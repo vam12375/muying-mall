@@ -1,0 +1,76 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: muying-mall
+  
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/muyingmall?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: admin
+  
+  # Redis配置  
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 
+      database: 0
+  
+  # Session配置
+  session:
+    store-type: redis
+    timeout: 1800s
+    redis:
+      namespace: muying:session
+
+# MyBatis-Plus配置
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+  type-aliases-package: com.muyingmall.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: is_deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# SpringDoc配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    
+# 支付宝配置
+alipay:
+  app-id: 2021000148611014  # 支付宝开放平台应用的appid，
+  private-key: MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9RmpyAN2WikcDad6g9GXu9UXDdeHwxWWvdskFDOrDxbNNeUcXY6O6qBIAoqwtyze8Xns0AtMd9/LqKkitinc6vSMDU61vusYIPCbGKPUtjDKNBsCLDYNeaiFNYo+dkoD3NoY0W2FikIVI/cTNy+PC1IA2XyTLsL3qUAI9shdxSqdmXYOA+7+tzj3lD17sG41pFFxXcSIRp24q54KQdiRqfMzD/OwtWw6riMqhwgYj7J0T0CTqPu9zeuDlk+Ru+Dw30rimNh+DL48zDMRWenwqX2tS/7I64gMpw+cPzWQaqa2EchCLduSt5Ed0uH0twJwYJYpMykpBp/t66NExPuJNAgMBAAECggEAZnlrRBHH5qsyy1xUVlw7m+ZbQPnfu9WDuj3bk8psiFXPP9C7dqRRjstUA9gO1DREFs4ocf5dgsotUC5YbuyapMil3jU9n1JFyUuXyo1+QIy5CbVwJVjJmSJoqVcFXlBlVnLEsjAPR6frIZuTI8CRrXgTelyEtWsZR3TN4c079+99ylOfcFo19pT6cJn1YI2NNEs+WUXhOJQl6VhdqCHLwZkWlX2eoA5y8Tyh23eQjg2BwmI6cADYQfW4r5gyTbTIxQV+XJLkcIbPP0zAPBhw0ooA70BG+Z23d6g46tx2DX3BLe4HS5Sujv++UfqrdLeYFK9Q4WcXxpcmzdxuVtL22QKBgQDx9WGNgpZ8CoxetIWwxHN9V6xVgrYBYWwuwoXKjs7Q7PLv6ube1c79UHZCrcU70wDdDVhtk5uh/8gO3r3/lJPyU+Pbb17F030LAMBlSUVclaQXm042CR5+Gc3RQzo5ZM9vT8n4B3K+giBauvFAuB+f5sUEpp79g7EeLNoyIm7YUwKBgQDIQlnmo/sLNha0bCxrmco4UF//wbJDolq+mJqx7YrXqGObm0C0t1bUMJvARaZxIMDsdKAOXPpQCyPUkkAZMNysZ4RY727qCEXu8p6RLL8NO8tri+7pUE6HdlQxR7lE/MqCdg71FCur5Qrd5NC8Lro3mTuoLK81f3KPwGefiheG3wKBgQCa7qJZx83ufZ6mofedWh4Nm89JLhq3RZfNVVfwfYNm+uMQx5ywAb66LASd68GI7jL2WS5PdB5LHIsRIoYNGymlGRyljWnlSOgf3IpWERXuFA/v4c2yAiLZYlKNdfvZdnjxcOkF/lb2MELhdiU3aO8vJ8juknbqJKKMjPHm+m956wKBgFOVriRgKTZCuzNPOzMmG4tpsMf1NsyYBTwsQdUmCp98vyaBpH5JT8p9B2U3LQNm4l9PRkb4c9nY7HmbGXnqNREYm9rrBOZV0aqsRZbekFebr4oR/AQR6tULhJSVFTVANd5CHHgalSfID8MR8DW7Yyo1oPrOu8qeiViKvDWQ08UNAoGAYtzWcH8YHybJXBQAvYLWXYNdSx05Zy+97AOX85cret7YO2zZJ/b+r6rO9zsbEnwG9iC+4UnznxQtRcOoz+PNiTT85f+mn0qiAHKBK8Jnvn2pMnnz/Eo9oGHIY/S/MKKI7IoJ2wX9IafmYr9v7dgYHMk8sGLdqGr1Sj81vKnCcL0=  # 开发者私钥，需要正确配置RSA私钥
+  public-key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0l8uu5dJ7SflIVPH1+j6xPt3/GIkrWxPo9RLtDAoVZG3VTNSRVuG4CTxK+3YCnVDfMjMDUvXzz0rdzS0ARVBiO2TILmJ7KcgxkzD+DLW2bDSLZAtGhZ7gAsOsdOqgx2SIWu5Ltnm29Ao9Yij98HtHQG6YDMmGLrhMxaBoO4rrKFdc88kQAyXDccQ4yla/2VWdmqT0PhvsydoCDMEW49OQqbQsvep+IHuHDbJYusQa4frNa5OlriPmH4I0GsrK7y6nYU9oP7crLIL+YxE/QHfe9/4B2BeQmZGkIUxriU8CWPMrDVnZcB+p/2epTYGBcGFX3GS/5arVOu8gE93sgf62QIDAQAB   # 支付宝公钥，从支付宝开放平台获取
+  gateway-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do  # 沙箱环境网关，正式环境需修改
+  return-url: http://localhost:8080/api/payment/alipay/return# 支付成功后的跳转地址
+  notify-url: http://localhost:8080/api/payment/alipay/notify# 异步回调地址
+
+# 微信支付配置
+wechat:
+  pay:
+    app-id: wxd930ea5d5a258f4f
+    mch-id: 1558950191
+    mch-serial-number: 12312312312312
+    private-key-path: classpath:cert/apiclient_key.pem
+    api-v3-key: sandboxd930ea5d5a258f4f1558950191
+    notify-url: http://localhost:8080/api/payment/wechat/notify
+    
+# 日志配置
+logging:
+  level:
+    com.muyingmall: debug
+    org.springframework.web: info
