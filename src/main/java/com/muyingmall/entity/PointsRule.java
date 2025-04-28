@@ -1,6 +1,7 @@
 package com.muyingmall.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -40,12 +41,16 @@ public class PointsRule implements Serializable {
 
     /**
      * 规则值（积分数量）
+     * 数据库列名为 points_value
      */
+    @TableField("points_value")
     private Integer value;
 
     /**
      * 排序
+     * 数据库列名为 sort_order (假设)
      */
+    @TableField("sort_order")
     private Integer sort;
 
     /**

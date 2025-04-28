@@ -1,3 +1,31 @@
+-- ----------------------------
+-- Table structure for brand
+-- ----------------------------
+DROP TABLE IF EXISTS `brand`;
+CREATE TABLE `brand`  (
+  `brand_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '品牌ID',
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '品牌名称',
+  `logo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '品牌logo',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '品牌描述',
+  `sort_order` int NULL DEFAULT 0 COMMENT '排序',
+  `status` tinyint(1) NULL DEFAULT 1 COMMENT '状态：0-禁用，1-正常',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`brand_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '品牌表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of brand
+-- ----------------------------
+INSERT INTO `brand` VALUES (1, '惠氏', 'brands/wyeth.png', '惠氏营养品是全球知名的婴幼儿营养品牌', 1, 1, '2025-03-05 21:58:47', '2025-03-15 22:53:47');
+INSERT INTO `brand` VALUES (2, '美素佳儿', 'brands/friso.png', '美素佳儿是荷兰皇家菲仕兰旗下的婴幼儿奶粉品牌', 2, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `brand` VALUES (3, '帮宝适', 'brands/pampers.png', '帮宝适是宝洁公司旗下的婴儿纸尿裤品牌', 3, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `brand` VALUES (4, '花王', 'brands/huawang.png', '花王是日本著名的个人护理用品品牌', 4, 1, '2025-03-05 21:58:47', '2025-03-17 16:10:15');
+
+
+
+
+
 CREATE TABLE `cart` (
   `cart_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '购物车ID',
   `user_id` int UNSIGNED NOT NULL COMMENT '用户ID',
@@ -93,7 +121,13 @@ CREATE TABLE `category`  (
   PRIMARY KEY (`category_id`) USING BTREE,
   INDEX `idx_parent_id`(`parent_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品分类表' ROW_FORMAT = Dynamic;
-
+----------------------------
+INSERT INTO `category` VALUES (1, 0, '奶粉', 'icons/milk.png', 1, 1, '2025-03-05 21:58:47', '2025-03-17 16:06:46');
+INSERT INTO `category` VALUES (2, 0, '尿不湿', 'icons/diaper.png', 2, 1, '2025-03-05 21:58:47', '2025-03-17 16:06:48');
+INSERT INTO `category` VALUES (3, 0, '服饰', 'icons/clothing.png', 3, 1, '2025-03-05 21:58:47', '2025-03-17 16:09:04');
+INSERT INTO `category` VALUES (4, 0, '玩具', 'icons/toy.png', 4, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `category` VALUES (5, 0, '洗护', 'icons/care.png', 5, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `category` VALUES (6, 0, '喂养', 'icons/feeding.png', 6, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
 ----------------------------
 CREATE TABLE `comment`  (
   `comment_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '评价ID',
@@ -145,6 +179,21 @@ ADD INDEX `idx_batch_id`(`batch_id`) USING BTREE,
 ADD INDEX `idx_rule_id`(`rule_id`) USING BTREE;
 ALTER TABLE `coupon` 
 ADD COLUMN `user_limit` INT DEFAULT 1 COMMENT '每用户最大领取次数，默认1次，0表示不限制';
+-- ----------------------------
+-- Records of coupon
+-- ----------------------------
+INSERT INTO `coupon` (`name`, `type`, `value`, `min_spend`, `max_discount`, `status`, `total_quantity`, `start_time`, `end_time`) VALUES
+('新用户优惠券', 'FIXED', 10.00, 50.00, NULL, 'ACTIVE', 1000, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY)),
+('满100减15', 'FIXED', 15.00, 100.00, NULL, 'ACTIVE', 500, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY)),
+('满200减30', 'FIXED', 30.00, 200.00, NULL, 'ACTIVE', 300, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY)),
+('满300减50', 'FIXED', 50.00, 300.00, NULL, 'ACTIVE', 200, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY)),
+('全场9折', 'PERCENTAGE', 0.90, 100.00, 50.00, 'ACTIVE', 100, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 15 DAY)),
+('母婴用品85折', 'PERCENTAGE', 0.85, 200.00, 100.00, 'ACTIVE', 300, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 20 DAY)),
+('奶粉尿裤满减', 'FIXED', 50.00, 300.00, NULL, 'ACTIVE', 200, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 25 DAY)),
+('玩具图书8折', 'PERCENTAGE', 0.80, 150.00, 60.00, 'ACTIVE', 150, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 15 DAY)),
+('婴儿洗护满减', 'FIXED', 25.00, 150.00, NULL, 'ACTIVE', 200, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 20 DAY)),
+('孕妇专享9折', 'PERCENTAGE', 0.90, 200.00, 80.00, 'ACTIVE', 100, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY));
+
 -------------------------------
 CREATE TABLE `coupon_rule` (
   `rule_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '规则ID',
@@ -155,6 +204,16 @@ CREATE TABLE `coupon_rule` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`rule_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '优惠券规则表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of coupon_rule
+-- ----------------------------
+INSERT INTO `coupon_rule` (`name`, `type`, `rule_content`) VALUES
+('新用户满50减10', 0, '{"threshold": 50.00, "amount": 10.00, "use_range": 0, "receive_count": 1, "is_mutex": true, "receive_started_at": "2025-03-01 00:00:00", "receive_ended_at": "2025-12-31 23:59:59", "use_started_at": "2025-03-01 00:00:00", "use_ended_at": "2025-12-31 23:59:59"}'),
+('全场满100减15', 0, '{"threshold": 100.00, "amount": 15.00, "use_range": 0, "receive_count": 1, "is_mutex": true, "receive_started_at": "2025-03-01 00:00:00", "receive_ended_at": "2025-12-31 23:59:59", "use_started_at": "2025-03-01 00:00:00", "use_ended_at": "2025-12-31 23:59:59"}'),
+('全场9折优惠', 2, '{"threshold": 100.00, "discount": 0.90, "max_discount": 50.00, "use_range": 0, "receive_count": 1, "is_mutex": true, "receive_started_at": "2025-03-01 00:00:00", "receive_ended_at": "2025-12-31 23:59:59", "use_started_at": "2025-03-01 00:00:00", "use_ended_at": "2025-12-31 23:59:59"}'),
+('母婴用品85折', 2, '{"threshold": 200.00, "discount": 0.85, "max_discount": 100.00, "use_range": 2, "category_ids": "1,2,3,4,5", "receive_count": 1, "is_mutex": true, "receive_started_at": "2025-03-01 00:00:00", "receive_ended_at": "2025-12-31 23:59:59", "use_started_at": "2025-03-01 00:00:00", "use_ended_at": "2025-12-31 23:59:59"}'),
+('奶粉尿裤专享', 0, '{"threshold": 300.00, "amount": 50.00, "use_range": 2, "category_ids": "2,7", "receive_count": 1, "is_mutex": true, "receive_started_at": "2025-03-01 00:00:00", "receive_ended_at": "2025-12-31 23:59:59", "use_started_at": "2025-03-01 00:00:00", "use_ended_at": "2025-12-31 23:59:59"}');
 -------------------------------
 CREATE TABLE `coupon_batch` (
   `batch_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '批次ID',
@@ -169,6 +228,16 @@ CREATE TABLE `coupon_batch` (
   CONSTRAINT `fk_coupon_batch_rule` FOREIGN KEY (`rule_id`) REFERENCES `coupon_rule` (`rule_id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '优惠券批次表' ROW_FORMAT = Dynamic;
 -------------------------------
+-- ----------------------------
+-- Records of coupon_batch
+-- ----------------------------
+INSERT INTO `coupon_batch` (`coupon_name`, `rule_id`, `total_count`, `assign_count`) VALUES
+('新用户专享-满50减10券', 1, 1000, 50),
+('618促销-满100减15券', 2, 500, 100),
+('会员日-9折优惠券', 3, 300, 30),
+('婴儿节-母婴85折券', 4, 200, 20),
+('奶粉尿裤专享满减券', 5, 200, 15);
+
 -- ----------------------------
 -- 创建触发器：更新用户优惠券状态（过期）
 -- ----------------------------
@@ -250,6 +319,11 @@ CREATE TABLE IF NOT EXISTS `member_level` (
   UNIQUE KEY `idx_level_name` (`level_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会员等级表';
 
+INSERT INTO `member_level` VALUES (1, '普通会员', 0, 1.00, NULL, '注册即可享受，无折扣优惠', '2025-03-19 13:38:12', '2025-03-19 13:38:12');
+INSERT INTO `member_level` VALUES (2, '银牌会员', 3000, 0.98, NULL, '享受全场商品98折优惠', '2025-03-19 13:38:12', '2025-03-19 13:38:12');
+INSERT INTO `member_level` VALUES (3, '金牌会员', 10000, 0.95, NULL, '享受全场商品95折优惠', '2025-03-19 13:38:12', '2025-03-19 13:38:12');
+INSERT INTO `member_level` VALUES (4, '钻石会员', 30000, 0.92, NULL, '享受全场商品92折优惠', '2025-03-19 13:38:12', '2025-03-19 13:38:12');
+INSERT INTO `member_level` VALUES (5, '至尊会员', 100000, 0.90, NULL, '享受全场商品9折优惠，专享客户服务', '2025-03-19 13:38:12', '2025-03-19 13:38:12');
 --------------------------------
 CREATE TABLE `product`  (
   `product_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '商品ID',
@@ -278,17 +352,30 @@ CREATE TABLE `product`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品表' ROW_FORMAT = Dynamic;
 --------------------------------
 -- 优化商品查询
-   ALTER TABLE `product` ADD INDEX `idx_category_status_price` (`category_id`, `product_status`, `price_new`);
-   -- 价格非负约束
-   ALTER TABLE `product` ADD CONSTRAINT `chk_price_positive` CHECK (`price_new` >= 0 AND `price_old` >= 0);
-   -- 评分范围约束
-   ALTER TABLE `product` ADD CONSTRAINT `chk_rating_range` CHECK (`rating` >= 1.0 AND `rating` <= 5.0);
-   -- 库存非负约束
-   ALTER TABLE `product` ADD CONSTRAINT `chk_stock_positive` CHECK (`stock` >= 0);
-   -- 销量非负约束
-   ALTER TABLE `product` ADD CONSTRAINT `chk_sales_positive` CHECK (`sales` >= 0);
-   -- 支持人数非负约束
-   
+ALTER TABLE `product` ADD INDEX `idx_category_status_price` (`category_id`, `product_status`, `price_new`);
+-- 价格非负约束
+ALTER TABLE `product` ADD CONSTRAINT `chk_price_positive` CHECK (`price_new` >= 0 AND `price_old` >= 0);
+-- 评分范围约束
+ALTER TABLE `product` ADD CONSTRAINT `chk_rating_range` CHECK (`rating` >= 1.0 AND `rating` <= 5.0);
+-- 库存非负约束
+ALTER TABLE `product` ADD CONSTRAINT `chk_stock_positive` CHECK (`stock` >= 0);
+-- 销量非负约束
+ALTER TABLE `product` ADD CONSTRAINT `chk_sales_positive` CHECK (`sales` >= 0);
+-- 支持人数非负约束
+ALTER TABLE `product` ADD CONSTRAINT `chk_support_positive` CHECK (`support` >= 0);
+-- ----------------------------
+-- 商品表数据
+-- ----------------------------
+INSERT INTO `product` VALUES (1, 8, 1, '惠氏启赋有机婴儿配方奶粉1段900g', 'WYS001', 'products/wyeth-1.jpg', '<p>惠氏启赋有机奶源，源自有机农场，富含DHA，提升宝宝免疫力。</p>', 339.00, 398.00, 1000, 500, 120, 4.9, 86, '上架', 1, 1, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `product` VALUES (2, 8, 2, '美素佳儿金装婴儿配方奶粉1段800g', 'FRS001', 'products/friso-1.jpg', '<p>荷兰原装进口，蕴含独特的LockNutri营养锁鲜技术。</p>', 299.00, 359.00, 800, 300, 80, 4.8, 45, '上架', 1, 0, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `product` VALUES (3, 12, 3, '帮宝适超薄干爽婴儿纸尿裤M码102片', 'PMP001', 'products/pampers-1.jpg', '<p>帮宝适一级帮，超薄设计，干爽透气，舒适不漏。</p>', 159.00, 199.00, 500, 200, 60, 4.7, 35, '上架', 1, 0, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `product` VALUES (4, 12, 4, '花王妙而舒纸尿裤L码54片', 'KAO001', 'products/huawang-1.jpg', '<p>日本进口，超薄透气，瞬吸干爽，防止红屁股。</p>', 128.00, 158.00, 400, 150, 50, 4.8, 28, '上架', 0, 1, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `product` VALUES (5, 14, 4, '花王婴儿湿巾80抽*6包', 'KAO002', 'products/huawang-2.jpg', '<p>99.9%纯水配方，温和无刺激，适合新生儿使用。</p>', 89.00, 109.00, 600, 300, 70, 4.9, 42, '上架', 1, 0, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `product` VALUES (6, 15, 1, '贝亲宽口径玻璃奶瓶240ml', 'PGN001', 'products/pigeon-1.jpg', '<p>贝亲宽口径玻璃奶瓶，防胀气设计，模拟母乳喂养。</p>', 79.00, 99.00, 300, 100, 30, 4.7, 20, '上架', 0, 0, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `product` VALUES (7, 21, 5, '好孩子婴儿推车轻便折叠', 'GBC001', 'products/goodbaby-1.jpg', '<p>好孩子轻便折叠推车，单手收车，便携出行。</p>', 699.00, 899.00, 100, 50, 20, 4.6, 15, '上架', 1, 1, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+INSERT INTO `product` VALUES (8, 18, 4, '花王婴儿洗发沐浴露二合一500ml', 'KAO003', 'products/huawang-3.jpg', '<p>花王二合一洗发沐浴露，温和不刺激眼睛，天然成分。</p>', 59.00, 79.00, 200, 80, 25, 4.8, 18, '上架', 0, 1, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
+
+
 -------------------------------
 CREATE TABLE `product_image`  (
   `image_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '图片ID',
@@ -302,6 +389,7 @@ CREATE TABLE `product_image`  (
   INDEX `idx_product_id`(`product_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 37 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品图片表' ROW_FORMAT = Dynamic;
 --------------------------------
+DROP TABLE IF EXISTS `product_specs`;
 CREATE TABLE `product_specs` (
      `spec_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
      `product_id` int UNSIGNED NOT NULL,
@@ -313,8 +401,89 @@ CREATE TABLE `product_specs` (
      PRIMARY KEY (`spec_id`),
      INDEX `idx_product_id` (`product_id`),
      CONSTRAINT `fk_product_specs_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`) ON DELETE CASCADE
-   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品规格表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品规格表';
+
    ---------------------------------
+-- ----------------------------
+-- 商品规格表数据
+-- ----------------------------
+-- 为60个商品添加规格信息，每个商品1-3个规格
+INSERT INTO `product_specs` VALUES (1, 1, '规格', '[{"id":1,"name":"1段(0-6个月)"},{"id":2,"name":"2段(6-12个月)"},{"id":3,"name":"3段(1-3岁)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (2, 1, '重量', '[{"id":1,"name":"900g"},{"id":2,"name":"1.8kg"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (3, 2, '规格', '[{"id":1,"name":"1段(0-6个月)"},{"id":2,"name":"2段(6-12个月)"},{"id":3,"name":"3段(1-3岁)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (4, 2, '重量', '[{"id":1,"name":"800g"},{"id":2,"name":"1.6kg"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (5, 3, '规格', '[{"id":1,"name":"1段(0-6个月)"},{"id":2,"name":"2段(6-12个月)"},{"id":3,"name":"3段(1-3岁)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (6, 4, '规格', '[{"id":1,"name":"2段(6-12个月)"},{"id":2,"name":"3段(1-3岁)"},{"id":3,"name":"4段(3-6岁)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (7, 4, '重量', '[{"id":1,"name":"400g"},{"id":2,"name":"800g"},{"id":3,"name":"1.6kg"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (8, 5, '规格', '[{"id":1,"name":"1段(0-6个月)"},{"id":2,"name":"2段(6-12个月)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (9, 6, '规格', '[{"id":1,"name":"婴儿配方奶粉"},{"id":2,"name":"较大婴儿配方奶粉"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (10, 6, '重量', '[{"id":1,"name":"700g"},{"id":2,"name":"1.5kg"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (11, 7, '规格', '[{"id":1,"name":"1段(0-6个月)"},{"id":2,"name":"2段(6-12个月)"},{"id":3,"name":"3段(1-3岁)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (12, 8, '重量', '[{"id":1,"name":"800g"},{"id":2,"name":"1.6kg"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (13, 9, '规格', '[{"id":1,"name":"有机奶粉"},{"id":2,"name":"普通奶粉"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (14, 10, '适用年龄', '[{"id":1,"name":"1-3岁"},{"id":2,"name":"3-7岁"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (15, 11, '尺寸', '[{"id":1,"name":"S(4-8kg)"},{"id":2,"name":"M(6-11kg)"},{"id":3,"name":"L(9-14kg)"},{"id":4,"name":"XL(12kg以上)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (16, 11, '数量', '[{"id":1,"name":"36片"},{"id":2,"name":"72片"},{"id":3,"name":"108片"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (17, 12, '尺寸', '[{"id":1,"name":"S(4-8kg)"},{"id":2,"name":"M(6-11kg)"},{"id":3,"name":"L(9-14kg)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (18, 12, '数量', '[{"id":1,"name":"40片"},{"id":2,"name":"80片"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (19, 13, '尺寸', '[{"id":1,"name":"NB(0-5kg)"},{"id":2,"name":"S(4-8kg)"},{"id":3,"name":"M(6-11kg)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (20, 14, '尺寸', '[{"id":1,"name":"M(6-11kg)"},{"id":2,"name":"L(9-14kg)"},{"id":3,"name":"XL(12kg以上)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (21, 15, '类型', '[{"id":1,"name":"纸尿裤"},{"id":2,"name":"拉拉裤"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (22, 15, '数量', '[{"id":1,"name":"50片"},{"id":2,"name":"100片"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (23, 16, '尺寸', '[{"id":1,"name":"S(4-8kg)"},{"id":2,"name":"M(6-11kg)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (24, 17, '类型', '[{"id":1,"name":"日用"},{"id":2,"name":"夜用加量版"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (25, 18, '尺寸', '[{"id":1,"name":"L(9-14kg)"},{"id":2,"name":"XL(12kg以上)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (26, 19, '尺寸', '[{"id":1,"name":"59cm(0-3个月)"},{"id":2,"name":"66cm(3-6个月)"},{"id":3,"name":"73cm(6-12个月)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (27, 19, '颜色', '[{"id":1,"name":"粉色"},{"id":2,"name":"蓝色"},{"id":3,"name":"黄色"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (28, 20, '尺寸', '[{"id":1,"name":"66cm(3-6个月)"},{"id":2,"name":"73cm(6-12个月)"},{"id":3,"name":"80cm(1-2岁)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (29, 20, '颜色', '[{"id":1,"name":"蓝白条"},{"id":2,"name":"灰色"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (30, 21, '尺寸', '[{"id":1,"name":"73cm(6-12个月)"},{"id":2,"name":"80cm(1-2岁)"},{"id":3,"name":"90cm(2-3岁)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (31, 22, '尺寸', '[{"id":1,"name":"80cm(1-2岁)"},{"id":2,"name":"90cm(2-3岁)"},{"id":3,"name":"100cm(3-4岁)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (32, 22, '颜色', '[{"id":1,"name":"白色"},{"id":2,"name":"粉色"},{"id":3,"name":"蓝色"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (33, 23, '尺寸', '[{"id":1,"name":"小号(0-6个月)"},{"id":2,"name":"中号(6-12个月)"},{"id":3,"name":"大号(1-3岁)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (34, 24, '尺寸', '[{"id":1,"name":"90cm(2-3岁)"},{"id":2,"name":"100cm(3-4岁)"},{"id":3,"name":"110cm(4-5岁)"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (35, 25, '尺寸', '[{"id":1,"name":"6-12个月"},{"id":2,"name":"1-3岁"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (36, 26, '颜色', '[{"id":1,"name":"红色"},{"id":2,"name":"蓝色"},{"id":3,"name":"粉色"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (37, 27, '尺寸', '[{"id":1,"name":"0-6个月"},{"id":2,"name":"6-12个月"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (38, 28, '款式', '[{"id":1,"name":"春秋款"},{"id":2,"name":"冬季款"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (39, 29, '适用年龄', '[{"id":1,"name":"0-1岁"},{"id":2,"name":"1-3岁"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (40, 30, '类型', '[{"id":1,"name":"积木套装"},{"id":2,"name":"单个积木"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (41, 30, '数量', '[{"id":1,"name":"40块"},{"id":2,"name":"80块"},{"id":3,"name":"120块"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (42, 31, '尺寸', '[{"id":1,"name":"小号"},{"id":2,"name":"大号"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (43, 32, '类型', '[{"id":1,"name":"动物系列"},{"id":2,"name":"交通工具系列"},{"id":3,"name":"食物系列"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (44, 33, '适用年龄', '[{"id":1,"name":"3-6岁"},{"id":2,"name":"6岁以上"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (45, 34, '颜色', '[{"id":1,"name":"红色"},{"id":2,"name":"蓝色"},{"id":3,"name":"黄色"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (46, 35, '材质', '[{"id":1,"name":"塑料"},{"id":2,"name":"木质"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (47, 36, '类型', '[{"id":1,"name":"拼图"},{"id":2,"name":"游戏套装"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (48, 37, '容量', '[{"id":1,"name":"200ml"},{"id":2,"name":"400ml"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (49, 38, '功效', '[{"id":1,"name":"滋润型"},{"id":2,"name":"修复型"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (50, 39, '容量', '[{"id":1,"name":"250ml"},{"id":2,"name":"500ml"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (51, 40, '类型', '[{"id":1,"name":"杀菌型"},{"id":2,"name":"护肤型"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (52, 40, '容量', '[{"id":1,"name":"250ml"},{"id":2,"name":"500ml"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (53, 41, '功效', '[{"id":1,"name":"温和型"},{"id":2,"name":"防敏感型"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (54, 42, '规格', '[{"id":1,"name":"小包装"},{"id":2,"name":"大包装"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (55, 43, '容量', '[{"id":1,"name":"100ml"},{"id":2,"name":"200ml"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (56, 44, '类型', '[{"id":1,"name":"婴儿专用"},{"id":2,"name":"儿童专用"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (57, 45, '容量', '[{"id":1,"name":"160ml"},{"id":2,"name":"240ml"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (58, 45, '材质', '[{"id":1,"name":"PP材质"},{"id":2,"name":"玻璃"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (59, 46, '类型', '[{"id":1,"name":"奶瓶"},{"id":2,"name":"奶瓶套装"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (60, 47, '适用年龄', '[{"id":1,"name":"0-6个月"},{"id":2,"name":"6个月以上"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (61, 48, '尺寸', '[{"id":1,"name":"小号"},{"id":2,"name":"中号"},{"id":3,"name":"大号"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (62, 49, '材质', '[{"id":1,"name":"硅胶"},{"id":2,"name":"塑料"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (63, 50, '类型', '[{"id":1,"name":"固体辅食碗"},{"id":2,"name":"液体辅食碗"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (64, 51, '颜色', '[{"id":1,"name":"粉色"},{"id":2,"name":"蓝色"},{"id":3,"name":"绿色"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (65, 52, '材质', '[{"id":1,"name":"不锈钢"},{"id":2,"name":"塑料"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (66, 53, '规格', '[{"id":1,"name":"基础款"},{"id":2,"name":"高级款"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (67, 54, '尺寸', '[{"id":1,"name":"M"},{"id":2,"name":"L"},{"id":3,"name":"XL"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (68, 54, '颜色', '[{"id":1,"name":"肤色"},{"id":2,"name":"黑色"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (69, 55, '规格', '[{"id":1,"name":"单瓶装"},{"id":2,"name":"3瓶装"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (70, 56, '功效', '[{"id":1,"name":"预防"},{"id":2,"name":"修复"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (71, 57, '尺寸', '[{"id":1,"name":"均码"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (72, 57, '颜色', '[{"id":1,"name":"白色"},{"id":2,"name":"粉色"},{"id":3,"name":"蓝色"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (73, 58, '类型', '[{"id":1,"name":"DHA"},{"id":2,"name":"钙铁锌"},{"id":3,"name":"叶酸"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (74, 59, '规格', '[{"id":1,"name":"标准型"},{"id":2,"name":"加大型"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
+INSERT INTO `product_specs` VALUES (75, 60, '类型', '[{"id":1,"name":"孕前"},{"id":2,"name":"孕中"},{"id":3,"name":"孕后"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00'); 
+-------------------------------
 CREATE TABLE `order` (
   `order_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '订单ID',
   `order_no` varchar(32) NOT NULL COMMENT '订单编号',

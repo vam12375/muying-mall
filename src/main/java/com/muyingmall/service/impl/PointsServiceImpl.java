@@ -8,6 +8,7 @@ import com.muyingmall.entity.*;
 import com.muyingmall.entity.PointsProduct;
 import com.muyingmall.mapper.PointsHistoryMapper;
 import com.muyingmall.mapper.PointsRuleMapper;
+import com.muyingmall.service.MemberLevelService;
 import com.muyingmall.service.PointsExchangeService;
 import com.muyingmall.service.PointsOperationService;
 import com.muyingmall.service.PointsProductService;
@@ -37,6 +38,7 @@ public class PointsServiceImpl implements PointsService {
     private final PointsRuleMapper pointsRuleMapper;
     private final PointsProductService pointsProductService;
     private final PointsOperationService pointsOperationService;
+    private final MemberLevelService memberLevelService;
 
     @Override
     public Integer getUserPoints(Integer userId) {
@@ -224,18 +226,30 @@ public class PointsServiceImpl implements PointsService {
                 // 继续执行，使用默认值0
             }
 
+            // 获取会员等级
+            String userLevel = "普通会员";
+            try {
+                userLevel = memberLevelService.getLevelNameByPoints(totalPoints);
+            } catch (Exception e) {
+                log.error("获取会员等级失败: {}", e.getMessage());
+                // 继续使用默认值
+            }
+
             // 构建结果
             result.put("todaySigned", todaySigned);
             result.put("continuousDays", continuousDays);
             result.put("historyMaxContinuousDays", historyMaxContinuousDays);
             result.put("totalPoints", totalPoints);
+            result.put("points", totalPoints); // 为前端提供一个额外的积分字段
+            result.put("userLevel", userLevel); // 添加会员等级
 
             // 添加可能的下一次签到可获得的积分数
             int nextSignInPoints = calculateNextSignInPoints(continuousDays);
             result.put("nextSignInPoints", nextSignInPoints);
 
-            log.debug("用户 {} 的签到状态: 今日已签到={}, 连续签到天数={}, 历史最长连续签到={}, 总积分={}, 下次签到积分={}",
-                    userId, todaySigned, continuousDays, historyMaxContinuousDays, totalPoints, nextSignInPoints);
+            log.debug("用户 {} 的签到状态: 今日已签到={}, 连续签到天数={}, 历史最长连续签到={}, 总积分={}, 会员等级={}, 下次签到积分={}",
+                    userId, todaySigned, continuousDays, historyMaxContinuousDays, totalPoints, userLevel,
+                    nextSignInPoints);
 
             return result;
         } catch (Exception e) {
@@ -245,6 +259,8 @@ public class PointsServiceImpl implements PointsService {
             result.put("continuousDays", 0);
             result.put("historyMaxContinuousDays", 0);
             result.put("totalPoints", 0);
+            result.put("points", 0);
+            result.put("userLevel", "普通会员");
             result.put("nextSignInPoints", 20); // 默认为20
             return result;
         }
