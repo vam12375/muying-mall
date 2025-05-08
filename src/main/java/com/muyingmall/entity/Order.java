@@ -1,6 +1,8 @@
 package com.muyingmall.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.muyingmall.enums.OrderStatus;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -12,7 +14,7 @@ import java.util.List;
  * 订单实体类
  */
 @Data
-@TableName("`order`") // order是MySQL关键字，需要加反引号
+@TableName(value = "`order`", autoResultMap = true) // order是MySQL关键字，需要加反引号
 public class Order implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -21,6 +23,7 @@ public class Order implements Serializable {
      * 订单ID
      */
     @TableId(value = "order_id", type = IdType.AUTO)
+    @TableField(updateStrategy = FieldStrategy.NEVER) // 防止主键字段在更新时被包含在SET语句中
     private Integer orderId;
 
     /**
@@ -46,7 +49,7 @@ public class Order implements Serializable {
     /**
      * 订单状态：pending_payment-待付款，pending_shipment-待发货，shipped-已发货，completed-已完成，cancelled-已取消
      */
-    private String status;
+    private OrderStatus status;
 
     /**
      * 支付ID，关联payment表
@@ -114,6 +117,16 @@ public class Order implements Serializable {
     private String receiverZip;
 
     /**
+     * 优惠券ID
+     */
+    private Long couponId;
+
+    /**
+     * 优惠券金额
+     */
+    private BigDecimal couponAmount;
+
+    /**
      * 订单备注
      */
     private String remark;
@@ -171,7 +184,14 @@ public class Order implements Serializable {
     /**
      * 是否删除：0-未删除，1-已删除
      */
+    @TableLogic
     private Integer isDeleted;
+
+    /**
+     * 版本号，用于乐观锁控制
+     */
+    @Version
+    private Integer version;
 
     /**
      * 创建时间
@@ -190,4 +210,15 @@ public class Order implements Serializable {
      */
     @TableField(exist = false)
     private List<OrderProduct> products;
+
+    /**
+     * 获取订单状态码，用于JSON序列化
+     * 确保返回前端期望的格式（如"pending_payment"）
+     * 
+     * @return 状态码字符串
+     */
+    @JsonProperty("status")
+    public String getStatusCode() {
+        return status != null ? status.getCode() : null;
+    }
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -82,6 +83,12 @@ public class User implements Serializable {
      */
     @TableField(exist = false)
     private Integer level;
+
+    /**
+     * 用户钱包余额
+     */
+    @TableField("balance")
+    private BigDecimal balance;
 
     /**
      * 创建时间

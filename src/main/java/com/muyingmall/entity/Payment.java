@@ -1,6 +1,7 @@
 package com.muyingmall.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.muyingmall.enums.PaymentStatus;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
  * 支付实体类
  */
 @Data
-@TableName("payment")
+@TableName(value = "payment", autoResultMap = true)
 public class Payment implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -20,6 +21,7 @@ public class Payment implements Serializable {
      * 支付ID
      */
     @TableId(value = "id", type = IdType.AUTO)
+    @TableField(updateStrategy = FieldStrategy.NEVER) // 防止主键字段在更新时被包含在SET语句中
     private Long id;
 
     /**
@@ -55,7 +57,7 @@ public class Payment implements Serializable {
     /**
      * 支付状态: 0-待支付 1-支付中 2-支付成功 3-支付失败 4-已关闭
      */
-    private Integer status;
+    private PaymentStatus status;
 
     /**
      * 支付时间
@@ -93,12 +95,20 @@ public class Payment implements Serializable {
     private String extra;
 
     /**
+     * 版本号，用于乐观锁控制
+     */
+    @Version
+    private Integer version;
+
+    /**
      * 创建时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 }

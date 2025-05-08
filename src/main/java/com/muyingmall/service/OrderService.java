@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.muyingmall.entity.Order;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,12 +15,16 @@ public interface OrderService extends IService<Order> {
     /**
      * 创建订单
      * 
-     * @param userId    用户ID
-     * @param addressId 地址ID
-     * @param remark    备注
+     * @param userId        用户ID
+     * @param addressId     地址ID
+     * @param remark        备注
+     * @param paymentMethod 支付方式
+     * @param couponId      优惠券ID
+     * @param cartIds       购物车项ID列表
      * @return 订单信息
      */
-    Map<String, Object> createOrder(Integer userId, Integer addressId, String remark);
+    Map<String, Object> createOrder(Integer userId, Integer addressId, String remark,
+            String paymentMethod, Long couponId, List<Integer> cartIds);
 
     /**
      * 获取订单详情

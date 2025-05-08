@@ -165,7 +165,22 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     public void selectAllCarts(Integer userId, Boolean selected) {
         LambdaUpdateWrapper<Cart> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(Cart::getUserId, userId)
-                .set(Cart::getSelected, selected);
+                .set(Cart::getSelected, selected ? 1 : 0); // 确保布尔值转为 0 或 1
         update(updateWrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void selectCartItem(Integer userId, Integer cartId, Boolean selected) {
+        LambdaUpdateWrapper<Cart> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Cart::getUserId, userId)
+                .eq(Cart::getCartId, cartId)
+                .set(Cart::getSelected, selected ? 1 : 0);
+        boolean success = update(updateWrapper);
+        if (!success) {
+            // 可以选择抛出异常或记录日志，取决于业务需求
+            // 这里仅记录日志，因为更新0行也可能不算严格意义的错误
+            log.warn("尝试更新购物车项选中状态失败或未找到记录: userId={}, cartId={}", userId, cartId);
+        }
     }
 }

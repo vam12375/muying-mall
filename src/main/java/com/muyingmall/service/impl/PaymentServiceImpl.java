@@ -3,8 +3,10 @@ package com.muyingmall.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.entity.Payment;
+import com.muyingmall.enums.PaymentStatus;
 import com.muyingmall.mapper.PaymentMapper;
 import com.muyingmall.service.PaymentService;
+import com.muyingmall.util.EnumUtil;
 import org.springframework.stereotype.Service;
 
 /**
@@ -30,7 +32,7 @@ public class PaymentServiceImpl extends ServiceImpl<PaymentMapper, Payment> impl
     public boolean updatePaymentStatus(String paymentNo, Integer status) {
         Payment payment = this.getByPaymentNo(paymentNo);
         if (payment != null) {
-            payment.setStatus(status);
+            payment.setStatus(EnumUtil.getPaymentStatusByCode(status));
             return this.updateById(payment);
         }
         return false;
@@ -42,4 +44,4 @@ public class PaymentServiceImpl extends ServiceImpl<PaymentMapper, Payment> impl
         queryWrapper.eq(Payment::getOrderNo, orderNo);
         return this.getOne(queryWrapper);
     }
-} 
+}

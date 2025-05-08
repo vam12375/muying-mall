@@ -129,4 +129,16 @@ public class Product implements Serializable {
      */
     @TableField(exist = false)
     private List<ProductSpecs> specsList;
+
+    /**
+     * 分类名称（非数据库字段）
+     */
+    @TableField(exist = false)
+    private String categoryName;
+
+    /**
+     * 品牌名称（非数据库字段）
+     */
+    @TableField(exist = false)
+    private String brandName;
 }

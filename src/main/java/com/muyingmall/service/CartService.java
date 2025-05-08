@@ -41,8 +41,8 @@ public interface CartService extends IService<Cart> {
     /**
      * 删除购物车
      *
-     * @param userId  用户ID
-     * @param cartId  购物车ID
+     * @param userId 用户ID
+     * @param cartId 购物车ID
      * @return 是否成功
      */
     boolean deleteCart(Integer userId, Integer cartId);
@@ -61,4 +61,13 @@ public interface CartService extends IService<Cart> {
      * @param selected 是否选中
      */
     void selectAllCarts(Integer userId, Boolean selected);
+
+    /**
+     * 选中/取消选中单个购物车项
+     *
+     * @param userId   用户ID
+     * @param cartId   购物车ID
+     * @param selected 是否选中
+     */
+    void selectCartItem(Integer userId, Integer cartId, Boolean selected);
 }

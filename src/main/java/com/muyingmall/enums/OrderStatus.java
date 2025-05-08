@@ -1,0 +1,91 @@
+package com.muyingmall.enums;
+
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
+
+/**
+ * 订单状态枚举
+ */
+@Getter
+public enum OrderStatus {
+
+    /**
+     * 待支付
+     */
+    PENDING_PAYMENT("pending_payment", "待支付"),
+
+    /**
+     * 已支付，待发货
+     */
+    PENDING_SHIPMENT("pending_shipment", "待发货"),
+
+    /**
+     * 已发货
+     */
+    SHIPPED("shipped", "已发货"),
+
+    /**
+     * 已完成
+     */
+    COMPLETED("completed", "已完成"),
+
+    /**
+     * 已取消
+     */
+    CANCELLED("cancelled", "已取消");
+
+    /**
+     * 状态编码
+     */
+    @EnumValue
+    private final String code;
+
+    /**
+     * 状态描述
+     */
+    @JsonValue
+    private final String desc;
+
+    OrderStatus(String code, String desc) {
+        this.code = code;
+        this.desc = desc;
+    }
+
+    /**
+     * 根据状态编码获取订单状态枚举
+     *
+     * @param code 状态编码
+     * @return 订单状态枚举
+     */
+    public static OrderStatus getByCode(String code) {
+        for (OrderStatus status : OrderStatus.values()) {
+            if (status.getCode().equals(code)) {
+                return status;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 判断是否可以转换为目标状态
+     *
+     * @param target 目标状态
+     * @return 是否可以转换
+     */
+    public boolean canTransitionTo(OrderStatus target) {
+        switch (this) {
+            case PENDING_PAYMENT:
+                return target == PENDING_SHIPMENT || target == CANCELLED;
+            case PENDING_SHIPMENT:
+                return target == SHIPPED || target == CANCELLED;
+            case SHIPPED:
+                return target == COMPLETED || target == CANCELLED;
+            case COMPLETED:
+            case CANCELLED:
+                return false;
+            default:
+                return false;
+        }
+    }
+}

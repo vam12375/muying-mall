@@ -1,16 +1,10 @@
 package com.muyingmall.controller;
 
-import com.muyingmall.common.response.Result;
+import com.muyingmall.common.api.CommonResult;
 import com.muyingmall.dto.AdminLoginDTO;
 import com.muyingmall.entity.User;
 import com.muyingmall.service.UserService;
-import com.muyingmall.util.JwtUtils;
-
-import io.jsonwebtoken.Claims;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -21,63 +15,84 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/admin")
-@RequiredArgsConstructor
-@Tag(name = "管理员管理", description = "管理员登录、信息管理等接口")
 public class AdminController {
 
-    private final UserService userService;
-    private final JwtUtils jwtUtils;
+    @Autowired
+    private UserService userService;
 
     /**
      * 管理员登录
      */
     @PostMapping("/login")
-    @Operation(summary = "管理员登录")
-    public Result<String> login(@RequestBody @Valid AdminLoginDTO loginDTO) {
-        // 调用service验证管理员身份
-        User admin = userService.adminLogin(loginDTO);
+    public CommonResult login(@RequestBody AdminLoginDTO loginParam) {
+        // 根据用户名查询用户
+        User user = userService.getUserByUsername(loginParam.getAdmin_name());
 
-        if (admin == null) {
-            return Result.error("用户名或密码错误");
+        // 用户不存在或密码错误
+        if (user == null || !userService.verifyPassword(user, loginParam.getAdmin_pass())) {
+            return CommonResult.failed("用户名或密码错误");
         }
 
-        // 生成JWT令牌
-        String token = jwtUtils.generateToken(admin.getUserId(), admin.getUsername(), admin.getRole());
+        // 检查用户角色是否为管理员
+        if (!"admin".equals(user.getRole())) {
+            return CommonResult.failed("该账号没有管理员权限");
+        }
 
-        return Result.success(token, "登录成功");
+        // 用户存在且验证通过，生成token
+        String token = userService.generateToken(user);
+
+        // 封装返回结果
+        Map<String, Object> result = new HashMap<>();
+        result.put("token", token);
+
+        // 用户信息（去除敏感信息）
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", user.getUserId());
+        userInfo.put("username", user.getUsername());
+        userInfo.put("nickname", user.getNickname());
+        userInfo.put("avatar", user.getAvatar());
+        userInfo.put("role", user.getRole());
+
+        result.put("user", userInfo);
+
+        return CommonResult.success(result);
     }
 
     /**
-     * 获取管理员信息
+     * 获取当前管理员信息
      */
     @GetMapping("/info")
-    @Operation(summary = "获取管理员信息")
-    public Result<Map<String, Object>> getAdminInfo(@RequestHeader("Authorization") String token) {
-        // 验证token
-        if (token == null || !token.startsWith("Bearer ")) {
-            return Result.error("未登录或token无效");
+    public CommonResult getAdminInfo(@RequestHeader("Authorization") String token) {
+        // 从token获取用户信息
+        User user = userService.getUserFromToken(token);
+
+        if (user == null) {
+            return CommonResult.unauthorized("token已过期或无效");
         }
 
-        String actualToken = token.substring(7);
-        if (!jwtUtils.validateToken(actualToken)) {
-            return Result.error("token已过期");
+        // 检查用户角色是否为管理员
+        if (!"admin".equals(user.getRole())) {
+            return CommonResult.forbidden("该账号没有管理员权限");
         }
 
-        // 解析token
-        Claims claims = jwtUtils.getClaimsFromToken(actualToken);
-        Integer userId = claims.get("userId", Integer.class);
+        // 封装用户信息（去除敏感信息）
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", user.getUserId());
+        userInfo.put("username", user.getUsername());
+        userInfo.put("nickname", user.getNickname());
+        userInfo.put("avatar", user.getAvatar());
+        userInfo.put("role", user.getRole());
 
-        // 获取管理员信息
-        User admin = userService.getById(userId);
-        if (admin == null || !"admin".equals(admin.getRole())) {
-            return Result.error("管理员不存在");
-        }
+        return CommonResult.success(userInfo);
+    }
 
-        Map<String, Object> adminInfo = new HashMap<>();
-        adminInfo.put("adminId", admin.getUserId());
-        adminInfo.put("adminName", admin.getUsername());
-        adminInfo.put("adminAvatar", admin.getAvatar());
-
-        return Result.success(adminInfo);
+    /**
+     * 管理员登出
+     */
+    @PostMapping("/logout")
+    public CommonResult logout(@RequestHeader("Authorization") String token) {
+        // 清除token等操作
+        userService.logout(token);
+        return CommonResult.success(null);
     }
 }

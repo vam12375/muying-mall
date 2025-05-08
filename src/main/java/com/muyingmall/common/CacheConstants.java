@@ -22,6 +22,11 @@ public class CacheConstants {
     public static final String PRODUCT_LIST_KEY = PRODUCT_KEY_PREFIX + "list:";
 
     /**
+     * 管理后台商品列表缓存键
+     */
+    public static final String PRODUCT_ADMIN_LIST_KEY = PRODUCT_KEY_PREFIX + "admin:list:";
+
+    /**
      * 热门商品缓存键
      */
     public static final String PRODUCT_HOT_KEY = PRODUCT_KEY_PREFIX + "hot";

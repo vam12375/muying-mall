@@ -47,13 +47,12 @@ public class PointsOperationServiceImpl implements PointsOperationService {
         }
 
         PointsHistory history = new PointsHistory();
-        history.setUserId(userId.longValue());
+        history.setUserId(userId);
         history.setPoints(points);
         history.setType("earn");
         history.setSource(source);
         history.setReferenceId(referenceId);
         history.setDescription(description);
-        history.setCreateTime(LocalDateTime.now());
 
         return pointsHistoryMapper.insert(history) > 0;
     }
@@ -72,13 +71,12 @@ public class PointsOperationServiceImpl implements PointsOperationService {
         }
 
         PointsHistory history = new PointsHistory();
-        history.setUserId(userId.longValue());
-        history.setPoints(-points); // 负数表示减少
+        history.setUserId(userId);
+        history.setPoints(-points);
         history.setType("spend");
         history.setSource(source);
         history.setReferenceId(referenceId);
         history.setDescription(description);
-        history.setCreateTime(LocalDateTime.now());
 
         return pointsHistoryMapper.insert(history) > 0;
     }

@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -98,6 +99,11 @@ public class CouponController {
 
     /**
      * 获取订单可用优惠券
+     * 接收数组参数为普通形式而非方括号语法
+     * 
+     * @param amount     订单金额
+     * @param productIds 商品ID列表
+     * @return 可用优惠券列表
      */
     @GetMapping("/user/coupons/order")
     @Operation(summary = "获取订单可用优惠券")

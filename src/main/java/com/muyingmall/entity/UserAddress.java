@@ -18,8 +18,8 @@ public class UserAddress implements Serializable {
     /**
      * 地址ID
      */
-    @TableId(value = "id", type = IdType.AUTO)
-    private Integer id;
+    @TableId(value = "address_id", type = IdType.AUTO)
+    private Integer addressId;
 
     /**
      * 用户ID
@@ -54,11 +54,13 @@ public class UserAddress implements Serializable {
     /**
      * 详细地址
      */
+    @TableField("detail")
     private String address;
 
     /**
      * 邮政编码
      */
+    @TableField("postal_code")
     private String zip;
 
     /**

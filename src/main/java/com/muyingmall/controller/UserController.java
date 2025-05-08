@@ -64,8 +64,11 @@ public class UserController {
 
         // 设置session过期时间，如果勾选了记住我，则延长session有效期
         if (loginDTO.getRememberMe()) {
-            // 设置为7天
-            session.setMaxInactiveInterval(7 * 24 * 60 * 60);
+            // 设置为7天 (7 * 24 * 60 * 60 = 604800秒)
+            session.setMaxInactiveInterval(604800);
+        } else {
+            // 默认使用application.yml中的配置（也是7天），这里可以设置为更短的时间，如30分钟
+            session.setMaxInactiveInterval(1800); // 30分钟
         }
 
         return Result.success(responseDTO, "登录成功");
@@ -88,7 +91,8 @@ public class UserController {
     @Operation(summary = "获取当前登录用户信息")
     public Result<User> getUserInfo() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
             return Result.error(401, "用户未认证");
         }
 
@@ -111,7 +115,8 @@ public class UserController {
     @Operation(summary = "修改用户信息")
     public Result<Void> updateUserInfo(@RequestBody User user) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
             return Result.error(401, "用户未认证");
         }
 
@@ -158,7 +163,8 @@ public class UserController {
     @Operation(summary = "上传用户头像")
     public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
             return Result.error(401, "用户未认证");
         }
 
@@ -185,7 +191,8 @@ public class UserController {
             @RequestParam("oldPassword") String oldPassword,
             @RequestParam("newPassword") String newPassword) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
             return Result.error(401, "用户未认证");
         }
 

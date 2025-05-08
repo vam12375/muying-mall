@@ -26,7 +26,7 @@ public class PointsHistory implements Serializable {
     /**
      * 用户ID
      */
-    private Long userId;
+    private Integer userId;
 
     /**
      * 积分变动数量（正为增加，负为减少）

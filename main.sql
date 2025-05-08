@@ -686,8 +686,8 @@ CREATE TABLE IF NOT EXISTS `points_rule` (
   `title` varchar(100) NOT NULL COMMENT '规则标题',
   `description` varchar(500) NOT NULL COMMENT '规则描述',
   `type` varchar(50) NOT NULL COMMENT '规则类型',
-  `value` int(11) NOT NULL DEFAULT 0 COMMENT '规则值（积分数量）',
-  `sort` int(11) NOT NULL DEFAULT 0 COMMENT '排序',
+  `points_value` int(11) NOT NULL DEFAULT 0 COMMENT '规则值（积分数量）',
+  `sort_order` int(11) NOT NULL DEFAULT 0 COMMENT '排序',
   `enabled` tinyint(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -695,8 +695,11 @@ CREATE TABLE IF NOT EXISTS `points_rule` (
   INDEX `idx_type` (`type`),
   INDEX `idx_enabled` (`enabled`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='积分规则表';
+-- 添加 sort_order 字段
+ALTER TABLE `points_rule`
+ADD COLUMN `sort_order` INT NULL DEFAULT 0 COMMENT '排序' AFTER `title`;
 -- 插入默认积分规则数据
-INSERT INTO `points_rule` (`title`, `description`, `type`, `points_value`, `sort`, `enabled`) VALUES
+INSERT INTO `points_rule` (`title`, `description`, `type`, `points_value`, `sort_order`, `enabled`) VALUES
 ('购物奖励', '购物可获得订单金额1%的积分', 'shopping', 0, 1, 1),
 ('评价奖励', '评价商品可获得10-30积分', 'review', 20, 2, 1),
 ('每日签到', '每日签到可获得5-20积分', 'signin', 20, 3, 1),
@@ -723,6 +726,7 @@ CREATE TABLE `user`  (
   UNIQUE INDEX `idx_username`(`username`) USING BTREE,
   UNIQUE INDEX `idx_email`(`email`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表' ROW_FORMAT = DYNAMIC;
+ALTER TABLE user ADD COLUMN balance DECIMAL(10, 2) DEFAULT 0.00;
 --------------------------------
 CREATE TABLE `user_address`  (
   `address_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '地址ID',
@@ -791,3 +795,6 @@ CREATE TABLE `user_coupon` (
   INDEX `idx_status`(`status`) USING BTREE,
   INDEX `idx_order_id`(`order_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户优惠券表' ROW_FORMAT = Dynamic;
+
+ALTER TABLE `order` ADD COLUMN `coupon_id` INT UNSIGNED DEFAULT NULL COMMENT '优惠券ID' AFTER `receiver_zip`;
+ALTER TABLE `order` ADD COLUMN `coupon_amount` DECIMAL(10,2) DEFAULT 0.00 COMMENT '优惠券金额' AFTER `coupon_id`;
