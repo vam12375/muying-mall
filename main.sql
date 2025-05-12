@@ -700,9 +700,9 @@ ALTER TABLE `points_rule`
 ADD COLUMN `sort_order` INT NULL DEFAULT 0 COMMENT '排序' AFTER `title`;
 -- 插入默认积分规则数据
 INSERT INTO `points_rule` (`title`, `description`, `type`, `points_value`, `sort_order`, `enabled`) VALUES
-('购物奖励', '购物可获得订单金额1%的积分', 'shopping', 0, 1, 1),
-('评价奖励', '评价商品可获得10-30积分', 'review', 20, 2, 1),
-('每日签到', '每日签到可获得5-20积分', 'signin', 20, 3, 1),
+('购物奖励', '购物可获得订单金额10%的积分', 'shopping', 0, 1, 1),
+('评价奖励', '评价商品可获得30积分', 'review', 30, 2, 1),
+('每日签到', '每日签到可获得20积分', 'signin', 20, 3, 1),
 ('邀请好友', '成功邀请新用户注册可获得100积分', 'invite', 100, 4, 1),
 ('完善资料', '首次完善个人资料可获得50积分', 'profile', 50, 5, 1),
 ('积分有效期', '积分有效期为一年，请及时使用', 'expiration', 0, 6, 1),
@@ -798,3 +798,91 @@ CREATE TABLE `user_coupon` (
 
 ALTER TABLE `order` ADD COLUMN `coupon_id` INT UNSIGNED DEFAULT NULL COMMENT '优惠券ID' AFTER `receiver_zip`;
 ALTER TABLE `order` ADD COLUMN `coupon_amount` DECIMAL(10,2) DEFAULT 0.00 COMMENT '优惠券金额' AFTER `coupon_id`;
+
+
+
+
+
+
+
+
+----------------------
+-- 新增物流功能
+----------------------
+-- ----------------------------
+-- Table structure for logistics_company
+-- ----------------------------
+DROP TABLE IF EXISTS `logistics_company`;
+CREATE TABLE `logistics_company` (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '物流公司ID',
+  `code` varchar(10) NOT NULL COMMENT '物流公司代码，用于生成物流单号前缀',
+  `name` varchar(50) NOT NULL COMMENT '物流公司名称',
+  `contact` varchar(50) NULL COMMENT '联系人',
+  `phone` varchar(20) NULL COMMENT '联系电话',
+  `address` varchar(255) NULL COMMENT '公司地址',
+  `status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+  `logo` varchar(255) NULL COMMENT '物流公司logo',
+  `sort_order` int DEFAULT 0 COMMENT '排序',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='物流公司表';
+
+-- ----------------------------
+-- Records of logistics_company
+-- ----------------------------
+INSERT INTO `logistics_company` VALUES (1, 'SF', '顺丰速运', '客服', '95338', '深圳市宝安区福永大道', 1, 'logistics/sf.png', 1, NOW(), NOW());
+INSERT INTO `logistics_company` VALUES (2, 'ZT', '中通快递', '客服', '95311', '上海市青浦区华新镇华志路', 1, 'logistics/zt.png', 2, NOW(), NOW());
+INSERT INTO `logistics_company` VALUES (3, 'YT', '圆通速递', '客服', '95554', '上海市青浦区华新镇华徐公路', 1, 'logistics/yt.png', 3, NOW(), NOW());
+INSERT INTO `logistics_company` VALUES (4, 'YD', '韵达速递', '客服', '95546', '上海市青浦区盈港东路', 1, 'logistics/yd.png', 4, NOW(), NOW());
+INSERT INTO `logistics_company` VALUES (5, 'EMS', 'EMS快递', '客服', '11183', '北京市西城区金融大街', 1, 'logistics/ems.png', 5, NOW(), NOW());
+
+-- ----------------------------
+-- Table structure for logistics
+-- ----------------------------
+DROP TABLE IF EXISTS `logistics`;
+CREATE TABLE `logistics` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '物流ID',
+  `order_id` int UNSIGNED NOT NULL COMMENT '订单ID',
+  `company_id` int UNSIGNED NOT NULL COMMENT '物流公司ID',
+  `tracking_no` varchar(50) NOT NULL COMMENT '物流单号',
+  `status` varchar(20) NOT NULL DEFAULT 'CREATED' COMMENT '物流状态：CREATED-已创建，SHIPPING-运输中，DELIVERED-已送达，EXCEPTION-异常',
+  `sender_name` varchar(50) NULL COMMENT '发件人姓名',
+  `sender_phone` varchar(20) NULL COMMENT '发件人电话',
+  `sender_address` varchar(255) NULL COMMENT '发件地址',
+  `receiver_name` varchar(50) NOT NULL COMMENT '收件人姓名',
+  `receiver_phone` varchar(20) NOT NULL COMMENT '收件人电话',
+  `receiver_address` varchar(255) NOT NULL COMMENT '收件地址',
+  `shipping_time` datetime NULL COMMENT '发货时间',
+  `delivery_time` datetime NULL COMMENT '送达时间',
+  `remark` varchar(255) NULL COMMENT '备注',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_order_id` (`order_id`),
+  UNIQUE KEY `idx_tracking_no` (`tracking_no`),
+  INDEX `idx_company_id` (`company_id`),
+  INDEX `idx_status` (`status`),
+  CONSTRAINT `fk_logistics_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_logistics_company` FOREIGN KEY (`company_id`) REFERENCES `logistics_company` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1 CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='物流表';
+
+-- ----------------------------
+-- Table structure for logistics_track
+-- ----------------------------
+DROP TABLE IF EXISTS `logistics_track`;
+CREATE TABLE `logistics_track` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '轨迹ID',
+  `logistics_id` bigint UNSIGNED NOT NULL COMMENT '物流ID',
+  `tracking_time` datetime NOT NULL COMMENT '轨迹时间',
+  `location` varchar(100) NULL COMMENT '当前位置',
+  `status` varchar(20) NOT NULL COMMENT '当前状态',
+  `content` varchar(255) NOT NULL COMMENT '轨迹内容',
+  `operator` varchar(50) NULL COMMENT '操作人',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  INDEX `idx_logistics_id` (`logistics_id`),
+  INDEX `idx_tracking_time` (`tracking_time`),
+  CONSTRAINT `fk_track_logistics` FOREIGN KEY (`logistics_id`) REFERENCES `logistics` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1 CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='物流轨迹表'; 

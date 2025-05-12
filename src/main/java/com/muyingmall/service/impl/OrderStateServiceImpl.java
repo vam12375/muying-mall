@@ -127,6 +127,7 @@ public class OrderStateServiceImpl implements OrderStateService {
                 // 超时取消，设置取消时间和原因
                 order.setCancelTime(LocalDateTime.now());
                 order.setCancelReason("订单超时未支付，系统自动取消");
+                order.setRemark("未支付已自动取消");
                 break;
             default:
                 break;

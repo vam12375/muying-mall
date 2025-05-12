@@ -7,6 +7,8 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 
 /**
  * 积分历史记录实体类
@@ -56,5 +58,6 @@ public class PointsHistory implements Serializable {
     /**
      * 操作时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 }

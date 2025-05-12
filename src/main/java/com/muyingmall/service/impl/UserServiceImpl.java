@@ -3,6 +3,7 @@ package com.muyingmall.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.muyingmall.common.CacheConstants;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.dto.AdminLoginDTO;
 import com.muyingmall.dto.LoginDTO;
@@ -11,6 +12,7 @@ import com.muyingmall.entity.User;
 import com.muyingmall.mapper.UserMapper;
 import com.muyingmall.service.UserService;
 import com.muyingmall.util.JwtUtils;
+import com.muyingmall.util.RedisUtil;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.math.BigDecimal;
+import java.util.Set;
 
 /**
  * 用户服务实现类
@@ -42,6 +46,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
+    private final RedisUtil redisUtil;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Value("${upload.path:/uploads}")
     private String uploadPath;
@@ -156,31 +162,78 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User findByUsername(String username) {
-        return lambdaQuery().eq(User::getUsername, username).one();
+        if (username == null || username.isEmpty()) {
+            return null;
+        }
+
+        // 构建缓存键
+        String cacheKey = CacheConstants.USER_NAME_KEY + username;
+
+        // 查询缓存
+        Object cacheResult = redisUtil.get(cacheKey);
+        if (cacheResult != null) {
+            log.debug("从缓存中获取用户信息: username={}", username);
+            return (User) cacheResult;
+        }
+
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询用户信息: username={}", username);
+        User user = lambdaQuery().eq(User::getUsername, username).one();
+
+        // 如果用户存在，则缓存结果
+        if (user != null) {
+            redisUtil.set(cacheKey, user, CacheConstants.USER_EXPIRE_TIME);
+            log.debug("将用户信息缓存到Redis: username={}", username);
+        }
+
+        return user;
     }
 
     @Override
     public User getByEmail(String email) {
-        return lambdaQuery().eq(User::getEmail, email).one();
+        if (email == null || email.isEmpty()) {
+            return null;
+        }
+
+        // 构建缓存键
+        String cacheKey = CacheConstants.USER_EMAIL_KEY + email;
+
+        // 查询缓存
+        Object cacheResult = redisUtil.get(cacheKey);
+        if (cacheResult != null) {
+            log.debug("从缓存中获取用户信息: email={}", email);
+            return (User) cacheResult;
+        }
+
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询用户信息: email={}", email);
+        User user = lambdaQuery().eq(User::getEmail, email).one();
+
+        // 如果用户存在，则缓存结果
+        if (user != null) {
+            redisUtil.set(cacheKey, user, CacheConstants.USER_EXPIRE_TIME);
+            log.debug("将用户信息缓存到Redis: email={}", email);
+        }
+
+        return user;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateUserInfo(User user) {
-        // 不允许修改敏感信息
-        User updateUser = getById(user.getUserId());
-        if (updateUser == null) {
-            throw new BusinessException("用户不存在");
+        if (user == null || user.getUserId() == null) {
+            return false;
         }
 
-        // 只更新允许修改的字段
-        updateUser.setNickname(user.getNickname());
-        updateUser.setAvatar(user.getAvatar());
-        updateUser.setGender(user.getGender());
-        updateUser.setBirthday(user.getBirthday());
-        updateUser.setPhone(user.getPhone());
-        updateUser.setEmail(user.getEmail());
-        return updateById(updateUser);
+        boolean result = updateById(user);
+
+        if (result) {
+            // 更新成功后，清除相关缓存
+            clearUserCache(user);
+            log.debug("用户信息更新成功，已清除相关缓存: userId={}", user.getUserId());
+        }
+
+        return result;
     }
 
     @Override
@@ -482,7 +535,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User getUserById(Integer userId) {
-        return getBaseMapper().selectById(userId);
+        if (userId == null) {
+            return null;
+        }
+
+        // 构建缓存键
+        String cacheKey = CacheConstants.USER_DETAIL_KEY + userId;
+
+        // 查询缓存
+        Object cacheResult = redisUtil.get(cacheKey);
+        if (cacheResult != null) {
+            log.debug("从缓存中获取用户信息: userId={}", userId);
+            return (User) cacheResult;
+        }
+
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询用户信息: userId={}", userId);
+        User user = getBaseMapper().selectById(userId);
+
+        // 如果用户存在，则缓存结果
+        if (user != null) {
+            redisUtil.set(cacheKey, user, CacheConstants.USER_EXPIRE_TIME);
+            log.debug("将用户信息缓存到Redis: userId={}", userId);
+        }
+
+        return user;
     }
 
     @Override
@@ -490,8 +567,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (user == null || user.getUserId() == null) {
             throw new BusinessException("用户信息不完整，无法更新");
         }
-        // 简单示例，实际可能需要更多校验
-        updateById(user);
+
+        boolean result = updateById(user);
+
+        if (result) {
+            // 更新成功后，清除相关缓存
+            clearUserCache(user);
+            log.debug("用户信息更新成功，已清除相关缓存: userId={}", user.getUserId());
+        }
     }
 
     @Override
@@ -524,5 +607,40 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("扣款失败，请重试"); // 或者更具体的错误，例如并发更新导致失败
         }
         // TODO: 考虑记录钱包流水
+    }
+
+    /**
+     * 清除用户相关缓存
+     *
+     * @param user 用户对象
+     */
+    private void clearUserCache(User user) {
+        if (user == null) {
+            return;
+        }
+
+        // 清除用户ID缓存
+        String userIdCacheKey = CacheConstants.USER_DETAIL_KEY + user.getUserId();
+        redisUtil.del(userIdCacheKey);
+
+        // 如果有用户名，清除用户名缓存
+        if (StringUtils.hasText(user.getUsername())) {
+            String usernameCacheKey = CacheConstants.USER_NAME_KEY + user.getUsername();
+            redisUtil.del(usernameCacheKey);
+        }
+
+        // 如果有邮箱，清除邮箱缓存
+        if (StringUtils.hasText(user.getEmail())) {
+            String emailCacheKey = CacheConstants.USER_EMAIL_KEY + user.getEmail();
+            redisUtil.del(emailCacheKey);
+        }
+
+        // 清除用户列表缓存
+        // 使用通配符删除所有用户列表相关缓存
+        String userListPattern = CacheConstants.USER_LIST_KEY + "*";
+        Set<String> keys = redisTemplate.keys(userListPattern);
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
     }
 }

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.muyingmall.common.CacheConstants;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.dto.CartAddDTO;
 import com.muyingmall.dto.CartUpdateDTO;
@@ -13,8 +14,10 @@ import com.muyingmall.entity.Product;
 import com.muyingmall.mapper.CartMapper;
 import com.muyingmall.service.CartService;
 import com.muyingmall.service.ProductService;
+import com.muyingmall.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +36,8 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
 
     private final ProductService productService;
     private final ObjectMapper objectMapper;
+    private final RedisUtil redisUtil;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -80,6 +85,10 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             existCart.setQuantity(existCart.getQuantity() + cartAddDTO.getQuantity());
             existCart.setSelected(cartAddDTO.getSelected());
             updateById(existCart);
+            
+            // 清除购物车缓存
+            clearCartCache(userId);
+            
             return existCart;
         } else {
             // 购物车不存在相同商品规格，创建新的购物车项
@@ -93,17 +102,45 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             cart.setPriceSnapshot(product.getPriceNew()); // 记录当前价格
             cart.setStatus(1); // 有效
             save(cart);
+            
+            // 清除购物车缓存
+            clearCartCache(userId);
+            
             return cart;
         }
     }
 
     @Override
     public List<Cart> getUserCarts(Integer userId) {
+        if (userId == null) {
+            return null;
+        }
+        
+        // 构建缓存键
+        String cacheKey = CacheConstants.USER_CART_KEY + userId;
+        
+        // 查询缓存
+        Object cacheResult = redisUtil.get(cacheKey);
+        if (cacheResult != null) {
+            log.debug("从缓存中获取用户购物车: userId={}", userId);
+            return (List<Cart>) cacheResult;
+        }
+        
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询用户购物车: userId={}", userId);
         LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Cart::getUserId, userId)
                 .eq(Cart::getStatus, 1) // 只查询有效的购物车项
                 .orderByDesc(Cart::getUpdateTime);
-        return list(queryWrapper);
+        List<Cart> cartList = list(queryWrapper);
+        
+        // 缓存结果
+        if (cartList != null && !cartList.isEmpty()) {
+            redisUtil.set(cacheKey, cartList, CacheConstants.CART_EXPIRE_TIME);
+            log.debug("将用户购物车缓存到Redis: userId={}", userId);
+        }
+        
+        return cartList;
     }
 
     @Override
@@ -140,6 +177,10 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         }
 
         updateById(cart);
+        
+        // 清除购物车缓存
+        clearCartCache(userId);
+        
         return cart;
     }
 
@@ -149,7 +190,14 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Cart::getCartId, cartId)
                 .eq(Cart::getUserId, userId);
-        return remove(queryWrapper);
+        boolean result = remove(queryWrapper);
+        
+        // 清除购物车缓存
+        if (result) {
+            clearCartCache(userId);
+        }
+        
+        return result;
     }
 
     @Override
@@ -157,7 +205,12 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     public void clearCart(Integer userId) {
         LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Cart::getUserId, userId);
-        remove(queryWrapper);
+        boolean result = remove(queryWrapper);
+        
+        // 清除购物车缓存
+        if (result) {
+            clearCartCache(userId);
+        }
     }
 
     @Override
@@ -165,8 +218,13 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     public void selectAllCarts(Integer userId, Boolean selected) {
         LambdaUpdateWrapper<Cart> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(Cart::getUserId, userId)
-                .set(Cart::getSelected, selected ? 1 : 0); // 确保布尔值转为 0 或 1
-        update(updateWrapper);
+                .set(Cart::getSelected, selected);
+        boolean result = update(updateWrapper);
+        
+        // 清除购物车缓存
+        if (result) {
+            clearCartCache(userId);
+        }
     }
 
     @Override
@@ -175,12 +233,38 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         LambdaUpdateWrapper<Cart> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(Cart::getUserId, userId)
                 .eq(Cart::getCartId, cartId)
-                .set(Cart::getSelected, selected ? 1 : 0);
-        boolean success = update(updateWrapper);
-        if (!success) {
-            // 可以选择抛出异常或记录日志，取决于业务需求
-            // 这里仅记录日志，因为更新0行也可能不算严格意义的错误
-            log.warn("尝试更新购物车项选中状态失败或未找到记录: userId={}, cartId={}", userId, cartId);
+                .set(Cart::getSelected, selected);
+        boolean result = update(updateWrapper);
+        
+        // 清除购物车缓存
+        if (result) {
+            clearCartCache(userId);
         }
+    }
+    
+    /**
+     * 清除购物车相关缓存
+     *
+     * @param userId 用户ID
+     */
+    private void clearCartCache(Integer userId) {
+        if (userId == null) {
+            return;
+        }
+        
+        // 清除用户购物车缓存
+        String cartCacheKey = CacheConstants.USER_CART_KEY + userId;
+        redisUtil.del(cartCacheKey);
+        log.debug("清除用户购物车缓存: userId={}", userId);
+        
+        // 清除购物车数量缓存
+        String cartCountCacheKey = CacheConstants.CART_COUNT_KEY + userId;
+        redisUtil.del(cartCountCacheKey);
+        log.debug("清除用户购物车数量缓存: userId={}", userId);
+        
+        // 清除购物车选中项缓存
+        String cartSelectedCacheKey = CacheConstants.CART_SELECTED_KEY + userId;
+        redisUtil.del(cartSelectedCacheKey);
+        log.debug("清除用户购物车选中项缓存: userId={}", userId);
     }
 }

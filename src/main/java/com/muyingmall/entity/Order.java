@@ -212,6 +212,18 @@ public class Order implements Serializable {
     private List<OrderProduct> products;
 
     /**
+     * 支付流水号（非数据库字段，来自payment表）
+     */
+    @TableField(exist = false)
+    private String transactionId;
+
+    /**
+     * 支付超时时间（非数据库字段，来自payment表）
+     */
+    @TableField(exist = false)
+    private LocalDateTime expireTime;
+
+    /**
      * 获取订单状态码，用于JSON序列化
      * 确保返回前端期望的格式（如"pending_payment"）
      * 

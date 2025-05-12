@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.muyingmall.entity.Order;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -21,10 +22,12 @@ public interface OrderService extends IService<Order> {
      * @param paymentMethod 支付方式
      * @param couponId      优惠券ID
      * @param cartIds       购物车项ID列表
+     * @param shippingFee   运费
+     * @param pointsUsed    使用的积分数量
      * @return 订单信息
      */
     Map<String, Object> createOrder(Integer userId, Integer addressId, String remark,
-            String paymentMethod, Long couponId, List<Integer> cartIds);
+            String paymentMethod, Long couponId, List<Integer> cartIds, BigDecimal shippingFee, Integer pointsUsed);
 
     /**
      * 获取订单详情

@@ -44,6 +44,29 @@ public class CartController {
     }
 
     /**
+     * 获取购物车中所有商品的总数量
+     */
+    @GetMapping("/total")
+    @Operation(summary = "获取购物车中所有商品的总数量")
+    public Result<Integer> getCartTotalItems() {
+        User user = getCurrentAuthenticatedUser();
+        if (user == null) {
+            return Result.error(401, "用户未认证");
+        }
+        // 获取购物车中所有商品的数量总和，而不仅仅是选中的商品
+        List<Cart> carts = cartService.getUserCarts(user.getUserId());
+        int totalItems = 0;
+        if (carts != null) {
+            for (Cart cart : carts) {
+                if (cart.getQuantity() != null) {
+                    totalItems += cart.getQuantity();
+                }
+            }
+        }
+        return Result.success(totalItems);
+    }
+
+    /**
      * 添加购物车
      */
     @PostMapping("/add")

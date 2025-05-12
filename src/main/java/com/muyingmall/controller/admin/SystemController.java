@@ -27,8 +27,14 @@ public class SystemController {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
+    // 注入专用于处理Spring Session数据的RedisTemplate
+    private final RedisTemplate<String, Object> sessionRedisTemplate;
+
     @Qualifier("redisConnectionFactoryDb1")
     private final RedisConnectionFactory redisConnectionFactory;
+
+    // Spring Session的键名前缀，用于识别Session相关的键
+    private static final String SESSION_KEY_PREFIX = "spring:session";
 
     /**
      * 获取Redis服务器信息
@@ -65,9 +71,11 @@ public class SystemController {
             redisInfo.put("totalCommands", info.getProperty("total_commands_processed"));
             redisInfo.put("keyspaceHits", info.getProperty("keyspace_hits"));
             redisInfo.put("keyspaceMisses", info.getProperty("keyspace_misses"));
+            redisInfo.put("keyspaceHitRate", calculateHitRate(info));
 
             // 获取键统计信息
-            Long totalKeys = redisTemplate.execute((RedisCallback<Long>) connection -> connection.dbSize());
+            Long totalKeys = redisTemplate
+                    .execute((RedisCallback<Long>) connection -> connection.serverCommands().dbSize());
             redisInfo.put("totalKeys", totalKeys);
 
             // 获取数据库统计信息
@@ -95,11 +103,30 @@ public class SystemController {
     }
 
     /**
+     * 计算缓存命中率
+     */
+    private String calculateHitRate(Properties info) {
+        String hitsStr = info.getProperty("keyspace_hits");
+        String missesStr = info.getProperty("keyspace_misses");
+
+        if (hitsStr == null || missesStr == null) {
+            return "0%";
+        }
+
+        long hits = Long.parseLong(hitsStr);
+        long misses = Long.parseLong(missesStr);
+        long total = hits + misses;
+
+        if (total == 0) {
+            return "0%";
+        }
+
+        double hitRate = (double) hits / total * 100;
+        return String.format("%.2f%%", hitRate);
+    }
+
+    /**
      * 获取Redis缓存键列表
-     * 
-     * @param pattern 键名匹配模式，如 user*
-     * @param page    页码，从1开始
-     * @param size    每页大小
      */
     @GetMapping("/redis/keys")
     public Result<Map<String, Object>> getRedisCacheKeys(
@@ -152,36 +179,39 @@ public class SystemController {
                 keyInfo.put("key", key);
 
                 try {
+                    // 根据键名选择合适的RedisTemplate
+                    RedisTemplate<String, Object> template = isSessionKey(key) ? sessionRedisTemplate : redisTemplate;
+
                     // 获取键类型
-                    String type = Objects.requireNonNull(redisTemplate.type(key)).name().toLowerCase();
+                    String type = Objects.requireNonNull(template.type(key)).name().toLowerCase();
                     keyInfo.put("type", type);
 
                     // 获取TTL
-                    Long ttl = redisTemplate.getExpire(key);
+                    Long ttl = template.getExpire(key);
                     keyInfo.put("ttl", ttl);
 
                     // 获取大小（大致估算）
                     long keySize = 0;
                     switch (type) {
                         case "string":
-                            Object value = redisTemplate.opsForValue().get(key);
+                            Object value = template.opsForValue().get(key);
                             keySize = (value != null) ? value.toString().length() : 0;
                             break;
                         case "list":
-                            keySize = redisTemplate.opsForList().size(key) == null ? 0
-                                    : redisTemplate.opsForList().size(key);
+                            keySize = template.opsForList().size(key) == null ? 0
+                                    : template.opsForList().size(key);
                             break;
                         case "hash":
-                            keySize = redisTemplate.opsForHash().size(key) == null ? 0
-                                    : redisTemplate.opsForHash().size(key);
+                            keySize = template.opsForHash().size(key) == null ? 0
+                                    : template.opsForHash().size(key);
                             break;
                         case "set":
-                            keySize = redisTemplate.opsForSet().size(key) == null ? 0
-                                    : redisTemplate.opsForSet().size(key);
+                            keySize = template.opsForSet().size(key) == null ? 0
+                                    : template.opsForSet().size(key);
                             break;
                         case "zset":
-                            keySize = redisTemplate.opsForZSet().size(key) == null ? 0
-                                    : redisTemplate.opsForZSet().size(key);
+                            keySize = template.opsForZSet().size(key) == null ? 0
+                                    : template.opsForZSet().size(key);
                             break;
                     }
                     keyInfo.put("size", keySize);
@@ -220,17 +250,20 @@ public class SystemController {
         }
 
         try {
+            // 根据键名选择合适的RedisTemplate
+            RedisTemplate<String, Object> template = isSessionKey(key) ? sessionRedisTemplate : redisTemplate;
+
             // 检查键是否存在
-            Boolean hasKey = redisTemplate.hasKey(key);
+            Boolean hasKey = template.hasKey(key);
             if (Boolean.FALSE.equals(hasKey) || hasKey == null) {
                 return Result.error("键不存在");
             }
 
             // 获取键类型
-            String type = Objects.requireNonNull(redisTemplate.type(key)).name().toLowerCase();
+            String type = Objects.requireNonNull(template.type(key)).name().toLowerCase();
 
             // 获取TTL
-            Long ttl = redisTemplate.getExpire(key);
+            Long ttl = template.getExpire(key);
 
             // 获取值
             Object value;
@@ -238,28 +271,28 @@ public class SystemController {
 
             switch (type) {
                 case "string":
-                    value = redisTemplate.opsForValue().get(key);
+                    value = template.opsForValue().get(key);
                     size = (value != null) ? value.toString().length() : 0;
                     break;
                 case "list":
-                    Long listSize = redisTemplate.opsForList().size(key);
+                    Long listSize = template.opsForList().size(key);
                     size = listSize == null ? 0 : listSize;
-                    value = redisTemplate.opsForList().range(key, 0, size - 1);
+                    value = template.opsForList().range(key, 0, size - 1);
                     break;
                 case "hash":
-                    value = redisTemplate.opsForHash().entries(key);
-                    size = redisTemplate.opsForHash().size(key) == null ? 0 : redisTemplate.opsForHash().size(key);
+                    value = template.opsForHash().entries(key);
+                    size = template.opsForHash().size(key) == null ? 0 : template.opsForHash().size(key);
                     break;
                 case "set":
-                    value = redisTemplate.opsForSet().members(key);
-                    size = redisTemplate.opsForSet().size(key) == null ? 0 : redisTemplate.opsForSet().size(key);
+                    value = template.opsForSet().members(key);
+                    size = template.opsForSet().size(key) == null ? 0 : template.opsForSet().size(key);
                     break;
                 case "zset":
-                    Long zsetSize = redisTemplate.opsForZSet().size(key);
+                    Long zsetSize = template.opsForZSet().size(key);
                     size = zsetSize == null ? 0 : zsetSize;
 
                     // 获取有序集合的分数和成员
-                    Set<org.springframework.data.redis.core.ZSetOperations.TypedTuple<Object>> tuples = redisTemplate
+                    Set<org.springframework.data.redis.core.ZSetOperations.TypedTuple<Object>> tuples = template
                             .opsForZSet().rangeWithScores(key, 0, size - 1);
 
                     List<Map<String, Object>> zsetValues = new ArrayList<>();
@@ -314,8 +347,31 @@ public class SystemController {
                 return Result.error("键列表不能为空");
             }
 
-            Long deleted = redisTemplate.delete(new HashSet<>(keyList));
-            return Result.success(deleted != null && deleted > 0);
+            // 分别处理普通键和Session键
+            List<String> sessionKeys = new ArrayList<>();
+            List<String> normalKeys = new ArrayList<>();
+
+            for (String key : keyList) {
+                if (isSessionKey(key)) {
+                    sessionKeys.add(key);
+                } else {
+                    normalKeys.add(key);
+                }
+            }
+
+            long deletedCount = 0;
+
+            if (!normalKeys.isEmpty()) {
+                Long deleted = redisTemplate.delete(new HashSet<>(normalKeys));
+                deletedCount += (deleted != null) ? deleted : 0;
+            }
+
+            if (!sessionKeys.isEmpty()) {
+                Long deleted = sessionRedisTemplate.delete(new HashSet<>(sessionKeys));
+                deletedCount += (deleted != null) ? deleted : 0;
+            }
+
+            return Result.success(deletedCount > 0);
         } catch (Exception e) {
             log.error("删除缓存键失败", e);
             return Result.error("删除缓存键失败: " + e.getMessage());
@@ -325,12 +381,12 @@ public class SystemController {
     /**
      * 清空所有缓存
      */
-    @PostMapping("/redis/clear")
-    public Result<Boolean> clearAllRedisCache() {
+    @PostMapping("/redis/flush")
+    public Result<Boolean> flushRedisCache() {
         try {
-            redisTemplate.execute((RedisCallback<Object>) connection -> {
-                connection.flushDb();
-                return null;
+            redisTemplate.execute((RedisCallback<Boolean>) connection -> {
+                connection.serverCommands().flushDb();
+                return true;
             });
             return Result.success(true);
         } catch (Exception e) {
@@ -340,10 +396,32 @@ public class SystemController {
     }
 
     /**
-     * 刷新Redis统计信息
+     * 清除所有缓存 (别名)
+     * 提供与/redis/flush相同的功能，但使用不同的端点名称
      */
-    @PostMapping("/redis/refresh")
-    public Result<Map<String, Object>> refreshRedisStats() {
-        return getRedisInfo();
+    @PostMapping("/redis/clear")
+    public Result<Boolean> clearRedisCache() {
+        log.debug("接收到清除缓存请求");
+        try {
+            redisTemplate.execute((RedisCallback<Boolean>) connection -> {
+                connection.serverCommands().flushDb();
+                return true;
+            });
+            log.info("缓存清除成功");
+            return Result.success(true);
+        } catch (Exception e) {
+            log.error("清除缓存失败", e);
+            return Result.error("清除缓存失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 判断键是否为Spring Session相关的键
+     * 
+     * @param key 键名
+     * @return 如果是Spring Session相关的键则返回true，否则返回false
+     */
+    private boolean isSessionKey(String key) {
+        return key != null && key.startsWith(SESSION_KEY_PREFIX);
     }
 }

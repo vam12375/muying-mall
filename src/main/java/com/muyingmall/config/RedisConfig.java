@@ -17,6 +17,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
@@ -75,6 +76,31 @@ public class RedisConfig {
             @Qualifier("redisConnectionFactoryDb1") RedisConnectionFactory factory,
             @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper) {
         return createRedisTemplate(factory, redisObjectMapper);
+    }
+
+    /**
+     * 创建专用于读取Spring Session数据的RedisTemplate
+     * 使用JDK序列化，与Spring Session默认的序列化方式兼容
+     */
+    @Bean
+    public RedisTemplate<String, Object> sessionRedisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+        
+        // 使用StringRedisSerializer来序列化和反序列化redis的key值
+        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+        template.setKeySerializer(stringRedisSerializer);
+        template.setHashKeySerializer(stringRedisSerializer);
+        
+        // 使用JdkSerializationRedisSerializer来序列化和反序列化redis的value值
+        // 这与Spring Session默认使用的序列化方式一致
+        JdkSerializationRedisSerializer jdkSerializer = new JdkSerializationRedisSerializer();
+        template.setValueSerializer(jdkSerializer);
+        template.setHashValueSerializer(jdkSerializer);
+        
+        template.afterPropertiesSet();
+        
+        return template;
     }
 
     /**

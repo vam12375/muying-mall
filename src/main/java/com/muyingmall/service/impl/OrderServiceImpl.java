@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.muyingmall.common.CacheConstants;
 import com.muyingmall.common.exception.BusinessException;
+import com.muyingmall.dto.OrderCreateDTO;
 import com.muyingmall.entity.Cart;
 import com.muyingmall.entity.Order;
 import com.muyingmall.entity.OrderProduct;
@@ -25,9 +27,11 @@ import com.muyingmall.service.PaymentService;
 import com.muyingmall.service.ProductService;
 import com.muyingmall.service.PointsService;
 import com.muyingmall.util.EnumUtil;
+import com.muyingmall.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -40,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Set;
 
 /**
  * 订单服务实现类
@@ -50,7 +55,7 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements OrderService {
 
     // 订单状态常量定义
-    private static final String ORDER_STATUS_PENDING_PAYMENT = "pending_payment"; // 待支付
+    private static final String ORDER_STATUS_PENDING_PAYMENT = "pending_payment"; // 待付款
     private static final String ORDER_STATUS_PENDING_SHIPMENT = "pending_shipment"; // 待发货
     private static final String ORDER_STATUS_SHIPPED = "shipped"; // 已发货
     private static final String ORDER_STATUS_COMPLETED = "completed"; // 已完成
@@ -64,11 +69,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private final PaymentService paymentService;
     private final ApplicationEventPublisher eventPublisher;
     private final PointsService pointsService;
+    private final RedisUtil redisUtil;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> createOrder(Integer userId, Integer addressId, String remark,
-            String paymentMethod, Long couponId, List<Integer> cartIds) {
+            String paymentMethod, Long couponId, List<Integer> cartIds, BigDecimal shippingFee, Integer pointsUsed) {
         // 校验用户
         User user = userMapper.selectById(userId);
         if (user == null) {
@@ -167,7 +174,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 设置订单金额
         order.setTotalAmount(totalAmount);
         order.setActualAmount(totalAmount);
-        order.setShippingFee(BigDecimal.ZERO); // 运费，可根据业务需求设置
+
+        // 设置运费，使用传入的运费参数
+        order.setShippingFee(shippingFee != null ? shippingFee : BigDecimal.ZERO);
+
+        // 如果有运费，将其加入实际支付金额
+        if (shippingFee != null && shippingFee.compareTo(BigDecimal.ZERO) > 0) {
+            order.setActualAmount(order.getActualAmount().add(shippingFee));
+        }
 
         // 处理优惠券（如果有）
         if (couponId != null && couponId > 0) {
@@ -185,10 +199,51 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             // 为了演示，直接减去优惠金额50元
             BigDecimal discountAmount = new BigDecimal("50");
             if (totalAmount.compareTo(discountAmount) > 0) {
-                order.setActualAmount(totalAmount.subtract(discountAmount));
+                order.setActualAmount(order.getActualAmount().subtract(discountAmount));
                 order.setCouponId(couponId);
                 order.setCouponAmount(discountAmount);
             }
+        }
+
+        // 处理积分抵扣（如果有）
+        if (pointsUsed != null && pointsUsed > 0) {
+            // 获取用户当前积分
+            Integer userPoints = pointsService.getUserPoints(userId);
+            if (userPoints < pointsUsed) {
+                throw new BusinessException("积分不足，当前积分：" + userPoints);
+            }
+
+            // 计算积分抵扣金额（每100积分抵扣1元）
+            BigDecimal pointsDiscountAmount = new BigDecimal(pointsUsed).divide(new BigDecimal("100"), 2,
+                    BigDecimal.ROUND_DOWN);
+
+            // 限制最大抵扣金额为50元
+            BigDecimal maxDiscount = new BigDecimal("50");
+            if (pointsDiscountAmount.compareTo(maxDiscount) > 0) {
+                pointsDiscountAmount = maxDiscount;
+                // 重新计算实际使用的积分
+                pointsUsed = 5000; // 最多使用5000积分
+            }
+
+            // 确保抵扣金额不超过应付金额
+            if (pointsDiscountAmount.compareTo(order.getActualAmount()) > 0) {
+                pointsDiscountAmount = order.getActualAmount();
+                // 重新计算实际使用的积分
+                pointsUsed = pointsDiscountAmount.multiply(new BigDecimal("100")).intValue();
+            }
+
+            // 更新订单信息
+            order.setPointsUsed(pointsUsed);
+            order.setPointsDiscount(pointsDiscountAmount);
+            order.setActualAmount(order.getActualAmount().subtract(pointsDiscountAmount));
+
+            // 扣减用户积分
+            boolean deductSuccess = pointsService.deductPoints(userId, pointsUsed, "order", orderNo, "订单抵扣");
+            if (!deductSuccess) {
+                throw new BusinessException("积分扣减失败");
+            }
+
+            log.info("订单 {} 使用积分 {} 抵扣金额 {}", orderNo, pointsUsed, pointsDiscountAmount);
         }
 
         // 保存订单
@@ -221,47 +276,106 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         result.put("actualAmount", order.getActualAmount());
         result.put("orderNumber", order.getOrderNo());
 
+        // 清除用户订单列表缓存
+        clearUserOrderListCache(userId);
+
         return result;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Order getOrderDetail(Integer orderId, Integer userId) {
+        if (orderId == null) {
+            return null;
+        }
+
+        // 构建缓存键
+        String cacheKey = CacheConstants.ORDER_DETAIL_KEY + orderId;
+
+        // 查询缓存
+        Object cacheResult = redisUtil.get(cacheKey);
+        if (cacheResult != null) {
+            Order cachedOrder = (Order) cacheResult;
+            // 验证权限
+            if (userId != null && !userId.equals(cachedOrder.getUserId())) {
+                throw new BusinessException("无权查看该订单");
+            }
+            log.debug("从缓存中获取订单详情: orderId={}", orderId);
+            return cachedOrder;
+        }
+
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询订单详情: orderId={}", orderId);
         Order order = getById(orderId);
+
         if (order == null) {
-            throw new BusinessException("订单不存在");
+            return null;
         }
 
-        // 验证订单属于当前用户
-        if (!order.getUserId().equals(userId)) {
-            throw new BusinessException("无权限查看此订单");
+        // 验证权限
+        if (userId != null && !userId.equals(order.getUserId())) {
+            throw new BusinessException("无权查看该订单");
         }
 
-        // 查询订单商品
+        // 获取订单商品
         LambdaQueryWrapper<OrderProduct> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(OrderProduct::getOrderId, orderId);
         List<OrderProduct> orderProducts = orderProductMapper.selectList(queryWrapper);
         order.setProducts(orderProducts);
+
+        // 缓存结果
+        redisUtil.set(cacheKey, order, CacheConstants.ORDER_EXPIRE_TIME);
+        log.debug("将订单详情缓存到Redis: orderId={}", orderId);
 
         return order;
     }
 
     @Override
     public Page<Order> getUserOrders(Integer userId, int page, int size, String status) {
-        Page<Order> pageParam = new Page<>(page, size);
+        if (userId == null) {
+            return new Page<>();
+        }
 
-        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Order::getUserId, userId);
+        // 构建缓存键
+        StringBuilder cacheKey = new StringBuilder(CacheConstants.USER_ORDER_LIST_KEY);
+        cacheKey.append(userId)
+                .append("_page_").append(page)
+                .append("_size_").append(size);
 
         if (StringUtils.hasText(status)) {
             // 处理status大小写问题，确保与前端匹配
             String normalizedStatus = normalizeOrderStatus(status);
+            cacheKey.append("_status_").append(normalizedStatus);
+        }
+
+        // 查询缓存
+        Object cacheResult = redisUtil.get(cacheKey.toString());
+        if (cacheResult != null) {
+            log.debug("从缓存中获取用户订单列表: userId={}, page={}, size={}, status={}", userId, page, size, status);
+            return (Page<Order>) cacheResult;
+        }
+
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询用户订单列表: userId={}, page={}, size={}, status={}", userId, page, size, status);
+
+        Page<Order> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Order::getUserId, userId);
+
+        // 如果指定了状态，则按状态筛选
+        if (StringUtils.hasText(status)) {
+            // 处理status大小写问题，确保与前端匹配
+            String normalizedStatus = normalizeOrderStatus(status);
             OrderStatus orderStatus = EnumUtil.getOrderStatusByCode(normalizedStatus);
-            queryWrapper.eq(Order::getStatus, orderStatus);
+            if (orderStatus != null) {
+                queryWrapper.eq(Order::getStatus, orderStatus);
+            }
             log.info("查询订单，用户ID: {}, 状态: {} (原始状态: {})", userId, normalizedStatus, status);
         } else {
             log.info("查询所有状态订单，用户ID: {}", userId);
         }
 
+        // 按创建时间倒序排序
         queryWrapper.orderByDesc(Order::getCreateTime);
 
         Page<Order> orderPage = page(pageParam, queryWrapper);
@@ -296,6 +410,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 order.setProducts(orderProducts);
             }
         }
+
+        // 缓存结果
+        redisUtil.set(cacheKey.toString(), orderPage, CacheConstants.ORDER_LIST_EXPIRE_TIME);
+        log.debug("将用户订单列表缓存到Redis: userId={}, page={}, size={}, status={}", userId, page, size, status);
 
         return orderPage;
     }
@@ -335,6 +453,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                             .eq(Product::getProductId, orderProduct.getProductId())
                             .setSql("stock = stock + " + orderProduct.getQuantity()));
         }
+
+        // 清除订单缓存
+        clearOrderCache(orderId, userId);
 
         return true;
     }
@@ -378,6 +499,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setPaymentMethod(paymentMethod);
         order.setUpdateTime(LocalDateTime.now());
         updateById(order);
+
+        // 清除订单缓存
+        clearOrderCache(orderId, userId);
 
         // 返回支付信息
         Map<String, Object> result = new HashMap<>();
@@ -434,6 +558,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             log.error("订单 {} 状态更新为 COMPLETED 失败", orderId);
             // 考虑是否抛出异常或返回false有不同含义
         }
+
+        // 清除订单缓存
+        clearOrderCache(orderId, userId);
 
         return result;
     }
@@ -501,6 +628,23 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         List<OrderProduct> orderProducts = orderProductMapper.selectList(queryWrapper);
         order.setProducts(orderProducts);
 
+        // 查询支付信息，并将支付信息的关键字段添加到订单实体中
+        if (order.getPaymentId() != null) {
+            Payment payment = paymentService.getById(order.getPaymentId());
+            if (payment != null) {
+                // 设置支付流水号
+                order.setTransactionId(payment.getTransactionId());
+
+                // 设置支付时间（优先使用expire_time）
+                order.setExpireTime(payment.getExpireTime());
+
+                // 如果payTime为空，但payment中有记录，也同步过来
+                if (order.getPayTime() == null && payment.getPayTime() != null) {
+                    order.setPayTime(payment.getPayTime());
+                }
+            }
+        }
+
         return order;
     }
 
@@ -526,7 +670,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             order.setCompletionTime(LocalDateTime.now());
         }
 
-        return updateById(order);
+        boolean result = updateById(order);
+
+        // 清除订单缓存
+        if (result) {
+            clearOrderCache(orderId, order.getUserId());
+        }
+
+        return result;
     }
 
     @Override
@@ -548,7 +699,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setShippingCompany(shippingCompany);
         order.setTrackingNo(trackingNo);
         order.setUpdateTime(LocalDateTime.now());
-        return updateById(order);
+        boolean result = updateById(order);
+
+        // 清除订单缓存
+        if (result) {
+            clearOrderCache(orderId, order.getUserId());
+        }
+
+        return result;
     }
 
     @Override
@@ -712,6 +870,55 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 return "closed";
             default:
                 return normalized;
+        }
+    }
+
+    /**
+     * 清除订单相关缓存
+     *
+     * @param orderId 订单ID
+     * @param userId  用户ID
+     */
+    private void clearOrderCache(Integer orderId, Integer userId) {
+        if (orderId == null) {
+            return;
+        }
+
+        // 清除订单详情缓存
+        String orderDetailCacheKey = CacheConstants.ORDER_DETAIL_KEY + orderId;
+        redisUtil.del(orderDetailCacheKey);
+        log.debug("清除订单详情缓存: orderId={}", orderId);
+
+        // 清除用户订单列表缓存
+        if (userId != null) {
+            clearUserOrderListCache(userId);
+        }
+
+        // 清除订单统计缓存
+        String orderStatsCacheKey = CacheConstants.ORDER_STATS_KEY + "*";
+        Set<String> statsKeys = redisTemplate.keys(orderStatsCacheKey);
+        if (statsKeys != null && !statsKeys.isEmpty()) {
+            redisTemplate.delete(statsKeys);
+            log.debug("清除订单统计缓存");
+        }
+    }
+
+    /**
+     * 清除用户订单列表缓存
+     *
+     * @param userId 用户ID
+     */
+    private void clearUserOrderListCache(Integer userId) {
+        if (userId == null) {
+            return;
+        }
+
+        // 清除用户订单列表缓存
+        String userOrderListCacheKey = CacheConstants.USER_ORDER_LIST_KEY + userId + "*";
+        Set<String> keys = redisTemplate.keys(userOrderListCacheKey);
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+            log.debug("清除用户订单列表缓存: userId={}", userId);
         }
     }
 }

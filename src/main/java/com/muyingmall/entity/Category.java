@@ -43,4 +43,10 @@ public class Category implements Serializable {
      */
     @TableField(exist = false)
     private List<Category> children;
+
+    /**
+     * 分类下的商品数量，不对应数据库字段
+     */
+    @TableField(exist = false)
+    private Integer productCount;
 }

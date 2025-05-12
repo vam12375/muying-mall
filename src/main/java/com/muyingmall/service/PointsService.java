@@ -4,14 +4,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.entity.PointsHistory;
 import com.muyingmall.entity.PointsProduct;
 import com.muyingmall.entity.PointsRule;
+import com.muyingmall.entity.PointsExchange;
+import com.muyingmall.entity.UserPoints;
+import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
 /**
  * 积分管理服务接口
  */
-public interface PointsService {
+public interface PointsService extends IService<UserPoints> {
 
     /**
      * 获取用户积分
@@ -24,9 +28,9 @@ public interface PointsService {
     /**
      * 增加用户积分
      *
-     * @param userId 用户ID
-     * @param points 积分数量
-     * @param source 积分来源
+     * @param userId      用户ID
+     * @param points      积分数量
+     * @param source      积分来源
      * @param referenceId 关联ID
      * @param description 描述
      * @return 是否成功
@@ -36,9 +40,9 @@ public interface PointsService {
     /**
      * 减少用户积分
      *
-     * @param userId 用户ID
-     * @param points 积分数量
-     * @param source 积分来源
+     * @param userId      用户ID
+     * @param points      积分数量
+     * @param source      积分来源
      * @param referenceId 关联ID
      * @param description 描述
      * @return 是否成功
@@ -49,8 +53,8 @@ public interface PointsService {
      * 获取用户积分历史记录
      *
      * @param userId 用户ID
-     * @param page 页码
-     * @param size 每页大小
+     * @param page   页码
+     * @param size   每页大小
      * @return 积分历史记录分页
      */
     Page<PointsHistory> getUserPointsHistory(Integer userId, int page, int size);
@@ -135,4 +139,13 @@ public interface PointsService {
      * @return 签到日历信息
      */
     Map<String, Object> getSignInCalendar(Integer userId, String month);
+
+    /**
+     * 根据订单完成情况发放积分
+     *
+     * @param userId      用户ID
+     * @param orderId     订单ID
+     * @param orderAmount 订单金额
+     */
+    void awardPointsForOrder(Integer userId, Integer orderId, BigDecimal orderAmount);
 }

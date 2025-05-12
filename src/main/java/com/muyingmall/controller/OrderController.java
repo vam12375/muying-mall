@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -62,13 +63,17 @@ public class OrderController {
             String paymentMethod = orderCreateDTO.getPaymentMethod();
             Long couponId = orderCreateDTO.getCouponId();
             List<Integer> cartIds = orderCreateDTO.getCartIds();
+            BigDecimal shippingFee = orderCreateDTO.getShippingFee();
+            Integer pointsUsed = orderCreateDTO.getPointsUsed();
 
             // 打印订单创建参数，方便调试
             System.out.println("创建订单参数: userId=" + user.getUserId() +
                     ", addressId=" + orderCreateDTO.getAddressId() +
                     ", paymentMethod=" + paymentMethod +
                     ", couponId=" + couponId +
-                    ", cartIds=" + cartIds);
+                    ", cartIds=" + cartIds +
+                    ", shippingFee=" + shippingFee +
+                    ", pointsUsed=" + pointsUsed);
 
             // 调用服务层创建订单，添加支付方式和优惠券ID
             Map<String, Object> orderInfo = orderService.createOrder(
@@ -77,7 +82,9 @@ public class OrderController {
                     orderCreateDTO.getRemark(),
                     orderCreateDTO.getPaymentMethod(),
                     orderCreateDTO.getCouponId(),
-                    orderCreateDTO.getCartIds());
+                    orderCreateDTO.getCartIds(),
+                    orderCreateDTO.getShippingFee(),
+                    pointsUsed);
 
             return Result.success(orderInfo, "创建成功");
         } catch (Exception e) {
@@ -172,7 +179,7 @@ public class OrderController {
     /**
      * 确认收货
      */
-    @PutMapping("/{orderId}/confirm")
+    @PutMapping("/{orderId}/receive")
     @Operation(summary = "确认收货")
     public Result<Void> confirmReceive(@PathVariable("orderId") Integer orderId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

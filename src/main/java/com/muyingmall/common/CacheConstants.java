@@ -82,6 +82,36 @@ public class CacheConstants {
     public static final String BRAND_KEY_PREFIX = "brand:";
 
     /**
+     * 用户缓存前缀
+     */
+    public static final String USER_KEY_PREFIX = "user:";
+
+    /**
+     * 用户详情缓存键
+     */
+    public static final String USER_DETAIL_KEY = USER_KEY_PREFIX + "detail:";
+
+    /**
+     * 用户名查询缓存键
+     */
+    public static final String USER_NAME_KEY = USER_KEY_PREFIX + "name:";
+
+    /**
+     * 用户邮箱查询缓存键
+     */
+    public static final String USER_EMAIL_KEY = USER_KEY_PREFIX + "email:";
+
+    /**
+     * 用户列表缓存键
+     */
+    public static final String USER_LIST_KEY = USER_KEY_PREFIX + "list:";
+
+    /**
+     * 用户令牌缓存键
+     */
+    public static final String USER_TOKEN_KEY = USER_KEY_PREFIX + "token:";
+
+    /**
      * 商品缓存过期时间（秒）
      */
     public static final long PRODUCT_EXPIRE_TIME = 7200; // 2小时
@@ -100,6 +130,91 @@ public class CacheConstants {
      * 品牌缓存过期时间（秒）
      */
     public static final long BRAND_EXPIRE_TIME = 86400; // 24小时
+
+    /**
+     * 用户信息缓存过期时间（秒）
+     */
+    public static final long USER_EXPIRE_TIME = 3600; // 1小时
+
+    /**
+     * 用户令牌缓存过期时间（秒）
+     */
+    public static final long USER_TOKEN_EXPIRE_TIME = 86400; // 24小时
+
+    /**
+     * 订单缓存前缀
+     */
+    public static final String ORDER_KEY_PREFIX = "order:";
+
+    /**
+     * 订单详情缓存键
+     */
+    public static final String ORDER_DETAIL_KEY = ORDER_KEY_PREFIX + "detail:";
+
+    /**
+     * 用户订单列表缓存键
+     */
+    public static final String USER_ORDER_LIST_KEY = ORDER_KEY_PREFIX + "user:";
+
+    /**
+     * 订单状态缓存键
+     */
+    public static final String ORDER_STATUS_KEY = ORDER_KEY_PREFIX + "status:";
+
+    /**
+     * 订单统计缓存键
+     */
+    public static final String ORDER_STATS_KEY = ORDER_KEY_PREFIX + "stats:";
+
+    /**
+     * 管理员订单列表缓存键
+     */
+    public static final String ADMIN_ORDER_LIST_KEY = ORDER_KEY_PREFIX + "admin:list:";
+
+    /**
+     * 订单信息缓存过期时间（秒）
+     */
+    public static final long ORDER_EXPIRE_TIME = 1800; // 30分钟
+
+    /**
+     * 订单列表缓存过期时间（秒）
+     */
+    public static final long ORDER_LIST_EXPIRE_TIME = 900; // 15分钟
+
+    /**
+     * 订单统计缓存过期时间（秒）
+     */
+    public static final long ORDER_STATS_EXPIRE_TIME = 3600; // 1小时
+
+    /**
+     * 购物车缓存前缀
+     */
+    public static final String CART_KEY_PREFIX = "cart:";
+
+    /**
+     * 用户购物车缓存键
+     */
+    public static final String USER_CART_KEY = CART_KEY_PREFIX + "user:";
+
+    /**
+     * 购物车商品数量缓存键
+     */
+    public static final String CART_COUNT_KEY = CART_KEY_PREFIX + "count:";
+
+    /**
+     * 购物车选中项缓存键
+     */
+    public static final String CART_SELECTED_KEY = CART_KEY_PREFIX + "selected:";
+
+    /**
+     * 购物车缓存过期时间（秒）
+     */
+    public static final long CART_EXPIRE_TIME = 1800; // 30分钟
+
+    /**
+     * 购物车数量缓存过期时间（秒）
+     */
+    public static final long CART_COUNT_EXPIRE_TIME = 300; // 5分钟
 
     /**
      * 通用短时缓存过期时间（秒）

@@ -17,8 +17,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * 商品服务实现类
@@ -30,6 +34,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     private final ProductImageMapper productImageMapper;
     private final ProductSpecsMapper productSpecsMapper;
     private final RedisUtil redisUtil;
+    private final ProductMapper productMapper;
 
     @Override
     public Page<Product> getProductPage(int page, int size, Integer categoryId, Boolean isHot, Boolean isNew,
@@ -446,5 +451,125 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         redisUtil.set(cacheKey, recommendProducts, CacheConstants.MEDIUM_EXPIRE_TIME);
 
         return recommendProducts;
+    }
+
+    @Override
+    public List<Product> getRecommendedProducts(Integer productId, Integer categoryId, int limit, String type) {
+        // 构建缓存键
+        StringBuilder cacheKey = new StringBuilder(CacheConstants.PRODUCT_RECOMMEND_KEY);
+        cacheKey.append("_").append(type)
+                .append("_limit_").append(limit);
+
+        if (productId != null) {
+            cacheKey.append("_pid_").append(productId);
+        }
+
+        if (categoryId != null) {
+            cacheKey.append("_cid_").append(categoryId);
+        }
+
+        // 查询缓存
+        Object cacheResult = redisUtil.get(cacheKey.toString());
+        if (cacheResult != null) {
+            return (List<Product>) cacheResult;
+        }
+
+        // 缓存不存在，查询数据库
+        List<Product> allProducts = list(new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductStatus, "上架"));
+
+        if (allProducts == null || allProducts.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        final List<Product> result = new ArrayList<>();
+
+        // 根据不同类型进行推荐
+        if ("shop".equals(type)) {
+            // 本店推荐 - 优先同类别、同品牌商品
+            if (productId != null) {
+                // 获取当前商品，用于提取品牌ID
+                Product currentProduct = getById(productId);
+                if (currentProduct != null && currentProduct.getBrandId() != null) {
+                    // 找出同品牌的商品
+                    List<Product> sameBrandProducts = allProducts.stream()
+                            .filter(p -> Objects.equals(p.getBrandId(), currentProduct.getBrandId()))
+                            .filter(p -> !Objects.equals(p.getProductId(), productId)) // 排除当前商品
+                            .collect(Collectors.toList());
+
+                    if (!sameBrandProducts.isEmpty()) {
+                        // 随机打乱同品牌商品
+                        Collections.shuffle(sameBrandProducts, new Random(System.currentTimeMillis()));
+                        // 取指定数量的商品
+                        List<Product> selectedProducts = sameBrandProducts.size() <= limit ? sameBrandProducts
+                                : sameBrandProducts.subList(0, limit);
+                        result.addAll(selectedProducts);
+                    }
+                }
+            }
+        } else if ("view".equals(type)) {
+            // 猜你喜欢 - 优先同类别商品，其次是热门商品
+            if (categoryId != null) {
+                // 找出同类别的商品
+                List<Product> sameCategoryProducts = allProducts.stream()
+                        .filter(p -> Objects.equals(p.getCategoryId(), categoryId))
+                        .filter(p -> productId == null || !Objects.equals(p.getProductId(), productId)) // 排除当前商品
+                        .collect(Collectors.toList());
+
+                if (!sameCategoryProducts.isEmpty()) {
+                    // 取出热门商品（根据销量排序）
+                    sameCategoryProducts.sort((p1, p2) -> {
+                        int sales1 = p1.getSales() != null ? p1.getSales() : 0;
+                        int sales2 = p2.getSales() != null ? p2.getSales() : 0;
+                        return sales2 - sales1; // 降序排序
+                    });
+
+                    // 随机打乱前20个热门商品
+                    List<Product> topProducts = sameCategoryProducts.size() <= 20 ? sameCategoryProducts
+                            : sameCategoryProducts.subList(0, 20);
+                    Collections.shuffle(topProducts, new Random(System.currentTimeMillis()));
+
+                    // 取指定数量的商品
+                    List<Product> selectedProducts = topProducts.size() <= limit ? topProducts
+                            : topProducts.subList(0, limit);
+                    result.addAll(selectedProducts);
+                }
+            }
+        }
+
+        // 如果通过上面的逻辑没有获取到足够的推荐商品，则随机选择
+        if (result.size() < limit) {
+            // 排除已推荐的商品和当前商品
+            final List<Product> finalResult = result; // 创建一个final引用以便在lambda中使用
+            List<Product> remainingProducts = allProducts.stream()
+                    .filter(p -> !finalResult.contains(p))
+                    .filter(p -> productId == null || !Objects.equals(p.getProductId(), productId))
+                    .collect(Collectors.toList());
+
+            if (!remainingProducts.isEmpty()) {
+                // 随机打乱
+                Collections.shuffle(remainingProducts, new Random(System.currentTimeMillis()));
+
+                // 添加剩余所需数量的商品
+                int needed = limit - result.size();
+                List<Product> additionalProducts = remainingProducts.size() <= needed ? remainingProducts
+                        : remainingProducts.subList(0, needed);
+
+                result.addAll(additionalProducts);
+            }
+        }
+
+        // 缓存结果
+        redisUtil.set(cacheKey.toString(), result, CacheConstants.SHORT_EXPIRE_TIME);
+
+        return result;
+    }
+
+    @Override
+    public int getProductCountByBrandId(Integer brandId) {
+        if (brandId == null) {
+            return 0;
+        }
+        return productMapper.countProductByBrandId(brandId);
     }
 }

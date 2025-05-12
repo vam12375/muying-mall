@@ -39,12 +39,12 @@ public enum OrderStatus {
      * 状态编码
      */
     @EnumValue
+    @JsonValue
     private final String code;
 
     /**
      * 状态描述
      */
-    @JsonValue
     private final String desc;
 
     OrderStatus(String code, String desc) {

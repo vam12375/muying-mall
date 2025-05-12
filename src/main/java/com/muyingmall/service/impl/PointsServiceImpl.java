@@ -3,6 +3,7 @@ package com.muyingmall.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.entity.*;
 import com.muyingmall.entity.PointsProduct;
@@ -13,6 +14,10 @@ import com.muyingmall.service.PointsExchangeService;
 import com.muyingmall.service.PointsOperationService;
 import com.muyingmall.service.PointsProductService;
 import com.muyingmall.service.PointsService;
+import com.muyingmall.enums.PointsOperationType;
+import com.muyingmall.entity.UserPoints;
+import com.muyingmall.mapper.UserPointsMapper;
+import com.muyingmall.mapper.OrderMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -32,13 +39,15 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class PointsServiceImpl implements PointsService {
+public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints> implements PointsService {
 
     private final PointsHistoryMapper pointsHistoryMapper;
     private final PointsRuleMapper pointsRuleMapper;
     private final PointsProductService pointsProductService;
     private final PointsOperationService pointsOperationService;
     private final MemberLevelService memberLevelService;
+    private final UserPointsMapper userPointsMapper;
+    private final OrderMapper orderMapper;
 
     @Override
     public Integer getUserPoints(Integer userId) {
@@ -117,7 +126,10 @@ public class PointsServiceImpl implements PointsService {
             // 连续签到奖励计算
             int continuousDays = (int) signInStatus.get("continuousDays");
 
-            // 可以根据连续签到天数增加额外奖励
+            // 计算今天签到后的连续天数
+            int newContinuousDays = continuousDays + 1;
+
+            // 基础额外积分（小额奖励）
             int extraPoints = 0;
             if (continuousDays >= 7) {
                 extraPoints = 10; // 连续签到7天以上额外10积分
@@ -126,14 +138,44 @@ public class PointsServiceImpl implements PointsService {
             }
 
             int totalPoints = signInPoints + extraPoints;
-
-            // 构建签到描述
             String description = "每日签到";
-            if (extraPoints > 0) {
-                description += "，连续签到" + (continuousDays + 1) + "天";
+
+            // 判断是否达到特殊连续签到奖励条件（第3天或第7天）
+            if (newContinuousDays == 3 || newContinuousDays == 7) {
+                // 获取对应的连续签到规则
+                String continuousType = "signin_continuous_" + newContinuousDays;
+                LambdaQueryWrapper<PointsRule> continuousRuleQuery = new LambdaQueryWrapper<>();
+                continuousRuleQuery.eq(PointsRule::getType, continuousType)
+                        .eq(PointsRule::getEnabled, 1);
+
+                try {
+                    PointsRule continuousRule = pointsRuleMapper.selectOne(continuousRuleQuery);
+                    if (continuousRule != null && continuousRule.getValue() != null) {
+                        int continuousPoints = continuousRule.getValue();
+                        // 记录连续签到奖励
+                        String specialDescription = "连续签到" + newContinuousDays + "天额外奖励";
+                        boolean continuousSuccess = this.addPoints(userId, continuousPoints,
+                                "signin_continuous",
+                                LocalDate.now().toString(),
+                                specialDescription);
+
+                        if (!continuousSuccess) {
+                            log.warn("用户 {} 连续签到 {} 天奖励记录失败", userId, newContinuousDays);
+                        } else {
+                            log.info("用户 {} 获得连续签到 {} 天额外奖励 {} 积分", userId, newContinuousDays, continuousPoints);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("查询连续签到规则失败: {}", e.getMessage());
+                    // 继续执行，不影响基础签到
+                }
             }
 
-            // 记录积分
+            if (extraPoints > 0) {
+                description += "，连续签到" + newContinuousDays + "天";
+            }
+
+            // 记录基础签到积分
             boolean success = this.addPoints(userId, totalPoints, "signin", LocalDate.now().toString(), description);
 
             if (!success) {
@@ -301,7 +343,7 @@ public class PointsServiceImpl implements PointsService {
             // 使用默认值
         }
 
-        // 计算额外积分
+        // 计算常规额外积分
         int extraPoints = 0;
         if (nextDay >= 7) {
             extraPoints = 10; // 下一次是连续7天或以上，额外10积分
@@ -309,7 +351,36 @@ public class PointsServiceImpl implements PointsService {
             extraPoints = 5; // 下一次是连续3天或以上，额外5积分
         }
 
-        return basePoints + extraPoints;
+        int totalPoints = basePoints + extraPoints;
+
+        // 计算特定里程碑的额外奖励（第3天或第7天）
+        if (nextDay == 3 || nextDay == 7) {
+            try {
+                // 获取对应的连续签到规则
+                String continuousType = "signin_continuous_" + nextDay;
+                LambdaQueryWrapper<PointsRule> continuousRuleQuery = new LambdaQueryWrapper<>();
+                continuousRuleQuery.eq(PointsRule::getType, continuousType)
+                        .eq(PointsRule::getEnabled, 1);
+
+                PointsRule continuousRule = pointsRuleMapper.selectOne(continuousRuleQuery);
+                if (continuousRule != null && continuousRule.getValue() != null) {
+                    // 将额外奖励加入到提示中
+                    totalPoints += continuousRule.getValue();
+                }
+            } catch (Exception e) {
+                log.error("获取连续签到奖励规则失败，无法计算额外奖励: {}", e.getMessage());
+                // 继续使用基础积分
+                if (nextDay == 3) {
+                    // 使用默认值200
+                    totalPoints += 200;
+                } else if (nextDay == 7) {
+                    // 使用默认值500
+                    totalPoints += 500;
+                }
+            }
+        }
+
+        return totalPoints;
     }
 
     @Override
@@ -404,8 +475,39 @@ public class PointsServiceImpl implements PointsService {
         Map<String, Object> result = new HashMap<>();
 
         try {
+            // 获取签到前的状态
+            Map<String, Object> beforeStatus = getSignInStatus(userId);
+            int continuousDays = (int) beforeStatus.get("continuousDays");
+
+            // 计算签到后的连续天数
+            int newContinuousDays = continuousDays + 1;
+
             // 签到获取积分
             Integer earnedPoints = signIn(userId);
+            int totalEarnedPoints = earnedPoints;
+
+            // 如果是第3天或第7天，需要加上额外奖励
+            if (newContinuousDays == 3 || newContinuousDays == 7) {
+                try {
+                    String continuousType = "signin_continuous_" + newContinuousDays;
+                    LambdaQueryWrapper<PointsRule> continuousRuleQuery = new LambdaQueryWrapper<>();
+                    continuousRuleQuery.eq(PointsRule::getType, continuousType)
+                            .eq(PointsRule::getEnabled, 1);
+
+                    PointsRule continuousRule = pointsRuleMapper.selectOne(continuousRuleQuery);
+                    if (continuousRule != null && continuousRule.getValue() != null) {
+                        totalEarnedPoints += continuousRule.getValue();
+                    }
+                } catch (Exception e) {
+                    log.error("获取连续签到规则失败，无法计算总奖励: {}", e.getMessage());
+                    // 继续使用基础积分
+                    if (newContinuousDays == 3) {
+                        totalEarnedPoints += 200; // 默认值
+                    } else if (newContinuousDays == 7) {
+                        totalEarnedPoints += 500; // 默认值
+                    }
+                }
+            }
 
             // 获取最新的签到状态
             Map<String, Object> status = getSignInStatus(userId);
@@ -413,12 +515,20 @@ public class PointsServiceImpl implements PointsService {
             // 合并结果
             result.putAll(status);
             result.put("earnedPoints", earnedPoints);
+            result.put("totalEarnedPoints", totalEarnedPoints); // 添加包含额外奖励的总积分
             // 确保积分值也放在根级别，方便前端直接获取
-            result.put("points", earnedPoints);
+            result.put("points", totalEarnedPoints);
             result.put("success", true);
-            result.put("message", "签到成功");
 
-            log.info("用户 {} 签到成功，获得 {} 积分", userId, earnedPoints);
+            // 如果有连续签到奖励，更新消息
+            if (newContinuousDays == 3 || newContinuousDays == 7) {
+                int extraReward = totalEarnedPoints - earnedPoints;
+                result.put("message", String.format("签到成功！连续签到%d天，额外奖励%d积分", newContinuousDays, extraReward));
+            } else {
+                result.put("message", "签到成功");
+            }
+
+            log.info("用户 {} 签到成功，获得基础积分 {} 点，总计获得 {} 积分", userId, earnedPoints, totalEarnedPoints);
             return result;
         } catch (BusinessException be) {
             // 业务异常，如今日已签到
@@ -431,6 +541,7 @@ public class PointsServiceImpl implements PointsService {
                 Map<String, Object> status = getSignInStatus(userId);
                 result.putAll(status);
                 result.put("earnedPoints", 0); // 签到失败时设置为0
+                result.put("totalEarnedPoints", 0); // 签到失败时总奖励也为0
                 result.put("points", 0); // 确保前端显示0
             } catch (Exception ex) {
                 log.error("获取用户 {} 签到状态失败: {}", userId, ex.getMessage());
@@ -441,6 +552,7 @@ public class PointsServiceImpl implements PointsService {
                 result.put("totalPoints", 0);
                 result.put("nextSignInPoints", 20);
                 result.put("earnedPoints", 0);
+                result.put("totalEarnedPoints", 0);
                 result.put("points", 0);
             }
 
@@ -457,6 +569,7 @@ public class PointsServiceImpl implements PointsService {
             result.put("historyMaxContinuousDays", 0);
             result.put("totalPoints", 0);
             result.put("earnedPoints", 0);
+            result.put("totalEarnedPoints", 0);
             result.put("points", 0);
             result.put("nextSignInPoints", 20);
 
@@ -596,6 +709,55 @@ public class PointsServiceImpl implements PointsService {
             result.put("message", "获取签到日历失败: " + e.getMessage());
 
             return result;
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void awardPointsForOrder(Integer userId, Integer orderId, BigDecimal orderAmount) {
+        if (userId == null || orderId == null || orderAmount == null) {
+            log.error("奖励积分参数错误: userId={}, orderId={}, orderAmount={}", userId, orderId, orderAmount);
+            return;
+        }
+
+        // 检查订单是否使用了积分抵扣
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            log.error("订单不存在, orderId={}", orderId);
+            return;
+        }
+
+        // 如果订单使用了积分抵扣，则不再奖励积分
+        if (order.getPointsUsed() != null && order.getPointsUsed() > 0) {
+            log.info("订单 {} 使用了积分抵扣 {}，不再奖励积分", order.getOrderNo(), order.getPointsUsed());
+            return;
+        }
+
+        try {
+            // 计算应奖励的积分 (订单金额的10%)
+            int pointsToAward = orderAmount.multiply(new BigDecimal("0.1")).intValue();
+            
+            // 确保至少奖励1积分（如果订单金额大于0）
+            if (orderAmount.compareTo(BigDecimal.ZERO) > 0 && pointsToAward < 1) {
+                pointsToAward = 1;
+            }
+            
+            if (pointsToAward <= 0) {
+                log.info("订单奖励积分为0，不进行奖励操作");
+                return;
+            }
+            
+            // 添加积分
+            String description = "订单完成奖励";
+            boolean success = addPoints(userId, pointsToAward, "order_completed", orderId.toString(), description);
+            
+            if (success) {
+                log.info("用户 {} 订单 {} 完成，奖励 {} 积分", userId, orderId, pointsToAward);
+            } else {
+                log.error("用户 {} 订单 {} 奖励积分失败", userId, orderId);
+            }
+        } catch (Exception e) {
+            log.error("订单奖励积分异常: userId={}, orderId={}, exception={}", userId, orderId, e.getMessage(), e);
         }
     }
 }

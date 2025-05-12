@@ -139,11 +139,11 @@ public class PointsController {
     }
 
     /**
-     * 检查今日是否已签到
+     * 检查今日是否已签到 (现在改为处理 /sign-in-status)
      */
-    @GetMapping("/check-sign-in")
-    @Operation(summary = "检查今日是否已签到")
-    public Result<Map<String, Object>> checkSignIn() {
+    @GetMapping("/sign-in-status")
+    @Operation(summary = "获取用户签到状态及基本积分信息")
+    public Result<Map<String, Object>> getSignInStatusEndpoint() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
             return Result.error(401, "用户未认证");
