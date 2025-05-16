@@ -59,8 +59,26 @@ mybatis-plus:
 springdoc:
   api-docs:
     path: /v3/api-docs
+    enabled: true
   swagger-ui:
     path: /swagger-ui.html
+    enabled: true
+    doc-expansion: none  # 默认不展开API列表
+    disable-swagger-default-url: true
+    display-request-duration: true  # 显示请求响应时间
+    operations-sorter: alpha  # 按字母顺序排序
+    tags-sorter: alpha  # 标签按字母排序
+    default-models-expand-depth: -1  # 隐藏models区域
+  default-produces-media-type: application/json  # 默认的响应内容类型
+  default-consumes-media-type: application/json  # 默认的请求内容类型
+  paths-to-match: /api/**  # 只扫描/api路径下的接口
+  packages-to-scan: com.muyingmall.controller  # 要扫描的包
+  # 全局参数设置
+  group-configs:
+    - group: default
+      paths-to-match: /**
+  cache:
+    disabled: false  # 启用缓存以提高性能
 
 # CORS配置
 cors:

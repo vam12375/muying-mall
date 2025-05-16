@@ -125,8 +125,8 @@ src/main/java/com/muyingmall/
 
 应用集成了SpringDoc OpenAPI，提供自动化的API文档：
 
-- 访问地址: http://localhost:8080/swagger-ui.html
-- OpenAPI JSON: http://localhost:8080/v3/api-docs
+- 访问地址: http://localhost:8080/api/swagger-ui.html
+- OpenAPI JSON: http://localhost:8080/api/v3/api-docs
 
 ## 数据库迁移
 
