@@ -70,4 +70,20 @@ public interface CartService extends IService<Cart> {
      * @param selected 是否选中
      */
     void selectCartItem(Integer userId, Integer cartId, Boolean selected);
+
+    /**
+     * 获取用户购物车商品总数量
+     *
+     * @param userId 用户ID
+     * @return 购物车商品总数
+     */
+    int getCartCount(Integer userId);
+
+    /**
+     * 获取用户购物车中已选中的商品
+     *
+     * @param userId 用户ID
+     * @return 已选中的购物车项列表
+     */
+    List<Cart> getSelectedCarts(Integer userId);
 }

@@ -1,10 +1,12 @@
 package com.muyingmall.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.muyingmall.entity.Product;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 商品服务接口
@@ -99,4 +101,35 @@ public interface ProductService extends IService<Product> {
          * @return 推荐商品列表
          */
         List<Product> getRecommendedProducts(Integer productId, Integer categoryId, int limit, String type);
+
+        /**
+         * 获取商品分类销售数据
+         * 
+         * @return 分类销售数据列表，每项包含name(分类名)和value(销售数量/比例)
+         */
+        List<Map<String, Object>> getCategorySales();
+
+        /**
+         * 获取热门商品列表
+         * 
+         * @param limit 数量限制
+         * @return 热门商品列表
+         */
+        List<Product> getHotProducts(int limit);
+
+        /**
+         * 获取新品商品列表
+         * 
+         * @param limit 数量限制
+         * @return 新品商品列表
+         */
+        List<Product> getNewProducts(int limit);
+
+        /**
+         * 获取推荐商品列表
+         * 
+         * @param limit 数量限制
+         * @return 推荐商品列表
+         */
+        List<Product> getRecommendProducts(int limit);
 }

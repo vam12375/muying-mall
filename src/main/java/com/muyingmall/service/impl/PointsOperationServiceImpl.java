@@ -1,9 +1,13 @@
 package com.muyingmall.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.entity.PointsHistory;
+import com.muyingmall.entity.PointsOperationLog;
 import com.muyingmall.mapper.PointsHistoryMapper;
+import com.muyingmall.mapper.PointsOperationLogMapper;
 import com.muyingmall.service.PointsOperationService;
 import com.muyingmall.mapper.UserPointsMapper;
 import com.muyingmall.entity.UserPoints;
@@ -12,8 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,10 +28,12 @@ import org.slf4j.LoggerFactory;
  */
 @Service
 @RequiredArgsConstructor
-public class PointsOperationServiceImpl implements PointsOperationService {
+public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMapper, PointsOperationLog>
+        implements PointsOperationService {
 
     private final PointsHistoryMapper pointsHistoryMapper;
     private final UserPointsMapper userPointsMapper;
+    private final PointsOperationLogMapper pointsOperationLogMapper;
     private static final Logger log = LoggerFactory.getLogger(PointsOperationServiceImpl.class);
 
     @Override
@@ -135,6 +143,10 @@ public class PointsOperationServiceImpl implements PointsOperationService {
             log.error("增加积分 - 为用户ID: {} 更新user_points表失败", userId);
             throw new BusinessException("更新用户总积分失败");
         }
+
+        // 记录积分操作日志
+        recordOperation(userId, "增加积分", points, userPoints.getPoints(), description, null);
+
         log.info("增加积分 - 成功为用户ID: {} 添加 {} 积分。来源: {}。user_points表中的新总积分: {}",
                 points, userId, source, userPoints.getPoints());
         return true;
@@ -195,9 +207,68 @@ public class PointsOperationServiceImpl implements PointsOperationService {
             log.error("扣减积分 - 为用户ID: {} 插入积分历史记录失败", userId);
             throw new BusinessException("积分历史记录失败（扣除）");
         }
+
+        // 记录积分操作日志
+        recordOperation(userId, "扣减积分", -points, userPoints.getPoints(), description, null);
+
         log.info(
                 "扣减积分 - 成功为用户ID: {} 扣除 {} 积分。来源: {}。user_points表中的新总积分: {}",
                 points, userId, source, userPoints.getPoints());
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean recordOperation(Integer userId, String operationType, Integer pointsChange,
+            Integer currentBalance, String description, Integer relatedOrderId) {
+        if (userId == null || operationType == null) {
+            log.warn("记录操作 - 无效参数: userId={}, operationType={}", userId, operationType);
+            return false;
+        }
+
+        try {
+            PointsOperationLog log = new PointsOperationLog();
+            log.setUserId(userId);
+            log.setOperationType(operationType);
+            log.setPointsChange(pointsChange);
+            log.setCurrentBalance(currentBalance);
+            log.setDescription(description);
+            log.setRelatedOrderId(relatedOrderId);
+            log.setCreateTime(LocalDateTime.now());
+
+            return save(log);
+        } catch (Exception e) {
+            this.log.error("记录积分操作日志失败: userId={}, operationType={}, exception={}",
+                    userId, operationType, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
+    public Page<PointsOperationLog> adminListOperationLogs(Integer page, Integer size, Integer userId,
+            String operationType, LocalDate startDate, LocalDate endDate) {
+        Page<PointsOperationLog> pageParam = new Page<>(page, size);
+
+        LambdaQueryWrapper<PointsOperationLog> queryWrapper = new LambdaQueryWrapper<>();
+
+        if (userId != null) {
+            queryWrapper.eq(PointsOperationLog::getUserId, userId);
+        }
+
+        if (operationType != null && !operationType.isEmpty()) {
+            queryWrapper.eq(PointsOperationLog::getOperationType, operationType);
+        }
+
+        if (startDate != null) {
+            queryWrapper.ge(PointsOperationLog::getCreateTime, startDate.atStartOfDay());
+        }
+
+        if (endDate != null) {
+            queryWrapper.le(PointsOperationLog::getCreateTime, endDate.plusDays(1).atStartOfDay());
+        }
+
+        queryWrapper.orderByDesc(PointsOperationLog::getCreateTime);
+
+        return page(pageParam, queryWrapper);
     }
 }

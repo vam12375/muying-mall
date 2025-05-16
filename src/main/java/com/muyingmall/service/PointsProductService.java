@@ -12,21 +12,20 @@ import java.util.List;
 public interface PointsProductService extends IService<PointsProduct> {
 
     /**
-     * 分页获取积分商品列表
+     * 分页查询积分商品
      *
      * @param page     页码
      * @param size     每页大小
-     * @param category 商品分类
-     * @param isHot    是否热门
+     * @param category 分类，可为空
      * @return 积分商品分页对象
      */
-    Page<PointsProduct> getPointsProductPage(int page, int size, String category, Boolean isHot);
+    Page<PointsProduct> getPointsProductPage(int page, int size, String category);
 
     /**
      * 获取积分商品详情
      *
-     * @param id 积分商品ID
-     * @return 积分商品详情
+     * @param id 商品ID
+     * @return 积分商品
      */
     PointsProduct getPointsProductDetail(Long id);
 
@@ -37,4 +36,15 @@ public interface PointsProductService extends IService<PointsProduct> {
      * @return 推荐的积分商品列表
      */
     List<PointsProduct> getRecommendProducts(int limit);
+
+    /**
+     * 管理员分页查询积分商品
+     *
+     * @param page     页码
+     * @param size     每页大小
+     * @param name     名称，可为空
+     * @param category 分类，可为空
+     * @return 积分商品分页对象
+     */
+    Page<PointsProduct> adminListPointsProducts(Integer page, Integer size, String name, String category);
 }

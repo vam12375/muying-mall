@@ -20,6 +20,7 @@
 		<alipay.version>4.38.0.ALL</alipay.version>
 		<wechat.version>0.0.3</wechat.version>
 		<springdoc.version>2.2.0</springdoc.version>
+		<elasticsearch.version>8.11.0</elasticsearch.version>
 	</properties>
 	
 	<dependencies>
@@ -90,6 +91,21 @@
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>${springdoc.version}</version>
+		</dependency>
+		
+		<!-- ElasticSearch相关 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>co.elastic.clients</groupId>
+			<artifactId>elasticsearch-java</artifactId>
+			<version>${elasticsearch.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.json</groupId>
+			<artifactId>jakarta.json-api</artifactId>
 		</dependency>
 		
 		<!-- 工具依赖 -->

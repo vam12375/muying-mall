@@ -21,6 +21,12 @@ INSERT INTO `brand` VALUES (1, '惠氏', 'brands/wyeth.png', '惠氏营养品是
 INSERT INTO `brand` VALUES (2, '美素佳儿', 'brands/friso.png', '美素佳儿是荷兰皇家菲仕兰旗下的婴幼儿奶粉品牌', 2, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
 INSERT INTO `brand` VALUES (3, '帮宝适', 'brands/pampers.png', '帮宝适是宝洁公司旗下的婴儿纸尿裤品牌', 3, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
 INSERT INTO `brand` VALUES (4, '花王', 'brands/huawang.png', '花王是日本著名的个人护理用品品牌', 4, 1, '2025-03-05 21:58:47', '2025-03-17 16:10:15');
+INSERT INTO `brand` VALUES (5, '爱他美', 'brands/aptamil.png', '爱他美是来自德国的高端婴幼儿配方奶粉品牌，专注婴幼儿营养研究超过40年', 5, 1, '2025-03-18 10:30:00', '2025-03-18 10:30:00');
+INSERT INTO `brand` VALUES (6, '费雪', 'brands/fisher-price.png', '费雪是全球著名玩具品牌，专注于儿童早期发展和教育玩具设计', 6, 1, '2025-03-18 10:32:15', '2025-03-18 10:32:15');
+INSERT INTO `brand` VALUES (7, '飞利浦新安怡', 'brands/avent.png', '飞利浦新安怡是全球领先的婴幼儿喂养用品品牌，专注于研发安全舒适的喂养产品', 7, 1, '2025-03-18 10:34:30', '2025-03-18 10:34:30');
+INSERT INTO `brand` VALUES (8, '美德乐', 'brands/medela.png', '美德乐是源自瑞士的全球知名母乳喂养解决方案品牌，专注于吸奶器和母乳喂养辅助产品', 8, 1, '2025-03-18 10:36:45', '2025-03-18 10:36:45');
+INSERT INTO `brand` VALUES (9, '贝亲', 'brands/pigeon.png', '贝亲是日本知名的母婴用品品牌，拥有超过60年的婴幼儿护理经验', 9, 1, '2025-03-18 10:39:00', '2025-03-18 10:39:00');
+INSERT INTO `brand` VALUES (10, '嘉宝', 'brands/gerber.png', '嘉宝是全球领先的婴幼儿辅食品牌，提供营养均衡的婴幼儿食品和零食', 10, 1, '2025-03-18 10:41:15', '2025-03-18 10:41:15');
 
 
 
@@ -698,6 +704,11 @@ CREATE TABLE IF NOT EXISTS `points_rule` (
 -- 添加 sort_order 字段
 ALTER TABLE `points_rule`
 ADD COLUMN `sort_order` INT NULL DEFAULT 0 COMMENT '排序' AFTER `title`;
+-- 添加连续签到奖励规则
+INSERT INTO points_rule (title, description, type, points_value, sort_order, enabled, create_time, update_time) 
+VALUES 
+('连续签到3天奖励', '连续签到满3天额外奖励200积分', 'signin_continuous_3', 200, 8, 1, NOW(), NOW()),
+('连续签到7天奖励', '连续签到满7天额外奖励500积分', 'signin_continuous_7', 500, 9, 1, NOW(), NOW()); 
 -- 插入默认积分规则数据
 INSERT INTO `points_rule` (`title`, `description`, `type`, `points_value`, `sort_order`, `enabled`) VALUES
 ('购物奖励', '购物可获得订单金额10%的积分', 'shopping', 0, 1, 1),

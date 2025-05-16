@@ -18,9 +18,14 @@ import com.muyingmall.enums.PointsOperationType;
 import com.muyingmall.entity.UserPoints;
 import com.muyingmall.mapper.UserPointsMapper;
 import com.muyingmall.mapper.OrderMapper;
+import com.muyingmall.service.UserService;
+import com.muyingmall.event.CheckinEvent;
+import com.muyingmall.common.CacheConstants;
+import com.muyingmall.util.RedisUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -32,6 +37,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 积分管理服务实现类
@@ -48,6 +54,9 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
     private final MemberLevelService memberLevelService;
     private final UserPointsMapper userPointsMapper;
     private final OrderMapper orderMapper;
+    private final UserService userService;
+    private final ApplicationEventPublisher applicationEventPublisher;
+    private final RedisUtil redisUtil;
 
     @Override
     public Integer getUserPoints(Integer userId) {
@@ -70,11 +79,33 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
     public Page<PointsHistory> getUserPointsHistory(Integer userId, int page, int size) {
         Page<PointsHistory> pageParam = new Page<>(page, size);
 
+        // 构建缓存键
+        String cacheKey = CacheConstants.USER_POINTS_HISTORY_KEY + userId + ":page_" + page + ":size_" + size;
+
+        // 查询缓存
+        Object cacheResult = redisUtil.get(cacheKey);
+        if (cacheResult != null) {
+            log.debug("从缓存中获取用户积分历史: userId={}, page={}, size={}", userId, page, size);
+            return (Page<PointsHistory>) cacheResult;
+        }
+
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询用户积分历史: userId={}, page={}, size={}", userId, page, size);
+
         LambdaQueryWrapper<PointsHistory> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PointsHistory::getUserId, userId)
                 .orderByDesc(PointsHistory::getCreateTime);
 
-        return pointsHistoryMapper.selectPage(pageParam, queryWrapper);
+        Page<PointsHistory> result = pointsHistoryMapper.selectPage(pageParam, queryWrapper);
+
+        // 缓存结果
+        if (result != null && !result.getRecords().isEmpty()) {
+            redisUtil.set(cacheKey, result, CacheConstants.POINTS_HISTORY_EXPIRE_TIME);
+            log.debug("将用户积分历史缓存到Redis: userId={}, page={}, size={}, 过期时间={}秒",
+                    userId, page, size, CacheConstants.POINTS_HISTORY_EXPIRE_TIME);
+        }
+
+        return result;
     }
 
     @Override
@@ -123,7 +154,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
                 log.warn("签到规则不存在或值为空，使用默认值 20 积分");
             }
 
-            // 连续签到奖励计算
+            // 连续签到天数
             int continuousDays = (int) signInStatus.get("continuousDays");
 
             // 计算今天签到后的连续天数
@@ -131,10 +162,16 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
 
             // 基础额外积分（小额奖励）
             int extraPoints = 0;
-            if (continuousDays >= 7) {
-                extraPoints = 10; // 连续签到7天以上额外10积分
-            } else if (continuousDays >= 3) {
-                extraPoints = 5; // 连续签到3天以上额外5积分
+            if (continuousDays >= 3) {
+                // 修改连续签到额外积分计算逻辑
+                // 连续签到3天及以上，第3天后每天额外获得5积分
+                // 对于已经连续签到超过3天的用户，额外积分为(天数-2)*5
+                extraPoints = (continuousDays - 2) * 5;
+
+                // 如果连续签到天数超过7天，每天获得10积分而不是5积分
+                if (continuousDays >= 7) {
+                    extraPoints = (continuousDays - 6) * 10 + 20; // 3-6天获得5积分/天，共20积分
+                }
             }
 
             int totalPoints = signInPoints + extraPoints;
@@ -202,6 +239,19 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
         Map<String, Object> result = new HashMap<>();
 
         try {
+            // 构建缓存键
+            String cacheKey = CacheConstants.USER_SIGNIN_STATUS_KEY + userId;
+
+            // 查询缓存
+            Object cacheResult = redisUtil.get(cacheKey);
+            if (cacheResult != null) {
+                log.debug("从缓存中获取用户签到状态: userId={}", userId);
+                return (Map<String, Object>) cacheResult;
+            }
+
+            // 缓存未命中，从数据库查询
+            log.debug("缓存未命中，从数据库查询用户签到状态: userId={}", userId);
+
             // 当前日期
             LocalDate today = LocalDate.now();
             LocalDateTime startOfToday = today.atStartOfDay();
@@ -277,6 +327,37 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
                 // 继续使用默认值
             }
 
+            // 获取累计获得的积分和已使用的积分
+            Integer totalEarned = 0;
+            Integer totalUsed = 0;
+            try {
+                // 查询累计获得的积分 - 确保正确使用type字段
+                LambdaQueryWrapper<PointsHistory> earnQuery = new LambdaQueryWrapper<>();
+                earnQuery.eq(PointsHistory::getUserId, userId)
+                        .eq(PointsHistory::getType, "earn"); // 类型为"earn"的记录
+
+                List<PointsHistory> earnRecords = pointsHistoryMapper.selectList(earnQuery);
+                totalEarned = earnRecords.stream()
+                        .mapToInt(PointsHistory::getPoints)
+                        .sum();
+
+                // 查询已使用的积分 - 确保正确使用type字段
+                LambdaQueryWrapper<PointsHistory> usedQuery = new LambdaQueryWrapper<>();
+                usedQuery.eq(PointsHistory::getUserId, userId)
+                        .eq(PointsHistory::getType, "spend"); // 类型为"spend"的记录
+
+                List<PointsHistory> usedRecords = pointsHistoryMapper.selectList(usedQuery);
+                totalUsed = usedRecords.stream()
+                        .mapToInt(PointsHistory::getPoints)
+                        .map(Math::abs) // 确保用正数来计算总使用量
+                        .sum();
+
+                log.debug("用户 {} 的积分统计: 累计获得={}, 已使用={}", userId, totalEarned, totalUsed);
+            } catch (Exception e) {
+                log.error("计算用户积分统计信息失败: {}", e.getMessage());
+                // 继续执行，使用默认值0
+            }
+
             // 构建结果
             result.put("todaySigned", todaySigned);
             result.put("continuousDays", continuousDays);
@@ -284,14 +365,40 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             result.put("totalPoints", totalPoints);
             result.put("points", totalPoints); // 为前端提供一个额外的积分字段
             result.put("userLevel", userLevel); // 添加会员等级
+            result.put("totalEarned", totalEarned); // 添加累计获得积分
+            result.put("totalUsed", totalUsed); // 添加已使用积分
+
+            // 添加本月获得的积分（可选）
+            LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
+            try {
+                LambdaQueryWrapper<PointsHistory> monthQuery = new LambdaQueryWrapper<>();
+                monthQuery.eq(PointsHistory::getUserId, userId)
+                        .eq(PointsHistory::getType, "earn")
+                        .ge(PointsHistory::getCreateTime, startOfMonth);
+
+                List<PointsHistory> monthRecords = pointsHistoryMapper.selectList(monthQuery);
+                int pointsThisMonth = monthRecords.stream()
+                        .mapToInt(PointsHistory::getPoints)
+                        .sum();
+
+                result.put("pointsThisMonth", pointsThisMonth);
+            } catch (Exception e) {
+                log.error("计算本月积分失败: {}", e.getMessage());
+                result.put("pointsThisMonth", 0);
+            }
 
             // 添加可能的下一次签到可获得的积分数
             int nextSignInPoints = calculateNextSignInPoints(continuousDays);
             result.put("nextSignInPoints", nextSignInPoints);
 
-            log.debug("用户 {} 的签到状态: 今日已签到={}, 连续签到天数={}, 历史最长连续签到={}, 总积分={}, 会员等级={}, 下次签到积分={}",
-                    userId, todaySigned, continuousDays, historyMaxContinuousDays, totalPoints, userLevel,
+            log.debug("用户 {} 的签到状态: 今日已签到={}, 连续签到天数={}, 历史最长连续签到={}, 总积分={}, 累计获得={}, 已使用={}, 会员等级={}, 下次签到积分={}",
+                    userId, todaySigned, continuousDays, historyMaxContinuousDays, totalPoints, totalEarned, totalUsed,
+                    userLevel,
                     nextSignInPoints);
+
+            // 缓存结果，由于签到状态会随着时间变化，设置较短的过期时间
+            redisUtil.set(cacheKey, result, CacheConstants.POINTS_STATUS_EXPIRE_TIME);
+            log.debug("将用户签到状态缓存到Redis: userId={}, 过期时间={}秒", userId, CacheConstants.POINTS_STATUS_EXPIRE_TIME);
 
             return result;
         } catch (Exception e) {
@@ -304,6 +411,9 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             result.put("points", 0);
             result.put("userLevel", "普通会员");
             result.put("nextSignInPoints", 20); // 默认为20
+            result.put("totalEarned", 0);
+            result.put("totalUsed", 0);
+            result.put("pointsThisMonth", 0);
             return result;
         }
     }
@@ -345,10 +455,16 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
 
         // 计算常规额外积分
         int extraPoints = 0;
-        if (nextDay >= 7) {
-            extraPoints = 10; // 下一次是连续7天或以上，额外10积分
-        } else if (nextDay >= 3) {
-            extraPoints = 5; // 下一次是连续3天或以上，额外5积分
+        if (nextDay >= 3) {
+            // 修改连续签到额外积分计算逻辑
+            // 连续签到3天及以上，第3天后每天额外获得5积分
+            // 对于已经连续签到超过3天的用户，额外积分为(天数-2)*5
+            extraPoints = (nextDay - 2) * 5;
+
+            // 如果连续签到天数超过7天，每天获得10积分而不是5积分
+            if (nextDay >= 7) {
+                extraPoints = (nextDay - 6) * 10 + 20; // 3-6天获得5积分/天，共20积分
+            }
         }
 
         int totalPoints = basePoints + extraPoints;
@@ -456,7 +572,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
     @Override
     public Page<PointsProduct> getPointsProducts(int page, int size, String category) {
         // 委托给PointsProductService处理
-        return pointsProductService.getPointsProductPage(page, size, category, null);
+        return pointsProductService.getPointsProductPage(page, size, category);
     }
 
     @Override
@@ -512,12 +628,16 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             // 获取最新的签到状态
             Map<String, Object> status = getSignInStatus(userId);
 
+            // 手动更新累计获得的积分值
+            Integer oldTotalEarned = (Integer) status.getOrDefault("totalEarned", 0);
+            status.put("totalEarned", oldTotalEarned + totalEarnedPoints);
+
             // 合并结果
             result.putAll(status);
             result.put("earnedPoints", earnedPoints);
             result.put("totalEarnedPoints", totalEarnedPoints); // 添加包含额外奖励的总积分
             // 确保积分值也放在根级别，方便前端直接获取
-            result.put("points", totalEarnedPoints);
+            result.put("points", status.get("totalPoints"));
             result.put("success", true);
 
             // 如果有连续签到奖励，更新消息
@@ -526,6 +646,29 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
                 result.put("message", String.format("签到成功！连续签到%d天，额外奖励%d积分", newContinuousDays, extraReward));
             } else {
                 result.put("message", "签到成功");
+            }
+
+            // 发布签到事件，用于在消息中心显示签到消息
+            try {
+                // 创建签到事件的额外参数 JSON
+                String extraJson = String.format("{\"earnedPoints\":%d,\"continuousDays\":%d}",
+                        earnedPoints, newContinuousDays);
+
+                // 创建并发布签到事件
+                CheckinEvent checkinEvent = new CheckinEvent(
+                        this, // 事件源
+                        userId, // 用户ID
+                        earnedPoints, // 签到获得的积分
+                        newContinuousDays, // 连续签到天数
+                        extraJson // 额外信息
+                );
+
+                applicationEventPublisher.publishEvent(checkinEvent);
+                log.info("用户 {} 签到事件已发布，连续天数: {}, 获得积分: {}",
+                        userId, newContinuousDays, earnedPoints);
+            } catch (Exception e) {
+                // 捕获事件发布异常，但不影响签到的主要功能
+                log.error("发布用户 {} 签到事件失败: {}", userId, e.getMessage(), e);
             }
 
             log.info("用户 {} 签到成功，获得基础积分 {} 点，总计获得 {} 积分", userId, earnedPoints, totalEarnedPoints);
@@ -542,7 +685,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
                 result.putAll(status);
                 result.put("earnedPoints", 0); // 签到失败时设置为0
                 result.put("totalEarnedPoints", 0); // 签到失败时总奖励也为0
-                result.put("points", 0); // 确保前端显示0
+                result.put("points", status.get("totalPoints")); // 使用当前总积分值
             } catch (Exception ex) {
                 log.error("获取用户 {} 签到状态失败: {}", userId, ex.getMessage());
                 // 添加默认值，避免前端出错
@@ -554,6 +697,8 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
                 result.put("earnedPoints", 0);
                 result.put("totalEarnedPoints", 0);
                 result.put("points", 0);
+                result.put("totalEarned", 0);
+                result.put("totalUsed", 0);
             }
 
             return result;
@@ -572,6 +717,8 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             result.put("totalEarnedPoints", 0);
             result.put("points", 0);
             result.put("nextSignInPoints", 20);
+            result.put("totalEarned", 0);
+            result.put("totalUsed", 0);
 
             return result;
         }
@@ -606,6 +753,19 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             } else {
                 yearMonth = YearMonth.now();
             }
+
+            // 构建缓存键
+            String cacheKey = CacheConstants.USER_SIGNIN_CALENDAR_KEY + userId + ":" + yearMonth.toString();
+
+            // 查询缓存
+            Object cacheResult = redisUtil.get(cacheKey);
+            if (cacheResult != null) {
+                log.debug("从缓存中获取用户签到日历: userId={}, month={}", userId, yearMonth);
+                return (Map<String, Object>) cacheResult;
+            }
+
+            // 缓存未命中，从数据库查询
+            log.debug("缓存未命中，从数据库查询用户签到日历: userId={}, month={}", userId, yearMonth);
 
             LocalDate today = LocalDate.now();
             boolean isCurrMonth = (yearMonth.getYear() == today.getYear()
@@ -674,14 +834,63 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             // 获取签到状态 - 使用当前状态
             Map<String, Object> signInStatus = getSignInStatus(userId);
 
+            // 确保积分统计值存在
+            if (!signInStatus.containsKey("totalEarned")) {
+                // 手动获取累计获得的积分
+                try {
+                    LambdaQueryWrapper<PointsHistory> earnQuery = new LambdaQueryWrapper<>();
+                    earnQuery.eq(PointsHistory::getUserId, userId)
+                            .eq(PointsHistory::getType, "earn");
+
+                    List<PointsHistory> earnRecords = pointsHistoryMapper.selectList(earnQuery);
+                    int totalEarned = earnRecords.stream()
+                            .mapToInt(PointsHistory::getPoints)
+                            .sum();
+
+                    signInStatus.put("totalEarned", totalEarned);
+                } catch (Exception e) {
+                    log.error("计算累计获得积分失败: {}", e.getMessage());
+                    signInStatus.put("totalEarned", 0);
+                }
+            }
+
+            if (!signInStatus.containsKey("totalUsed")) {
+                // 手动获取已使用的积分
+                try {
+                    LambdaQueryWrapper<PointsHistory> usedQuery = new LambdaQueryWrapper<>();
+                    usedQuery.eq(PointsHistory::getUserId, userId)
+                            .eq(PointsHistory::getType, "spend");
+
+                    List<PointsHistory> usedRecords = pointsHistoryMapper.selectList(usedQuery);
+                    int totalUsed = usedRecords.stream()
+                            .mapToInt(PointsHistory::getPoints)
+                            .map(Math::abs)
+                            .sum();
+
+                    signInStatus.put("totalUsed", totalUsed);
+                } catch (Exception e) {
+                    log.error("计算已使用积分失败: {}", e.getMessage());
+                    signInStatus.put("totalUsed", 0);
+                }
+            }
+
             // 合并结果
             result.put("monthInfo", monthInfo);
             result.put("signInStatus", signInStatus);
             result.put("success", true);
 
+            // 缓存结果
+            // 当月的缓存设置较短时间，其他月份可以缓存更长时间
+            long expireTime = isCurrMonth ? CacheConstants.POINTS_STATUS_EXPIRE_TIME : // 当前月用较短的过期时间
+                    CacheConstants.SIGNIN_CALENDAR_EXPIRE_TIME; // 历史月份用较长的过期时间
+
+            redisUtil.set(cacheKey, result, expireTime);
+            log.debug("将用户签到日历缓存到Redis: userId={}, month={}, 过期时间={}秒",
+                    userId, yearMonth, expireTime);
+
             return result;
         } catch (Exception e) {
-            log.error("获取用户 {} 的签到日历失败: {}", userId, e.getMessage(), e);
+            log.error("获取用户 {} 的签到日历失败: {}", e.getMessage(), e);
 
             // 返回基本结构，避免前端出错
             Map<String, Object> basicMonthInfo = new HashMap<>();
@@ -702,6 +911,8 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             basicStatus.put("continuousDays", 0);
             basicStatus.put("historyMaxContinuousDays", 0);
             basicStatus.put("totalPoints", 0);
+            basicStatus.put("totalEarned", 0);
+            basicStatus.put("totalUsed", 0);
 
             result.put("monthInfo", basicMonthInfo);
             result.put("signInStatus", basicStatus);
@@ -736,21 +947,21 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
         try {
             // 计算应奖励的积分 (订单金额的10%)
             int pointsToAward = orderAmount.multiply(new BigDecimal("0.1")).intValue();
-            
+
             // 确保至少奖励1积分（如果订单金额大于0）
             if (orderAmount.compareTo(BigDecimal.ZERO) > 0 && pointsToAward < 1) {
                 pointsToAward = 1;
             }
-            
+
             if (pointsToAward <= 0) {
                 log.info("订单奖励积分为0，不进行奖励操作");
                 return;
             }
-            
+
             // 添加积分
             String description = "订单完成奖励";
             boolean success = addPoints(userId, pointsToAward, "order_completed", orderId.toString(), description);
-            
+
             if (success) {
                 log.info("用户 {} 订单 {} 完成，奖励 {} 积分", userId, orderId, pointsToAward);
             } else {
@@ -759,5 +970,121 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
         } catch (Exception e) {
             log.error("订单奖励积分异常: userId={}, orderId={}, exception={}", userId, orderId, e.getMessage(), e);
         }
+    }
+
+    @Override
+    public Page<PointsHistory> adminListPointsHistory(Integer page, Integer size, Integer userId,
+            String type, String source, LocalDate startDate, LocalDate endDate) {
+        Page<PointsHistory> pageParam = new Page<>(page, size);
+
+        LambdaQueryWrapper<PointsHistory> queryWrapper = new LambdaQueryWrapper<>();
+
+        if (userId != null) {
+            queryWrapper.eq(PointsHistory::getUserId, userId);
+        }
+
+        if (StringUtils.hasText(type)) {
+            queryWrapper.eq(PointsHistory::getType, type);
+        }
+
+        if (StringUtils.hasText(source)) {
+            queryWrapper.eq(PointsHistory::getSource, source);
+        }
+
+        if (startDate != null) {
+            queryWrapper.ge(PointsHistory::getCreateTime, startDate.atStartOfDay());
+        }
+
+        if (endDate != null) {
+            queryWrapper.le(PointsHistory::getCreateTime, endDate.plusDays(1).atStartOfDay().minusNanos(1));
+        }
+
+        queryWrapper.orderByDesc(PointsHistory::getCreateTime);
+
+        return pointsHistoryMapper.selectPage(pageParam, queryWrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean adminAdjustPoints(Integer userId, Integer points, String description) {
+        if (userId == null || points == null || points == 0) {
+            log.warn("管理员调整积分 - 无效参数: userId={}, points={}", userId, points);
+            return false;
+        }
+
+        // 积分增加
+        if (points > 0) {
+            return addPoints(userId, points, "admin", null, description);
+        }
+        // 积分扣减
+        else {
+            return deductPoints(userId, Math.abs(points), "admin", null, description);
+        }
+    }
+
+    @Override
+    public Page<PointsExchange> adminListPointsExchanges(Integer page, Integer size, Integer userId,
+            Long productId, String status, LocalDate startDate, LocalDate endDate) {
+        // 使用模拟数据，实际项目中应查询数据库
+        Page<PointsExchange> result = new Page<>(page, size, 0);
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateExchangeStatus(Long id, String status) {
+        // 使用模拟数据，实际项目中应更新数据库
+        return true;
+    }
+
+    @Override
+    public Map<String, Object> getPointsStats(LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> stats = new HashMap<>();
+
+        // 累计发放积分
+        Integer totalEarned = 0;
+        // 累计消费积分
+        Integer totalSpent = 0;
+        // 今日发放积分
+        Integer todayEarned = 0;
+        // 今日消费积分
+        Integer todaySpent = 0;
+
+        // 使用模拟数据，实际项目中应查询数据库
+        stats.put("totalEarned", totalEarned);
+        stats.put("totalSpent", totalSpent);
+        stats.put("todayEarned", todayEarned);
+        stats.put("todaySpent", todaySpent);
+
+        return stats;
+    }
+
+    @Override
+    public Page<UserPoints> pageWithUser(Page<UserPoints> page, LambdaQueryWrapper<UserPoints> queryWrapper) {
+        // 先查询用户积分信息
+        this.page(page, queryWrapper);
+
+        List<UserPoints> records = page.getRecords();
+        if (records != null && !records.isEmpty()) {
+            // 收集所有用户ID
+            List<Long> userIds = records.stream()
+                    .map(UserPoints::getUserId)
+                    .collect(Collectors.toList());
+
+            // 查询用户信息
+            List<User> users = userService.listByIds(userIds);
+
+            // 创建用户ID到用户信息的映射
+            Map<Integer, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getUserId, user -> user));
+
+            // 关联用户信息到积分记录
+            for (UserPoints userPoints : records) {
+                User user = userMap.get(userPoints.getUserId().intValue());
+                userPoints.setUser(user);
+            }
+        }
+
+        return page;
     }
 }

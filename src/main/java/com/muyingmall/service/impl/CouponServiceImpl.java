@@ -12,11 +12,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.muyingmall.entity.CouponBatch;
+import com.muyingmall.entity.CouponRule;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 优惠券服务实现类
@@ -229,5 +235,108 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         }
 
         return false;
+    }
+
+    @Override
+    public Page<Coupon> adminListCoupons(Integer page, Integer size, String name, String type, String status) {
+        Page<Coupon> pageParam = new Page<>(page, size);
+
+        LambdaQueryWrapper<Coupon> queryWrapper = new LambdaQueryWrapper<>();
+
+        if (StringUtils.hasText(name)) {
+            queryWrapper.like(Coupon::getName, name);
+        }
+
+        if (StringUtils.hasText(type)) {
+            queryWrapper.eq(Coupon::getType, type);
+        }
+
+        if (StringUtils.hasText(status)) {
+            queryWrapper.eq(Coupon::getStatus, status);
+        }
+
+        queryWrapper.orderByDesc(Coupon::getCreateTime);
+
+        return page(pageParam, queryWrapper);
+    }
+
+    @Override
+    public boolean saveCoupon(Coupon coupon) {
+        coupon.setCreateTime(LocalDateTime.now());
+        coupon.setUpdateTime(LocalDateTime.now());
+        coupon.setReceivedQuantity(0);
+        return save(coupon);
+    }
+
+    @Override
+    public boolean updateCoupon(Coupon coupon) {
+        coupon.setUpdateTime(LocalDateTime.now());
+        return updateById(coupon);
+    }
+
+    @Override
+    public boolean deleteCoupon(Long id) {
+        return removeById(id);
+    }
+
+    @Override
+    public boolean updateCouponStatus(Long id, String status) {
+        Coupon coupon = getById(id);
+        if (coupon == null) {
+            return false;
+        }
+
+        coupon.setStatus(status);
+        coupon.setUpdateTime(LocalDateTime.now());
+        return updateById(coupon);
+    }
+
+    @Override
+    public Page<CouponBatch> listCouponBatches(Integer page, Integer size, String couponName) {
+        // 为简化返回模拟数据，实际项目中应查询数据库
+        Page<CouponBatch> result = new Page<>(page, size, 0);
+        return result;
+    }
+
+    @Override
+    public boolean saveCouponBatch(CouponBatch batch) {
+        // 为简化返回成功，实际项目中应保存到数据库
+        return true;
+    }
+
+    @Override
+    public CouponBatch getCouponBatchDetail(Integer batchId) {
+        // 为简化返回null，实际项目中应查询数据库
+        return null;
+    }
+
+    @Override
+    public Page<CouponRule> listCouponRules(Integer page, Integer size, String name) {
+        // 为简化返回模拟数据，实际项目中应查询数据库
+        Page<CouponRule> result = new Page<>(page, size, 0);
+        return result;
+    }
+
+    @Override
+    public boolean saveCouponRule(CouponRule rule) {
+        // 为简化返回成功，实际项目中应保存到数据库
+        return true;
+    }
+
+    @Override
+    public boolean updateCouponRule(CouponRule rule) {
+        // 为简化返回成功，实际项目中应更新数据库
+        return true;
+    }
+
+    @Override
+    public Map<String, Object> getCouponStats() {
+        // 为简化返回模拟数据，实际项目中应查询统计数据
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalCoupons", 0);
+        stats.put("usedCoupons", 0);
+        stats.put("expiredCoupons", 0);
+
+        return stats;
     }
 }

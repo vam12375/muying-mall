@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.muyingmall.entity.Order;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -143,4 +144,13 @@ public interface OrderService extends IService<Order> {
      * @return 统计信息
      */
     Map<String, Object> getOrderStatistics(Integer userId);
+
+    /**
+     * 获取指定时间段内的销售额
+     *
+     * @param startTime 开始时间
+     * @param endTime   结束时间
+     * @return 销售总额
+     */
+    BigDecimal getSalesBetween(LocalDateTime startTime, LocalDateTime endTime);
 }

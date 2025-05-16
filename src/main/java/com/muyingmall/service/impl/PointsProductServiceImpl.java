@@ -25,6 +25,14 @@ public class PointsProductServiceImpl extends ServiceImpl<PointsProductMapper, P
     private final RedisUtil redisUtil;
 
     @Override
+    public Page<PointsProduct> getPointsProductPage(int page, int size, String category) {
+        // 调用重载方法
+        return getPointsProductPage(page, size, category, null);
+    }
+
+    /**
+     * 分页查询积分商品（带热门标记的扩展方法）
+     */
     public Page<PointsProduct> getPointsProductPage(int page, int size, String category, Boolean isHot) {
         // 构建缓存键
         StringBuilder cacheKey = new StringBuilder(CacheConstants.POINTS_PRODUCT_LIST_KEY);
@@ -124,5 +132,27 @@ public class PointsProductServiceImpl extends ServiceImpl<PointsProductMapper, P
         redisUtil.set(cacheKey, result, CacheConstants.MEDIUM_EXPIRE_TIME);
 
         return result;
+    }
+
+    @Override
+    public Page<PointsProduct> adminListPointsProducts(Integer page, Integer size, String name, String category) {
+        Page<PointsProduct> pageParam = new Page<>(page, size);
+
+        LambdaQueryWrapper<PointsProduct> queryWrapper = new LambdaQueryWrapper<>();
+
+        // 条件查询
+        if (StringUtils.hasText(name)) {
+            queryWrapper.like(PointsProduct::getName, name);
+        }
+
+        if (StringUtils.hasText(category)) {
+            queryWrapper.eq(PointsProduct::getCategory, category);
+        }
+
+        // 按排序号降序，创建时间降序排序
+        queryWrapper.orderByDesc(PointsProduct::getSortOrder)
+                .orderByDesc(PointsProduct::getCreateTime);
+
+        return page(pageParam, queryWrapper);
     }
 }

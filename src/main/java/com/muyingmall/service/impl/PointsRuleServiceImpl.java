@@ -11,6 +11,8 @@ import com.muyingmall.service.PointsRuleService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+
 /**
  * 积分规则服务实现类
  */
@@ -92,5 +94,30 @@ public class PointsRuleServiceImpl extends ServiceImpl<PointsRuleMapper, PointsR
                 .set(PointsRule::getEnabled, 0);
 
         return update(updateWrapper);
+    }
+
+    @Override
+    public Page<PointsRule> adminListPointsRules(Integer page, Integer size, String name) {
+        Page<PointsRule> pageParam = new Page<>(page, size);
+
+        LambdaQueryWrapper<PointsRule> queryWrapper = new LambdaQueryWrapper<>();
+
+        if (StringUtils.hasText(name)) {
+            queryWrapper.like(PointsRule::getTitle, name);
+        }
+
+        queryWrapper.orderByAsc(PointsRule::getSort)
+                .orderByDesc(PointsRule::getCreateTime);
+
+        return page(pageParam, queryWrapper);
+    }
+
+    @Override
+    public List<PointsRule> getAllRules() {
+        LambdaQueryWrapper<PointsRule> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByAsc(PointsRule::getSort)
+                .orderByDesc(PointsRule::getCreateTime);
+
+        return list(queryWrapper);
     }
 }

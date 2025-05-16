@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.muyingmall.common.CacheConstants;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.dto.OrderCreateDTO;
@@ -17,6 +18,7 @@ import com.muyingmall.entity.UserAddress;
 import com.muyingmall.enums.OrderStatus;
 import com.muyingmall.enums.PaymentStatus;
 import com.muyingmall.event.OrderCompletedEvent;
+import com.muyingmall.event.OrderStatusChangedEvent;
 import com.muyingmall.mapper.CartMapper;
 import com.muyingmall.mapper.OrderMapper;
 import com.muyingmall.mapper.OrderProductMapper;
@@ -436,28 +438,36 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new BusinessException("当前订单状态不可取消");
         }
 
+        // 保存旧状态用于发送消息通知
+        String oldStatus = order.getStatus().getCode();
+
         // 更新订单状态
         order.setStatus(OrderStatus.CANCELLED);
         order.setCancelTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
-        updateById(order);
+        boolean result = updateById(order);
 
-        // 恢复库存
-        LambdaQueryWrapper<OrderProduct> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(OrderProduct::getOrderId, orderId);
-        List<OrderProduct> orderProducts = orderProductMapper.selectList(queryWrapper);
+        if (result) {
+            // 恢复库存
+            LambdaQueryWrapper<OrderProduct> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(OrderProduct::getOrderId, orderId);
+            List<OrderProduct> orderProducts = orderProductMapper.selectList(queryWrapper);
 
-        for (OrderProduct orderProduct : orderProducts) {
-            productService.update(
-                    new LambdaUpdateWrapper<Product>()
-                            .eq(Product::getProductId, orderProduct.getProductId())
-                            .setSql("stock = stock + " + orderProduct.getQuantity()));
+            for (OrderProduct orderProduct : orderProducts) {
+                productService.update(
+                        new LambdaUpdateWrapper<Product>()
+                                .eq(Product::getProductId, orderProduct.getProductId())
+                                .setSql("stock = stock + " + orderProduct.getQuantity()));
+            }
+
+            // 清除订单缓存
+            clearOrderCache(orderId, userId);
+
+            // 发送订单状态变更消息通知
+            sendOrderStatusChangeNotification(order, oldStatus, ORDER_STATUS_CANCELLED);
         }
 
-        // 清除订单缓存
-        clearOrderCache(orderId, userId);
-
-        return true;
+        return result;
     }
 
     @Override
@@ -531,7 +541,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
 
         // 记录旧状态，用于事件
-        OrderStatus oldStatus = order.getStatus();
+        String oldStatus = order.getStatus().getCode();
 
         // 更新订单状态
         order.setStatus(OrderStatus.COMPLETED);
@@ -543,15 +553,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (result) {
             log.info("订单 {} 状态更新为 COMPLETED 成功", orderId);
             try {
+                // 发布订单完成事件
                 eventPublisher.publishEvent(new OrderCompletedEvent(
                         order.getOrderId(),
                         order.getUserId(),
                         order.getActualAmount(),
                         order.getOrderNo()));
                 log.info("成功发布 OrderCompletedEvent for Order ID {}", order.getOrderId());
+
+                // 发送订单状态变更消息通知
+                sendOrderStatusChangeNotification(order, oldStatus, ORDER_STATUS_COMPLETED);
             } catch (Exception pubEx) {
                 // 事件发布失败不应影响主流程，但需要记录错误
-                log.error("发布 OrderCompletedEvent 失败 for Order ID {}: {}", order.getOrderId(), pubEx.getMessage(),
+                log.error("发布事件失败 for Order ID {}: {}", order.getOrderId(), pubEx.getMessage(),
                         pubEx);
             }
         } else {
@@ -656,6 +670,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new BusinessException("订单不存在");
         }
 
+        // 保存旧状态用于发送消息通知
+        String oldStatus = order.getStatus().getCode();
+
         // 更新订单状态
         order.setStatus(EnumUtil.getOrderStatusByCode(status));
         order.setRemark(remark);
@@ -675,6 +692,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 清除订单缓存
         if (result) {
             clearOrderCache(orderId, order.getUserId());
+
+            // 发送订单状态变更消息通知
+            sendOrderStatusChangeNotification(order, oldStatus, status);
         }
 
         return result;
@@ -693,6 +713,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new BusinessException("当前订单状态不可发货");
         }
 
+        // 保存旧状态用于发送消息通知
+        String oldStatus = order.getStatus().getCode();
+
         // 更新订单状态
         order.setStatus(OrderStatus.SHIPPED);
         order.setShippingTime(LocalDateTime.now());
@@ -704,6 +727,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 清除订单缓存
         if (result) {
             clearOrderCache(orderId, order.getUserId());
+
+            // 发送订单状态变更消息通知
+            sendOrderStatusChangeNotification(order, oldStatus, ORDER_STATUS_SHIPPED);
         }
 
         return result;
@@ -790,6 +816,33 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         statistics.put("cancelledCount", cancelledCount);
 
         return statistics;
+    }
+
+    @Override
+    public BigDecimal getSalesBetween(LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            // 查询指定时间段内的已完成订单
+            QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("status", "completed") // 假设status=completed表示已完成
+                    .between("create_time", startTime, endTime);
+
+            List<Order> orders = this.list(queryWrapper);
+
+            // 计算总销售额
+            BigDecimal totalSales = BigDecimal.ZERO;
+            if (orders != null && !orders.isEmpty()) {
+                for (Order order : orders) {
+                    if (order.getActualAmount() != null) {
+                        totalSales = totalSales.add(order.getActualAmount());
+                    }
+                }
+            }
+
+            return totalSales;
+        } catch (Exception e) {
+            log.error("获取时间段销售额失败", e);
+            return BigDecimal.ZERO;
+        }
     }
 
     /**
@@ -919,6 +972,36 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);
             log.debug("清除用户订单列表缓存: userId={}", userId);
+        }
+    }
+
+    /**
+     * 更新订单状态后发送消息通知
+     *
+     * @param order     订单
+     * @param oldStatus 原状态
+     * @param newStatus 新状态
+     */
+    private void sendOrderStatusChangeNotification(Order order, String oldStatus, String newStatus) {
+        try {
+            String extra = String.format("{\"orderId\":%d,\"oldStatus\":\"%s\",\"newStatus\":\"%s\"}",
+                    order.getOrderId(), oldStatus, newStatus);
+
+            OrderStatusChangedEvent event = new OrderStatusChangedEvent(
+                    this,
+                    order.getUserId(),
+                    order.getOrderId(),
+                    order.getOrderNo(),
+                    oldStatus,
+                    newStatus,
+                    extra);
+
+            eventPublisher.publishEvent(event);
+            log.info("已发送订单状态变更消息通知: orderId={}, userId={}, oldStatus={}, newStatus={}",
+                    order.getOrderId(), order.getUserId(), oldStatus, newStatus);
+        } catch (Exception e) {
+            log.error("发送订单状态变更消息通知失败: orderId={}, error={}",
+                    order.getOrderId(), e.getMessage(), e);
         }
     }
 }

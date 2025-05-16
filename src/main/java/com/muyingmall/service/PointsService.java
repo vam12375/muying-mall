@@ -1,6 +1,7 @@
 package com.muyingmall.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.muyingmall.entity.PointsHistory;
 import com.muyingmall.entity.PointsProduct;
 import com.muyingmall.entity.PointsRule;
@@ -9,6 +10,7 @@ import com.muyingmall.entity.UserPoints;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -148,4 +150,71 @@ public interface PointsService extends IService<UserPoints> {
      * @param orderAmount 订单金额
      */
     void awardPointsForOrder(Integer userId, Integer orderId, BigDecimal orderAmount);
+
+    /**
+     * 管理员分页查询积分历史记录
+     *
+     * @param page      页码
+     * @param size      每页数量
+     * @param userId    用户ID，可为空
+     * @param type      积分类型，可为空
+     * @param source    积分来源，可为空
+     * @param startDate 开始日期，可为空
+     * @param endDate   结束日期，可为空
+     * @return 积分历史记录分页
+     */
+    Page<PointsHistory> adminListPointsHistory(Integer page, Integer size, Integer userId,
+            String type, String source, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 管理员调整用户积分
+     *
+     * @param userId      用户ID
+     * @param points      积分值，正数为增加，负数为减少
+     * @param description 描述
+     * @return 是否成功
+     */
+    boolean adminAdjustPoints(Integer userId, Integer points, String description);
+
+    /**
+     * 管理员查询积分兑换记录
+     *
+     * @param page      页码
+     * @param size      每页数量
+     * @param userId    用户ID，可为空
+     * @param productId 商品ID，可为空
+     * @param status    状态，可为空
+     * @param startDate 开始日期，可为空
+     * @param endDate   结束日期，可为空
+     * @return 积分兑换记录分页
+     */
+    Page<PointsExchange> adminListPointsExchanges(Integer page, Integer size, Integer userId,
+            Long productId, String status, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 更新积分兑换状态
+     *
+     * @param id     兑换记录ID
+     * @param status 状态
+     * @return 是否成功
+     */
+    boolean updateExchangeStatus(Long id, String status);
+
+    /**
+     * 获取积分统计数据
+     *
+     * @param startDate 开始日期，可为空
+     * @param endDate   结束日期，可为空
+     * @return 统计数据
+     */
+    Map<String, Object> getPointsStats(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 分页查询用户积分列表并关联用户信息
+     *
+     * @param page         分页参数
+     * @param queryWrapper 查询条件
+     * @return 分页结果
+     */
+    Page<UserPoints> pageWithUser(Page<UserPoints> page, LambdaQueryWrapper<UserPoints> queryWrapper);
 }

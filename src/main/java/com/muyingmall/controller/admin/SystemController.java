@@ -416,6 +416,29 @@ public class SystemController {
     }
 
     /**
+     * 刷新Redis服务器状态
+     * 清除部分缓存并返回最新的服务器信息
+     */
+    @PostMapping("/redis/refresh")
+    public Result<Map<String, Object>> refreshRedisStats() {
+        log.info("接收到刷新Redis状态请求");
+        try {
+            // 清除部分系统缓存，但不清除用户会话和重要数据
+            Set<String> keys = redisTemplate.keys("product:*");
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+                log.info("已清除商品相关缓存, 共{}个键", keys.size());
+            }
+            
+            // 返回最新的Redis服务器信息
+            return getRedisInfo();
+        } catch (Exception e) {
+            log.error("刷新Redis状态失败", e);
+            return Result.error("刷新Redis状态失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 判断键是否为Spring Session相关的键
      * 
      * @param key 键名

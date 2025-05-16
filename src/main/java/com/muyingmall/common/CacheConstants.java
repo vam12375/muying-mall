@@ -230,4 +230,69 @@ public class CacheConstants {
      * 通用长时缓存过期时间（秒）
      */
     public static final long LONG_EXPIRE_TIME = 86400; // 24小时
+
+    /**
+     * 积分系统缓存前缀
+     */
+    public static final String POINTS_KEY_PREFIX = "points:";
+
+    /**
+     * 用户签到状态缓存键
+     */
+    public static final String USER_SIGNIN_STATUS_KEY = POINTS_KEY_PREFIX + "signin:status:";
+
+    /**
+     * 用户积分历史缓存键
+     */
+    public static final String USER_POINTS_HISTORY_KEY = POINTS_KEY_PREFIX + "history:";
+
+    /**
+     * 用户签到日历缓存键
+     */
+    public static final String USER_SIGNIN_CALENDAR_KEY = POINTS_KEY_PREFIX + "signin:calendar:";
+
+    /**
+     * 积分系统缓存过期时间（秒）
+     */
+    public static final long POINTS_STATUS_EXPIRE_TIME = 300; // 5分钟
+
+    /**
+     * 积分历史缓存过期时间（秒）
+     */
+    public static final long POINTS_HISTORY_EXPIRE_TIME = 600; // 10分钟
+
+    /**
+     * 签到日历缓存过期时间（秒）
+     */
+    public static final long SIGNIN_CALENDAR_EXPIRE_TIME = 3600; // 1小时
+
+    /**
+     * 消息系统缓存前缀
+     */
+    public static final String MESSAGE_KEY_PREFIX = "message:";
+
+    /**
+     * 用户未读消息计数缓存键
+     */
+    public static final String USER_UNREAD_COUNT_KEY = MESSAGE_KEY_PREFIX + "unread:count:";
+
+    /**
+     * 用户消息列表缓存键
+     */
+    public static final String USER_MESSAGES_KEY = MESSAGE_KEY_PREFIX + "list:";
+
+    /**
+     * 用户未读消息按类型统计缓存键
+     */
+    public static final String USER_UNREAD_TYPE_KEY = MESSAGE_KEY_PREFIX + "unread:type:";
+
+    /**
+     * 消息计数缓存过期时间（秒）
+     */
+    public static final long MESSAGE_COUNT_EXPIRE_TIME = 60; // 1分钟
+
+    /**
+     * 消息列表缓存过期时间（秒）
+     */
+    public static final long MESSAGE_LIST_EXPIRE_TIME = 300; // 5分钟
 }

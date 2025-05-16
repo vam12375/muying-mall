@@ -545,18 +545,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 查询缓存
         Object cacheResult = redisUtil.get(cacheKey);
         if (cacheResult != null) {
-            log.debug("从缓存中获取用户信息: userId={}", userId);
+            log.debug("从缓存中获取用户详情: userId={}", userId);
             return (User) cacheResult;
         }
 
         // 缓存未命中，从数据库查询
-        log.debug("缓存未命中，从数据库查询用户信息: userId={}", userId);
-        User user = getBaseMapper().selectById(userId);
+        log.debug("缓存未命中，从数据库查询用户详情: userId={}", userId);
 
-        // 如果用户存在，则缓存结果
+        // 从数据库查询用户信息
+        User user = getById(userId);
+
+        // 如果用户存在，缓存结果
         if (user != null) {
             redisUtil.set(cacheKey, user, CacheConstants.USER_EXPIRE_TIME);
-            log.debug("将用户信息缓存到Redis: userId={}", userId);
+            log.debug("将用户详情缓存到Redis: userId={}, 过期时间={}秒", userId, CacheConstants.USER_EXPIRE_TIME);
         }
 
         return user;
@@ -615,32 +617,70 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param user 用户对象
      */
     private void clearUserCache(User user) {
-        if (user == null) {
+        if (user == null || user.getUserId() == null) {
             return;
         }
 
-        // 清除用户ID缓存
-        String userIdCacheKey = CacheConstants.USER_DETAIL_KEY + user.getUserId();
-        redisUtil.del(userIdCacheKey);
+        try {
+            // 用户详情缓存
+            String detailCacheKey = CacheConstants.USER_DETAIL_KEY + user.getUserId();
+            redisUtil.del(detailCacheKey);
+            log.debug("清除用户详情缓存: userId={}", user.getUserId());
 
-        // 如果有用户名，清除用户名缓存
-        if (StringUtils.hasText(user.getUsername())) {
-            String usernameCacheKey = CacheConstants.USER_NAME_KEY + user.getUsername();
-            redisUtil.del(usernameCacheKey);
-        }
+            // 用户名查询缓存（仅当用户名更新时才需要清除）
+            if (user.getUsername() != null) {
+                String usernameCacheKey = CacheConstants.USER_NAME_KEY + user.getUsername();
+                redisUtil.del(usernameCacheKey);
+                log.debug("清除用户名查询缓存: username={}", user.getUsername());
+            }
 
-        // 如果有邮箱，清除邮箱缓存
-        if (StringUtils.hasText(user.getEmail())) {
-            String emailCacheKey = CacheConstants.USER_EMAIL_KEY + user.getEmail();
-            redisUtil.del(emailCacheKey);
-        }
+            // 邮箱查询缓存（仅当邮箱更新时才需要清除）
+            if (user.getEmail() != null) {
+                String emailCacheKey = CacheConstants.USER_EMAIL_KEY + user.getEmail();
+                redisUtil.del(emailCacheKey);
+                log.debug("清除邮箱查询缓存: email={}", user.getEmail());
+            }
 
-        // 清除用户列表缓存
-        // 使用通配符删除所有用户列表相关缓存
-        String userListPattern = CacheConstants.USER_LIST_KEY + "*";
-        Set<String> keys = redisTemplate.keys(userListPattern);
-        if (keys != null && !keys.isEmpty()) {
-            redisTemplate.delete(keys);
+            // 用户令牌缓存（一般不需要在这里清除，通常在登出时清除）
+            // 如果是更改密码或者账号状态变更，可能需要强制清除令牌缓存
+            if (user.getPassword() != null || user.getStatus() != null) {
+                // 查找并清除该用户的所有令牌缓存
+                Set<String> tokenKeys = redisUtil.keys(CacheConstants.USER_TOKEN_KEY + "*");
+                if (tokenKeys != null && !tokenKeys.isEmpty()) {
+                    // 遍历令牌，检查是否属于当前用户
+                    for (String tokenKey : tokenKeys) {
+                        try {
+                            String token = tokenKey.substring(CacheConstants.USER_TOKEN_KEY.length());
+                            // 从令牌中提取用户信息
+                            Claims claims = jwtUtils.getClaimsFromToken(token);
+                            if (claims != null) {
+                                Integer tokenUserId = claims.get("userId", Integer.class);
+                                if (tokenUserId != null && tokenUserId.equals(user.getUserId())) {
+                                    // 属于当前用户的令牌，清除缓存
+                                    redisUtil.del(tokenKey);
+                                    log.debug("清除用户令牌缓存: userId={}, token={}", user.getUserId(), token);
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.error("解析令牌失败: {}", e.getMessage());
+                            // 继续处理下一个令牌
+                        }
+                    }
+                }
+            }
+
+            // 清除用户列表缓存 (可能涉及分页查询)
+            // 适用于用户信息更新影响列表显示的情况
+            // 使用模式匹配删除所有与用户列表相关的缓存
+            Set<String> listKeys = redisUtil.keys(CacheConstants.USER_LIST_KEY + "*");
+            if (listKeys != null && !listKeys.isEmpty()) {
+                redisUtil.del(listKeys.toArray(new String[0]));
+                log.debug("清除用户列表缓存，共{}个键", listKeys.size());
+            }
+
+            log.info("已清除用户相关缓存: userId={}", user.getUserId());
+        } catch (Exception e) {
+            log.error("清除用户缓存失败: userId={}, error={}", user.getUserId(), e.getMessage());
         }
     }
 }

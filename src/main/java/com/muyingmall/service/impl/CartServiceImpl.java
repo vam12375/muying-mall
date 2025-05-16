@@ -267,4 +267,96 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         redisUtil.del(cartSelectedCacheKey);
         log.debug("清除用户购物车选中项缓存: userId={}", userId);
     }
+
+    /**
+     * 获取用户购物车商品总数
+     *
+     * @param userId 用户ID
+     * @return 购物车商品总数
+     */
+    @Override
+    public int getCartCount(Integer userId) {
+        if (userId == null) {
+            return 0;
+        }
+
+        // 构建缓存键
+        String cacheKey = CacheConstants.CART_COUNT_KEY + userId;
+        
+        // 查询缓存
+        Object cacheResult = redisUtil.get(cacheKey);
+        if (cacheResult != null) {
+            log.debug("从缓存中获取用户购物车商品数量: userId={}", userId);
+            return (int) cacheResult;
+        }
+        
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询用户购物车商品数量: userId={}", userId);
+        
+        // 查询购物车商品总数
+        LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Cart::getUserId, userId)
+                .eq(Cart::getStatus, 1); // 只计算有效的购物车项
+        
+        // 获取购物车列表
+        List<Cart> cartList = list(queryWrapper);
+        
+        // 计算商品总数
+        int totalCount = 0;
+        if (cartList != null && !cartList.isEmpty()) {
+            for (Cart cart : cartList) {
+                totalCount += cart.getQuantity();
+            }
+        }
+        
+        // 缓存结果
+        redisUtil.set(cacheKey, totalCount, CacheConstants.CART_COUNT_EXPIRE_TIME);
+        log.debug("将用户购物车商品数量缓存到Redis: userId={}, count={}, 过期时间={}秒", 
+                userId, totalCount, CacheConstants.CART_COUNT_EXPIRE_TIME);
+        
+        return totalCount;
+    }
+    
+    /**
+     * 获取用户购物车中选中的商品
+     *
+     * @param userId 用户ID
+     * @return 选中的购物车项列表
+     */
+    @Override
+    public List<Cart> getSelectedCarts(Integer userId) {
+        if (userId == null) {
+            return null;
+        }
+        
+        // 构建缓存键
+        String cacheKey = CacheConstants.CART_SELECTED_KEY + userId;
+        
+        // 查询缓存
+        Object cacheResult = redisUtil.get(cacheKey);
+        if (cacheResult != null) {
+            log.debug("从缓存中获取用户购物车选中项: userId={}", userId);
+            return (List<Cart>) cacheResult;
+        }
+        
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询用户购物车选中项: userId={}", userId);
+        
+        // 查询选中的购物车项
+        LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Cart::getUserId, userId)
+                .eq(Cart::getStatus, 1) // 只查询有效的购物车项
+                .eq(Cart::getSelected, 1) // 只查询选中的购物车项
+                .orderByDesc(Cart::getUpdateTime);
+        
+        List<Cart> selectedCarts = list(queryWrapper);
+        
+        // 缓存结果
+        if (selectedCarts != null && !selectedCarts.isEmpty()) {
+            redisUtil.set(cacheKey, selectedCarts, CacheConstants.CART_EXPIRE_TIME);
+            log.debug("将用户购物车选中项缓存到Redis: userId={}, count={}", userId, selectedCarts.size());
+        }
+        
+        return selectedCarts;
+    }
 }
