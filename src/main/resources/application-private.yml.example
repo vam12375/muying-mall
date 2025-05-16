@@ -1,0 +1,25 @@
+# 数据库密码
+spring:
+  datasource:
+    password: your_database_password_here
+  data:
+    redis:
+      password: your_redis_password_here
+
+# 支付宝敏感信息
+alipay:
+  app-id: your_alipay_appid_here  # 支付宝开放平台应用的appid
+  private-key: your_private_key_here  # 开发者私钥，需要正确配置RSA私钥
+  public-key: your_public_key_here   # 支付宝公钥，从支付宝开放平台获取
+
+# 微信支付敏感信息
+wechat:
+  pay:
+    app-id: your_wechat_appid_here
+    mch-id: your_mch_id_here
+    mch-serial-number: your_mch_serial_number_here
+    api-v3-key: your_api_v3_key_here
+
+# JWT密钥
+jwt:
+  secret: your_jwt_secret_key_here  # 确保这个密钥足够长且复杂，用于HS512建议至少64字节 
