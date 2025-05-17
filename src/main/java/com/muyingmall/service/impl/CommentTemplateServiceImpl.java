@@ -7,7 +7,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.entity.CommentTemplate;
+import com.muyingmall.entity.Product;
 import com.muyingmall.mapper.CommentTemplateMapper;
+import com.muyingmall.mapper.ProductMapper;
 import com.muyingmall.service.CommentTemplateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 评价模板服务实现类
@@ -25,6 +30,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommentTemplateServiceImpl extends ServiceImpl<CommentTemplateMapper, CommentTemplate>
         implements CommentTemplateService {
+
+    private final ProductMapper productMapper;
 
     @Override
     public List<CommentTemplate> getSystemTemplates(Integer rating, Integer categoryId) {
@@ -52,6 +59,54 @@ public class CommentTemplateServiceImpl extends ServiceImpl<CommentTemplateMappe
         queryWrapper.orderByDesc(CommentTemplate::getWeight);
 
         return this.list(queryWrapper);
+    }
+    
+    @Override
+    public List<CommentTemplate> getRecommendedTemplates(Integer userId, Integer productId, Integer rating, Integer limit) {
+        // 结果列表
+        List<CommentTemplate> recommendedTemplates = new ArrayList<>();
+        
+        // 获取商品类别
+        Integer categoryId = null;
+        if (productId != null) {
+            Product product = productMapper.selectById(productId);
+            if (product != null) {
+                categoryId = product.getCategoryId();
+            }
+        }
+        
+        // 1. 获取匹配评分和类别的系统模板
+        List<CommentTemplate> matchedTemplates = getSystemTemplates(rating, categoryId);
+        recommendedTemplates.addAll(matchedTemplates);
+        
+        // 2. 如果用户ID不为空，获取用户的自定义模板
+        if (userId != null) {
+            List<CommentTemplate> userTemplates = getUserTemplates(userId);
+            
+            // 过滤出符合评分范围的模板
+            if (rating != null) {
+                userTemplates = userTemplates.stream()
+                    .filter(template -> 
+                        template.getMinRating() == null || template.getMinRating() <= rating)
+                    .filter(template -> 
+                        template.getMaxRating() == null || template.getMaxRating() >= rating)
+                    .collect(Collectors.toList());
+            }
+            
+            recommendedTemplates.addAll(userTemplates);
+        }
+        
+        // 3. 按使用次数和权重排序
+        recommendedTemplates.sort(Comparator
+                .comparing(CommentTemplate::getUseCount, Comparator.reverseOrder())
+                .thenComparing(CommentTemplate::getWeight, Comparator.reverseOrder()));
+        
+        // 4. 如果指定了限制数量，则截取指定数量的模板
+        if (limit != null && limit > 0 && recommendedTemplates.size() > limit) {
+            return recommendedTemplates.subList(0, limit);
+        }
+        
+        return recommendedTemplates;
     }
 
     @Override

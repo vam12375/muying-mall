@@ -29,6 +29,17 @@ public interface CommentTemplateService extends IService<CommentTemplate> {
     List<CommentTemplate> getUserTemplates(Integer userId);
 
     /**
+     * 获取推荐模板列表，综合考虑评分、商品类别和用户历史选择
+     *
+     * @param userId    用户ID (可选)
+     * @param productId 商品ID (可选)
+     * @param rating    评分 (可选)
+     * @param limit     限制数量 (可选)
+     * @return 推荐模板列表
+     */
+    List<CommentTemplate> getRecommendedTemplates(Integer userId, Integer productId, Integer rating, Integer limit);
+
+    /**
      * 创建用户自定义模板
      *
      * @param template 模板对象

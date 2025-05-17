@@ -29,6 +29,21 @@ public class CommentRewardConfig implements Serializable {
     private String rewardType;
 
     /**
+     * 奖励名称
+     */
+    private String rewardName;
+
+    /**
+     * 奖励描述
+     */
+    private String rewardDescription;
+
+    /**
+     * 奖励等级：1-基础，2-进阶，3-高级
+     */
+    private Integer rewardLevel;
+
+    /**
      * 奖励值
      */
     private Integer rewardValue;
@@ -39,9 +54,24 @@ public class CommentRewardConfig implements Serializable {
     private Integer minContentLength;
 
     /**
+     * 最低评分要求
+     */
+    private Integer minRating;
+
+    /**
      * 是否要求图片：0-不要求，1-要求
      */
     private Integer requireImage;
+
+    /**
+     * 最低图片数量要求
+     */
+    private Integer minImages;
+
+    /**
+     * 是否首次评价奖励：0-否，1-是
+     */
+    private Integer isFirstComment;
 
     /**
      * 状态：0-禁用，1-启用

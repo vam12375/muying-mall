@@ -13,7 +13,7 @@ public class CommentStatsDTO {
     /**
      * 总评价数量
      */
-    private Long totalComments;
+    private Integer totalComments;
 
     /**
      * 平均评分
@@ -54,10 +54,10 @@ public class CommentStatsDTO {
     /**
      * 有图片的评价数量
      */
-    private Long commentWithImages;
+    private Integer commentWithImages;
 
     /**
      * 匿名评价数量
      */
-    private Long anonymousComments;
+    private Integer anonymousComments;
 }

@@ -534,7 +534,8 @@ ADD COLUMN `tracking_no` VARCHAR(64) COMMENT '物流单号' AFTER `shipping_time
 ADD COLUMN `shipping_company` VARCHAR(64) COMMENT '物流公司' AFTER `tracking_no`; 
 -- 优化订单查询
    ALTER TABLE `order` ADD INDEX `idx_user_status_create_time` (`user_id`, `status`, `create_time`);
-
+-- 为订单表添加评价状态列
+ALTER TABLE `order` ADD COLUMN `is_commented` TINYINT(1) DEFAULT 0 COMMENT '是否已评价：0-未评价，1-已评价' AFTER `cancel_reason`;
 --添加
 ALTER TABLE `order` ADD COLUMN `pay_time` DATETIME COMMENT '支付时间' AFTER `payment_id`;
    -- 添加缺失的外键关联
