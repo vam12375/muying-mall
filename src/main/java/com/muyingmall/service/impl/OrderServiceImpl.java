@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -217,7 +218,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
             // 计算积分抵扣金额（每100积分抵扣1元）
             BigDecimal pointsDiscountAmount = new BigDecimal(pointsUsed).divide(new BigDecimal("100"), 2,
-                    BigDecimal.ROUND_DOWN);
+                    RoundingMode.DOWN);
 
             // 限制最大抵扣金额为50元
             BigDecimal maxDiscount = new BigDecimal("50");
@@ -1003,5 +1004,32 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             log.error("发送订单状态变更消息通知失败: orderId={}, error={}",
                     order.getOrderId(), e.getMessage(), e);
         }
+    }
+
+    @Override
+    public boolean isOrderCommented(Integer orderId) {
+        Order order = this.getById(orderId);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+        return order.getIsCommented() != null && order.getIsCommented() == 1;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateOrderCommentStatus(Integer orderId, Integer isCommented) {
+        Order order = this.getById(orderId);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+
+        int result = baseMapper.updateOrderCommentStatus(orderId, isCommented);
+
+        // 如果更新成功，清除相关缓存
+        if (result > 0) {
+            clearOrderCache(orderId, order.getUserId());
+        }
+
+        return result > 0;
     }
 }

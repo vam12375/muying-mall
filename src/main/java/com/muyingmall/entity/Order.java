@@ -182,6 +182,11 @@ public class Order implements Serializable {
     private String cancelReason;
 
     /**
+     * 是否已评价：0-未评价，1-已评价
+     */
+    private Integer isCommented;
+
+    /**
      * 是否删除：0-未删除，1-已删除
      */
     @TableLogic

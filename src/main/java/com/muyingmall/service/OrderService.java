@@ -153,4 +153,21 @@ public interface OrderService extends IService<Order> {
      * @return 销售总额
      */
     BigDecimal getSalesBetween(LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 检查订单是否已评价
+     * 
+     * @param orderId 订单ID
+     * @return 是否已评价
+     */
+    boolean isOrderCommented(Integer orderId);
+    
+    /**
+     * 更新订单评价状态
+     * 
+     * @param orderId 订单ID
+     * @param isCommented 评价状态：0-未评价，1-已评价
+     * @return 是否成功
+     */
+    boolean updateOrderCommentStatus(Integer orderId, Integer isCommented);
 }

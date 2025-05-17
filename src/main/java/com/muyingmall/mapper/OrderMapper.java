@@ -45,4 +45,14 @@ public interface OrderMapper extends BaseMapper<Order> {
         int updateOrderStatusByAlternateId(@Param("orderId") Integer orderId,
                         @Param("status") String status,
                         @Param("payTime") LocalDateTime payTime);
+
+        /**
+         * 更新订单评价状态
+         * 
+         * @param orderId     订单ID
+         * @param isCommented 评价状态：0-未评价，1-已评价
+         * @return 影响的行数
+         */
+        @Update("UPDATE `order` SET `is_commented`=#{isCommented}, `update_time`=NOW() WHERE `order_id`=#{orderId}")
+        int updateOrderCommentStatus(@Param("orderId") Integer orderId, @Param("isCommented") Integer isCommented);
 }
