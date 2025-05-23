@@ -14,6 +14,7 @@ import com.muyingmall.enums.PaymentStatus;
 import com.muyingmall.enums.RefundStatus;
 import com.muyingmall.exception.BusinessException;
 import com.muyingmall.mapper.RefundMapper;
+import com.muyingmall.service.AlipayRefundService;
 import com.muyingmall.service.OrderService;
 import com.muyingmall.service.PaymentService;
 import com.muyingmall.service.RefundLogService;
@@ -34,6 +35,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -50,6 +52,7 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
     private final UserService userService;
     private final RefundStateService refundStateService;
     private final RefundLogService refundLogService;
+    private final AlipayRefundService alipayRefundService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -105,8 +108,34 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
         // 保存退款申请
         save(refund);
 
-        // 更新订单状态为退款中
-        refundStateService.sendEvent(refund.getId(), RefundEvent.SUBMIT, "USER", "用户申请退款");
+        // 触发状态机SUBMIT事件，确保状态转换被正确记录
+        try {
+            refundStateService.sendEvent(refund.getId(), RefundEvent.SUBMIT, "USER",
+                    "用户" + userId, userId, "用户申请退款：" + refundReason);
+            log.info("已触发退款申请SUBMIT事件，退款ID: {}, 用户ID: {}", refund.getId(), userId);
+        } catch (Exception e) {
+            // 不影响退款申请的创建，但需要记录异常
+            log.error("触发退款申请SUBMIT事件失败，但退款申请已创建，退款ID: {}, 错误: {}", refund.getId(), e.getMessage(), e);
+        }
+
+        // 同步更新订单状态为退款中
+        try {
+            Order orderToUpdate = orderService.getById(orderId);
+            OrderStatus currentOrderStatus = orderToUpdate.getStatus();
+
+            // 只有在订单状态允许的情况下才更新订单状态
+            if (currentOrderStatus != OrderStatus.REFUNDING &&
+                    currentOrderStatus != OrderStatus.REFUNDED) {
+                orderToUpdate.setStatus(OrderStatus.REFUNDING);
+                orderService.updateById(orderToUpdate);
+
+                // 记录订单状态变更日志（如果需要）
+                log.info("订单状态已更新为退款中, 订单ID: {}, 退款ID: {}", orderId, refund.getId());
+            }
+        } catch (Exception e) {
+            log.error("更新订单状态失败，但退款申请已创建，订单ID: {}, 错误: {}", orderId, e.getMessage());
+            // 不抛出异常，允许退款申请继续处理
+        }
 
         return refund.getId();
     }
@@ -166,6 +195,29 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
         refund.setAdminName(adminName);
         updateById(refund);
 
+        try {
+            // 根据不同的退款渠道处理退款
+            String transactionId = null;
+            if ("ALIPAY".equals(refundChannel)) {
+                // 调用支付宝退款
+                log.info("开始调用支付宝退款接口, 退款单号: {}", refund.getRefundNo());
+                transactionId = alipayRefundService.refund(refund);
+                if (StringUtils.hasText(transactionId)) {
+                    // 保存支付宝返回的交易号
+                    refund.setTransactionId(transactionId);
+                    updateById(refund);
+                    log.info("支付宝退款调用成功, 退款单号: {}, 交易号: {}", refund.getRefundNo(), transactionId);
+                }
+            }
+            // 其他退款渠道处理...
+            // else if ("WECHAT".equals(refundChannel)) { ... }
+        } catch (Exception e) {
+            log.error("退款处理失败", e);
+            // 发生异常时不影响状态流转，但需要记录日志
+            refundLogService.logStatusChange(refundId, refund.getRefundNo(), refund.getStatus(), refund.getStatus(),
+                    "SYSTEM", null, "系统", "调用退款接口失败: " + e.getMessage());
+        }
+
         // 更新退款状态为处理中
         refundStateService.sendEvent(refundId, RefundEvent.PROCESS, "ADMIN", adminName, adminId,
                 "管理员开始处理退款，渠道：" + refundChannel);
@@ -183,6 +235,24 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
 
         if (!RefundStatus.PROCESSING.getCode().equals(refund.getStatus())) {
             throw new BusinessException("当前退款状态不允许完成");
+        }
+
+        // 如果是支付宝退款，验证退款状态
+        if ("ALIPAY".equals(refund.getRefundChannel())) {
+            try {
+                String refundStatus = alipayRefundService.queryRefundStatus(refund.getRefundNo(), transactionId);
+                log.info("支付宝退款状态查询结果: {}, 退款单号: {}", refundStatus, refund.getRefundNo());
+
+                // 如果支付宝返回退款失败，则不允许标记为完成
+                if ("REFUND_FAIL".equals(refundStatus)) {
+                    throw new BusinessException("支付宝退款失败，无法标记为完成");
+                }
+            } catch (Exception e) {
+                log.error("查询支付宝退款状态失败", e);
+                // 查询失败时，记录日志但允许继续操作
+                refundLogService.logStatusChange(refundId, refund.getRefundNo(), refund.getStatus(), refund.getStatus(),
+                        "SYSTEM", null, "系统", "查询支付宝退款状态失败: " + e.getMessage());
+            }
         }
 
         // 更新退款信息
@@ -305,36 +375,65 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
         if (size == null || size < 1)
             size = 10;
 
+        log.info("管理员查询退款列表: page={}, size={}, status={}, userId={}, orderId={}, startTime={}, endTime={}",
+                page, size, status, userId, orderId, startTime, endTime);
+
         Page<Refund> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Refund> queryWrapper = new LambdaQueryWrapper<>();
 
         // 添加查询条件
         if (StringUtils.hasText(status)) {
             queryWrapper.eq(Refund::getStatus, status);
+            log.debug("添加状态过滤条件: status={}", status);
+        } else {
+            log.debug("未指定状态过滤条件，将返回所有状态的退款申请");
         }
 
         if (userId != null) {
             queryWrapper.eq(Refund::getUserId, userId);
+            log.debug("添加用户ID过滤条件: userId={}", userId);
         }
 
         if (orderId != null) {
             queryWrapper.eq(Refund::getOrderId, orderId);
+            log.debug("添加订单ID过滤条件: orderId={}", orderId);
         }
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         if (StringUtils.hasText(startTime)) {
-            LocalDateTime start = LocalDateTime.parse(startTime, formatter);
-            queryWrapper.ge(Refund::getCreateTime, start);
+            try {
+                LocalDateTime start = LocalDateTime.parse(startTime, formatter);
+                queryWrapper.ge(Refund::getCreateTime, start);
+                log.debug("添加开始时间过滤条件: startTime={}", start);
+            } catch (Exception e) {
+                log.warn("解析开始时间失败: {}, 将忽略此条件", startTime, e);
+            }
         }
 
         if (StringUtils.hasText(endTime)) {
-            LocalDateTime end = LocalDateTime.parse(endTime, formatter);
-            queryWrapper.le(Refund::getCreateTime, end);
+            try {
+                LocalDateTime end = LocalDateTime.parse(endTime, formatter);
+                queryWrapper.le(Refund::getCreateTime, end);
+                log.debug("添加结束时间过滤条件: endTime={}", end);
+            } catch (Exception e) {
+                log.warn("解析结束时间失败: {}, 将忽略此条件", endTime, e);
+            }
         }
 
+        // 默认按创建时间倒序排序
         queryWrapper.orderByDesc(Refund::getCreateTime);
+        log.debug("设置排序: 按创建时间降序");
 
-        return page(pageParam, queryWrapper);
+        // 执行查询
+        Page<Refund> resultPage = page(pageParam, queryWrapper);
+        log.info("查询结果: 总记录数={}, 当前页记录数={}", resultPage.getTotal(), resultPage.getRecords().size());
+
+        // 如果没有记录，记录一下SQL以便调试
+        if (resultPage.getTotal() == 0) {
+            log.warn("未找到符合条件的退款记录，请检查查询条件或数据库");
+        }
+
+        return resultPage;
     }
 
     @Override
@@ -348,63 +447,104 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
     public Map<String, Object> getRefundStatistics(String startTime, String endTime) {
         Map<String, Object> result = new HashMap<>();
 
-        // 处理时间范围
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime start = null;
-        LocalDateTime end = null;
+        try {
+            // 处理时间范围
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime start = null;
+            LocalDateTime end = null;
 
-        if (StringUtils.hasText(startTime)) {
-            start = LocalDateTime.parse(startTime, formatter);
+            if (StringUtils.hasText(startTime)) {
+                start = LocalDateTime.parse(startTime, formatter);
+            }
+
+            if (StringUtils.hasText(endTime)) {
+                end = LocalDateTime.parse(endTime, formatter);
+            }
+
+            // 统计各状态的退款数量
+            QueryWrapper<Refund> queryWrapper = new QueryWrapper<>();
+            if (start != null) {
+                queryWrapper.ge("create_time", start);
+            }
+            if (end != null) {
+                queryWrapper.le("create_time", end);
+            }
+            queryWrapper.select("status, count(*) as count");
+            queryWrapper.groupBy("status");
+
+            Map<String, Long> statusCounts = new HashMap<>();
+            getBaseMapper().selectMaps(queryWrapper).forEach(map -> {
+                String status = (String) map.get("status");
+                Long count = (Long) map.get("count");
+                statusCounts.put(status, count);
+            });
+
+            // 计算总退款金额
+            BigDecimal totalAmount = BigDecimal.ZERO;
+            try {
+                QueryWrapper<Refund> amountQuery = new QueryWrapper<>();
+                if (start != null) {
+                    amountQuery.ge("create_time", start);
+                }
+                if (end != null) {
+                    amountQuery.le("create_time", end);
+                }
+                amountQuery.eq("status", RefundStatus.COMPLETED.getCode());
+                amountQuery.select("sum(amount) as total_amount");
+
+                List<Map<String, Object>> amountResults = getBaseMapper().selectMaps(amountQuery);
+                if (amountResults != null && !amountResults.isEmpty()) {
+                    Map<String, Object> amountMap = amountResults.get(0);
+                    if (amountMap != null && amountMap.get("total_amount") != null) {
+                        totalAmount = (BigDecimal) amountMap.get("total_amount");
+                    }
+                }
+            } catch (Exception e) {
+                log.error("计算总退款金额失败", e);
+                // 失败时使用默认值0
+            }
+
+            // 返回结果
+            result.put("statusCounts", statusCounts);
+            result.put("totalAmount", totalAmount);
+            result.put("pendingCount", statusCounts.getOrDefault(RefundStatus.PENDING.getCode(), 0L));
+            result.put("approvedCount", statusCounts.getOrDefault(RefundStatus.APPROVED.getCode(), 0L));
+            result.put("processingCount", statusCounts.getOrDefault(RefundStatus.PROCESSING.getCode(), 0L));
+            result.put("completedCount", statusCounts.getOrDefault(RefundStatus.COMPLETED.getCode(), 0L));
+            result.put("rejectedCount", statusCounts.getOrDefault(RefundStatus.REJECTED.getCode(), 0L));
+            result.put("failedCount", statusCounts.getOrDefault(RefundStatus.FAILED.getCode(), 0L));
+        } catch (Exception e) {
+            log.error("获取退款统计数据失败", e);
+            // 发生异常时提供默认值
+            result.put("statusCounts", new HashMap<>());
+            result.put("totalAmount", BigDecimal.ZERO);
+            result.put("pendingCount", 0L);
+            result.put("approvedCount", 0L);
+            result.put("processingCount", 0L);
+            result.put("completedCount", 0L);
+            result.put("rejectedCount", 0L);
+            result.put("failedCount", 0L);
         }
-
-        if (StringUtils.hasText(endTime)) {
-            end = LocalDateTime.parse(endTime, formatter);
-        }
-
-        // 统计各状态的退款数量
-        QueryWrapper<Refund> queryWrapper = new QueryWrapper<>();
-        if (start != null) {
-            queryWrapper.ge("create_time", start);
-        }
-        if (end != null) {
-            queryWrapper.le("create_time", end);
-        }
-        queryWrapper.select("status, count(*) as count");
-        queryWrapper.groupBy("status");
-
-        Map<String, Long> statusCounts = new HashMap<>();
-        getBaseMapper().selectMaps(queryWrapper).forEach(map -> {
-            String status = (String) map.get("status");
-            Long count = (Long) map.get("count");
-            statusCounts.put(status, count);
-        });
-
-        // 计算总退款金额
-        QueryWrapper<Refund> amountQuery = new QueryWrapper<>();
-        if (start != null) {
-            amountQuery.ge("create_time", start);
-        }
-        if (end != null) {
-            amountQuery.le("create_time", end);
-        }
-        amountQuery.eq("status", RefundStatus.COMPLETED.getCode());
-        amountQuery.select("sum(amount) as total_amount");
-
-        Map<String, Object> amountMap = getBaseMapper().selectMaps(amountQuery).get(0);
-        BigDecimal totalAmount = amountMap.get("total_amount") != null ? (BigDecimal) amountMap.get("total_amount")
-                : BigDecimal.ZERO;
-
-        // 返回结果
-        result.put("statusCounts", statusCounts);
-        result.put("totalAmount", totalAmount);
-        result.put("pendingCount", statusCounts.getOrDefault(RefundStatus.PENDING.getCode(), 0L));
-        result.put("approvedCount", statusCounts.getOrDefault(RefundStatus.APPROVED.getCode(), 0L));
-        result.put("processingCount", statusCounts.getOrDefault(RefundStatus.PROCESSING.getCode(), 0L));
-        result.put("completedCount", statusCounts.getOrDefault(RefundStatus.COMPLETED.getCode(), 0L));
-        result.put("rejectedCount", statusCounts.getOrDefault(RefundStatus.REJECTED.getCode(), 0L));
-        result.put("failedCount", statusCounts.getOrDefault(RefundStatus.FAILED.getCode(), 0L));
 
         return result;
+    }
+
+    /**
+     * 根据退款单号查询退款记录
+     *
+     * @param refundNo 退款单号
+     * @return 退款记录，如果不存在返回null
+     */
+    @Override
+    public Refund getRefundByRefundNo(String refundNo) {
+        if (!StringUtils.hasText(refundNo)) {
+            return null;
+        }
+
+        LambdaQueryWrapper<Refund> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Refund::getRefundNo, refundNo);
+
+        return getOne(queryWrapper);
     }
 
     /**

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.muyingmall.common.response.Result;
 import com.muyingmall.dto.OrderCreateDTO;
+import com.muyingmall.dto.DirectPurchaseDTO;
 import com.muyingmall.entity.Order;
 import com.muyingmall.entity.OrderProduct;
 import com.muyingmall.entity.User;
@@ -151,9 +152,11 @@ public class OrderController {
 
     /**
      * 取消订单
+     * 可取消的订单状态: 待支付、待发货、已发货
+     * 已完成、已取消、已退款等状态的订单不可取消
      */
     @PutMapping("/{orderId}/cancel")
-    @Operation(summary = "取消订单")
+    @Operation(summary = "取消订单", description = "取消订单，仅待支付、待发货、已发货状态的订单可以取消")
     public Result<Void> cancelOrder(
             @PathVariable("orderId") Integer orderId,
             @RequestParam(required = false) String reason) {
@@ -422,6 +425,56 @@ public class OrderController {
         } catch (Exception e) {
             e.printStackTrace();
             return Result.error("诊断失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 直接购买商品（不添加到购物车）
+     */
+    @PostMapping("/direct-purchase")
+    @Operation(summary = "直接购买商品")
+    public Result<Map<String, Object>> directPurchase(@RequestBody @Valid DirectPurchaseDTO purchaseDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        try {
+            // 打印直接购买请求参数，方便调试
+            System.out.println("直接购买参数: userId=" + user.getUserId() +
+                    ", addressId=" + purchaseDTO.getAddressId() +
+                    ", productId=" + purchaseDTO.getProductId() +
+                    ", quantity=" + purchaseDTO.getQuantity() +
+                    ", specs=" + purchaseDTO.getSpecs() +
+                    ", paymentMethod=" + purchaseDTO.getPaymentMethod() +
+                    ", couponId=" + purchaseDTO.getCouponId() +
+                    ", shippingFee=" + purchaseDTO.getShippingFee() +
+                    ", pointsUsed=" + purchaseDTO.getPointsUsed());
+
+            // 调用服务层创建订单
+            Map<String, Object> orderInfo = orderService.directPurchase(
+                    user.getUserId(),
+                    purchaseDTO.getAddressId(),
+                    purchaseDTO.getProductId(),
+                    purchaseDTO.getQuantity(),
+                    purchaseDTO.getSpecs(),
+                    purchaseDTO.getRemark(),
+                    purchaseDTO.getPaymentMethod(),
+                    purchaseDTO.getCouponId(),
+                    purchaseDTO.getShippingFee(),
+                    purchaseDTO.getPointsUsed());
+
+            return Result.success(orderInfo, "创建成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error("直接购买失败: " + e.getMessage());
         }
     }
 }

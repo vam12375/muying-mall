@@ -129,7 +129,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             boolean alreadySignedToday = (boolean) signInStatus.get("todaySigned");
 
             if (alreadySignedToday) {
-                throw new BusinessException("今日已签到");
+                throw new BusinessException("您今日已签到，请明天再来");
             }
 
             // 获取签到规则 - 避免使用sort列排序
@@ -246,7 +246,16 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             Object cacheResult = redisUtil.get(cacheKey);
             if (cacheResult != null) {
                 log.debug("从缓存中获取用户签到状态: userId={}", userId);
-                return (Map<String, Object>) cacheResult;
+
+                // 直接返回缓存结果前，确保积分总数是最新的
+                Map<String, Object> cachedStatus = (Map<String, Object>) cacheResult;
+
+                // 从数据库获取最新的积分总数
+                Integer latestTotalPoints = getUserPoints(userId);
+                cachedStatus.put("totalPoints", latestTotalPoints);
+                cachedStatus.put("points", latestTotalPoints);
+
+                return cachedStatus;
             }
 
             // 缓存未命中，从数据库查询
@@ -360,6 +369,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
 
             // 构建结果
             result.put("todaySigned", todaySigned);
+            result.put("isSignedIn", todaySigned); // 添加isSignedIn字段，与todaySigned保持一致
             result.put("continuousDays", continuousDays);
             result.put("historyMaxContinuousDays", historyMaxContinuousDays);
             result.put("totalPoints", totalPoints);
@@ -405,6 +415,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             log.error("获取用户 {} 的签到状态失败: {}", userId, e.getMessage(), e);
             // 返回基本信息，避免前端出错
             result.put("todaySigned", false);
+            result.put("isSignedIn", false); // 添加isSignedIn字段，与todaySigned保持一致
             result.put("continuousDays", 0);
             result.put("historyMaxContinuousDays", 0);
             result.put("totalPoints", 0);
@@ -625,7 +636,12 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
                 }
             }
 
-            // 获取最新的签到状态
+            // 清除用户积分状态缓存，确保下次获取的是最新数据
+            String cacheKey = CacheConstants.USER_SIGNIN_STATUS_KEY + userId;
+            redisUtil.del(cacheKey);
+            log.debug("已清除用户积分状态缓存: cacheKey={}", cacheKey);
+
+            // 获取最新的签到状态（重新从数据库获取，避免使用缓存）
             Map<String, Object> status = getSignInStatus(userId);
 
             // 手动更新累计获得的积分值
@@ -637,7 +653,9 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             result.put("earnedPoints", earnedPoints);
             result.put("totalEarnedPoints", totalEarnedPoints); // 添加包含额外奖励的总积分
             // 确保积分值也放在根级别，方便前端直接获取
-            result.put("points", status.get("totalPoints"));
+            result.put("points", totalEarnedPoints); // 前端会使用这个字段，修改为显示包含奖励的总积分
+            result.put("todaySigned", true); // 确保todaySigned为true
+            result.put("isSignedIn", true); // 添加isSignedIn字段，确保和todaySigned一致
             result.put("success", true);
 
             // 如果有连续签到奖励，更新消息
@@ -686,10 +704,12 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
                 result.put("earnedPoints", 0); // 签到失败时设置为0
                 result.put("totalEarnedPoints", 0); // 签到失败时总奖励也为0
                 result.put("points", status.get("totalPoints")); // 使用当前总积分值
+                // 确保todaySigned和isSignedIn字段已经从status中复制过来，无需额外添加
             } catch (Exception ex) {
                 log.error("获取用户 {} 签到状态失败: {}", userId, ex.getMessage());
                 // 添加默认值，避免前端出错
                 result.put("todaySigned", true); // 假设已签到
+                result.put("isSignedIn", true); // 添加isSignedIn字段，确保和todaySigned一致
                 result.put("continuousDays", 0);
                 result.put("historyMaxContinuousDays", 0);
                 result.put("totalPoints", 0);
@@ -710,6 +730,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
 
             // 添加默认值，避免前端出错
             result.put("todaySigned", false);
+            result.put("isSignedIn", false); // 添加isSignedIn字段，确保和todaySigned一致
             result.put("continuousDays", 0);
             result.put("historyMaxContinuousDays", 0);
             result.put("totalPoints", 0);

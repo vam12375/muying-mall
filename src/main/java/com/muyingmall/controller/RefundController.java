@@ -7,6 +7,7 @@ import com.muyingmall.service.RefundService;
 import com.muyingmall.service.RefundStateService;
 import com.muyingmall.util.Result;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -16,8 +17,9 @@ import java.util.Map;
  * 退款控制器
  */
 @RestController
-@RequestMapping("/api/refund")
+@RequestMapping("/refund")
 @RequiredArgsConstructor
+@Slf4j
 public class RefundController {
 
     private final RefundService refundService;
@@ -27,12 +29,18 @@ public class RefundController {
      * 申请退款
      */
     @PostMapping("/apply")
-    public Result<Long> applyRefund(@RequestParam("orderId") Integer orderId,
-                                    @RequestParam("userId") Integer userId,
-                                    @RequestParam("amount") BigDecimal amount,
-                                    @RequestParam("reason") String reason,
-                                    @RequestParam(value = "reasonDetail", required = false) String reasonDetail,
-                                    @RequestParam(value = "evidenceImages", required = false) String evidenceImages) {
+    public Result<Long> applyRefund(@RequestBody Map<String, Object> requestData) {
+        log.info("收到退款申请请求: {}", requestData);
+
+        // 从请求体中获取参数
+        Integer orderId = Integer.valueOf(requestData.get("orderId").toString());
+        Integer userId = Integer.valueOf(requestData.get("userId").toString());
+        BigDecimal amount = new BigDecimal(requestData.get("amount").toString());
+        String reason = (String) requestData.get("reason");
+        String reasonDetail = requestData.get("reasonDetail") != null ? (String) requestData.get("reasonDetail") : null;
+        String evidenceImages = requestData.get("evidenceImages") != null ? requestData.get("evidenceImages").toString()
+                : null;
+
         Long refundId = refundService.applyRefund(orderId, userId, amount, reason, reasonDetail, evidenceImages);
         return Result.success(refundId, "退款申请提交成功");
     }
@@ -75,8 +83,15 @@ public class RefundController {
     public Result<Page<Refund>> getOrderRefunds(@PathVariable("orderId") Integer orderId,
                                                 @RequestParam(value = "page", defaultValue = "1") Integer page,
                                                 @RequestParam(value = "size", defaultValue = "10") Integer size) {
+        log.info("获取订单退款列表请求：orderId={}, page={}, size={}", orderId, page, size);
+        try {
         Page<Refund> refunds = refundService.getOrderRefunds(orderId, page, size);
+            log.info("获取订单退款列表成功：orderId={}, 总记录数={}", orderId, refunds.getTotal());
         return Result.success(refunds);
+        } catch (Exception e) {
+            log.error("获取订单退款列表失败：orderId={}", orderId, e);
+            return Result.error("获取订单退款列表失败：" + e.getMessage());
+        }
     }
 
     /**

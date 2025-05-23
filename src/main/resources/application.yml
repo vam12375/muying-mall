@@ -2,6 +2,11 @@ server:
   port: 8080
   servlet:
     context-path: /api
+  # 添加Tomcat配置，允许请求路径中包含特殊字符
+  tomcat:
+    relaxed-query-chars: '[,],{,},|'
+    relaxed-path-chars: '[,],{,},|'
+    max-http-form-post-size: 20MB
 
 spring:
   application:
@@ -82,9 +87,9 @@ springdoc:
 
 # CORS配置
 cors:
-  allowed-origins: http://localhost:5173,http://localhost:3000,http://localhost:8081
+  allowed-origins: http://localhost:5173,http://localhost:3000,http://localhost:8081,http://localhost:4000
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
-  allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+  allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,X-CSRF-Token
   allow-credentials: true
   max-age: 3600
     
@@ -96,6 +101,7 @@ alipay:
   gateway-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do  # 沙箱环境网关，正式环境需修改
   return-url: http://localhost:8080/api/payment/alipay/return #支付成功后的跳转地址
   notify-url: http://localhost:8080/api/payment/alipay/notify #异步回调地址
+  refund-notify-url: http://localhost:8080/api/payment/alipay/refund/notify #退款异步回调地址
 
 # 微信支付配置 - 敏感信息已移至application-private.yml
 wechat:

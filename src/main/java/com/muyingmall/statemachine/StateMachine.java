@@ -10,7 +10,7 @@ package com.muyingmall.statemachine;
 public interface StateMachine<S, E, C> {
 
     /**
-     * 发送事件，触发状态转换
+     * 触发状态转换事件
      * 
      * @param currentState 当前状态
      * @param event        事件
@@ -20,19 +20,19 @@ public interface StateMachine<S, E, C> {
     S sendEvent(S currentState, E event, C context);
 
     /**
-     * 检查是否可以从当前状态转换到目标状态
+     * 检查状态是否可转换
      * 
      * @param currentState 当前状态
      * @param targetState  目标状态
-     * @return 是否可以转换
+     * @return 是否可转换
      */
     boolean canTransit(S currentState, S targetState);
 
     /**
-     * 获取所有可能的下一个状态
+     * 获取指定状态可以转换到的下一个状态集合
      * 
      * @param currentState 当前状态
-     * @return 可能的下一个状态数组
+     * @return 可转换的状态集合
      */
     S[] getPossibleNextStates(S currentState);
 }

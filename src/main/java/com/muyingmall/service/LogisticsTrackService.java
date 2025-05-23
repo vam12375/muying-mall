@@ -44,4 +44,13 @@ public interface LogisticsTrackService extends IService<LogisticsTrack> {
      * @return 是否添加成功
      */
     boolean addTrack(LogisticsTrack track);
+
+    /**
+     * 批量添加物流轨迹
+     *
+     * @param logisticsId 物流ID
+     * @param tracks      轨迹列表
+     * @return 是否添加成功
+     */
+    boolean batchAddTracks(Long logisticsId, List<LogisticsTrack> tracks);
 }

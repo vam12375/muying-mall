@@ -898,3 +898,64 @@ CREATE TABLE `logistics_track` (
   INDEX `idx_tracking_time` (`tracking_time`),
   CONSTRAINT `fk_track_logistics` FOREIGN KEY (`logistics_id`) REFERENCES `logistics` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='物流轨迹表'; 
+ALTER TABLE `logistics_track` 
+ADD COLUMN `details_json` JSON NULL COMMENT '轨迹详情JSON数据';
+-- ----------------------------
+-- 退款申请表
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `refund` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '退款ID',
+  `refund_no` varchar(64) NOT NULL COMMENT '退款单号',
+  `order_id` int UNSIGNED NOT NULL COMMENT '订单ID',
+  `order_no` varchar(50) NOT NULL COMMENT '订单号',
+  `user_id` int UNSIGNED NOT NULL COMMENT '用户ID',
+  `payment_id` bigint UNSIGNED NULL COMMENT '支付ID',
+  `amount` decimal(10, 2) NOT NULL COMMENT '退款金额',
+  `refund_reason` varchar(50) NOT NULL COMMENT '退款原因',
+  `refund_reason_detail` varchar(500) NULL COMMENT '退款原因详情',
+  `evidence_images` json NULL COMMENT '凭证图片',
+  `status` varchar(20) NOT NULL DEFAULT 'PENDING' COMMENT '退款状态：PENDING-待处理, APPROVED-已批准, REJECTED-已拒绝, PROCESSING-处理中, COMPLETED-已完成, FAILED-退款失败',
+  `reject_reason` varchar(500) NULL COMMENT '拒绝原因',
+  `refund_time` datetime NULL COMMENT '退款时间',
+  `refund_account` varchar(100) NULL COMMENT '退款账户',
+  `refund_channel` varchar(20) NULL COMMENT '退款渠道：ALIPAY-支付宝, WECHAT-微信, BANK-银行卡',
+  `transaction_id` varchar(100) NULL COMMENT '退款交易号',
+  `admin_id` int UNSIGNED NULL COMMENT '处理人ID',
+  `admin_name` varchar(50) NULL COMMENT '处理人姓名',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否删除：0-否，1-是',
+  `version` int NOT NULL DEFAULT 0 COMMENT '版本号，用于乐观锁',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `idx_refund_no`(`refund_no`) USING BTREE,
+  INDEX `idx_order_id`(`order_id`) USING BTREE,
+  INDEX `idx_order_no`(`order_no`) USING BTREE,
+  INDEX `idx_user_id`(`user_id`) USING BTREE,
+  INDEX `idx_payment_id`(`payment_id`) USING BTREE,
+  INDEX `idx_status`(`status`) USING BTREE,
+  INDEX `idx_create_time`(`create_time`) USING BTREE,
+  CONSTRAINT `fk_refund_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  CONSTRAINT `fk_refund_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  CONSTRAINT `fk_refund_payment` FOREIGN KEY (`payment_id`) REFERENCES `payment` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '退款申请表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- 退款处理日志表
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `refund_log` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '日志ID',
+  `refund_id` bigint UNSIGNED NOT NULL COMMENT '退款ID',
+  `refund_no` varchar(64) NOT NULL COMMENT '退款单号',
+  `old_status` varchar(20) NOT NULL COMMENT '旧状态',
+  `new_status` varchar(20) NOT NULL COMMENT '新状态',
+  `operator_type` varchar(20) NOT NULL COMMENT '操作者类型：USER-用户, ADMIN-管理员, SYSTEM-系统',
+  `operator_id` int UNSIGNED NULL COMMENT '操作者ID',
+  `operator_name` varchar(50) NULL COMMENT '操作者名称',
+  `comment` varchar(500) NULL COMMENT '处理备注',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_refund_id`(`refund_id`) USING BTREE,
+  INDEX `idx_refund_no`(`refund_no`) USING BTREE,
+  INDEX `idx_create_time`(`create_time`) USING BTREE,
+  CONSTRAINT `fk_log_refund` FOREIGN KEY (`refund_id`) REFERENCES `refund` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '退款处理日志表' ROW_FORMAT = Dynamic;

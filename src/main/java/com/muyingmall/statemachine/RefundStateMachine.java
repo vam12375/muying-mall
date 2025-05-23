@@ -26,6 +26,8 @@ public class RefundStateMachine implements StateMachine<RefundStatus, RefundEven
         pendingMap.put(RefundEvent.APPROVE, RefundStatus.APPROVED);
         pendingMap.put(RefundEvent.REJECT, RefundStatus.REJECTED);
         pendingMap.put(RefundEvent.CANCEL, RefundStatus.REJECTED);
+        // 添加SUBMIT事件，用于新建退款申请时的状态保持
+        pendingMap.put(RefundEvent.SUBMIT, RefundStatus.PENDING);
         STATE_MACHINE_MAP.put(RefundStatus.PENDING, pendingMap);
 
         // 已批准状态下的转换规则

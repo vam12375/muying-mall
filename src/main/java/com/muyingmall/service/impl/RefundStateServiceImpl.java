@@ -15,8 +15,9 @@ import com.muyingmall.statemachine.OrderStateMachine;
 import com.muyingmall.statemachine.RefundEvent;
 import com.muyingmall.statemachine.RefundStateContext;
 import com.muyingmall.statemachine.RefundStateMachine;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
  * 退款状态服务实现类
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class RefundStateServiceImpl implements RefundStateService {
 
@@ -33,6 +33,19 @@ public class RefundStateServiceImpl implements RefundStateService {
     private final OrderService orderService;
     private final RefundStateMachine refundStateMachine;
     private final OrderStateMachine orderStateMachine;
+
+    @Autowired
+    public RefundStateServiceImpl(@Lazy RefundService refundService,
+                                  RefundLogService refundLogService,
+                                  OrderService orderService,
+                                  RefundStateMachine refundStateMachine,
+                                  OrderStateMachine orderStateMachine) {
+        this.refundService = refundService;
+        this.refundLogService = refundLogService;
+        this.orderService = orderService;
+        this.refundStateMachine = refundStateMachine;
+        this.orderStateMachine = orderStateMachine;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -61,15 +74,59 @@ public class RefundStateServiceImpl implements RefundStateService {
             // 获取当前状态
             RefundStatus currentStatus = RefundStatus.getByCode(refund.getStatus());
             if (currentStatus == null) {
+                log.error("无效的当前退款状态, refundId: {}, status: {}", refundId, refund.getStatus());
                 throw new BusinessException("无效的当前退款状态");
             }
 
+            log.info("准备执行状态转换, refundId: {}, 当前状态: {}, 事件: {}, 操作者: {}/{}, 原因: {}",
+                    refundId, currentStatus.getDesc(), event, operatorType, operatorName, reason);
+
+            // 特殊处理SUBMIT事件，确保其始终成功
+            if (event == RefundEvent.SUBMIT) {
+                log.info("处理SUBMIT事件，重要的状态初始化事件，refundId: {}", refundId);
+
+                // 即使当前状态不是PENDING，也尝试更新状态日志
+                if (currentStatus != RefundStatus.PENDING) {
+                    log.warn("SUBMIT事件期望当前状态为PENDING，但实际是: {}, refundId: {}", currentStatus.getDesc(), refundId);
+                }
+
+                // 记录状态变更日志
+                refundLogService.logStatusChange(
+                        refundId,
+                        refund.getRefundNo(),
+                        currentStatus.getCode(),
+                        RefundStatus.PENDING.getCode(),
+                        operatorType,
+                        operatorId,
+                        operatorName,
+                        reason);
+                log.info("SUBMIT事件已记录状态日志, refundId: {}", refundId);
+                return true;
+            }
+
+            // 记录可能的下一个状态
+            RefundStatus[] possibleNextStates = refundStateMachine.getPossibleNextStates(currentStatus);
+            if (possibleNextStates != null && possibleNextStates.length > 0) {
+                StringBuilder sb = new StringBuilder();
+                for (RefundStatus status : possibleNextStates) {
+                    sb.append(status.getDesc()).append(", ");
+                }
+                log.debug("当前状态[{}]允许的下一个状态: {}", currentStatus.getDesc(), sb.toString());
+            } else {
+                log.debug("当前状态[{}]没有配置下一个状态", currentStatus.getDesc());
+            }
+
             // 执行状态转换
+            log.info("执行状态转换, refundId: {}, 从[{}]状态通过[{}]事件转换",
+                    refundId, currentStatus.getDesc(), event);
             RefundStatus newStatus = refundStateMachine.sendEvent(currentStatus, event, context);
+            log.info("状态转换成功, refundId: {}, 从[{}]状态转换为[{}]状态",
+                    refundId, currentStatus.getDesc(), newStatus.getDesc());
 
             // 更新退款状态
             refund.setStatus(newStatus.getCode());
             refundService.updateById(refund);
+            log.debug("已更新退款记录状态, refundId: {}, 新状态: {}", refundId, newStatus.getDesc());
 
             // 记录状态变更日志
             refundLogService.logStatusChange(
@@ -81,6 +138,7 @@ public class RefundStateServiceImpl implements RefundStateService {
                     operatorId,
                     operatorName,
                     reason);
+            log.debug("已记录状态变更日志, refundId: {}", refundId);
 
             // 特殊事件处理（如触发订单状态变更）
             handleSpecialEvents(refund, event, newStatus);

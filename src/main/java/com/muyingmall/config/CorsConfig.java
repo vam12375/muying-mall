@@ -1,5 +1,6 @@
 package com.muyingmall.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,9 +9,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 /**
- * 跨域配置 - 修复版本
+ * 跨域配置 - 增强版本
  */
 @Configuration
+@Slf4j
 public class CorsConfig {
 
     @Value("${cors.allowed-origins}")
@@ -30,11 +32,17 @@ public class CorsConfig {
 
     @Bean
     public CorsFilter corsFilter() {
+        log.info("初始化CORS配置...");
+        log.info("允许的域: {}", allowedOrigins);
+        log.info("允许的方法: {}", allowedMethods);
+        log.info("允许的头: {}", allowedHeaders);
+        log.info("允许凭证: {}", allowCredentials);
+        log.info("最大缓存时间: {}", maxAge);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // 设置允许的来源 - 修复支持更多开发环境
-        // 强制添加常用的开发端口，确保开发环境可用
+        // 设置允许的来源 - 增强支持更多开发环境
         if (allowCredentials) {
             // 如果需要支持credentials，不能使用通配符*，需要明确指定域名
             config.addAllowedOrigin("http://localhost:5173"); // Vite默认
@@ -55,6 +63,9 @@ public class CorsConfig {
             config.addAllowedOriginPattern("*");
         }
 
+        // 确保OPTIONS方法被允许
+        config.addAllowedMethod("OPTIONS");
+
         // 设置允许的HTTP方法
         if ("*".equals(allowedMethods)) {
             config.addAllowedMethod("*");
@@ -74,6 +85,11 @@ public class CorsConfig {
                 config.addAllowedHeader(header.trim());
             }
         }
+
+        // 确保常用的请求头被允许
+        config.addAllowedHeader("Authorization");
+        config.addAllowedHeader("Content-Type");
+        config.addAllowedHeader("Accept");
 
         // 允许暴露的响应头
         config.addExposedHeader("Authorization");

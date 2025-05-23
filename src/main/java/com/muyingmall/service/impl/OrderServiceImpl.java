@@ -15,6 +15,8 @@ import com.muyingmall.entity.Payment;
 import com.muyingmall.entity.Product;
 import com.muyingmall.entity.User;
 import com.muyingmall.entity.UserAddress;
+import com.muyingmall.entity.UserCoupon;
+import com.muyingmall.entity.Coupon;
 import com.muyingmall.enums.OrderStatus;
 import com.muyingmall.enums.PaymentStatus;
 import com.muyingmall.event.OrderCompletedEvent;
@@ -28,8 +30,11 @@ import com.muyingmall.service.OrderService;
 import com.muyingmall.service.PaymentService;
 import com.muyingmall.service.ProductService;
 import com.muyingmall.service.PointsService;
+import com.muyingmall.service.CouponService;
+import com.muyingmall.service.UserCouponService;
 import com.muyingmall.util.EnumUtil;
 import com.muyingmall.util.RedisUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -42,6 +47,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +80,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private final PointsService pointsService;
     private final RedisUtil redisUtil;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
+    private final CouponService couponService;
+    private final UserCouponService userCouponService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -188,23 +197,37 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         // 处理优惠券（如果有）
         if (couponId != null && couponId > 0) {
-            // 此处添加优惠券逻辑，减少实际支付金额
-            log.info("应用优惠券: {}", couponId);
-            // TODO: 实现优惠券计算逻辑，以下是示例
-            // UserCoupon userCoupon = userCouponService.getUserCoupon(userId, couponId);
-            // if (userCoupon != null && userCoupon.getStatus().equals("UNUSED")) {
-            // BigDecimal discountAmount = calculateCouponDiscount(userCoupon, totalAmount);
-            // order.setActualAmount(totalAmount.subtract(discountAmount));
-            // order.setCouponId(couponId);
-            // order.setCouponAmount(discountAmount);
-            // }
+            // 获取用户优惠券
+            UserCoupon userCoupon = userCouponService.getById(couponId);
+            if (userCoupon != null && userCoupon.getUserId().equals(userId)
+                    && userCoupon.getStatus().equals("UNUSED")) {
+                // 获取优惠券信息
+                Coupon coupon = couponService.getById(userCoupon.getCouponId());
+                if (coupon != null && "ACTIVE".equals(coupon.getStatus())) {
+                    // 验证优惠券是否可用
+                    if (order.getTotalAmount().compareTo(coupon.getMinSpend()) >= 0) {
+                        BigDecimal couponAmount = coupon.getValue();
+                        // 记录使用的优惠券
+                        order.setCouponId(couponId);
+                        order.setCouponAmount(couponAmount);
 
-            // 为了演示，直接减去优惠金额50元
-            BigDecimal discountAmount = new BigDecimal("50");
-            if (totalAmount.compareTo(discountAmount) > 0) {
-                order.setActualAmount(order.getActualAmount().subtract(discountAmount));
-                order.setCouponId(couponId);
-                order.setCouponAmount(discountAmount);
+                        // 更新优惠券状态
+                        userCoupon.setStatus("USED");
+                        userCoupon.setUseTime(LocalDateTime.now());
+                        // 只有在订单ID不为null时才设置OrderId，避免NullPointerException
+                        if (order.getOrderId() != null) {
+                            userCoupon.setOrderId(order.getOrderId().longValue());
+                            userCouponService.updateById(userCoupon);
+                        } else {
+                            log.warn("订单ID为null，暂不更新优惠券状态，将在订单保存后更新");
+                            // 标记此优惠券需要在后续更新
+                            order.setCouponId(couponId); // 保存优惠券ID，后续可根据需要更新
+                        }
+                    } else {
+                        log.warn("优惠券不可用于此订单，最低消费金额不足: 订单总额={}, 优惠券最低金额={}",
+                                order.getTotalAmount(), coupon.getMinSpend());
+                    }
+                }
             }
         }
 
@@ -252,6 +275,33 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 保存订单
         save(order);
 
+        // 添加调试日志，检查订单ID是否成功回填
+        log.info("保存订单后的订单ID: {}", order.getOrderId());
+
+        // 检查订单ID是否为null，如果为null则手动查询获取
+        if (order.getOrderId() == null) {
+            log.warn("订单ID为null，尝试通过订单号查询获取订单ID");
+
+            // 根据订单号查询刚刚创建的订单
+            LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Order::getOrderNo, order.getOrderNo());
+            Order savedOrder = getOne(queryWrapper);
+
+            if (savedOrder != null && savedOrder.getOrderId() != null) {
+                log.info("通过订单号查询成功获取订单ID: {}", savedOrder.getOrderId());
+                order.setOrderId(savedOrder.getOrderId());
+            } else {
+                log.error("无法获取订单ID，订单号: {}", order.getOrderNo());
+                throw new BusinessException(500, "创建订单失败：无法获取订单ID");
+            }
+        }
+
+        // 验证订单ID不为null
+        if (order.getOrderId() == null) {
+            log.error("订单ID仍然为null，无法继续处理");
+            throw new BusinessException(500, "创建订单失败：订单ID为null");
+        }
+
         // 保存订单商品
         for (OrderProduct orderProduct : orderProducts) {
             orderProduct.setOrderId(order.getOrderId());
@@ -281,6 +331,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         // 清除用户订单列表缓存
         clearUserOrderListCache(userId);
+
+        // 订单ID获取成功后，处理之前因为订单ID为null而未完成的优惠券状态更新
+        if (couponId != null && couponId > 0) {
+            UserCoupon userCoupon = userCouponService.getById(couponId);
+            if (userCoupon != null && userCoupon.getUserId().equals(userId)
+                    && "UNUSED".equals(userCoupon.getStatus())) {
+                log.info("更新优惠券状态，订单ID: {}, 优惠券ID: {}", order.getOrderId(), couponId);
+                userCoupon.setStatus("USED");
+                userCoupon.setUseTime(LocalDateTime.now());
+                userCoupon.setOrderId(order.getOrderId().longValue());
+                userCouponService.updateById(userCoupon);
+            }
+        }
 
         return result;
     }
@@ -434,8 +497,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new BusinessException("无权限取消此订单");
         }
 
-        // 只有待支付状态的订单可以取消
-        if (!OrderStatus.PENDING_PAYMENT.equals(order.getStatus())) {
+        // 检查当前状态是否可以取消
+        OrderStatus currentStatus = order.getStatus();
+        if (!currentStatus.canTransitionTo(OrderStatus.CANCELLED)) {
             throw new BusinessException("当前订单状态不可取消");
         }
 
@@ -1031,5 +1095,304 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
 
         return result > 0;
+    }
+
+    /**
+     * 直接购买商品（不添加到购物车）
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> directPurchase(Integer userId, Integer addressId, Integer productId,
+            Integer quantity, String specs, String remark,
+            String paymentMethod, Long couponId,
+            BigDecimal shippingFee, Integer pointsUsed) {
+        log.info("开始处理直接购买请求: 用户ID={}, 商品ID={}, 数量={}", userId, productId, quantity);
+
+        // 获取用户地址信息
+        LambdaQueryWrapper<UserAddress> addressQueryWrapper = new LambdaQueryWrapper<>();
+        addressQueryWrapper.eq(UserAddress::getUserId, userId)
+                .eq(UserAddress::getAddressId, addressId);
+        UserAddress address = addressMapper.selectOne(addressQueryWrapper);
+
+        if (address == null) {
+            throw new BusinessException(400, "收货地址不存在");
+        }
+
+        // 获取商品信息
+        Product product = productService.getById(productId);
+        if (product == null) {
+            throw new BusinessException(400, "商品不存在");
+        }
+
+        // 检查库存
+        if (product.getStock() < quantity) {
+            throw new BusinessException(400, "商品库存不足");
+        }
+
+        // 处理规格数据，确保是有效的JSON格式
+        String processedSpecs = processSpecsToJson(specs);
+        log.debug("处理后的规格数据: {}", processedSpecs);
+
+        try {
+            // 创建订单
+            Order order = new Order();
+            order.setUserId(userId);
+            order.setOrderNo(generateOrderNo());
+            order.setTotalAmount(product.getPriceNew().multiply(new BigDecimal(quantity)));
+            order.setStatus(EnumUtil.getOrderStatusByCode(ORDER_STATUS_PENDING_PAYMENT));
+            // 设置订单其他属性
+            order.setAddressId(addressId);
+            order.setReceiverName(address.getReceiver());
+            order.setReceiverPhone(address.getPhone());
+            order.setReceiverProvince(address.getProvince());
+            order.setReceiverCity(address.getCity());
+            order.setReceiverDistrict(address.getDistrict());
+            order.setReceiverAddress(address.getAddress());
+            order.setReceiverZip(address.getZip());
+            order.setRemark(remark);
+            order.setPaymentMethod(paymentMethod);
+            order.setShippingFee(shippingFee != null ? shippingFee : BigDecimal.ZERO);
+            order.setCreateTime(LocalDateTime.now());
+            order.setUpdateTime(LocalDateTime.now());
+
+            // 计算优惠金额
+            BigDecimal couponAmount = BigDecimal.ZERO;
+            BigDecimal pointsAmount = BigDecimal.ZERO;
+
+            // 处理优惠券
+            if (couponId != null && couponId > 0) {
+                // 获取用户优惠券
+                UserCoupon userCoupon = userCouponService.getById(couponId);
+                if (userCoupon != null && userCoupon.getUserId().equals(userId)
+                        && userCoupon.getStatus().equals("UNUSED")) {
+                    // 获取优惠券信息
+                    Coupon coupon = couponService.getById(userCoupon.getCouponId());
+                    if (coupon != null && "ACTIVE".equals(coupon.getStatus())) {
+                        // 验证优惠券是否可用
+                        if (order.getTotalAmount().compareTo(coupon.getMinSpend()) >= 0) {
+                            couponAmount = coupon.getValue();
+                            // 记录使用的优惠券
+                            order.setCouponId(couponId);
+                            order.setCouponAmount(couponAmount);
+
+                            // 更新优惠券状态
+                            userCoupon.setStatus("USED");
+                            userCoupon.setUseTime(LocalDateTime.now());
+                            // 只有在订单ID不为null时才设置OrderId，避免NullPointerException
+                            if (order.getOrderId() != null) {
+                                userCoupon.setOrderId(order.getOrderId().longValue());
+                                userCouponService.updateById(userCoupon);
+                            } else {
+                                log.warn("订单ID为null，暂不更新优惠券状态，将在订单保存后更新");
+                                // 标记此优惠券需要在后续更新
+                                order.setCouponId(couponId); // 保存优惠券ID，后续可根据需要更新
+                            }
+                        } else {
+                            log.warn("优惠券不可用于此订单，最低消费金额不足: 订单总额={}, 优惠券最低金额={}",
+                                    order.getTotalAmount(), coupon.getMinSpend());
+                        }
+                    }
+                }
+            }
+
+            // 处理积分抵扣
+            if (pointsUsed != null && pointsUsed > 0) {
+                // 检查用户积分是否足够
+                Integer userPoints = pointsService.getUserPoints(userId);
+                if (userPoints >= pointsUsed) {
+                    // 计算积分抵扣金额，通常100积分=1元
+                    pointsAmount = new BigDecimal(pointsUsed).divide(new BigDecimal("100"), 2, RoundingMode.DOWN);
+
+                    // 记录使用的积分
+                    order.setPointsUsed(pointsUsed);
+                    order.setPointsDiscount(pointsAmount);
+
+                    // 扣减用户积分
+                    boolean deductSuccess = pointsService.deductPoints(userId, pointsUsed, "order", order.getOrderNo(),
+                            "订单抵扣");
+                    if (!deductSuccess) {
+                        throw new BusinessException(400, "积分扣减失败");
+                    }
+                }
+            }
+
+            // 计算实际支付金额
+            BigDecimal actualAmount = order.getTotalAmount()
+                    .add(order.getShippingFee())
+                    .subtract(couponAmount)
+                    .subtract(pointsAmount);
+            // 确保金额不为负数
+            order.setActualAmount(actualAmount.max(BigDecimal.ZERO));
+
+            // 保存订单
+            save(order);
+
+            // 添加调试日志，检查订单ID是否成功回填
+            log.info("保存订单后的订单ID: {}", order.getOrderId());
+
+            // 检查订单ID是否为null，如果为null则手动查询获取
+            if (order.getOrderId() == null) {
+                log.warn("订单ID为null，尝试通过订单号查询获取订单ID");
+
+                // 根据订单号查询刚刚创建的订单
+                LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(Order::getOrderNo, order.getOrderNo());
+                Order savedOrder = getOne(queryWrapper);
+
+                if (savedOrder != null && savedOrder.getOrderId() != null) {
+                    log.info("通过订单号查询成功获取订单ID: {}", savedOrder.getOrderId());
+                    order.setOrderId(savedOrder.getOrderId());
+                } else {
+                    log.error("无法获取订单ID，订单号: {}", order.getOrderNo());
+                    throw new BusinessException(500, "创建订单失败：无法获取订单ID");
+                }
+            }
+
+            // 验证订单ID不为null
+            if (order.getOrderId() == null) {
+                log.error("订单ID仍然为null，无法继续处理");
+                throw new BusinessException(500, "创建订单失败：订单ID为null");
+            }
+
+            // 订单ID获取成功后，处理之前因为订单ID为null而未完成的优惠券状态更新
+            if (couponId != null && couponId > 0) {
+                UserCoupon userCoupon = userCouponService.getById(couponId);
+                if (userCoupon != null && userCoupon.getUserId().equals(userId)
+                        && "UNUSED".equals(userCoupon.getStatus())) {
+                    log.info("更新优惠券状态，订单ID: {}, 优惠券ID: {}", order.getOrderId(), couponId);
+                    userCoupon.setStatus("USED");
+                    userCoupon.setUseTime(LocalDateTime.now());
+                    userCoupon.setOrderId(order.getOrderId().longValue());
+                    userCouponService.updateById(userCoupon);
+                }
+            }
+
+            // 创建订单商品
+            OrderProduct orderProduct = new OrderProduct();
+            orderProduct.setOrderId(order.getOrderId());
+            orderProduct.setProductId(product.getProductId());
+            orderProduct.setProductName(product.getProductName());
+            orderProduct.setProductImg(product.getProductImg());
+            orderProduct.setPrice(product.getPriceNew());
+            orderProduct.setQuantity(quantity);
+            orderProduct.setSpecs(processedSpecs); // 使用处理后的规格数据
+            orderProduct.setCreateTime(LocalDateTime.now());
+            orderProduct.setUpdateTime(LocalDateTime.now());
+
+            // 保存订单商品
+            orderProductMapper.insert(orderProduct);
+
+            // 更新商品库存
+            productService.update(
+                    new LambdaUpdateWrapper<Product>()
+                            .eq(Product::getProductId, productId)
+                            .setSql("stock = stock - " + quantity)
+                            .setSql("sales = sales + " + quantity));
+
+            // 创建支付记录 - 如果有支付服务
+            if (paymentService != null) {
+                try {
+                    Payment payment = new Payment();
+                    payment.setUserId(userId);
+                    payment.setOrderId(order.getOrderId());
+                    payment.setOrderNo(order.getOrderNo());
+                    payment.setAmount(order.getActualAmount());
+                    payment.setPaymentMethod(order.getPaymentMethod());
+                    payment.setStatus(PaymentStatus.PENDING); // 使用枚举值
+                    payment.setCreateTime(LocalDateTime.now());
+                    paymentService.save(payment);
+                } catch (Exception e) {
+                    log.warn("创建支付记录失败，但不影响订单创建", e);
+                }
+            }
+
+            // 如果有Redis服务，将订单放入Redis，设置过期时间
+            if (redisUtil != null) {
+                try {
+                    String orderKey = CacheConstants.ORDER_KEY_PREFIX + order.getOrderNo();
+                    redisUtil.set(orderKey, order, CacheConstants.ORDER_EXPIRE_TIME);
+                } catch (Exception e) {
+                    log.warn("将订单放入Redis失败，但不影响订单创建", e);
+                }
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("orderId", order.getOrderId());
+            result.put("orderNumber", order.getOrderNo());
+            result.put("totalAmount", order.getTotalAmount());
+            result.put("actualAmount", order.getActualAmount());
+            result.put("pointsUsed", order.getPointsUsed());
+            result.put("pointsDiscount", order.getPointsDiscount());
+
+            // 清除用户订单列表缓存
+            clearUserOrderListCache(userId);
+
+            return result;
+        } catch (Exception e) {
+            log.error("直接购买失败", e);
+            // 记录更详细的错误信息
+            log.error("直接购买失败 - 详细信息: 错误类型={}, 错误消息={}, 堆栈={}",
+                    e.getClass().getName(), e.getMessage(), Arrays.toString(e.getStackTrace()));
+
+            // 如果是空指针异常，提供更多上下文
+            if (e instanceof NullPointerException) {
+                log.error("空指针异常可能是由于订单ID为null，请检查订单保存和ID生成逻辑");
+            }
+
+            throw new BusinessException(500, "直接购买失败");
+        }
+    }
+
+    /**
+     * 处理规格数据为JSON格式
+     * 
+     * @param specs 规格字符串
+     * @return JSON格式的规格数据
+     */
+    private String processSpecsToJson(String specs) {
+        if (specs == null || specs.isEmpty()) {
+            return "{}"; // 返回空JSON对象
+        }
+
+        try {
+            // 检查是否已经是JSON格式
+            objectMapper.readTree(specs);
+            return specs; // 如果能够解析为JSON，则直接返回
+        } catch (Exception e) {
+            log.debug("规格数据不是JSON格式，尝试转换: {}", specs);
+
+            // 将"类型:孕中"这样的格式转换为JSON
+            try {
+                Map<String, String> specsMap = new HashMap<>();
+
+                // 处理如"类型:孕中"或"颜色:红色,尺寸:L"这样的格式
+                if (specs.contains(":")) {
+                    String[] pairs = specs.split(",");
+                    for (String pair : pairs) {
+                        if (pair.contains(":")) {
+                            String[] kv = pair.split(":", 2);
+                            if (kv.length == 2) {
+                                specsMap.put(kv[0].trim(), kv[1].trim());
+                            }
+                        }
+                    }
+                } else {
+                    // 如果没有冒号，则将整个字符串作为规格值
+                    specsMap.put("规格", specs.trim());
+                }
+
+                return objectMapper.writeValueAsString(specsMap);
+            } catch (Exception ex) {
+                log.error("转换规格数据为JSON失败", ex);
+                // 如果转换失败，则创建一个包含原始字符串的JSON对象
+                try {
+                    Map<String, String> fallbackMap = new HashMap<>();
+                    fallbackMap.put("规格文本", specs);
+                    return objectMapper.writeValueAsString(fallbackMap);
+                } catch (Exception fallbackEx) {
+                    return "{}"; // 最终回退到空JSON对象
+                }
+            }
+        }
     }
 }

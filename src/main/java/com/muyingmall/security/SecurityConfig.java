@@ -48,13 +48,19 @@ public class SecurityConfig {
                 // 允许访问支付回调接口
                 .requestMatchers("/payment/alipay/notify", "/payment/wechat/notify").permitAll()
                 .requestMatchers("/payment/alipay/return").permitAll() // 支付宝同步回调通常也需放行
+                .requestMatchers("/api/payment/alipay/refund/notify").permitAll() // 支付宝退款异步通知
                 // 允许访问静态资源
                 .requestMatchers("/upload/**", "/static/**").permitAll()
                 // 允许访问公开可用的优惠券列表
                 .requestMatchers("/coupons/available").permitAll()
-                // 管理员接口需要admin权限（排除已经允许的登录接口）
+                // 允许访问所有退款相关接口，确保格式正确，移除前导斜杠
+                .requestMatchers("refund/**").permitAll()
+                // 临时允许访问管理员退款相关接口，用于调试，移除前导斜杠
+                .requestMatchers("admin/refund/**").permitAll() // 使用通配符匹配所有admin/refund路径
+                // 管理员接口需要admin权限（排除已经允许的登录接口和上面配置的路径）
                 .requestMatchers(request -> request.getRequestURI().startsWith("/api/admin/") &&
-                        !request.getRequestURI().equals("/api/admin/login"))
+                        !request.getRequestURI().equals("/api/admin/login") &&
+                        !request.getRequestURI().startsWith("/api/admin/refund/"))
                 .hasAuthority("admin")
                 // 用户相关接口需要登录
                 .requestMatchers("/user/**").authenticated()

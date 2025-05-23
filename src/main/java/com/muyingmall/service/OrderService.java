@@ -31,6 +31,26 @@ public interface OrderService extends IService<Order> {
             String paymentMethod, Long couponId, List<Integer> cartIds, BigDecimal shippingFee, Integer pointsUsed);
 
     /**
+     * 直接购买商品（不添加到购物车）
+     * 
+     * @param userId        用户ID
+     * @param addressId     地址ID
+     * @param productId     商品ID
+     * @param quantity      数量
+     * @param specs         规格
+     * @param remark        备注
+     * @param paymentMethod 支付方式
+     * @param couponId      优惠券ID
+     * @param shippingFee   运费
+     * @param pointsUsed    使用的积分
+     * @return 创建的订单信息
+     */
+    Map<String, Object> directPurchase(Integer userId, Integer addressId, Integer productId,
+            Integer quantity, String specs, String remark,
+            String paymentMethod, Long couponId,
+            BigDecimal shippingFee, Integer pointsUsed);
+
+    /**
      * 获取订单详情
      * 
      * @param orderId 订单ID
@@ -153,7 +173,7 @@ public interface OrderService extends IService<Order> {
      * @return 销售总额
      */
     BigDecimal getSalesBetween(LocalDateTime startTime, LocalDateTime endTime);
-    
+
     /**
      * 检查订单是否已评价
      * 
@@ -161,11 +181,11 @@ public interface OrderService extends IService<Order> {
      * @return 是否已评价
      */
     boolean isOrderCommented(Integer orderId);
-    
+
     /**
      * 更新订单评价状态
      * 
-     * @param orderId 订单ID
+     * @param orderId     订单ID
      * @param isCommented 评价状态：0-未评价，1-已评价
      * @return 是否成功
      */

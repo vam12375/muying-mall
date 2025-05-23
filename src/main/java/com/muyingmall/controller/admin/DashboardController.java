@@ -8,6 +8,7 @@ import com.muyingmall.entity.Product;
 import com.muyingmall.entity.User;
 import com.muyingmall.service.OrderService;
 import com.muyingmall.service.ProductService;
+import com.muyingmall.service.RefundService;
 import com.muyingmall.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,6 +41,7 @@ public class DashboardController {
     private final UserService userService;
     private final ProductService productService;
     private final OrderService orderService;
+    private final RefundService refundService;
 
     /**
      * 获取仪表盘统计数据
@@ -66,6 +68,10 @@ public class DashboardController {
             // 计算总收入（已完成订单）
             BigDecimal totalIncome = calculateTotalIncome();
             result.put("totalIncome", totalIncome);
+
+            // 查询退款统计
+            Map<String, Object> refundStats = refundService.getRefundStatistics(null, null);
+            result.put("refundStats", refundStats);
 
             return Result.success(result);
         } catch (Exception e) {
@@ -211,7 +217,7 @@ public class DashboardController {
             todoItems.add(pendingShipment);
 
             // 待处理退款数量
-            long pendingRefundsCount = 0; // 假设还没有实现退款功能
+            long pendingRefundsCount = refundService.getPendingRefundCount();
             Map<String, Object> pendingRefunds = new HashMap<>();
             pendingRefunds.put("title", "待处理退款");
             pendingRefunds.put("count", pendingRefundsCount);
@@ -271,6 +277,58 @@ public class DashboardController {
         } catch (Exception e) {
             log.error("获取用户增长数据失败", e);
             return Result.error("获取用户增长数据失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取退款趋势数据
+     */
+    @GetMapping("/refund-trend")
+    @Operation(summary = "获取退款趋势数据")
+    public Result<Map<String, Object>> getRefundTrend(
+            @RequestParam(value = "days", defaultValue = "7") Integer days) {
+        try {
+            // 获取最近n天的日期列表
+            List<LocalDate> dateList = new ArrayList<>();
+            for (int i = days - 1; i >= 0; i--) {
+                dateList.add(LocalDate.now().minusDays(i));
+            }
+
+            // 格式化日期为展示格式
+            List<String> formattedDates = dateList.stream()
+                    .map(date -> date.format(DateTimeFormatter.ofPattern("MM-dd")))
+                    .collect(Collectors.toList());
+
+            // 准备数据结构
+            List<Long> refundCountData = new ArrayList<>();
+
+            // 查询每天的退款数据
+            for (LocalDate date : dateList) {
+                LocalDateTime startOfDay = date.atStartOfDay();
+                LocalDateTime endOfDay = date.plusDays(1).atStartOfDay().minusNanos(1);
+
+                String startTime = startOfDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                String endTime = endOfDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+                Map<String, Object> refundStats = refundService.getRefundStatistics(startTime, endTime);
+                long refundCount = (long) refundStats.getOrDefault("pendingCount", 0L) +
+                        (long) refundStats.getOrDefault("approvedCount", 0L) +
+                        (long) refundStats.getOrDefault("processingCount", 0L) +
+                        (long) refundStats.getOrDefault("completedCount", 0L) +
+                        (long) refundStats.getOrDefault("rejectedCount", 0L) +
+                        (long) refundStats.getOrDefault("failedCount", 0L);
+
+                refundCountData.add(refundCount);
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("dates", formattedDates);
+            result.put("refundCounts", refundCountData);
+
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("获取退款趋势数据失败", e);
+            return Result.error("获取退款趋势数据失败: " + e.getMessage());
         }
     }
 

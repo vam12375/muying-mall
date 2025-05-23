@@ -5,6 +5,7 @@ import com.muyingmall.entity.CommentTag;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -38,7 +39,7 @@ public interface CommentTagMapper extends BaseMapper<CommentTag> {
      * @param tagId 标签ID
      * @return 影响行数
      */
-    @Select("UPDATE comment_tag SET usage_count = usage_count + 1 WHERE tag_id = #{tagId}")
+    @Update("UPDATE comment_tag SET usage_count = usage_count + 1 WHERE tag_id = #{tagId}")
     int incrementUsageCount(@Param("tagId") Integer tagId);
 
     /**
@@ -47,7 +48,7 @@ public interface CommentTagMapper extends BaseMapper<CommentTag> {
      * @param tagId 标签ID
      * @return 影响行数
      */
-    @Select("UPDATE comment_tag SET usage_count = usage_count - 1 WHERE tag_id = #{tagId} AND usage_count > 0")
+    @Update("UPDATE comment_tag SET usage_count = usage_count - 1 WHERE tag_id = #{tagId} AND usage_count > 0")
     int decrementUsageCount(@Param("tagId") Integer tagId);
 
     /**

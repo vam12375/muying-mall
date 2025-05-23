@@ -27,5 +27,20 @@ public enum OrderEvent {
     /**
      * 超时事件
      */
-    TIMEOUT
+    TIMEOUT,
+
+    /**
+     * 申请退款事件
+     */
+    REFUND_APPLY,
+
+    /**
+     * 退款完成事件
+     */
+    REFUND_COMPLETE,
+
+    /**
+     * 退款失败事件
+     */
+    REFUND_FAIL
 }

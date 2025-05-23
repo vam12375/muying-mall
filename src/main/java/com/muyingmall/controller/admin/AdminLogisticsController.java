@@ -154,6 +154,33 @@ public class AdminLogisticsController {
             return CommonResult.failed("添加物流轨迹失败: " + e.getMessage());
         }
     }
+    
+    /**
+     * 批量添加物流轨迹
+     *
+     * @param logisticsId 物流ID
+     * @param tracks 轨迹列表
+     * @return 添加结果
+     */
+    @PostMapping("/{logisticsId}/batch-tracks")
+    @Operation(summary = "批量添加物流轨迹")
+    public CommonResult<Boolean> batchAddLogisticsTracks(
+            @PathVariable("logisticsId") Long logisticsId,
+            @RequestBody List<LogisticsTrack> tracks) {
+        try {
+            log.info("接收到批量添加物流轨迹请求，物流ID: {}, 轨迹数量: {}", logisticsId, tracks.size());
+            
+            boolean result = logisticsTrackService.batchAddTracks(logisticsId, tracks);
+            if (result) {
+                return CommonResult.success(true, "批量添加物流轨迹成功");
+            } else {
+                return CommonResult.failed("批量添加物流轨迹失败");
+            }
+        } catch (Exception e) {
+            log.error("批量添加物流轨迹失败", e);
+            return CommonResult.failed("批量添加物流轨迹失败: " + e.getMessage());
+        }
+    }
 
     /**
      * 获取物流轨迹列表
