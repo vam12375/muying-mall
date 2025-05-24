@@ -33,10 +33,17 @@ spring:
       # Redis连接池配置
       lettuce:
         pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-          max-wait: -1ms
+          max-active: 16       # 最大连接数，增加以支持高并发
+          max-idle: 8          # 最大空闲连接数
+          min-idle: 4          # 最小空闲连接数，提高以保持足够的可用连接
+          max-wait: 1000ms     # 连接池最大阻塞等待时间
+          time-between-eviction-runs: 60000ms # 空闲连接检测周期
+      timeout: 3000ms          # 连接超时时间
+      # Redis客户端配置
+      client-name: muying-mall # 客户端名称，便于监控识别
+      connect-timeout: 3000ms  # 连接超时时间
+      # Redis高级配置
+      client-type: lettuce     # 使用lettuce客户端
   
   # Session配置
   session:
@@ -45,6 +52,31 @@ spring:
     redis:
       namespace: muying:session
       flush-mode: on_save  # 确保会话变更立即写入Redis
+
+# Redis自定义配置
+redis:
+  # 缓存淘汰策略配置
+  config:
+    # 设置maxmemory-policy为volatile-lru，只淘汰设置了过期时间的key
+    maxmemory-policy: volatile-lru
+    # Redis内存限制，建议设置为可用内存的75%
+    maxmemory: 1gb
+    # 键空间通知配置，启用过期和驱逐事件通知
+    notify-keyspace-events: Ex
+  # 缓存统计配置
+  stats:
+    # 是否启用缓存统计
+    enabled: true
+    # 统计采样率（1-100）
+    sample-rate: 10
+  # 高级特性配置
+  features:
+    # 是否启用批量操作Pipeline
+    pipeline-enabled: true
+    # 是否启用Lua脚本缓存
+    script-cache-enabled: true
+    # 是否启用分布式锁
+    lock-enabled: true
 
 # MyBatis-Plus配置
 mybatis-plus:
@@ -119,6 +151,7 @@ logging:
     com.muyingmall: debug
     org.springframework.web: info
     org.springframework.security: DEBUG
+    org.springframework.data.redis: info # 添加Redis日志级别配置
 
 # 前端应用地址 (用于支付回调重定向)
 frontend:
@@ -128,3 +161,20 @@ frontend:
 jwt:
   # secret已移至application-private.yml
   expiration: 86400 # 单位：秒 (这里是24小时)
+
+# 缓存配置
+cache:
+  # 全局缓存设置
+  global:
+    # 是否启用缓存
+    enabled: true
+    # 默认过期时间（秒）
+    default-ttl: 3600
+  # 二级缓存设置
+  second-level:
+    # 是否启用本地缓存作为二级缓存
+    enabled: false
+    # 本地缓存最大大小
+    max-size: 1000
+    # 本地缓存过期时间（秒）
+    ttl: 60
