@@ -131,6 +131,13 @@
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 		
+		<!-- 显式添加micrometer-core依赖 -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-core</artifactId>
+			<version>1.12.0</version>
+		</dependency>
+		
 		<!-- Jakarta Annotation API -->
 		<dependency>
 			<groupId>jakarta.annotation</groupId>
@@ -180,4 +187,25 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	<repositories>
+		<!-- Maven中央仓库 -->
+		<repository>
+			<id>central</id>
+			<name>Maven Central</name>
+			<url>https://repo.maven.apache.org/maven2</url>
+		</repository>
+		<!-- Spring仓库 -->
+		<repository>
+			<id>spring-releases</id>
+			<name>Spring Releases</name>
+			<url>https://repo.spring.io/release</url>
+		</repository>
+		<!-- JCenter仓库 -->
+		<repository>
+			<id>jcenter</id>
+			<name>JCenter</name>
+			<url>https://jcenter.bintray.com</url>
+		</repository>
+	</repositories>
 </project>

@@ -25,7 +25,8 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CommentReplyServiceImpl extends ServiceImpl<CommentReplyMapper, CommentReply> implements CommentReplyService {
+public class CommentReplyServiceImpl extends ServiceImpl<CommentReplyMapper, CommentReply>
+        implements CommentReplyService {
 
     private final UserMapper userMapper;
     private final CommentMapper commentMapper;
@@ -50,7 +51,22 @@ public class CommentReplyServiceImpl extends ServiceImpl<CommentReplyMapper, Com
             commentReply.setReplyType(1); // 默认为商家回复
         }
 
-        return this.save(commentReply);
+        // 保存评价回复
+        boolean saveResult = this.save(commentReply);
+
+        if (saveResult) {
+            // 更新评价的hasReplied状态为true
+            // 使用傀儡更新评价的hasReplied状态
+            Comment updateComment = new Comment();
+            updateComment.setCommentId(commentReply.getCommentId());
+            updateComment.setHasReplied(true); // 设置为已回复
+            commentMapper.updateById(updateComment);
+
+            // 记录日志
+            log.info("已更新评价[{}]的回复状态为已回复", commentReply.getCommentId());
+        }
+
+        return saveResult;
     }
 
     @Override
@@ -143,4 +159,4 @@ public class CommentReplyServiceImpl extends ServiceImpl<CommentReplyMapper, Com
 
         return replies;
     }
-} 
+}

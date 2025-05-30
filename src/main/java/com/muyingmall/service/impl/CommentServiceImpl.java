@@ -112,6 +112,28 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         // 更新订单评价状态
         if (result) {
             orderMapper.updateOrderCommentStatus(comment.getOrderId(), 1);
+
+            // 计算并发放奖励
+            try {
+                log.info("评价创建成功，准备计算并发放奖励: commentId={}, userId={}",
+                        comment.getCommentId(), comment.getUserId());
+                Map<String, Object> rewardResult = commentRewardConfigService.grantReward(comment);
+                log.info("用户 {} 评价 {} 奖励发放结果: {}",
+                        comment.getUserId(), comment.getCommentId(), rewardResult);
+
+                // 检查奖励发放是否成功
+                Boolean success = (Boolean) rewardResult.get("success");
+                if (success != null && success) {
+                    log.info("奖励发放成功: commentId={}, userId={}, reward={}",
+                            comment.getCommentId(), comment.getUserId(), rewardResult.get("totalReward"));
+                } else {
+                    log.warn("奖励发放失败或无奖励: commentId={}, userId={}, result={}",
+                            comment.getCommentId(), comment.getUserId(), rewardResult);
+                }
+            } catch (Exception e) {
+                log.error("发放评价奖励失败，但不影响评价提交: {}", e.getMessage(), e);
+                // 奖励发放失败不影响评价提交结果
+            }
         }
 
         return result;

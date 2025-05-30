@@ -62,6 +62,11 @@ public class Comment implements Serializable {
     private Integer status;
 
     /**
+     * 是否已回复：0-否，1-是
+     */
+    private Boolean hasReplied;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

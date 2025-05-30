@@ -37,7 +37,12 @@ public enum MessageType {
     /**
      * 优惠券消息
      */
-    COUPON("COUPON", "优惠券消息");
+    COUPON("COUPON", "优惠券消息"),
+
+    /**
+     * 评价奖励消息
+     */
+    COMMENT_REWARD("COMMENT_REWARD", "评价奖励消息");
 
     private final String code;
     private final String desc;
