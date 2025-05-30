@@ -14,7 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 物流轨迹服务实现类
@@ -54,6 +57,16 @@ public class LogisticsTrackServiceImpl extends ServiceImpl<LogisticsTrackMapper,
         track.setStatus("CREATED");
         track.setContent("物流信息已创建，等待揽收");
         track.setOperator("系统");
+        
+        // 添加JSON扩展数据
+        Map<String, Object> detailsMap = new HashMap<>();
+        detailsMap.put("type", "initial");
+        detailsMap.put("systemGenerated", true);
+        detailsMap.put("logisticsInfo", Map.of(
+            "trackingNo", logistics.getTrackingNo(),
+            "companyId", logistics.getCompanyId()
+        ));
+        track.setDetailsJson(detailsMap);
         
         // 手动设置创建时间，解决自动填充可能失效的问题
         track.setCreateTime(LocalDateTime.now());
@@ -104,6 +117,16 @@ public class LogisticsTrackServiceImpl extends ServiceImpl<LogisticsTrackMapper,
         track.setContent(content);
         track.setOperator(StringUtils.hasText(operator) ? operator : "系统");
         
+        // 添加JSON扩展数据
+        Map<String, Object> detailsMap = new HashMap<>();
+        detailsMap.put("type", "statusChange");
+        detailsMap.put("systemGenerated", true);
+        detailsMap.put("previousStatus", logistics.getStatus().getCode());
+        if (StringUtils.hasText(remark)) {
+            detailsMap.put("remark", remark);
+        }
+        track.setDetailsJson(detailsMap);
+        
         // 手动设置创建时间，解决自动填充可能失效的问题
         track.setCreateTime(LocalDateTime.now());
 
@@ -124,11 +147,84 @@ public class LogisticsTrackServiceImpl extends ServiceImpl<LogisticsTrackMapper,
             track.setTrackingTime(LocalDateTime.now());
         }
         
+        // 如果没有设置JSON数据，添加默认数据
+        if (track.getDetailsJson() == null) {
+            Map<String, Object> detailsMap = new HashMap<>();
+            detailsMap.put("type", "manual");
+            detailsMap.put("systemGenerated", false);
+            track.setDetailsJson(detailsMap);
+        }
+        
         // 手动设置创建时间，解决自动填充可能失效的问题
         if (track.getCreateTime() == null) {
             track.setCreateTime(LocalDateTime.now());
         }
 
         return save(track);
+    }
+    
+    /**
+     * 批量添加物流轨迹
+     *
+     * @param logisticsId 物流ID
+     * @param tracks 轨迹列表
+     * @return 是否添加成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean batchAddTracks(Long logisticsId, List<LogisticsTrack> tracks) {
+        if (tracks == null || tracks.isEmpty()) {
+            log.warn("批量添加物流轨迹时传入空列表");
+            return false;
+        }
+        
+        log.info("开始批量添加物流轨迹，物流ID: {}, 轨迹数量: {}", logisticsId, tracks.size());
+        
+        List<LogisticsTrack> processedTracks = new ArrayList<>(tracks.size());
+        LocalDateTime now = LocalDateTime.now();
+        
+        // 处理每个轨迹点
+        for (int i = 0; i < tracks.size(); i++) {
+            LogisticsTrack track = tracks.get(i);
+            
+            // 设置物流ID
+            track.setLogisticsId(logisticsId);
+            
+            // 设置轨迹时间（如果未设置）
+            if (track.getTrackingTime() == null) {
+                // 根据索引设置不同的时间，确保时间顺序
+                track.setTrackingTime(now.plusMinutes(i * 30));
+            }
+            
+            // 设置创建时间
+            track.setCreateTime(now);
+            
+            // 设置默认操作人（如果未设置）
+            if (!StringUtils.hasText(track.getOperator())) {
+                track.setOperator("系统批量生成");
+            }
+            
+            // 扩展JSON数据
+            Map<String, Object> detailsJson = track.getDetailsJson();
+            if (detailsJson == null) {
+                detailsJson = new HashMap<>();
+            }
+            
+            // 添加批量生成的标识
+            detailsJson.put("batchGenerated", true);
+            detailsJson.put("batchIndex", i);
+            detailsJson.put("batchTimestamp", now.toString());
+            
+            track.setDetailsJson(detailsJson);
+            
+            processedTracks.add(track);
+        }
+        
+        // 批量保存所有轨迹
+        boolean result = saveBatch(processedTracks);
+        log.info("批量添加物流轨迹{}，物流ID: {}, 轨迹数量: {}", 
+                result ? "成功" : "失败", logisticsId, processedTracks.size());
+        
+        return result;
     }
 }

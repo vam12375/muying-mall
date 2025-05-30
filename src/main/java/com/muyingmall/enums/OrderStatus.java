@@ -33,7 +33,17 @@ public enum OrderStatus {
     /**
      * 已取消
      */
-    CANCELLED("cancelled", "已取消");
+    CANCELLED("cancelled", "已取消"),
+
+    /**
+     * 退款中
+     */
+    REFUNDING("refunding", "退款中"),
+
+    /**
+     * 已退款
+     */
+    REFUNDED("refunded", "已退款");
 
     /**
      * 状态编码
@@ -78,10 +88,14 @@ public enum OrderStatus {
             case PENDING_PAYMENT:
                 return target == PENDING_SHIPMENT || target == CANCELLED;
             case PENDING_SHIPMENT:
-                return target == SHIPPED || target == CANCELLED;
+                return target == SHIPPED || target == CANCELLED || target == REFUNDING;
             case SHIPPED:
-                return target == COMPLETED || target == CANCELLED;
+                return target == COMPLETED || target == CANCELLED || target == REFUNDING;
             case COMPLETED:
+                return target == REFUNDING;
+            case REFUNDING:
+                return target == REFUNDED || target == COMPLETED;
+            case REFUNDED:
             case CANCELLED:
                 return false;
             default:

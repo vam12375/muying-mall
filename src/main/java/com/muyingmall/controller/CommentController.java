@@ -2,6 +2,8 @@ package com.muyingmall.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.muyingmall.common.api.CommonResult;
 import com.muyingmall.dto.CommentDTO;
 import com.muyingmall.dto.CommentReplyDTO;
@@ -15,6 +17,8 @@ import com.muyingmall.entity.CommentRewardConfig;
 import com.muyingmall.entity.CommentTag;
 import com.muyingmall.entity.CommentTemplate;
 import com.muyingmall.entity.Order;
+import com.muyingmall.entity.UserMessage;
+import com.muyingmall.enums.MessageType;
 import com.muyingmall.enums.OrderStatus;
 import com.muyingmall.service.CommentReplyService;
 import com.muyingmall.service.CommentRewardConfigService;
@@ -22,14 +26,23 @@ import com.muyingmall.service.CommentService;
 import com.muyingmall.service.CommentTagService;
 import com.muyingmall.service.CommentTemplateService;
 import com.muyingmall.service.OrderService;
+import com.muyingmall.service.UserMessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,6 +54,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/comment")
 @RequiredArgsConstructor
 @Tag(name = "评价管理", description = "评价相关接口")
+@Slf4j
 public class CommentController {
 
     private final CommentService commentService;
@@ -49,15 +63,30 @@ public class CommentController {
     private final CommentTagService commentTagService;
     private final CommentTemplateService commentTemplateService;
     private final CommentRewardConfigService commentRewardConfigService;
+    private final UserMessageService userMessageService;
+
+    @Value("${upload.path:E:/11/muying-web/public}")
+    private String uploadPath;
+
+    @Value("${upload.domain:http://localhost:5173}")
+    private String domain;
+
+    // 使用ObjectMapper将对象转换为JSON字符串
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Operation(summary = "创建商品评价")
     @PostMapping("/create")
     public CommonResult<Boolean> createComment(@RequestBody CommentDTO commentDTO) {
         Comment comment = new Comment();
         BeanUtils.copyProperties(commentDTO, comment);
-        // 如果images是列表，需要转换为JSON字符串
+        // 如果images是列表，转换为JSON字符串
         if (commentDTO.getImages() != null && !commentDTO.getImages().isEmpty()) {
-            comment.setImages(String.join(",", commentDTO.getImages()));
+            try {
+                comment.setImages(objectMapper.writeValueAsString(commentDTO.getImages()));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                return CommonResult.failed("图片格式转换失败: " + e.getMessage());
+            }
         }
         boolean result = commentService.createComment(comment);
         return CommonResult.success(result);
@@ -79,9 +108,14 @@ public class CommentController {
         Comment comment = new Comment();
         BeanUtils.copyProperties(commentDTO, comment);
 
-        // 如果images是列表，需要转换为JSON字符串
+        // 如果images是列表，转换为JSON字符串
         if (commentDTO.getImages() != null && !commentDTO.getImages().isEmpty()) {
-            comment.setImages(String.join(",", commentDTO.getImages()));
+            try {
+                comment.setImages(objectMapper.writeValueAsString(commentDTO.getImages()));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                return CommonResult.failed("图片格式转换失败: " + e.getMessage());
+            }
         }
 
         boolean result = commentService.createComment(comment);
@@ -115,6 +149,20 @@ public class CommentController {
             @PathVariable @Parameter(description = "商品ID") Integer productId) {
         List<Comment> comments = commentService.getProductComments(productId);
         List<CommentDTO> result = convertToDTO(comments);
+
+        // 为每条评价获取回复
+        for (CommentDTO dto : result) {
+            // 获取评价回复
+            List<CommentReply> replies = commentReplyService.getCommentReplies(dto.getCommentId());
+            if (replies != null && !replies.isEmpty()) {
+                // 转换回复并设置到评价DTO
+                dto.setReplies(convertToReplyDTO(replies));
+                dto.setHasReplied(true);
+            } else {
+                dto.setHasReplied(false);
+            }
+        }
+
         return CommonResult.success(result);
     }
 
@@ -131,6 +179,19 @@ public class CommentController {
 
         // 转换评价列表
         List<CommentDTO> records = convertToDTO(commentPage.getRecords());
+
+        // 为每条评价获取回复
+        for (CommentDTO dto : records) {
+            // 获取评价回复
+            List<CommentReply> replies = commentReplyService.getCommentReplies(dto.getCommentId());
+            if (replies != null && !replies.isEmpty()) {
+                // 转换回复并设置到评价DTO
+                dto.setReplies(convertToReplyDTO(replies));
+                dto.setHasReplied(true);
+            } else {
+                dto.setHasReplied(false);
+            }
+        }
 
         // 构建返回结果
         Map<String, Object> result = Map.of(
@@ -229,9 +290,14 @@ public class CommentController {
         Comment comment = new Comment();
         BeanUtils.copyProperties(commentDTO, comment);
 
-        // 如果images是列表，需要转换为JSON字符串
+        // 如果images是列表，转换为JSON字符串
         if (commentDTO.getImages() != null && !commentDTO.getImages().isEmpty()) {
-            comment.setImages(String.join(",", commentDTO.getImages()));
+            try {
+                comment.setImages(objectMapper.writeValueAsString(commentDTO.getImages()));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                return CommonResult.failed("图片格式转换失败: " + e.getMessage());
+            }
         }
 
         boolean result = commentService.updateById(comment);
@@ -364,9 +430,14 @@ public class CommentController {
         Comment comment = new Comment();
         BeanUtils.copyProperties(commentDTO, comment);
 
-        // 如果images是列表，需要转换为JSON字符串
+        // 如果images是列表，转换为JSON字符串
         if (commentDTO.getImages() != null && !commentDTO.getImages().isEmpty()) {
-            comment.setImages(String.join(",", commentDTO.getImages()));
+            try {
+                comment.setImages(objectMapper.writeValueAsString(commentDTO.getImages()));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                return CommonResult.failed("图片格式转换失败: " + e.getMessage());
+            }
         }
 
         // 获取标签ID列表
@@ -603,6 +674,62 @@ public class CommentController {
         return CommonResult.success(orders);
     }
 
+    @Operation(summary = "获取评价情感分析数据")
+    @GetMapping("/sentiment-analysis")
+    public CommonResult<Map<String, Object>> getCommentSentimentAnalysis(
+            @RequestParam(required = false) @Parameter(description = "商品ID") Integer productId,
+            @RequestParam(defaultValue = "30") @Parameter(description = "天数") Integer days) {
+
+        Map<String, Object> result = commentService.getCommentSentimentAnalysis(productId, days);
+        return CommonResult.success(result);
+    }
+
+    @Operation(summary = "获取用户评价奖励历史")
+    @GetMapping("/user/{userId}/rewards")
+    public CommonResult<List<Map<String, Object>>> getUserCommentRewards(
+            @PathVariable @Parameter(description = "用户ID") Integer userId,
+            @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
+            @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size) {
+
+        // 通过消息中心查询用户的评价奖励消息
+        IPage<UserMessage> messages = userMessageService.getUserMessages(
+                userId,
+                MessageType.COMMENT_REWARD.getCode(),
+                null,
+                page,
+                size);
+
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        if (messages != null && messages.getRecords() != null) {
+            for (UserMessage message : messages.getRecords()) {
+                Map<String, Object> rewardInfo = new HashMap<>();
+                rewardInfo.put("messageId", message.getMessageId());
+                rewardInfo.put("title", message.getTitle());
+                rewardInfo.put("content", message.getContent());
+                rewardInfo.put("createTime", message.getCreateTime());
+                rewardInfo.put("isRead", message.getIsRead());
+
+                // 尝试解析额外信息
+                if (message.getExtra() != null && !message.getExtra().isEmpty()) {
+                    try {
+                        Map<String, Object> extraInfo = objectMapper.readValue(message.getExtra(), Map.class);
+                        rewardInfo.put("commentId", extraInfo.get("commentId"));
+                        rewardInfo.put("productId", extraInfo.get("productId"));
+                        rewardInfo.put("totalReward", extraInfo.get("totalReward"));
+                        rewardInfo.put("rewards", extraInfo.get("rewards"));
+                    } catch (Exception e) {
+                        log.error("解析评价奖励额外信息失败: {}", e.getMessage());
+                    }
+                }
+
+                result.add(rewardInfo);
+            }
+        }
+
+        return CommonResult.success(result);
+    }
+
     /**
      * 将Comment实体转换为CommentDTO
      */
@@ -615,9 +742,15 @@ public class CommentController {
             CommentDTO dto = new CommentDTO();
             BeanUtils.copyProperties(comment, dto);
 
-            // 处理图片，将逗号分隔的字符串转为列表
+            // 处理图片，将JSON字符串转为列表
             if (comment.getImages() != null && !comment.getImages().isEmpty()) {
-                dto.setImages(List.of(comment.getImages().split(",")));
+                try {
+                    // 尝试将JSON字符串解析为列表
+                    dto.setImages(objectMapper.readValue(comment.getImages(), List.class));
+                } catch (JsonProcessingException e) {
+                    // 如果解析失败，尝试使用旧的逗号分隔格式
+                    dto.setImages(List.of(comment.getImages().split(",")));
+                }
             }
 
             // 设置用户信息
@@ -690,7 +823,13 @@ public class CommentController {
 
             // 设置图片列表
             if (comment.getImages() != null && !comment.getImages().isEmpty()) {
-                dto.setImages(List.of(comment.getImages().split(",")));
+                try {
+                    // 尝试将JSON字符串解析为列表
+                    dto.setImages(objectMapper.readValue(comment.getImages(), List.class));
+                } catch (JsonProcessingException e) {
+                    // 如果解析失败，尝试使用旧的逗号分隔格式
+                    dto.setImages(List.of(comment.getImages().split(",")));
+                }
             }
 
             // 获取评价标签
@@ -761,13 +900,61 @@ public class CommentController {
         return CommonResult.success(keywords);
     }
 
-    @Operation(summary = "获取评价情感分析数据")
-    @GetMapping("/sentiment-analysis")
-    public CommonResult<Map<String, Object>> getCommentSentimentAnalysis(
-            @RequestParam(required = false) @Parameter(description = "商品ID") Integer productId,
-            @RequestParam(defaultValue = "30") @Parameter(description = "天数") Integer days) {
+    /**
+     * 上传评论图片
+     */
+    @Operation(summary = "上传评论图片")
+    @PostMapping("/upload/image")
+    public CommonResult<Map<String, String>> uploadCommentImage(@RequestParam("file") MultipartFile file) {
+        try {
+            // 验证文件
+            if (file == null || file.isEmpty()) {
+                return CommonResult.failed("文件不能为空");
+            }
 
-        Map<String, Object> sentimentData = commentService.getCommentSentimentAnalysis(productId, days);
-        return CommonResult.success(sentimentData);
+            // 获取文件后缀
+            String originalFilename = file.getOriginalFilename();
+            String suffix = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+
+            // 限制文件类型
+            if (!".jpg".equalsIgnoreCase(suffix) && !".jpeg".equalsIgnoreCase(suffix) &&
+                    !".png".equalsIgnoreCase(suffix) && !".gif".equalsIgnoreCase(suffix)) {
+                return CommonResult.failed("只支持jpg、jpeg、png、gif格式的图片");
+            }
+
+            // 生成评论图片存储路径
+            String relativePath = "/comment/" + java.time.LocalDate.now().toString().replace("-", "/");
+            String storageDir = uploadPath + relativePath;
+
+            // 确保目录存在
+            Path uploadDir = Paths.get(storageDir);
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+
+            // 生成文件名: 时间戳_随机数.后缀
+            String filename = System.currentTimeMillis() + "_" +
+                    java.util.UUID.randomUUID().toString().substring(0, 8) + suffix;
+            Path filePath = uploadDir.resolve(filename);
+
+            // 保存文件
+            Files.copy(file.getInputStream(), filePath);
+
+            // 生成访问URL
+            String fileUrl = domain + relativePath + "/" + filename;
+
+            // 返回结果
+            Map<String, String> result = new HashMap<>();
+            result.put("url", fileUrl);
+            result.put("name", originalFilename);
+
+            return CommonResult.success(result);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return CommonResult.failed("图片上传失败: " + e.getMessage());
+        }
     }
 }

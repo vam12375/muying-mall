@@ -49,13 +49,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final RedisUtil redisUtil;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    @Value("${upload.path:/uploads}")
+    @Value("${upload.path:E:/11/muying-web/public}")
     private String uploadPath;
 
-    @Value("${upload.avatar.path:/avatar}")
+    @Value("${upload.avatar.path:/avatars}")
     private String avatarPath;
 
-    @Value("${upload.domain:http://localhost:8080}")
+    @Value("${upload.domain:http://localhost:5173}")
     private String domain;
 
     // @Value("${jwt.expiration:86400}")

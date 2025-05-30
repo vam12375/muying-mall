@@ -93,7 +93,15 @@ public class CommentTagServiceImpl extends ServiceImpl<CommentTagMapper, Comment
         if (tagId == null) {
             return false;
         }
-        return baseMapper.incrementUsageCount(tagId) > 0;
+        try {
+            int result = baseMapper.incrementUsageCount(tagId);
+            log.debug("增加标签使用次数, tagId={}, 结果={}", tagId, result);
+            return result > 0;
+        } catch (Exception e) {
+            log.warn("增加标签使用次数失败, tagId={}, error={}", tagId, e.getMessage());
+            // 不抛出异常，避免事务回滚
+            return false;
+        }
     }
 
     @Override
@@ -102,7 +110,15 @@ public class CommentTagServiceImpl extends ServiceImpl<CommentTagMapper, Comment
         if (tagId == null) {
             return false;
         }
-        return baseMapper.decrementUsageCount(tagId) > 0;
+        try {
+            int result = baseMapper.decrementUsageCount(tagId);
+            log.debug("减少标签使用次数, tagId={}, 结果={}", tagId, result);
+            return result > 0;
+        } catch (Exception e) {
+            log.warn("减少标签使用次数失败, tagId={}, error={}", tagId, e.getMessage());
+            // 不抛出异常，避免事务回滚
+            return false;
+        }
     }
 
     @Override

@@ -112,6 +112,28 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         // 更新订单评价状态
         if (result) {
             orderMapper.updateOrderCommentStatus(comment.getOrderId(), 1);
+
+            // 计算并发放奖励
+            try {
+                log.info("评价创建成功，准备计算并发放奖励: commentId={}, userId={}",
+                        comment.getCommentId(), comment.getUserId());
+                Map<String, Object> rewardResult = commentRewardConfigService.grantReward(comment);
+                log.info("用户 {} 评价 {} 奖励发放结果: {}",
+                        comment.getUserId(), comment.getCommentId(), rewardResult);
+
+                // 检查奖励发放是否成功
+                Boolean success = (Boolean) rewardResult.get("success");
+                if (success != null && success) {
+                    log.info("奖励发放成功: commentId={}, userId={}, reward={}",
+                            comment.getCommentId(), comment.getUserId(), rewardResult.get("totalReward"));
+                } else {
+                    log.warn("奖励发放失败或无奖励: commentId={}, userId={}, result={}",
+                            comment.getCommentId(), comment.getUserId(), rewardResult);
+                }
+            } catch (Exception e) {
+                log.error("发放评价奖励失败，但不影响评价提交: {}", e.getMessage(), e);
+                // 奖励发放失败不影响评价提交结果
+            }
         }
 
         return result;
@@ -120,15 +142,31 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createCommentWithTags(Comment comment, List<Integer> tagIds) {
-        // 创建评价
-        boolean result = createComment(comment);
+        log.info("开始创建带标签的评价, comment={}, tagIds={}", comment, tagIds);
 
-        // 如果评价创建成功且有标签，添加标签关联
-        if (result && !CollectionUtils.isEmpty(tagIds)) {
-            addCommentTags(comment.getCommentId(), tagIds);
+        try {
+            // 创建评价
+            boolean result = createComment(comment);
+            log.info("评价创建结果: {}, commentId={}", result, comment.getCommentId());
+
+            // 如果评价创建成功且有标签，添加标签关联
+            if (result) {
+                if (!CollectionUtils.isEmpty(tagIds)) {
+                    log.info("开始关联评价标签, commentId={}, tagIds={}", comment.getCommentId(), tagIds);
+                    addCommentTags(comment.getCommentId(), tagIds);
+                } else {
+                    log.info("没有标签需要关联, commentId={}", comment.getCommentId());
+                }
+            } else {
+                log.error("评价创建失败，无法关联标签");
+                return false;
+            }
+
+            return result;
+        } catch (Exception e) {
+            log.error("创建带标签的评价失败: {}", e.getMessage(), e);
+            throw new BusinessException("创建带标签的评价失败: " + e.getMessage());
         }
-
-        return result;
     }
 
     @Override
@@ -667,29 +705,55 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean addCommentTags(Integer commentId, List<Integer> tagIds) {
-        if (commentId == null || CollectionUtils.isEmpty(tagIds)) {
-            return false;
+        if (commentId == null) {
+            log.error("添加评价标签失败: 评价ID为空");
+            throw new BusinessException("添加评价标签失败: 评价ID不能为空");
+        }
+
+        if (CollectionUtils.isEmpty(tagIds)) {
+            log.warn("添加评价标签: 标签列表为空, commentId={}", commentId);
+            return true; // 空标签列表视为成功，不做任何操作
         }
 
         // 检查评价是否存在
         Comment comment = this.getById(commentId);
         if (comment == null) {
+            log.error("添加评价标签失败: 评价不存在, commentId={}", commentId);
             throw new BusinessException("评价不存在");
         }
 
         try {
+            log.info("开始添加评价标签, commentId={}, tagIds={}", commentId, tagIds);
+
+            // 检查标签ID是否有效
+            for (Integer tagId : tagIds) {
+                if (tagId == null) {
+                    log.error("添加评价标签失败: 标签ID为空, commentId={}", commentId);
+                    throw new BusinessException("标签ID不能为空");
+                }
+            }
+
             // 批量插入标签关联
-            commentTagRelationMapper.batchInsert(commentId, tagIds);
+            int insertCount = commentTagRelationMapper.batchInsert(commentId, tagIds);
+            log.info("批量插入评价标签关系成功, commentId={}, 插入数量={}", commentId, insertCount);
 
             // 更新标签使用次数
             for (Integer tagId : tagIds) {
-                commentTagService.incrementUsageCount(tagId);
+                try {
+                    boolean success = commentTagService.incrementUsageCount(tagId);
+                    if (!success) {
+                        log.warn("更新标签使用次数失败, tagId={}", tagId);
+                    }
+                } catch (Exception e) {
+                    log.warn("更新标签使用次数失败, tagId={}, error={}", tagId, e.getMessage());
+                    // 继续处理其他标签，不中断流程
+                }
             }
 
             return true;
         } catch (Exception e) {
-            log.error("添加评价标签失败", e);
-            throw new BusinessException("添加评价标签失败");
+            log.error("添加评价标签失败, commentId={}, tagIds={}, error={}", commentId, tagIds, e.getMessage(), e);
+            throw new BusinessException("添加评价标签失败: " + e.getMessage());
         }
     }
 

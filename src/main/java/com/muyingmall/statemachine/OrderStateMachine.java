@@ -32,15 +32,28 @@ public class OrderStateMachine implements StateMachine<OrderStatus, OrderEvent, 
         Map<OrderEvent, OrderStatus> pendingShipmentMap = new HashMap<>();
         pendingShipmentMap.put(OrderEvent.SHIP, OrderStatus.SHIPPED);
         pendingShipmentMap.put(OrderEvent.CANCEL, OrderStatus.CANCELLED);
+        pendingShipmentMap.put(OrderEvent.REFUND_APPLY, OrderStatus.REFUNDING);
         STATE_MACHINE_MAP.put(OrderStatus.PENDING_SHIPMENT, pendingShipmentMap);
 
         // 已发货状态下的转换规则
         Map<OrderEvent, OrderStatus> shippedMap = new HashMap<>();
         shippedMap.put(OrderEvent.RECEIVE, OrderStatus.COMPLETED);
+        shippedMap.put(OrderEvent.REFUND_APPLY, OrderStatus.REFUNDING);
         STATE_MACHINE_MAP.put(OrderStatus.SHIPPED, shippedMap);
 
-        // 已完成状态下的转换规则 - 终态，无法再转换
-        STATE_MACHINE_MAP.put(OrderStatus.COMPLETED, new HashMap<>());
+        // 已完成状态下的转换规则
+        Map<OrderEvent, OrderStatus> completedMap = new HashMap<>();
+        completedMap.put(OrderEvent.REFUND_APPLY, OrderStatus.REFUNDING);
+        STATE_MACHINE_MAP.put(OrderStatus.COMPLETED, completedMap);
+
+        // 退款中状态下的转换规则
+        Map<OrderEvent, OrderStatus> refundingMap = new HashMap<>();
+        refundingMap.put(OrderEvent.REFUND_COMPLETE, OrderStatus.REFUNDED);
+        refundingMap.put(OrderEvent.REFUND_FAIL, OrderStatus.COMPLETED);
+        STATE_MACHINE_MAP.put(OrderStatus.REFUNDING, refundingMap);
+
+        // 已退款状态下的转换规则 - 终态，无法再转换
+        STATE_MACHINE_MAP.put(OrderStatus.REFUNDED, new HashMap<>());
 
         // 已取消状态下的转换规则 - 终态，无法再转换
         STATE_MACHINE_MAP.put(OrderStatus.CANCELLED, new HashMap<>());

@@ -2,6 +2,11 @@ server:
   port: 8080
   servlet:
     context-path: /api
+  # 添加Tomcat配置，允许请求路径中包含特殊字符
+  tomcat:
+    relaxed-query-chars: '[,],{,},|'
+    relaxed-path-chars: '[,],{,},|'
+    max-http-form-post-size: 20MB
 
 spring:
   application:
@@ -28,10 +33,17 @@ spring:
       # Redis连接池配置
       lettuce:
         pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-          max-wait: -1ms
+          max-active: 16       # 最大连接数，增加以支持高并发
+          max-idle: 8          # 最大空闲连接数
+          min-idle: 4          # 最小空闲连接数，提高以保持足够的可用连接
+          max-wait: 1000ms     # 连接池最大阻塞等待时间
+          time-between-eviction-runs: 60000ms # 空闲连接检测周期
+      timeout: 3000ms          # 连接超时时间
+      # Redis客户端配置
+      client-name: muying-mall # 客户端名称，便于监控识别
+      connect-timeout: 3000ms  # 连接超时时间
+      # Redis高级配置
+      client-type: lettuce     # 使用lettuce客户端
   
   # Session配置
   session:
@@ -40,6 +52,49 @@ spring:
     redis:
       namespace: muying:session
       flush-mode: on_save  # 确保会话变更立即写入Redis
+      
+  # Elasticsearch配置（当服务不可用时禁用连接尝试）
+  elasticsearch:
+    uris: localhost:9200 # Elasticsearch访问地址
+    connection-timeout: 1s # 连接超时设置为较短时间，防止长时间等待
+    socket-timeout: 1s # 套接字超时设置为较短时间
+    username: # 如果有认证信息，可在此处配置
+    password: # 如果有认证信息，可在此处配置
+
+# 健康检查配置
+management:
+  health:
+    elasticsearch:
+      enabled: false # 禁用Elasticsearch健康检查
+  endpoint:
+    health:
+      show-details: always # 显示详细健康信息
+      show-components: always # 显示所有组件健康状态
+      
+# Redis自定义配置
+redis:
+  # 缓存淘汰策略配置
+  config:
+    # 设置maxmemory-policy为volatile-lru，只淘汰设置了过期时间的key
+    maxmemory-policy: volatile-lru
+    # Redis内存限制，建议设置为可用内存的75%
+    maxmemory: 1gb
+    # 键空间通知配置，启用过期和驱逐事件通知
+    notify-keyspace-events: Ex
+  # 缓存统计配置
+  stats:
+    # 是否启用缓存统计
+    enabled: true
+    # 统计采样率（1-100）
+    sample-rate: 10
+  # 高级特性配置
+  features:
+    # 是否启用批量操作Pipeline
+    pipeline-enabled: true
+    # 是否启用Lua脚本缓存
+    script-cache-enabled: true
+    # 是否启用分布式锁
+    lock-enabled: true
 
 # MyBatis-Plus配置
 mybatis-plus:
@@ -82,9 +137,9 @@ springdoc:
 
 # CORS配置
 cors:
-  allowed-origins: http://localhost:5173,http://localhost:3000,http://localhost:8081
+  allowed-origins: http://localhost:5173,http://localhost:3000,http://localhost:8081,http://localhost:4000
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
-  allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+  allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,X-CSRF-Token
   allow-credentials: true
   max-age: 3600
     
@@ -96,6 +151,7 @@ alipay:
   gateway-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do  # 沙箱环境网关，正式环境需修改
   return-url: http://localhost:8080/api/payment/alipay/return #支付成功后的跳转地址
   notify-url: http://localhost:8080/api/payment/alipay/notify #异步回调地址
+  refund-notify-url: http://localhost:8080/api/payment/alipay/refund/notify #退款异步回调地址
 
 # 微信支付配置 - 敏感信息已移至application-private.yml
 wechat:
@@ -113,6 +169,8 @@ logging:
     com.muyingmall: debug
     org.springframework.web: info
     org.springframework.security: DEBUG
+    org.springframework.data.redis: info # 添加Redis日志级别配置
+    org.springframework.data.elasticsearch: WARN # 降低Elasticsearch相关日志级别
 
 # 前端应用地址 (用于支付回调重定向)
 frontend:
@@ -122,3 +180,20 @@ frontend:
 jwt:
   # secret已移至application-private.yml
   expiration: 86400 # 单位：秒 (这里是24小时)
+
+# 缓存配置
+cache:
+  # 全局缓存设置
+  global:
+    # 是否启用缓存
+    enabled: true
+    # 默认过期时间（秒）
+    default-ttl: 3600
+  # 二级缓存设置
+  second-level:
+    # 是否启用本地缓存作为二级缓存
+    enabled: false
+    # 本地缓存最大大小
+    max-size: 1000
+    # 本地缓存过期时间（秒）
+    ttl: 60

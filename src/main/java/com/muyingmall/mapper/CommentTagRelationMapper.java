@@ -6,6 +6,7 @@ import com.muyingmall.entity.CommentTagRelation;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Insert;
 
 import java.util.List;
 
@@ -42,7 +43,7 @@ public interface CommentTagRelationMapper extends BaseMapper<CommentTagRelation>
      * @param tagIds    标签ID列表
      * @return 影响行数
      */
-    @Select({
+    @Insert({
             "<script>",
             "INSERT INTO comment_tag_relation(comment_id, tag_id) VALUES ",
             "<foreach collection='tagIds' item='tagId' separator=','>",

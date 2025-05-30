@@ -41,6 +41,16 @@ public class OrderStateContext {
     private String operator;
 
     /**
+     * 操作者类型：USER-用户, ADMIN-管理员, SYSTEM-系统
+     */
+    private String operatorType;
+
+    /**
+     * 操作者ID
+     */
+    private Integer operatorId;
+
+    /**
      * 状态变更时间
      */
     private long timestamp = System.currentTimeMillis();

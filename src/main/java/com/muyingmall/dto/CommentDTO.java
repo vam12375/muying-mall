@@ -84,4 +84,14 @@ public class CommentDTO {
      * 商品图片
      */
     private String productImage;
+
+    /**
+     * 是否已回复
+     */
+    private Boolean hasReplied;
+
+    /**
+     * 评价回复列表
+     */
+    private List<CommentReplyDTO> replies;
 }

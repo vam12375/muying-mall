@@ -295,4 +295,40 @@ public class CacheConstants {
      * 消息列表缓存过期时间（秒）
      */
     public static final long MESSAGE_LIST_EXPIRE_TIME = 300; // 5分钟
+
+    /**
+     * 内容管理缓存前缀
+     */
+    public static final String CONTENT_KEY_PREFIX = "content:";
+
+    /**
+     * 内容详情缓存键
+     */
+    public static final String CONTENT_DETAIL_KEY = CONTENT_KEY_PREFIX + "detail:";
+
+    /**
+     * 内容列表缓存键
+     */
+    public static final String CONTENT_LIST_KEY = CONTENT_KEY_PREFIX + "list:";
+
+    /**
+     * 分析数据缓存前缀
+     */
+    public static final String ANALYTICS_KEY_PREFIX = "analytics:";
+
+    /**
+     * 分析报表缓存键
+     */
+    public static final String ANALYTICS_REPORT_KEY = ANALYTICS_KEY_PREFIX + "report:";
+
+    /**
+     * 分析数据缓存过期时间（秒）
+     */
+    public static final long ANALYTICS_EXPIRE_TIME = 1800; // 30分钟
+
+    /**
+     * 空值缓存标记
+     * 用于标识查询不到的数据，防止缓存穿透
+     */
+    public static final String EMPTY_CACHE_VALUE = "EMPTY_VALUE_PROTECTION";
 }
