@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -761,12 +762,16 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Transactional(rollbackFor = Exception.class)
     public boolean updateCommentTags(Integer commentId, List<Integer> tagIds) {
         if (commentId == null) {
+            log.error("更新评价标签失败: 评价ID为空");
             return false;
         }
+
+        log.info("开始更新评价标签, commentId={}, tagIds={}", commentId, tagIds);
 
         // 检查评价是否存在
         Comment comment = this.getById(commentId);
         if (comment == null) {
+            log.error("更新评价标签失败: 评价不存在, commentId={}", commentId);
             throw new BusinessException("评价不存在");
         }
 
@@ -777,18 +782,42 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                     .map(CommentTag::getTagId)
                     .collect(Collectors.toList());
 
-            // 删除所有现有标签关联
-            removeAllCommentTags(commentId);
+            log.info("当前评价标签: commentId={}, 现有标签={}", commentId, currentTagIds);
 
-            // 如果有新标签，添加新的标签关联
-            if (!CollectionUtils.isEmpty(tagIds)) {
-                addCommentTags(commentId, tagIds);
+            // 检查是否需要更新
+            boolean needsUpdate = tagIds == null || tagIds.size() != currentTagIds.size() ||
+                    !new HashSet<>(tagIds).equals(new HashSet<>(currentTagIds));
+
+            if (!needsUpdate) {
+                log.info("标签没有变化，无需更新: commentId={}", commentId);
+                return true;
             }
 
+            log.info("开始删除评价现有标签: commentId={}", commentId);
+            // 删除所有现有标签关联
+            boolean removeResult = removeAllCommentTags(commentId);
+            if (!removeResult && !currentTags.isEmpty()) {
+                log.error("删除评价现有标签失败: commentId={}", commentId);
+                throw new BusinessException("删除评价现有标签失败");
+            }
+
+            // 如果有新标签，添加新的标签关联
+            if (tagIds != null && !tagIds.isEmpty()) {
+                log.info("开始添加新标签: commentId={}, 新标签={}", commentId, tagIds);
+                boolean addResult = addCommentTags(commentId, tagIds);
+                if (!addResult) {
+                    log.error("添加新标签失败: commentId={}, tagIds={}", commentId, tagIds);
+                    throw new BusinessException("添加新标签失败");
+                }
+            } else {
+                log.info("没有新标签需要添加: commentId={}", commentId);
+            }
+
+            log.info("评价标签更新成功: commentId={}", commentId);
             return true;
         } catch (Exception e) {
-            log.error("更新评价标签失败", e);
-            throw new BusinessException("更新评价标签失败");
+            log.error("更新评价标签失败: commentId={}, error={}", commentId, e.getMessage(), e);
+            throw new BusinessException("更新评价标签失败: " + e.getMessage());
         }
     }
 
@@ -822,23 +851,73 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             return false;
         }
 
-        try {
-            // 获取当前标签
-            List<CommentTag> currentTags = getCommentTags(commentId);
+        // 获取当前标签
+        List<CommentTag> currentTags = getCommentTags(commentId);
 
-            // 删除所有标签关联
-            int result = commentTagRelationMapper.deleteByCommentId(commentId);
-
-            // 减少标签使用次数
-            for (CommentTag tag : currentTags) {
-                commentTagService.decrementUsageCount(tag.getTagId());
-            }
-
-            return result > 0;
-        } catch (Exception e) {
-            log.error("删除评价所有标签失败", e);
-            throw new BusinessException("删除评价所有标签失败");
+        if (currentTags.isEmpty()) {
+            log.info("评价没有标签，无需删除, commentId={}", commentId);
+            return true;
         }
+
+        log.info("开始删除评价所有标签, commentId={}, 标签数量={}", commentId, currentTags.size());
+
+        // 记录标签IDs用于日志
+        List<Integer> tagIds = currentTags.stream()
+                .map(CommentTag::getTagId)
+                .collect(Collectors.toList());
+        log.info("要删除的标签IDs: {}", tagIds);
+
+        // 重试机制
+        int maxRetries = 3;
+        int retryCount = 0;
+        boolean success = false;
+        Exception lastException = null;
+
+        while (!success && retryCount < maxRetries) {
+            try {
+                // 删除所有标签关联
+                int result = commentTagRelationMapper.deleteByCommentId(commentId);
+                log.info("删除评价标签关联结果: commentId={}, 影响行数={}", commentId, result);
+
+                if (result >= 0) { // 删除成功，即使没有实际删除任何行
+                    success = true;
+
+                    // 减少标签使用次数
+                    for (CommentTag tag : currentTags) {
+                        try {
+                            boolean decrementResult = commentTagService.decrementUsageCount(tag.getTagId());
+                            log.debug("减少标签使用次数: tagId={}, 结果={}", tag.getTagId(), decrementResult);
+                        } catch (Exception e) {
+                            // 减少使用次数失败不影响整体流程
+                            log.warn("减少标签使用次数失败: tagId={}, error={}", tag.getTagId(), e.getMessage());
+                        }
+                    }
+                } else {
+                    log.warn("删除评价标签关联返回异常结果: {}", result);
+                    throw new BusinessException("删除标签关联返回异常结果: " + result);
+                }
+            } catch (Exception e) {
+                lastException = e;
+                retryCount++;
+                log.warn("删除评价所有标签失败, 重试 {}/{}: commentId={}, error={}", retryCount, maxRetries, commentId,
+                        e.getMessage());
+
+                // 等待一段时间后重试
+                try {
+                    Thread.sleep(100 * retryCount);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+
+        if (!success) {
+            log.error("删除评价所有标签失败，已达到最大重试次数: commentId={}", commentId, lastException);
+            throw new BusinessException("删除评价所有标签失败，请稍后重试");
+        }
+
+        return success;
     }
 
     /**
