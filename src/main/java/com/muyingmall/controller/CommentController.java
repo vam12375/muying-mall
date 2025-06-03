@@ -262,6 +262,33 @@ public class CommentController {
         return CommonResult.success(result);
     }
 
+    @Operation(summary = "获取用户评价统计数据")
+    @GetMapping("/user/{userId}/stats")
+    public CommonResult<Map<String, Object>> getUserCommentStats(
+            @PathVariable @Parameter(description = "用户ID") Integer userId) {
+        try {
+            Map<String, Object> stats = commentService.getUserCommentStats(userId);
+            return CommonResult.success(stats);
+        } catch (Exception e) {
+            log.error("获取用户评价统计数据失败", e);
+            return CommonResult.failed("系统繁忙，请稍后再试");
+        }
+    }
+
+    @Operation(summary = "获取用户评价趋势数据")
+    @GetMapping("/user/{userId}/trend")
+    public CommonResult<Map<String, Object>> getUserCommentTrend(
+            @PathVariable @Parameter(description = "用户ID") Integer userId,
+            @RequestParam(defaultValue = "30") @Parameter(description = "天数") Integer days) {
+        try {
+            Map<String, Object> trend = commentService.getUserCommentTrend(userId, days);
+            return CommonResult.success(trend);
+        } catch (Exception e) {
+            log.error("获取用户评价趋势数据失败", e);
+            return CommonResult.failed("系统繁忙，请稍后再试");
+        }
+    }
+
     @Operation(summary = "更新评价状态")
     @PutMapping("/{commentId}/status")
     public CommonResult<Boolean> updateCommentStatus(
