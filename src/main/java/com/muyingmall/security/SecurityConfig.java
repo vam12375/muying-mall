@@ -62,6 +62,8 @@ public class SecurityConfig {
                         !request.getRequestURI().equals("/api/admin/login") &&
                         !request.getRequestURI().startsWith("/api/admin/refund/"))
                 .hasAuthority("admin")
+                // 钱包相关接口需要登录（明确配置）
+                .requestMatchers("/user/wallet/**").authenticated()
                 // 用户相关接口需要登录
                 .requestMatchers("/user/**").authenticated()
                 .requestMatchers("/order/**").authenticated()

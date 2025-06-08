@@ -17,6 +17,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * JWT认证过滤器
@@ -48,12 +50,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Claims claims = jwtUtils.getClaimsFromToken(token);
         String username = claims.get("username", String.class);
         String role = claims.get("role", String.class);
+        Integer userId = null;
+
+        try {
+            userId = claims.get("userId", Integer.class);
+            System.out.println("JwtAuthenticationFilter: 从token中提取到userId: " + userId);
+        } catch (Exception e) {
+            System.out.println("JwtAuthenticationFilter: 无法从token提取userId: " + e.getMessage());
+        }
 
         if (username != null && role != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            Map<String, Object> details = new HashMap<>();
+            if (userId != null) {
+                details.put("userId", userId);
+            }
+
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     username, null, Collections.singletonList(new SimpleGrantedAuthority(role)));
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            WebAuthenticationDetailsSource detailsSource = new WebAuthenticationDetailsSource();
+            authentication.setDetails(details);
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            System.out.println("JwtAuthenticationFilter: 已设置认证信息，username=" + username +
+                    ", role=" + role + ", userId=" + userId);
         }
 
         filterChain.doFilter(request, response);

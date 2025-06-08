@@ -3,11 +3,12 @@ package com.muyingmall.common;
 import lombok.Data;
 
 /**
- * 通用返回结果
+ * 通用结果类
+ *
+ * @param <T> 数据类型
  */
 @Data
 public class Result<T> {
-
     /**
      * 状态码
      */
@@ -24,45 +25,104 @@ public class Result<T> {
     private T data;
 
     /**
-     * 成功返回结果
+     * 是否成功
+     */
+    private boolean success;
+
+    /**
+     * 时间戳
+     */
+    private long timestamp;
+
+    public Result() {
+        this.timestamp = System.currentTimeMillis();
+    }
+
+    public Result(int code, String message, T data, boolean success) {
+        this.code = code;
+        this.message = message;
+        this.data = data;
+        this.success = success;
+        this.timestamp = System.currentTimeMillis();
+    }
+
+    /**
+     * 成功结果
+     *
+     * @param <T> 数据类型
+     * @return 成功结果
+     */
+    public static <T> Result<T> success() {
+        return new Result<>(200, "操作成功", null, true);
+    }
+
+    /**
+     * 成功结果
+     *
+     * @param data 数据
+     * @param <T>  数据类型
+     * @return 成功结果
      */
     public static <T> Result<T> success(T data) {
-        Result<T> result = new Result<>();
-        result.setCode(200);
-        result.setMessage("操作成功");
-        result.setData(data);
-        return result;
+        return new Result<>(200, "操作成功", data, true);
     }
 
     /**
-     * 成功返回结果
+     * 成功结果
+     *
+     * @param message 提示信息
+     * @param data    数据
+     * @param <T>     数据类型
+     * @return 成功结果
      */
     public static <T> Result<T> success(String message, T data) {
-        Result<T> result = new Result<>();
-        result.setCode(200);
-        result.setMessage(message);
-        result.setData(data);
-        return result;
+        return new Result<>(200, message, data, true);
     }
 
     /**
-     * 失败返回结果
+     * 失败结果
+     *
+     * @param code    状态码
+     * @param message 提示信息
+     * @param <T>     数据类型
+     * @return 失败结果
      */
-    public static <T> Result<T> error(String message) {
-        Result<T> result = new Result<>();
-        result.setCode(500);
-        result.setMessage(message);
-        return result;
+    public static <T> Result<T> failure(int code, String message) {
+        return new Result<>(code, message, null, false);
     }
 
     /**
-     * 失败返回结果
+     * 失败结果
+     *
+     * @param message 提示信息
+     * @param <T>     数据类型
+     * @return 失败结果
+     */
+    public static <T> Result<T> failure(String message) {
+        return new Result<>(500, message, null, false);
+    }
+
+    /**
+     * 错误结果 (failure方法的别名)
+     *
+     * @param code    状态码
+     * @param message 提示信息
+     * @param <T>     数据类型
+     * @return 错误结果
      */
     public static <T> Result<T> error(int code, String message) {
-        Result<T> result = new Result<>();
-        result.setCode(code);
-        result.setMessage(message);
-        return result;
+        return failure(code, message);
+    }
+
+    /**
+     * 错误结果 (failure方法的别名)
+     *
+     * @param message 提示信息
+     * @param <T>     数据类型
+     * @return 错误结果
+     */
+    public static <T> Result<T> error(String message) {
+        return failure(message);
     }
 
     /**
