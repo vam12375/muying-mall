@@ -21,6 +21,7 @@
 		<wechat.version>0.0.3</wechat.version>
 		<springdoc.version>2.2.0</springdoc.version>
 		<elasticsearch.version>8.11.0</elasticsearch.version>
+		<pagehelper.version>6.1.0</pagehelper.version>
 	</properties>
 	
 	<dependencies>
@@ -54,6 +55,12 @@
      		<artifactId>mybatis-plus-jsqlparser</artifactId>
      		<version>${mybatis-plus.version}</version>
  		</dependency>
+		<!-- PageHelper分页插件 -->
+		<dependency>
+			<groupId>com.github.pagehelper</groupId>
+			<artifactId>pagehelper-spring-boot-starter</artifactId>
+			<version>2.1.0</version>
+		</dependency>
 		<!-- Redis相关 -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

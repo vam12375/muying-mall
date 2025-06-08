@@ -86,8 +86,9 @@ public class User implements Serializable {
 
     /**
      * 用户钱包余额
+     * 注意：该字段已从user表移至user_account表，此处标记为非数据库字段
      */
-    @TableField("balance")
+    @TableField(exist = false)
     private BigDecimal balance;
 
     /**
