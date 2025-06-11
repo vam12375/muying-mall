@@ -13,12 +13,14 @@ import com.muyingmall.config.AlipayConfig;
 import com.muyingmall.entity.Order;
 import com.muyingmall.entity.Payment;
 import com.muyingmall.entity.User;
+import com.muyingmall.entity.UserAccount;
 import com.muyingmall.enums.OrderStatus;
 import com.muyingmall.enums.PaymentStatus;
 import com.muyingmall.mapper.OrderMapper;
 import com.muyingmall.service.OrderService;
 import com.muyingmall.service.PaymentService;
 import com.muyingmall.service.UserService;
+import com.muyingmall.service.UserAccountService;
 import com.muyingmall.util.EnumUtil;
 import com.muyingmall.common.exception.BusinessException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -66,6 +68,7 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final OrderService orderService;
     private final UserService userService;
+    private final UserAccountService userAccountService; // 注入UserAccountService
     private final AlipayConfig alipayConfig;
     @Autowired
     private OrderMapper orderMapper; // 注入OrderMapper
@@ -181,7 +184,7 @@ public class PaymentController {
     /**
      * 创建微信沙箱模拟支付订单
      */
-    @PostMapping("/wechat/sandbox/create/{orderId}")
+    @PostMapping("/wechat/sandbox/{orderId}")
     @Operation(summary = "创建微信沙箱模拟支付订单")
     @Transactional
     public Result<Map<String, Object>> createWechatSandboxPayment(@PathVariable("orderId") Integer orderId) {
@@ -261,12 +264,24 @@ public class PaymentController {
     }
 
     /**
+     * 创建微信沙箱模拟支付订单（兼容原始路径）
+     */
+    @PostMapping("/wechat/sandbox/create/{orderId}")
+    @Operation(summary = "创建微信沙箱模拟支付订单（兼容原始路径）")
+    @Transactional
+    public Result<Map<String, Object>> createWechatSandboxPaymentCompat(@PathVariable("orderId") Integer orderId) {
+        // 委托给新的实现方法，确保兼容性
+        return createWechatSandboxPayment(orderId);
+    }
+
+    /**
      * 创建钱包支付订单
      */
     @PostMapping("/wallet/create/{orderId}")
     @Operation(summary = "创建钱包支付订单")
     @Transactional
-    public Result<Map<String, Object>> createWalletPayment(@PathVariable("orderId") Integer orderId) {
+    public Result<Map<String, Object>> createWalletPayment(@PathVariable("orderId") Integer orderId,
+            @RequestBody(required = false) Map<String, Object> requestParams) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
@@ -279,6 +294,18 @@ public class PaymentController {
         }
 
         try {
+            // 添加详细的请求参数日志
+            log.info("钱包支付请求参数: orderId={}, requestParams={}, requestParams类型={}",
+                    orderId, requestParams, requestParams != null ? requestParams.getClass().getName() : "null");
+
+            // 检查请求参数中的每个键值对
+            if (requestParams != null) {
+                requestParams.forEach((key, value) -> {
+                    log.info("参数键值对: key={}, value={}, value类型={}",
+                            key, value, value != null ? value.getClass().getName() : "null");
+                });
+            }
+
             Order order = orderService.getById(orderId);
             if (order == null) {
                 return Result.error(404, "订单不存在");
@@ -290,20 +317,44 @@ public class PaymentController {
                 return Result.error(400, "订单状态非待支付");
             }
 
+            // 从订单获取金额 - 不依赖前端传递
             BigDecimal orderAmount = order.getActualAmount();
-            BigDecimal userBalance = user.getBalance() == null ? BigDecimal.ZERO : user.getBalance();
 
-            if (userBalance.compareTo(orderAmount) < 0) {
-                return Result.error(400, "钱包余额不足");
+            // 获取用户的实际账户余额 - 从UserAccount表获取
+            UserAccount userAccount = userAccountService.getUserAccountByUserId(user.getUserId());
+            if (userAccount == null) {
+                log.error("用户账户不存在: userId={}", user.getUserId());
+                return Result.error(404, "用户账户不存在");
             }
+
+            BigDecimal userBalance = userAccount.getBalance() == null ? BigDecimal.ZERO : userAccount.getBalance();
+
+            // 详细记录用于比较的金额值
+            log.info("钱包支付 - 订单金额(数据库): {}, 用户余额(user_account表): {}", orderAmount, userBalance);
+
+            // 精确比较BigDecimal值，避免精度问题
+            int comparisonResult = userBalance.compareTo(orderAmount);
+            log.info("余额比较结果: {} (负数表示余额不足，0或正数表示余额足够)", comparisonResult);
+
+            if (comparisonResult < 0) {
+                log.warn("钱包支付失败 - 余额不足: 用户ID={}, 订单ID={}, 订单金额={}, 用户余额={}, 差额={}",
+                        user.getUserId(), orderId, orderAmount, userBalance,
+                        orderAmount.subtract(userBalance).setScale(2, java.math.RoundingMode.HALF_UP));
+                return Result.error(400, "钱包余额不足，当前余额：" + userBalance + "，订单金额：" + orderAmount);
+            }
+
+            log.info("余额检查通过，开始扣减用户余额");
 
             // 扣减用户余额
             userService.deductBalance(user.getUserId(), orderAmount);
+            log.info("用户余额扣减成功，扣减金额: {}", orderAmount);
 
             // 创建支付记录
             String paymentNo = generatePaymentNo();
+            log.info("生成支付单号: {}", paymentNo);
+
             Payment payment = new Payment();
-            payment.setPaymentNo(paymentNo);
+            payment.setPaymentNo(paymentNo); // 确保设置支付单号
             payment.setOrderId(order.getOrderId());
             payment.setOrderNo(order.getOrderNo());
             payment.setUserId(user.getUserId());
@@ -317,7 +368,9 @@ public class PaymentController {
             // ExpireTime might not be relevant for immediate success
             // payment.setExpireTime(LocalDateTime.now().plusHours(2));
 
+            log.info("即将创建支付记录: {}", payment);
             paymentService.createPayment(payment);
+            log.info("支付记录创建成功: ID={}, PaymentNo={}", payment.getId(), payment.getPaymentNo());
 
             // 更新订单的支付ID和支付方式
             order.setPaymentId(payment.getId());
@@ -325,9 +378,11 @@ public class PaymentController {
             order.setUpdateTime(LocalDateTime.now());
             // Order status will be updated by updatePaymentAndOrderStatus
             orderService.updateById(order);
+            log.info("订单支付信息更新成功: OrderID={}, PaymentID={}", order.getOrderId(), payment.getId());
 
             // 更新支付和订单状态 (订单状态将变为待发货等)
             updatePaymentAndOrderStatus(payment.getId(), payment.getTransactionId());
+            log.info("支付和订单状态更新成功");
 
             Map<String, Object> result = new HashMap<>();
             result.put("paymentId", payment.getId());

@@ -1,13 +1,19 @@
 package com.muyingmall.service.impl;
 
+import com.alipay.api.AlipayApiException;
+import com.alipay.api.AlipayClient;
+import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.common.PageResult;
 import com.muyingmall.common.exception.BusinessException;
+import com.muyingmall.config.AlipayConfig;
 import com.muyingmall.dto.RechargeRequestDTO;
 import com.muyingmall.dto.TransactionQueryDTO;
+import com.muyingmall.dto.WalletInfoDTO;
 import com.muyingmall.entity.AccountTransaction;
 import com.muyingmall.entity.User;
 import com.muyingmall.entity.UserAccount;
@@ -16,6 +22,9 @@ import com.muyingmall.mapper.UserAccountMapper;
 import com.muyingmall.mapper.UserMapper;
 import com.muyingmall.service.UserAccountService;
 import com.muyingmall.util.SecurityUtil;
+import com.muyingmall.util.SpringContextUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -36,6 +45,8 @@ import java.time.format.DateTimeFormatter;
  * 用户账户服务实现类
  */
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class UserAccountServiceImpl implements UserAccountService {
 
     @Autowired
@@ -46,6 +57,8 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Autowired
     private UserMapper userMapper;
+
+    private final AlipayConfig alipayConfig;
 
     @Override
     public PageResult<UserAccount> getUserAccountPage(Integer page, Integer size, String keyword, Integer status) {
@@ -338,23 +351,128 @@ public class UserAccountServiceImpl implements UserAccountService {
     public Map<String, Object> createRechargeOrder(Integer userId, BigDecimal amount, String paymentMethod) {
         Map<String, Object> result = new HashMap<>();
 
-        // 生成充值订单号
-        String rechargeOrderNo = generateRechargeOrderNo();
-        result.put("orderNo", rechargeOrderNo);
-        result.put("amount", amount);
-        result.put("paymentMethod", paymentMethod);
+        try {
+            // 参数验证
+            if (userId == null) {
+                throw new BusinessException("用户ID不能为空");
+            }
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new BusinessException("充值金额必须大于0");
+            }
+            if (paymentMethod == null || paymentMethod.isEmpty()) {
+                throw new BusinessException("支付方式不能为空");
+            }
 
-        // TODO: 调用支付接口，生成支付链接或二维码
-        // 这里模拟支付链接
-        if ("alipay".equals(paymentMethod)) {
-            result.put("payUrl", "/payment/alipay?orderNo=" + rechargeOrderNo);
-        } else if ("wechat".equals(paymentMethod)) {
-            result.put("payUrl", "/payment/wechat?orderNo=" + rechargeOrderNo);
-            result.put("qrCode",
-                    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAABlBMVEX///8AAABVwtN+AAAA");
+            System.out
+                    .println("开始创建充值订单: userId=" + userId + ", amount=" + amount + ", paymentMethod=" + paymentMethod);
+
+            // 生成充值订单号
+            String rechargeOrderNo = generateRechargeOrderNo();
+            result.put("orderNo", rechargeOrderNo);
+            result.put("amount", amount);
+            result.put("paymentMethod", paymentMethod);
+
+            System.out.println("生成充值订单号: " + rechargeOrderNo);
+
+            // 创建充值订单记录
+            AccountTransaction transaction = new AccountTransaction();
+            transaction.setUserId(userId);
+            transaction.setType(1); // 1表示充值
+            transaction.setAmount(amount);
+
+            // 获取用户当前余额
+            UserAccount userAccount = getUserAccountByUserId(userId);
+            if (userAccount == null) {
+                throw new BusinessException("用户账户不存在");
+            }
+
+            transaction.setAccountId(userAccount.getId());
+            transaction.setBeforeBalance(userAccount.getBalance());
+            transaction.setAfterBalance(userAccount.getBalance().add(amount)); // 充值后余额
+            transaction.setTransactionNo(rechargeOrderNo); // 使用充值订单号作为交易号
+            transaction.setStatus(0); // 0表示处理中
+            transaction.setPaymentMethod(paymentMethod);
+            transaction.setDescription("账户充值");
+            transaction.setCreateTime(new Date());
+            transaction.setUpdateTime(new Date());
+
+            try {
+                System.out.println("保存充值交易记录: userId=" + userId + ", accountId=" + transaction.getAccountId()
+                        + ", amount=" + amount);
+                accountTransactionMapper.insert(transaction);
+                System.out.println("保存充值交易记录成功: id=" + transaction.getId());
+            } catch (Exception e) {
+                System.err.println("保存充值交易记录失败: " + e.getMessage());
+                throw new BusinessException("保存充值交易记录失败: " + e.getMessage());
+            }
+
+            // 根据支付方式生成支付信息
+            if ("alipay".equals(paymentMethod)) {
+                try {
+                    // 使用注入的AlipayConfig
+
+                    // 创建AlipayClient实例
+                    AlipayClient alipayClient = new DefaultAlipayClient(
+                            alipayConfig.getGatewayUrl(),
+                            alipayConfig.getAppId(),
+                            alipayConfig.getPrivateKey(),
+                            "json",
+                            "UTF-8",
+                            alipayConfig.getPublicKey(),
+                            "RSA2");
+
+                    // 创建支付宝支付请求
+                    AlipayTradePagePayRequest alipayRequest = new AlipayTradePagePayRequest();
+                    alipayRequest.setNotifyUrl(alipayConfig.getNotifyUrl()); // 设置异步通知地址
+                    alipayRequest.setReturnUrl(alipayConfig.getReturnUrl()); // 设置同步返回地址
+
+                    // 构建支付请求参数
+                    Map<String, Object> bizContent = new HashMap<>();
+                    bizContent.put("out_trade_no", rechargeOrderNo);
+                    bizContent.put("total_amount", amount.toString());
+                    bizContent.put("subject", "母婴商城账户充值");
+                    bizContent.put("product_code", "FAST_INSTANT_TRADE_PAY");
+                    // 设置订单过期时间
+                    bizContent.put("timeout_express", "2h");
+
+                    alipayRequest.setBizContent(com.alibaba.fastjson.JSON.toJSONString(bizContent));
+
+                    // 发送支付请求获取支付表单HTML
+                    String formHtml = alipayClient.pageExecute(alipayRequest).getBody();
+
+                    // 返回支付表单HTML
+                    result.put("formHtml", formHtml);
+                    System.out.println("生成支付宝支付表单成功");
+
+                } catch (Exception e) {
+                    System.err.println("生成支付宝支付表单失败: " + e.getMessage());
+                    e.printStackTrace();
+                    throw new BusinessException("生成支付宝支付表单失败: " + e.getMessage());
+                }
+            } else if ("wechat".equals(paymentMethod)) {
+                // 调用微信支付接口，生成支付二维码
+                System.out.println("生成微信支付链接: orderNo=" + rechargeOrderNo);
+                result.put("redirectUrl", "/payment/wallet/wechat?orderNo=" + rechargeOrderNo);
+                result.put("qrCode",
+                        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAABlBMVEX///8AAABVwtN+AAAA");
+
+                // TODO: 调用实际的微信支付接口
+                // 示例：result.put("qrCode", wechatPayService.createPaymentQRCode(rechargeOrderNo,
+                // amount, "账户充值", "/payment/wallet/wechat/notify"));
+            } else {
+                throw new BusinessException("不支持的支付方式: " + paymentMethod);
+            }
+
+            System.out.println("创建充值订单成功: orderNo=" + rechargeOrderNo);
+            return result;
+        } catch (BusinessException be) {
+            System.err.println("创建充值订单业务异常: " + be.getMessage());
+            throw be;
+        } catch (Exception e) {
+            System.err.println("创建充值订单系统异常: " + e.getMessage());
+            e.printStackTrace();
+            throw new BusinessException("创建充值订单失败: " + e.getMessage());
         }
-
-        return result;
     }
 
     @Override

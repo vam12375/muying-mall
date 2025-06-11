@@ -1,14 +1,26 @@
 package com.muyingmall.controller;
 
+import com.alipay.api.AlipayApiException;
+import com.alipay.api.AlipayClient;
+import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.request.AlipayTradePagePayRequest;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.common.api.CommonPage;
 import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.ResultCode;
+import com.muyingmall.common.exception.BusinessException;
+import com.muyingmall.config.AlipayConfig;
+import com.muyingmall.dto.WalletInfoDTO;
+import com.muyingmall.dto.TransactionQueryDTO;
+import com.muyingmall.dto.RechargeRequestDTO;
 import com.muyingmall.entity.AccountTransaction;
 import com.muyingmall.entity.UserAccount;
+import com.muyingmall.mapper.AccountTransactionMapper;
 import com.muyingmall.service.UserAccountService;
-import com.muyingmall.dto.WalletInfoDTO;
 import com.muyingmall.util.SecurityUtil;
+import com.muyingmall.util.SpringContextUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,6 +46,9 @@ public class UserWalletController {
 
     @Autowired
     private UserAccountService userAccountService;
+
+    @Autowired
+    private AccountTransactionMapper accountTransactionMapper;
 
     @Operation(summary = "获取钱包信息")
     @GetMapping("/info")
@@ -182,8 +198,7 @@ public class UserWalletController {
     @Operation(summary = "创建充值订单")
     @PostMapping("/recharge")
     public CommonResult<Map<String, Object>> createRechargeOrder(
-            @Parameter(description = "充值金额", required = true) @RequestParam(value = "amount") BigDecimal amount,
-            @Parameter(description = "支付方式：alipay-支付宝，wechat-微信支付", required = true) @RequestParam(value = "paymentMethod") String paymentMethod) {
+            @RequestBody RechargeRequestDTO rechargeRequest) {
 
         // 添加详细日志
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -200,22 +215,163 @@ public class UserWalletController {
 
         try {
             // 验证充值金额
+            BigDecimal amount = rechargeRequest.getAmount();
+            String paymentMethod = rechargeRequest.getPaymentMethod();
+
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 log.error("创建充值订单失败：充值金额必须大于0，当前金额={}", amount);
                 return CommonResult.validateFailed("充值金额必须大于0");
             }
 
+            // 验证支付方式
+            if (!"alipay".equals(paymentMethod) && !"wechat".equals(paymentMethod)) {
+                log.error("创建充值订单失败：不支持的支付方式，paymentMethod={}", paymentMethod);
+                return CommonResult.validateFailed("不支持的支付方式");
+            }
+
             log.info("开始创建充值订单，userId={}, amount={}, paymentMethod={}", userId, amount, paymentMethod);
 
             // 创建充值订单
-            Map<String, Object> result = userAccountService.createRechargeOrder(userId, amount, paymentMethod);
+            try {
+                Map<String, Object> result = userAccountService.createRechargeOrder(userId, amount, paymentMethod);
+                log.info("创建充值订单成功：{}", result);
+                return CommonResult.success(result);
+            } catch (Exception e) {
+                log.error("调用userAccountService.createRechargeOrder时发生异常", e);
+                // 提供更详细的错误信息
+                String errorMessage = "创建充值订单失败: " + (e.getMessage() != null ? e.getMessage() : "未知错误");
+                log.error(errorMessage);
+                return CommonResult.failed(errorMessage);
+            }
+        } catch (Exception e) {
+            log.error("创建充值订单过程中发生未预期的异常", e);
+            return CommonResult.failed("创建充值订单失败: " + (e.getMessage() != null ? e.getMessage() : "系统错误，请稍后再试"));
+        }
+    }
 
-            log.info("创建充值订单成功：{}", result);
+    @Operation(summary = "查询充值订单状态")
+    @GetMapping("/recharge/{orderNo}/status")
+    public CommonResult<Map<String, Object>> queryRechargeStatus(
+            @Parameter(description = "充值订单号", required = true) @PathVariable(value = "orderNo") String orderNo) {
+
+        log.info("查询充值订单状态，orderNo={}", orderNo);
+
+        // 从当前登录用户获取用户ID
+        Integer userId = userAccountService.getCurrentUserId();
+        if (userId == null) {
+            log.error("查询充值订单状态失败：用户ID为null");
+            return CommonResult.unauthorized(null);
+        }
+
+        try {
+            // 查询交易记录
+            AccountTransaction transaction = accountTransactionMapper.selectOne(
+                    new LambdaQueryWrapper<AccountTransaction>()
+                            .eq(AccountTransaction::getUserId, userId)
+                            .eq(AccountTransaction::getTransactionNo, orderNo)
+                            .eq(AccountTransaction::getType, 1) // 1表示充值
+            );
+
+            if (transaction == null) {
+                log.error("查询充值订单状态失败：订单不存在，orderNo={}", orderNo);
+                return CommonResult.validateFailed("充值订单不存在");
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("orderNo", orderNo);
+            result.put("amount", transaction.getAmount());
+            result.put("status",
+                    transaction.getStatus() == 1 ? "SUCCESS" : (transaction.getStatus() == 0 ? "PENDING" : "FAILED"));
+            result.put("statusDesc",
+                    transaction.getStatus() == 1 ? "支付成功" : (transaction.getStatus() == 0 ? "处理中" : "支付失败"));
+            result.put("paymentMethod", transaction.getPaymentMethod());
+            result.put("createTime", transaction.getCreateTime());
+            result.put("updateTime", transaction.getUpdateTime());
+
+            log.info("查询充值订单状态成功：{}", result);
 
             return CommonResult.success(result);
         } catch (Exception e) {
-            log.error("创建充值订单失败", e);
-            return CommonResult.failed("创建充值订单失败: " + e.getMessage());
+            log.error("查询充值订单状态失败", e);
+            return CommonResult.failed("查询充值订单状态失败: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "获取充值订单支付表单")
+    @GetMapping("/recharge/form")
+    public CommonResult<Map<String, Object>> getRechargeOrderForm(
+            @Parameter(description = "充值订单号", required = true) @RequestParam(value = "orderNo") String orderNo) {
+
+        log.info("获取充值订单支付表单，orderNo={}", orderNo);
+
+        // 从当前登录用户获取用户ID
+        Integer userId = userAccountService.getCurrentUserId();
+        if (userId == null) {
+            log.error("获取充值订单支付表单失败：用户ID为null");
+            return CommonResult.unauthorized(null);
+        }
+
+        try {
+            // 查询交易记录
+            AccountTransaction transaction = accountTransactionMapper.selectOne(
+                    new LambdaQueryWrapper<AccountTransaction>()
+                            .eq(AccountTransaction::getUserId, userId)
+                            .eq(AccountTransaction::getTransactionNo, orderNo)
+                            .eq(AccountTransaction::getType, 1) // 1表示充值
+            );
+
+            if (transaction == null) {
+                log.error("获取充值订单支付表单失败：订单不存在，orderNo={}", orderNo);
+                return CommonResult.validateFailed("充值订单不存在");
+            }
+
+            // 获取支付表单
+            try {
+                // 获取AlipayConfig实例
+                AlipayConfig alipayConfig = SpringContextUtil.getBean(AlipayConfig.class);
+
+                // 创建AlipayClient实例
+                AlipayClient alipayClient = new DefaultAlipayClient(
+                        alipayConfig.getGatewayUrl(),
+                        alipayConfig.getAppId(),
+                        alipayConfig.getPrivateKey(),
+                        "json",
+                        "UTF-8",
+                        alipayConfig.getPublicKey(),
+                        "RSA2");
+
+                // 创建支付宝支付请求
+                AlipayTradePagePayRequest alipayRequest = new AlipayTradePagePayRequest();
+                alipayRequest.setNotifyUrl(alipayConfig.getNotifyUrl()); // 设置异步通知地址
+                alipayRequest.setReturnUrl(alipayConfig.getReturnUrl()); // 设置同步返回地址
+
+                // 构建支付请求参数
+                Map<String, Object> bizContent = new HashMap<>();
+                bizContent.put("out_trade_no", orderNo);
+                bizContent.put("total_amount", transaction.getAmount().toString());
+                bizContent.put("subject", "母婴商城账户充值");
+                bizContent.put("product_code", "FAST_INSTANT_TRADE_PAY");
+                // 设置订单过期时间
+                bizContent.put("timeout_express", "2h");
+
+                alipayRequest.setBizContent(com.alibaba.fastjson.JSON.toJSONString(bizContent));
+
+                // 发送支付请求获取支付表单HTML
+                String formHtml = alipayClient.pageExecute(alipayRequest).getBody();
+
+                // 返回支付表单HTML
+                Map<String, Object> result = new HashMap<>();
+                result.put("formHtml", formHtml);
+                log.info("获取充值订单支付表单成功");
+
+                return CommonResult.success(result);
+            } catch (Exception e) {
+                log.error("获取充值订单支付表单失败: {}", e.getMessage(), e);
+                return CommonResult.failed("获取充值订单支付表单失败: " + e.getMessage());
+            }
+        } catch (Exception e) {
+            log.error("获取充值订单支付表单过程中发生未预期的异常", e);
+            return CommonResult.failed("获取充值订单支付表单失败: " + (e.getMessage() != null ? e.getMessage() : "系统错误，请稍后再试"));
         }
     }
 }
