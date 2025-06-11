@@ -37,7 +37,8 @@ public class UserAccount {
     /**
      * 冻结金额
      */
-    private BigDecimal frozenAmount;
+    @TableField(exist = false)
+    private BigDecimal frozenAmount = BigDecimal.ZERO;
 
     /**
      * 账户状态：0-冻结，1-正常
@@ -75,5 +76,6 @@ public class UserAccount {
     /**
      * 关联的用户信息（非数据库字段）
      */
+    @TableField(exist = false)
     private User user;
 }

@@ -9,7 +9,9 @@ import com.muyingmall.dto.AdminLoginDTO;
 import com.muyingmall.dto.LoginDTO;
 import com.muyingmall.dto.UserDTO;
 import com.muyingmall.entity.User;
+import com.muyingmall.entity.UserAccount;
 import com.muyingmall.mapper.UserMapper;
+import com.muyingmall.service.UserAccountService;
 import com.muyingmall.service.UserService;
 import com.muyingmall.util.JwtUtils;
 import com.muyingmall.util.RedisUtil;
@@ -48,6 +50,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final JwtUtils jwtUtils;
     private final RedisUtil redisUtil;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final UserAccountService userAccountService;
 
     @Value("${upload.path:E:/11/muying-web/public}")
     private String uploadPath;
@@ -582,33 +585,51 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deductBalance(Integer userId, BigDecimal amountToDeduct) {
+        log.info("开始执行扣款操作: userId={}, amount={}", userId, amountToDeduct);
+        
         if (userId == null || amountToDeduct == null || amountToDeduct.compareTo(BigDecimal.ZERO) <= 0) {
+            log.error("扣款参数错误: userId={}, amount={}", userId, amountToDeduct);
             throw new BusinessException("参数错误：用户ID和扣款金额不能为空，且金额必须大于0");
         }
 
-        User user = getById(userId);
-        if (user == null) {
-            throw new BusinessException("用户不存在");
+        try {
+            // 使用UserAccountService获取真实的用户账户余额
+            UserAccount userAccount = userAccountService.getUserAccountByUserId(userId);
+            log.info("获取到用户账户: userId={}, accountId={}, balance={}", 
+                     userId, userAccount.getId(), userAccount.getBalance());
+            
+            // 检查余额是否足够
+            BigDecimal currentBalance = userAccount.getBalance();
+            if (currentBalance == null) {
+                currentBalance = BigDecimal.ZERO;
+            }
+            
+            log.info("余额检查: 当前余额={}, 扣款金额={}, 差额={}", 
+                     currentBalance, amountToDeduct, currentBalance.subtract(amountToDeduct));
+            
+            if (currentBalance.compareTo(amountToDeduct) < 0) {
+                log.warn("用户余额不足: userId={}, balance={}, amount={}", 
+                         userId, currentBalance, amountToDeduct);
+                throw new BusinessException("钱包余额不足，当前余额：" + currentBalance + "，扣款金额：" + amountToDeduct);
+            }
+            
+            // 使用UserAccountService提供的方法扣减余额（通常是针对一个订单）
+            // 如果没有orderId，则传null或特殊值如-1，在UserAccountService中特殊处理
+            Integer orderId = null; // 这里可能需要修改，取决于业务需求
+            
+            // 使用adjustUserBalance方法，传入负数金额表示扣减
+            BigDecimal negativeAmount = amountToDeduct.negate(); // 转为负数
+            userAccountService.adjustUserBalance(userId, negativeAmount, "系统扣款");
+            
+            log.info("扣款成功: userId={}, amount={}", userId, amountToDeduct);
+            
+        } catch (BusinessException e) {
+            log.error("扣款业务异常: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("扣款过程发生异常: {}", e.getMessage(), e);
+            throw new BusinessException("扣款失败: " + e.getMessage());
         }
-
-        BigDecimal currentBalance = user.getBalance();
-        if (currentBalance == null) {
-            currentBalance = BigDecimal.ZERO; // 如果余额为null，则视为0
-            user.setBalance(currentBalance); // 初始化余额，防止后续计算NPE
-        }
-
-        if (currentBalance.compareTo(amountToDeduct) < 0) {
-            throw new BusinessException("钱包余额不足");
-        }
-
-        user.setBalance(currentBalance.subtract(amountToDeduct));
-        // updateById 会自动处理 @Version (如果User实体类中配置了版本号字段用于乐观锁)
-        // 如果没有配置乐观锁，高并发下这里可能存在问题，需要更复杂的锁机制
-        boolean success = updateById(user);
-        if (!success) {
-            throw new BusinessException("扣款失败，请重试"); // 或者更具体的错误，例如并发更新导致失败
-        }
-        // TODO: 考虑记录钱包流水
     }
 
     /**

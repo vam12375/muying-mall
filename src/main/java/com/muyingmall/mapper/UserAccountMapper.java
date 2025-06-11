@@ -136,6 +136,6 @@ public interface UserAccountMapper extends BaseMapper<UserAccount> {
          * @param userId 用户ID
          * @return 用户账户信息
          */
-        @Select("SELECT account_id as id, user_id, balance, frozen_balance, points, status, pay_password, security_level, last_login_time, last_login_ip, create_time, update_time FROM user_account WHERE user_id = #{userId}")
+        @Select("SELECT account_id as id, user_id, balance, status, create_time, update_time FROM user_account WHERE user_id = #{userId}")
         UserAccount getUserAccountByUserId(@Param("userId") Integer userId);
 }

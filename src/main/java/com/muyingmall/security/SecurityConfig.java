@@ -48,6 +48,7 @@ public class SecurityConfig {
                 // 允许访问支付回调接口
                 .requestMatchers("/payment/alipay/notify", "/payment/wechat/notify").permitAll()
                 .requestMatchers("/payment/alipay/return").permitAll() // 支付宝同步回调通常也需放行
+                .requestMatchers("/payment/wallet/manual-complete").permitAll() // 允许访问手动完成充值接口（仅用于测试）
                 .requestMatchers("/api/payment/alipay/refund/notify").permitAll() // 支付宝退款异步通知
                 // 允许访问静态资源
                 .requestMatchers("/upload/**", "/static/**").permitAll()
