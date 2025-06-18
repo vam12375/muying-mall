@@ -331,11 +331,31 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
 
     @Override
     public Map<String, Object> getCouponStats() {
-        // 为简化返回模拟数据，实际项目中应查询统计数据
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalCoupons", 0);
-        stats.put("usedCoupons", 0);
-        stats.put("expiredCoupons", 0);
+
+        // 查询优惠券总数
+        LambdaQueryWrapper<Coupon> totalQuery = new LambdaQueryWrapper<>();
+        long totalCoupons = count(totalQuery);
+
+        // 查询已领取的优惠券数量
+        LambdaQueryWrapper<UserCoupon> receivedQuery = new LambdaQueryWrapper<>();
+        long receivedCount = userCouponMapper.selectCount(receivedQuery);
+
+        // 查询已使用的优惠券数量
+        LambdaQueryWrapper<UserCoupon> usedQuery = new LambdaQueryWrapper<>();
+        usedQuery.eq(UserCoupon::getStatus, "USED");
+        long usedCoupons = userCouponMapper.selectCount(usedQuery);
+
+        // 查询已过期的优惠券数量
+        LambdaQueryWrapper<UserCoupon> expiredQuery = new LambdaQueryWrapper<>();
+        expiredQuery.eq(UserCoupon::getStatus, "UNUSED")
+                .le(UserCoupon::getExpireTime, LocalDateTime.now());
+        long expiredCoupons = userCouponMapper.selectCount(expiredQuery);
+
+        stats.put("totalCoupons", totalCoupons);
+        stats.put("receivedCount", receivedCount);
+        stats.put("usedCoupons", usedCoupons);
+        stats.put("expiredCoupons", expiredCoupons);
 
         return stats;
     }

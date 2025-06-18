@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 账户交易记录Mapper接口
@@ -240,11 +241,20 @@ public interface AccountTransactionMapper extends BaseMapper<AccountTransaction>
 
         /**
          * 根据用户ID和交易类型统计交易金额
-         * 
+         *
          * @param userId 用户ID
          * @param type   交易类型
          * @return 交易金额总和
          */
-        @Select("SELECT SUM(amount) FROM account_transaction WHERE user_id = #{userId} AND type = #{type} AND status = 1")
+        @Select("SELECT COALESCE(SUM(amount), 0) FROM account_transaction WHERE user_id = #{userId} AND type = #{type} AND status = 1")
         BigDecimal sumAmountByUserIdAndType(@Param("userId") Integer userId, @Param("type") Integer type);
+
+        /**
+         * 查询用户的交易记录统计信息（用于调试）
+         *
+         * @param userId 用户ID
+         * @return 统计信息
+         */
+        @Select("SELECT type, status, COUNT(*) as count, SUM(amount) as total_amount FROM account_transaction WHERE user_id = #{userId} GROUP BY type, status")
+        List<Map<String, Object>> getTransactionStatsByUserId(@Param("userId") Integer userId);
 }

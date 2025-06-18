@@ -336,14 +336,27 @@ public class UserAccountServiceImpl implements UserAccountService {
     public Map<String, BigDecimal> getWalletStats(Integer userId) {
         Map<String, BigDecimal> stats = new HashMap<>();
 
+        log.info("开始获取用户{}的钱包统计信息", userId);
+
+        // 先查询用户的交易记录统计信息（用于调试）
+        try {
+            List<Map<String, Object>> transactionStats = accountTransactionMapper.getTransactionStatsByUserId(userId);
+            log.info("用户{}的交易记录统计: {}", userId, transactionStats);
+        } catch (Exception e) {
+            log.warn("获取用户{}交易记录统计失败: {}", userId, e.getMessage());
+        }
+
         // 获取累计充值金额
         BigDecimal totalRecharge = accountTransactionMapper.sumAmountByUserIdAndType(userId, 1);
+        log.info("用户{}累计充值金额查询结果: {}", userId, totalRecharge);
         stats.put("totalRecharge", totalRecharge != null ? totalRecharge : BigDecimal.ZERO);
 
         // 获取累计消费金额
         BigDecimal totalConsumption = accountTransactionMapper.sumAmountByUserIdAndType(userId, 2);
+        log.info("用户{}累计消费金额查询结果: {}", userId, totalConsumption);
         stats.put("totalConsumption", totalConsumption != null ? totalConsumption : BigDecimal.ZERO);
 
+        log.info("用户{}钱包统计信息: {}", userId, stats);
         return stats;
     }
 
@@ -611,7 +624,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         transaction.setTransactionNo(generateTransactionNo());
         transaction.setAccountId(userAccount.getId());
         transaction.setRelatedId(orderId.toString());
-        transaction.setDescription("钱包支付订单");
+        transaction.setDescription("账户消费扣款");
         transaction.setCreateTime(new Date());
         transaction.setUpdateTime(new Date());
 

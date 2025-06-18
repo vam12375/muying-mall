@@ -1,322 +1,311 @@
-# Muying Mall - 母婴商城后端API服务
+# 🍼 母婴商城系统
 
-母婴商城系统的后端API服务，基于Spring Boot构建的现代Java应用，为前台商城和后台管理系统提供强大的API支持。
+<div align="center">
 
-## 技术栈详解
+![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.0-brightgreen?style=flat-square&logo=spring)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?style=flat-square&logo=mysql)
+![Redis](https://img.shields.io/badge/Redis-7.4.0-red?style=flat-square&logo=redis)
+![Elasticsearch](https://img.shields.io/badge/Elasticsearch-8.11-yellow?style=flat-square&logo=elasticsearch)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-### 1. 核心框架与环境
-- **Spring Boot 3.2.0**
-  - 基于Spring框架的简化开发方案
-  - 采用自动配置和约定优于配置原则
-  - 利用Spring Boot Actuator实现系统健康监控和指标收集
-  - 集成了丰富的Web开发功能，如内嵌式容器、请求映射等
-  
-- **Java 21**
-  - 采用长期支持版本(LTS)
-  - 利用Java 21的新特性，如增强的switch表达式、记录类(Records)等
-  - 使用虚拟线程(Virtual Threads)提高并发处理能力
+**现代化的母婴用品电商平台，基于Spring Boot 3.2.0构建**
 
-- **构建工具**
-  - Maven 3.8+，用于依赖管理和项目构建
-  - 项目基于Spring Boot Starter父项目进行版本管理
-  - 使用Maven插件体系构建可执行JAR包
+[快速开始](#-快速开始) • [功能特性](#-功能特性) • [技术架构](#-技术架构) • [文档](#-文档) • [贡献指南](#-贡献指南)
 
-### 2. 数据层技术
-- **ORM框架: MyBatis-Plus 3.5.9**
-  - 增强版MyBatis，提供了丰富的CRUD操作封装
-  - 自动化SQL构建，减少手动SQL编写
-  - 内置分页插件，简化分页查询操作
-  - 字段自动填充功能，自动处理创建时间、更新时间等公共字段
-  - 乐观锁插件，实现并发控制
-  - 逻辑删除功能，实现数据软删除
+</div>
 
-- **数据库: MySQL 8.0+**
-  - 使用InnoDB存储引擎，支持事务和外键约束
-  - 优化的表结构设计，合理使用索引
-  - 使用存储过程、触发器优化特定业务场景
-  - 采用主从复制架构，提高读写性能和系统可用性
-  - 实现了定期数据清理和归档
+---
 
-### 3. 缓存与会话管理
-- **Redis 缓存**
-  - Spring Data Redis 提供Redis操作抽象
-  - 多级缓存设计，包括本地缓存和分布式缓存
-  - 实现商品信息、分类信息等热点数据的缓存
-  - 使用Redis实现分布式锁，解决高并发下的数据一致性问题
-  - 缓存预热机制，提高系统启动后的响应速度
+## 📋 项目简介
 
-- **会话管理: Spring Session**
-  - 基于Redis的分布式会话管理
-  - 实现跨节点的会话共享
-  - 自定义会话过期策略
-  - 会话数据安全存储
+母婴商城系统是一个功能完整的现代化电商平台，专注于母婴用品的在线销售。系统采用前后端分离架构，基于Spring Boot 3.2.0和Java 21构建，提供完整的电商功能，包括用户管理、商品管理、订单处理、支付集成、营销活动等核心模块。
 
-### 4. 安全框架
-- **Spring Security**
-  - 基于角色的权限控制(RBAC)
-  - 自定义认证流程
-  - 防止CSRF攻击
-  - 实现请求过滤和安全拦截
-  - 密码加密存储(BCrypt)
+### 🎯 核心特性
 
-- **认证授权: JWT (JJWT 0.11.5)**
-  - 基于Token的无状态认证机制
-  - 自定义Token生成策略
-  - Token有效期管理
-  - 刷新Token机制
-  - 支持黑名单机制，实现Token即时失效
+- **🔐 用户体系**: 完整的用户注册、登录、信息管理体系
+- **📦 商品管理**: 支持多级分类、多规格、多图片的商品管理
+- **🛒 购物体验**: 购物车、收藏、商品搜索、评价系统
+- **📋 订单处理**: 完整的订单生命周期管理，支持状态机流转
+- **💳 支付集成**: 集成支付宝、微信支付等主流支付方式
+- **🎁 营销功能**: 优惠券系统、积分体系、会员等级
+- **🚚 物流管理**: 物流跟踪、配送管理
 
-### 5. API文档
-- **SpringDoc OpenAPI 2.2.0**
-  - 自动生成API文档
-  - 基于注解的API描述
-  - 支持Swagger UI界面展示
-  - API分组与标签管理
-  - 文档版本控制
-  - 支持认证信息配置
+### 🚀 技术特性
 
-### 6. 搜索引擎
-- **Elasticsearch 8.11.0**
-  - 高性能全文搜索
-  - 与Spring Boot集成的Elasticsearch客户端
-  - 商品搜索、智能推荐
-  - 搜索结果排序与过滤
-  - 搜索热词统计
-  - 数据库与搜索引擎数据同步策略
+- **现代架构**: 基于Spring Boot 3.2.0，采用最新Java 21特性
+- **高性能**: Redis缓存、Elasticsearch搜索、数据库优化
+- **高可用**: 分布式架构设计，支持水平扩展
+- **安全可靠**: Spring Security + JWT认证，数据加密存储
+- **开发友好**: 完整的API文档、规范的代码结构
 
-### 7. JSON处理
-- **FastJSON2 2.0.40**
-  - 高性能JSON解析和生成
-  - 支持复杂对象序列化
-  - 自定义序列化和反序列化
+## 🛠 技术栈
 
-- **Jackson (jackson-datatype-jsr310)**
-  - Spring Boot默认的JSON库
-  - 支持Java 8日期时间API (JSR-310)
-  - 自定义日期格式处理
+### 后端技术
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| Java | 21 | 编程语言 |
+| Spring Boot | 3.2.0 | 核心框架 |
+| Spring Security | 6.x | 安全框架 |
+| MyBatis-Plus | 3.5.9 | ORM框架 |
+| MySQL | 8.0+ | 主数据库 |
+| Redis | 7.4.0 | 缓存和会话存储 |
+| Elasticsearch | 8.11.0 | 全文搜索引擎 |
+| JWT | 0.11.5 | 令牌认证 |
+| SpringDoc | 2.2.0 | API文档生成 |
 
-### 8. 支付集成
-- **支付宝 SDK 4.38.0**
-  - 集成支付宝支付功能
-  - 支持多种支付方式
-  - 实现异步通知处理
-  - 退款流程支持
-  - 支付状态查询
+### 开发工具
+- **构建工具**: Maven 3.8+
+- **IDE**: IntelliJ IDEA (推荐)
+- **版本控制**: Git
+- **容器化**: Docker & Docker Compose
+- **API测试**: Postman, Swagger UI
 
-- **微信支付 SDK 0.0.3**
-  - 微信支付接口集成
-  - 支持扫码支付、H5支付等
-  - 支付结果异步通知
-  - 退款和查询功能
+## 🚀 快速开始
 
-### 9. 业务逻辑实现
-- **状态机模式**
-  - 实现订单状态流转
-  - 实现支付状态管理
-  - 实现退款状态管理
-  - 基于事件驱动的状态转换
+### 环境要求
 
-- **事件系统**
-  - 基于Spring Event实现业务解耦
-  - 异步事件处理
-  - 事件驱动的业务流程
+- **Java**: 21+
+- **Maven**: 3.8+
+- **MySQL**: 8.0+
+- **Redis**: 7.4.0+
+- **Elasticsearch**: 8.11+
 
-- **分布式锁**
-  - 基于Redis实现分布式锁
-  - 解决并发操作的数据一致性问题
-  - 支持可重入锁、公平锁等多种锁类型
+### 安装步骤
 
-- **TCC事务**
-  - Try-Confirm-Cancel模式
-  - 实现分布式事务
-  - 保证跨服务操作的一致性
+1. **克隆项目**
+   ```bash
+   git clone https://github.com/vam12375/muying-mall.git
+   cd muying-mall
+   ```
 
-### 10. 性能优化与监控
-- **性能优化**
-  - 多级缓存策略
-  - SQL查询优化
-  - 异步处理长耗时操作
-  - 连接池优化
+2. **配置数据库**
+   ```sql
+   CREATE DATABASE muying_mall CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+   mysql -u root -p muying_mall < main.sql
+   ```
 
-- **监控与指标**
-  - Micrometer 集成
-  - 性能指标收集
-  - 自定义监控指标
-  - 与Prometheus、Grafana等监控工具集成
+3. **配置应用**
+   ```bash
+   cp src/main/resources/application-private.yml.example src/main/resources/application-private.yml
+   # 编辑配置文件，填入数据库密码等私有配置
+   ```
 
-## 功能特性
+4. **启动服务**
+   ```bash
+   # 启动基础服务
+   docker-compose up -d mysql redis elasticsearch
 
-- 用户认证与授权
-  - 基于JWT的登录认证
-  - 基于角色的权限控制
-- 商品服务
-  - 商品信息管理
-  - 商品分类管理
-  - 品牌管理
-  - 库存管理
-- 搜索服务
-  - 基于Elasticsearch的全文搜索
-  - 商品搜索与过滤
-- 订单服务
-  - 订单创建与管理
-  - 订单状态流转
-  - 订单事件处理
-- 支付服务
-  - 支付宝支付集成
-  - 微信支付集成
-  - 支付回调处理
-- 用户服务
-  - 用户注册与信息管理
-  - 会员等级系统
-- 促销服务
-  - 优惠券系统
-  - 活动管理
-- 统计服务
-  - 销售数据统计
-  - 用户行为分析
+   # 启动应用
+   mvn spring-boot:run
+   ```
 
-## 项目设置
+5. **验证安装**
+   ```bash
+   curl http://localhost:8080/api/actuator/health
+   # 访问 http://localhost:8080/api/swagger-ui.html 查看API文档
+   ```
 
-### 前置条件
-
-- JDK 21
-- Maven 3.8+
-- MySQL 8+
-- Redis 6+
-- Elasticsearch 8.11 (可选，用于搜索功能)
-
-### 本地开发
+### Docker快速启动
 
 ```bash
-# 使用Maven运行应用
-mvn spring-boot:run
+# 使用Docker Compose一键启动
+docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f app
 ```
 
-### 构建
+## 📚 文档
+
+### 📖 技术文档
+
+| 文档类型 | 链接 | 说明 |
+|----------|------|------|
+| 🏗️ 系统架构 | [架构文档](docs/architecture/) | 系统整体架构设计 |
+| 🗄️ 数据库设计 | [数据库文档](docs/database/) | ER图、表结构、数据字典 |
+| 🔄 业务流程 | [业务文档](docs/business/) | 核心业务流程和时序图 |
+| 💻 开发指南 | [开发文档](docs/development/) | 环境搭建、编码规范、测试指南 |
+| 🔌 API接口 | [API文档](docs/api/) | RESTful API接口文档 |
+
+### 🎯 核心文档
+
+- **[系统概览](docs/architecture/system-overview.md)** - 系统整体介绍和技术栈
+- **[数据库ER图](docs/database/er-diagram.md)** - 完整的数据库实体关系图
+- **[开发环境搭建](docs/development/setup-guide.md)** - 详细的环境配置指南
+- **[编码规范](docs/development/coding-standards.md)** - 代码规范和最佳实践
+
+## 🏗️ 项目结构
+
+```
+muying-mall/
+├── docs/                          # 📚 项目文档
+│   ├── architecture/              # 🏗️ 架构设计文档
+│   ├── database/                  # 🗄️ 数据库设计文档
+│   ├── business/                  # 🔄 业务流程文档
+│   ├── development/               # 💻 开发相关文档
+│   └── api/                       # 🔌 API接口文档
+├── src/
+│   ├── main/
+│   │   ├── java/com/muyingmall/
+│   │   │   ├── controller/        # 🎮 控制器层
+│   │   │   ├── service/           # 🔧 业务服务层
+│   │   │   ├── mapper/            # 🗃️ 数据访问层
+│   │   │   ├── entity/            # 📊 实体类
+│   │   │   ├── dto/               # 📦 数据传输对象
+│   │   │   ├── config/            # ⚙️ 配置类
+│   │   │   └── common/            # 🛠️ 通用工具类
+│   │   └── resources/
+│   │       ├── mapper/            # 📋 MyBatis映射文件
+│   │       └── application.yml    # ⚙️ 应用配置
+│   └── test/                      # 🧪 测试代码
+├── main.sql                       # 🗄️ 数据库初始化脚本
+├── docker-compose.yml             # 🐳 Docker编排文件
+├── pom.xml                        # 📦 Maven配置文件
+└── README.md                      # 📖 项目说明文档
+```
+
+## 🔧 核心功能模块
+
+### 用户管理模块
+- 用户注册/登录
+- 个人信息管理
+- 收货地址管理
+- 积分账户管理
+
+### 商品管理模块
+- 商品信息管理
+- 多级分类管理
+- 品牌管理
+- 库存管理
+
+### 订单管理模块
+- 购物车管理
+- 订单创建与管理
+- 订单状态流转
+- 物流跟踪
+
+### 支付管理模块
+- 多种支付方式
+- 支付状态管理
+- 支付回调处理
+- 退款管理
+
+### 营销管理模块
+- 优惠券系统
+- 积分体系
+- 商品评价
+- 收藏功能
+
+## 🌐 API接口
+
+系统提供完整的RESTful API接口，支持：
+
+- **用户相关**: 注册、登录、信息管理
+- **商品相关**: 商品查询、分类浏览、搜索
+- **订单相关**: 订单创建、查询、状态管理
+- **支付相关**: 支付创建、回调处理、退款
+- **营销相关**: 优惠券、积分、评价
+
+### API文档访问
+
+- **Swagger UI**: http://localhost:8080/api/swagger-ui.html
+- **OpenAPI JSON**: http://localhost:8080/api/v3/api-docs
+
+## 🧪 测试
+
+### 运行测试
 
 ```bash
-# 生成可部署的JAR包
-mvn clean package
+# 运行所有测试
+mvn test
+
+# 运行单元测试
+mvn test -Dtest="*Test"
+
+# 运行集成测试
+mvn test -Dtest="*IntegrationTest"
+
+# 生成测试报告
+mvn test jacoco:report
 ```
 
-生成的JAR文件位于`target/muying-mall-0.0.1-SNAPSHOT.jar`
+### 测试覆盖率
 
-### 运行JAR包
+- **单元测试覆盖率**: 目标 80%+
+- **集成测试覆盖率**: 目标 60%+
+- **API测试覆盖率**: 目标 90%+
 
+## 🚀 部署
+
+### 开发环境
 ```bash
-java -jar target/muying-mall-0.0.1-SNAPSHOT.jar
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-## 项目结构
-
-```
-src/main/java/com/muyingmall/
-├── api/           # API接口定义
-├── common/        # 通用工具和常量
-├── config/        # 应用配置
-├── controller/    # 控制器
-├── dto/           # 数据传输对象
-├── entity/        # 实体类
-├── enums/         # 枚举类型
-├── event/         # 事件处理
-├── exception/     # 异常处理
-├── filter/        # 过滤器
-├── listener/      # 事件监听器
-├── lock/          # 分布式锁
-├── mapper/        # MyBatis映射
-├── security/      # 安全相关
-├── service/       # 业务服务
-├── statemachine/  # 状态机
-├── task/          # 定时任务
-├── tcc/           # TCC事务
-├── util/          # 工具类
-└── MuyingMallApplication.java # 应用入口
+### 测试环境
+```bash
+docker-compose -f docker-compose.test.yml up -d
 ```
 
-## 环境配置
+### 生产环境
+```bash
+# 构建镜像
+docker build -t muying-mall:latest .
 
-应用使用Spring Profile进行环境配置管理：
+# 部署到Kubernetes
+kubectl apply -f k8s/
+```
 
-- `dev`: 开发环境
-- `test`: 测试环境
-- `prod`: 生产环境
+## 🤝 贡献指南
 
-配置文件位于`src/main/resources/application-{profile}.yml`
+我们欢迎所有形式的贡献！请阅读 [贡献指南](CONTRIBUTING.md) 了解如何参与项目开发。
 
-## API文档
+### 开发流程
 
-应用集成了SpringDoc OpenAPI，提供自动化的API文档：
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 创建 Pull Request
 
-- 访问地址: http://localhost:8080/api/swagger-ui.html
-- OpenAPI JSON: http://localhost:8080/api/v3/api-docs
+### 代码规范
 
-## 数据库迁移
+- 遵循 [编码规范](docs/development/coding-standards.md)
+- 编写单元测试
+- 更新相关文档
+- 通过所有CI检查
 
-应用包含主要的数据库脚本：`main.sql`，用于初始化数据库结构和基础数据。
+## 📄 许可证
 
-## 安全设计
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
-- 使用Spring Security进行认证授权
-- 基于JWT的Token认证机制
-- 请求签名验证
-- 敏感数据加密存储
-- XSS防护
-- CSRF防护
-- 频率限制
+## 👥 团队
 
-## 性能优化
+- **项目负责人**: [@your-name](https://github.com/vam12375)
+- **技术负责人**: [@tech-lead](https://github.com/vam12375)
+- **开发团队**: [@dev-team](https://github.com/vam12375)
 
-- Redis缓存常用数据
-- 使用Elasticsearch提升搜索性能
-- MyBatis-Plus针对复杂查询的性能优化
-- 分布式锁避免并发问题
-- 异步处理长耗时操作
+## 📞 联系我们
 
-## 部署建议
+- **项目主页**: https://github.com/vam12375/muying-mall
+- **问题反馈**: https://github.com/vam12375/muying-mall/issues
+- **邮箱**: 2898191344@qq.com
+- **文档**: https://docs.muyingmall.com
 
-- 使用Docker容器化部署
-- 配合Nginx作为反向代理
-- Redis集群提高缓存可用性
-- MySQL主从复制保障数据安全
-- 定期备份数据库
+## 🙏 致谢
 
-## 开发规范
+感谢所有为这个项目做出贡献的开发者！
 
-- RESTful API设计规范
-- 统一的异常处理机制
-- 规范的代码格式
-- 完善的日志记录
-- 单元测试覆盖关键业务逻辑
+---
 
-## 接口安全
+<div align="center">
 
-所有API端点都需要适当的认证，除了：
-- `/api/auth/login` - 用户登录
-- `/api/auth/register` - 用户注册
-- `/api/products/**` - 产品浏览(GET请求) 
+**如果这个项目对你有帮助，请给我们一个 ⭐️**
 
-## 详细文档
+Made with ❤️ by [母婴商城团队](https://github.com/vam12375)
 
-本项目提供了详细的开发和使用文档：
-
-### API文档
-- [API文档概览](docs/api/index.md)
-- 在线Swagger文档：http://localhost:8080/api/swagger-ui.html
-
-### 系统架构
-- [系统整体架构](docs/architecture/system-architecture.md)
-- [组件交互图](docs/architecture/component-diagram.md)
-
-### 数据库设计
-- [数据库概览](docs/database/schema-overview.md)
-- [ER图](docs/database/er-diagram.png)
-
-### 开发指南
-- [环境搭建](docs/development/setup.md)
-- [开发最佳实践](docs/development/best-practices.md)
-- [代码示例](docs/development/code-examples.md)
-
-### 部署文档
-- [Docker部署指南](docs/deployment/docker-deployment.md)
-- [Kubernetes配置](docs/deployment/kubernetes-config.md)
-- [Nginx配置](docs/deployment/nginx-config.md) 
+</div>

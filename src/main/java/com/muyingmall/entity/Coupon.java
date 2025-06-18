@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -29,12 +30,12 @@ public class Coupon implements Serializable {
      * 优惠券名称
      */
     private String name;
-    
+
     /**
      * 批次ID
      */
     private Integer batchId;
-    
+
     /**
      * 规则ID
      */
@@ -99,7 +100,7 @@ public class Coupon implements Serializable {
      * 已领取数量
      */
     private Integer receivedQuantity;
-    
+
     /**
      * 每用户最大领取次数，0表示不限制
      */
@@ -108,21 +109,25 @@ public class Coupon implements Serializable {
     /**
      * 有效期开始时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
 
     /**
      * 有效期结束时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
 
     /**
      * 创建时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
     /**
