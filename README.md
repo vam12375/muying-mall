@@ -285,9 +285,9 @@ kubectl apply -f k8s/
 
 ## 👥 团队
 
-- **项目负责人**: [@your-name](https://github.com/vam12375)
-- **技术负责人**: [@tech-lead](https://github.com/vam12375)
-- **开发团队**: [@dev-team](https://github.com/vam12375)
+- **项目负责人**: [@青柠檬](https://github.com/vam12375)
+- **技术负责人**: [@青柠檬](https://github.com/vam12375)
+- **开发团队**: [@个人+AI开发](https://github.com/vam12375)
 
 ## 📞 联系我们
 
