@@ -1,0 +1,123 @@
+{
+  "properties": {
+    "productId": {
+      "type": "integer"
+    },
+    "productName": {
+      "type": "text",
+      "analyzer": "ik_max_word",
+      "search_analyzer": "ik_smart",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        },
+        "pinyin": {
+          "type": "text",
+          "analyzer": "pinyin_analyzer"
+        }
+      }
+    },
+    "productDetail": {
+      "type": "text",
+      "analyzer": "ik_max_word",
+      "search_analyzer": "ik_smart"
+    },
+    "productSummary": {
+      "type": "text",
+      "analyzer": "ik_max_word",
+      "search_analyzer": "ik_smart"
+    },
+    "productPrice": {
+      "type": "double"
+    },
+    "originalPrice": {
+      "type": "double"
+    },
+    "productStock": {
+      "type": "integer"
+    },
+    "productStatus": {
+      "type": "keyword"
+    },
+    "categoryId": {
+      "type": "integer"
+    },
+    "categoryName": {
+      "type": "text",
+      "analyzer": "ik_max_word",
+      "search_analyzer": "ik_smart",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "brandId": {
+      "type": "integer"
+    },
+    "brandName": {
+      "type": "text",
+      "analyzer": "ik_max_word",
+      "search_analyzer": "ik_smart",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "productImage": {
+      "type": "keyword",
+      "index": false
+    },
+    "productImages": {
+      "type": "keyword",
+      "index": false
+    },
+    "isHot": {
+      "type": "boolean"
+    },
+    "isNew": {
+      "type": "boolean"
+    },
+    "isRecommend": {
+      "type": "boolean"
+    },
+    "salesCount": {
+      "type": "integer"
+    },
+    "rating": {
+      "type": "double"
+    },
+    "commentCount": {
+      "type": "integer"
+    },
+    "tags": {
+      "type": "text",
+      "analyzer": "ik_max_word",
+      "search_analyzer": "ik_smart"
+    },
+    "specs": {
+      "type": "object",
+      "enabled": true
+    },
+    "createTime": {
+      "type": "date",
+      "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+    },
+    "updateTime": {
+      "type": "date",
+      "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+    },
+    "searchWeight": {
+      "type": "double"
+    },
+    "keywords": {
+      "type": "text",
+      "analyzer": "ik_max_word",
+      "search_analyzer": "ik_smart"
+    }
+  }
+}

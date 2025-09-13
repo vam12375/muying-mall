@@ -21,6 +21,8 @@ import com.muyingmall.service.OrderService;
 import com.muyingmall.service.PaymentService;
 import com.muyingmall.service.UserService;
 import com.muyingmall.service.UserAccountService;
+import com.muyingmall.service.CacheRefreshService;
+import com.muyingmall.service.OrderNotificationService;
 import com.muyingmall.util.EnumUtil;
 import com.muyingmall.common.exception.BusinessException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,6 +48,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -70,11 +74,16 @@ public class PaymentController {
     private final UserService userService;
     private final UserAccountService userAccountService; // 注入UserAccountService
     private final AlipayConfig alipayConfig;
+    private final CacheRefreshService cacheRefreshService; // 注入缓存刷新服务
+    private final OrderNotificationService orderNotificationService; // 注入订单通知服务
     @Autowired
     private OrderMapper orderMapper; // 注入OrderMapper
 
     @Autowired(required = false)
     private DataSource dataSource; // 注入数据源，用于JDBC操作
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate; // 注入Redis模板，用于缓存操作
 
     @Value("${frontend.url}")
     private String frontendUrl;
@@ -343,11 +352,15 @@ public class PaymentController {
                 return Result.error(400, "钱包余额不足，当前余额：" + userBalance + "，订单金额：" + orderAmount);
             }
 
-            log.info("余额检查通过，开始扣减用户余额");
+            log.info("余额检查通过，开始钱包支付");
 
-            // 扣减用户余额
-            userService.deductBalance(user.getUserId(), orderAmount);
-            log.info("用户余额扣减成功，扣减金额: {}", orderAmount);
+            // 使用钱包支付订单（会创建正确的消费交易记录）
+            boolean paymentSuccess = userAccountService.payOrderByWallet(user.getUserId(), orderId, orderAmount);
+            if (!paymentSuccess) {
+                log.error("钱包支付失败: 用户ID={}, 订单ID={}, 金额={}", user.getUserId(), orderId, orderAmount);
+                return Result.error("钱包支付失败");
+            }
+            log.info("钱包支付成功，扣减金额: {}", orderAmount);
 
             // 创建支付记录
             String paymentNo = generatePaymentNo();
@@ -976,6 +989,12 @@ public class PaymentController {
 
                 if (result > 0) {
                     log.info("JdbcTemplate订单状态已成功更新为{}: Order ID {}", targetStatus.getDesc(), order.getOrderId());
+
+                    // 立即刷新订单相关缓存
+                    cacheRefreshService.refreshOrderCache(order.getOrderId(), order.getUserId());
+
+                    // 发布订单状态变更事件
+                    publishOrderStatusChangeEvent(order, targetStatus);
                 } else {
                     log.error("JdbcTemplate订单状态更新失败，影响行数为0: Order ID {}", order.getOrderId());
                 }
@@ -985,6 +1004,34 @@ public class PaymentController {
         } catch (Exception e) {
             log.error("更新订单状态顶层异常: Payment ID {}, Order ID {}, 错误: {}",
                     payment.getId(), payment.getOrderId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 发布订单状态变更事件
+     */
+    private void publishOrderStatusChangeEvent(Order order, OrderStatus newStatus) {
+        try {
+            // 发布订单状态变更事件
+            log.info("发布订单状态变更事件: orderId={}, oldStatus={}, newStatus={}",
+                    order.getOrderId(), order.getStatus(), newStatus);
+
+            // 通知订单状态变更
+            orderNotificationService.notifyOrderStatusChange(
+                    order.getOrderId(),
+                    order.getUserId(),
+                    order.getStatus().getCode(),
+                    newStatus.getCode(),
+                    "payment_success");
+
+            // 发送实时同步通知
+            orderNotificationService.notifyRealTimeSync(order.getOrderId(), order.getUserId());
+
+            // 通知缓存刷新
+            orderNotificationService.notifyCacheRefresh(order.getOrderId(), order.getUserId(), "order_detail");
+
+        } catch (Exception e) {
+            log.error("发布订单状态变更事件失败: orderId={}, error={}", order.getOrderId(), e.getMessage(), e);
         }
     }
 

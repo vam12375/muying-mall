@@ -5,14 +5,16 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.entity.AdminLoginRecord;
+import com.muyingmall.event.AdminLoginEvent;
 import com.muyingmall.mapper.AdminLoginRecordMapper;
 import com.muyingmall.service.AdminLoginRecordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -29,6 +31,7 @@ public class AdminLoginRecordServiceImpl extends ServiceImpl<AdminLoginRecordMap
         implements AdminLoginRecordService {
 
     private final AdminLoginRecordMapper loginRecordMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Long recordLogin(Integer adminId, String adminName, HttpServletRequest request,
@@ -71,6 +74,11 @@ public class AdminLoginRecordServiceImpl extends ServiceImpl<AdminLoginRecordMap
             save(record);
             log.info("记录管理员登录信息成功: adminId={}, loginStatus={}, ip={}",
                     adminId, loginStatus, ipAddress);
+
+            // 发布登录事件
+            if (AdminLoginRecord.LoginStatus.SUCCESS.getCode().equals(loginStatus)) {
+                eventPublisher.publishEvent(new AdminLoginEvent(this, record));
+            }
 
             return record.getId();
         } catch (Exception e) {

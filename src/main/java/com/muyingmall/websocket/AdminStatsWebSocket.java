@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.websocket.*;
-import javax.websocket.server.PathParam;
-import javax.websocket.server.ServerEndpoint;
+import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,15 +52,15 @@ public class AdminStatsWebSocket {
     public void onOpen(Session session, @PathParam("adminId") String adminId) {
         this.session = session;
         this.adminId = adminId;
-        
+
         // 加入set中
         webSocketSet.add(this);
-        
+
         // 加入map中
         webSocketMap.put(adminId, this);
-        
+
         log.info("管理员{}连接WebSocket成功，当前在线人数为：{}", adminId, getOnlineCount());
-        
+
         try {
             sendMessage("连接成功");
         } catch (IOException e) {
@@ -75,10 +75,10 @@ public class AdminStatsWebSocket {
     public void onClose() {
         // 从set中删除
         webSocketSet.remove(this);
-        
+
         // 从map中删除
         webSocketMap.remove(adminId);
-        
+
         log.info("管理员{}断开WebSocket连接，当前在线人数为：{}", adminId, getOnlineCount());
     }
 
@@ -90,12 +90,12 @@ public class AdminStatsWebSocket {
     @OnMessage
     public void onMessage(String message, Session session) {
         log.info("收到来自管理员{}的信息：{}", adminId, message);
-        
+
         try {
             // 解析消息
             Map<String, Object> messageMap = objectMapper.readValue(message, Map.class);
             String type = (String) messageMap.get("type");
-            
+
             if ("heartbeat".equals(type)) {
                 // 心跳消息
                 sendMessage("{\"type\":\"heartbeat\",\"data\":\"pong\"}");
@@ -129,7 +129,7 @@ public class AdminStatsWebSocket {
      */
     public static void sendInfo(String message, @PathParam("adminId") String adminId) throws IOException {
         log.info("推送消息到管理员{}，推送内容：{}", adminId, message);
-        
+
         AdminStatsWebSocket webSocket = webSocketMap.get(adminId);
         if (webSocket != null) {
             webSocket.sendMessage(message);
@@ -144,10 +144,9 @@ public class AdminStatsWebSocket {
             AdminStatsWebSocket webSocket = webSocketMap.get(adminId);
             if (webSocket != null) {
                 Map<String, Object> message = Map.of(
-                    "type", "stats",
-                    "data", stats,
-                    "timestamp", System.currentTimeMillis()
-                );
+                        "type", "stats",
+                        "data", stats,
+                        "timestamp", System.currentTimeMillis());
                 String jsonMessage = objectMapper.writeValueAsString(message);
                 webSocket.sendMessage(jsonMessage);
                 log.debug("推送统计数据到管理员{}", adminId);
@@ -165,10 +164,9 @@ public class AdminStatsWebSocket {
             AdminStatsWebSocket webSocket = webSocketMap.get(adminId);
             if (webSocket != null) {
                 Map<String, Object> message = Map.of(
-                    "type", "loginRecord",
-                    "data", loginRecord,
-                    "timestamp", System.currentTimeMillis()
-                );
+                        "type", "loginRecord",
+                        "data", loginRecord,
+                        "timestamp", System.currentTimeMillis());
                 String jsonMessage = objectMapper.writeValueAsString(message);
                 webSocket.sendMessage(jsonMessage);
                 log.debug("推送登录记录到管理员{}", adminId);
@@ -186,10 +184,9 @@ public class AdminStatsWebSocket {
             AdminStatsWebSocket webSocket = webSocketMap.get(adminId);
             if (webSocket != null) {
                 Map<String, Object> message = Map.of(
-                    "type", "operationLog",
-                    "data", operationLog,
-                    "timestamp", System.currentTimeMillis()
-                );
+                        "type", "operationLog",
+                        "data", operationLog,
+                        "timestamp", System.currentTimeMillis());
                 String jsonMessage = objectMapper.writeValueAsString(message);
                 webSocket.sendMessage(jsonMessage);
                 log.debug("推送操作日志到管理员{}", adminId);
@@ -218,10 +215,9 @@ public class AdminStatsWebSocket {
     public static void broadcastStats(Map<String, Object> stats) {
         try {
             Map<String, Object> message = Map.of(
-                "type", "stats",
-                "data", stats,
-                "timestamp", System.currentTimeMillis()
-            );
+                    "type", "stats",
+                    "data", stats,
+                    "timestamp", System.currentTimeMillis());
             String jsonMessage = objectMapper.writeValueAsString(message);
             broadcast(jsonMessage);
             log.debug("广播统计数据到所有在线管理员");

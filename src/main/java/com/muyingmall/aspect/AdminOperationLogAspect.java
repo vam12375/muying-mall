@@ -5,7 +5,7 @@ import com.muyingmall.entity.AdminOperationLog.OperationResult;
 import com.muyingmall.entity.AdminOperationLog.OperationType;
 import com.muyingmall.entity.User;
 import com.muyingmall.service.AdminOperationLogService;
-import com.muyingmall.util.JwtTokenUtil;
+import com.muyingmall.util.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 
 /**
@@ -31,7 +31,7 @@ import java.lang.reflect.Method;
 public class AdminOperationLogAspect {
 
     private final AdminOperationLogService operationLogService;
-    private final JwtTokenUtil jwtTokenUtil;
+    private final JwtUtils jwtUtils;
 
     /**
      * 定义切点：所有带有@AdminOperationLog注解的方法
@@ -65,8 +65,8 @@ public class AdminOperationLogAspect {
     /**
      * 记录操作日志
      */
-    private void recordOperationLog(ProceedingJoinPoint joinPoint, Object result, 
-                                   Exception exception, long startTime) {
+    private void recordOperationLog(ProceedingJoinPoint joinPoint, Object result,
+            Exception exception, long startTime) {
         try {
             // 获取注解信息
             MethodSignature signature = (MethodSignature) joinPoint.getSignature();
@@ -78,7 +78,8 @@ public class AdminOperationLogAspect {
             }
 
             // 获取请求信息
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder
+                    .getRequestAttributes();
             if (attributes == null) {
                 return;
             }
@@ -96,8 +97,8 @@ public class AdminOperationLogAspect {
             long executionTime = System.currentTimeMillis() - startTime;
 
             // 确定操作结果
-            String operationResult = exception == null ? 
-                OperationResult.SUCCESS.getCode() : OperationResult.FAILED.getCode();
+            String operationResult = exception == null ? OperationResult.SUCCESS.getCode()
+                    : OperationResult.FAILED.getCode();
 
             // 获取错误信息
             String errorMessage = exception != null ? exception.getMessage() : null;
@@ -113,20 +114,19 @@ public class AdminOperationLogAspect {
 
             // 记录操作日志
             operationLogService.recordOperation(
-                currentAdmin.getUserId(),
-                currentAdmin.getUsername(),
-                annotation.operation(),
-                annotation.module(),
-                operationType,
-                annotation.targetType(),
-                targetId,
-                request,
-                responseStatus,
-                operationResult,
-                errorMessage,
-                executionTime,
-                annotation.description()
-            );
+                    currentAdmin.getUserId(),
+                    currentAdmin.getUsername(),
+                    annotation.operation(),
+                    annotation.module(),
+                    operationType,
+                    annotation.targetType(),
+                    targetId,
+                    request,
+                    responseStatus,
+                    operationResult,
+                    errorMessage,
+                    executionTime,
+                    annotation.description());
 
         } catch (Exception e) {
             log.error("记录操作日志失败: {}", e.getMessage(), e);
@@ -141,15 +141,21 @@ public class AdminOperationLogAspect {
             String authHeader = request.getHeader("Authorization");
             if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
-                String username = jwtTokenUtil.getUsernameFromToken(token);
-                if (StringUtils.hasText(username)) {
-                    // 这里应该从数据库查询用户信息，暂时创建一个简单的用户对象
-                    User user = new User();
-                    user.setUsername(username);
-                    // 从token中解析用户ID（需要在JWT中包含用户ID）
-                    // 或者从数据库查询
-                    user.setUserId(1); // 临时设置，实际应该从token或数据库获取
-                    return user;
+                try {
+                    io.jsonwebtoken.Claims claims = jwtUtils.getClaimsFromToken(token);
+                    if (claims != null) {
+                        String username = claims.get("username", String.class);
+                        Integer userId = claims.get("userId", Integer.class);
+                        if (StringUtils.hasText(username)) {
+                            // 这里应该从数据库查询用户信息，暂时创建一个简单的用户对象
+                            User user = new User();
+                            user.setUsername(username);
+                            user.setUserId(userId != null ? userId : 1); // 从token获取或默认值
+                            return user;
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("解析JWT token失败: {}", e.getMessage());
                 }
             }
         } catch (Exception e) {

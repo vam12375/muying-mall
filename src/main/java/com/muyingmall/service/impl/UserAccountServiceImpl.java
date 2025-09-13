@@ -92,9 +92,44 @@ public class UserAccountServiceImpl implements UserAccountService {
         // 查询用户账户
         UserAccount userAccount = userAccountMapper.getUserAccountByUserId(userId);
         if (userAccount == null) {
-            throw new BusinessException("用户账户不存在");
+            // 用户账户不存在，自动创建一个
+            log.info("用户账户不存在，自动创建: userId={}", userId);
+            userAccount = createUserAccount(userId);
         }
 
+        return userAccount;
+    }
+
+    /**
+     * 创建用户账户
+     *
+     * @param userId 用户ID
+     * @return 创建的用户账户
+     */
+    @Transactional(rollbackFor = Exception.class)
+    private UserAccount createUserAccount(Integer userId) {
+        // 验证用户是否存在
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+
+        // 创建用户账户
+        UserAccount userAccount = new UserAccount();
+        userAccount.setUserId(userId);
+        userAccount.setBalance(BigDecimal.ZERO);
+        userAccount.setFrozenAmount(BigDecimal.ZERO);
+        userAccount.setStatus(1); // 1表示正常状态
+        userAccount.setCreateTime(new Date());
+        userAccount.setUpdateTime(new Date());
+
+        // 保存到数据库
+        int rows = userAccountMapper.insert(userAccount);
+        if (rows <= 0) {
+            throw new BusinessException("创建用户账户失败");
+        }
+
+        log.info("用户账户创建成功: userId={}, accountId={}", userId, userAccount.getId());
         return userAccount;
     }
 
@@ -635,5 +670,60 @@ public class UserAccountServiceImpl implements UserAccountService {
         // orderService.updateOrderStatus(orderId, 1); // 假设1表示已支付状态
 
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void refundToWallet(Integer userId, BigDecimal amount, String description) {
+        if (userId == null) {
+            throw new BusinessException("用户ID不能为空");
+        }
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("退款金额必须大于0");
+        }
+        if (StringUtils.isBlank(description)) {
+            throw new BusinessException("退款描述不能为空");
+        }
+
+        log.info("开始钱包退款: userId={}, amount={}, description={}", userId, amount, description);
+
+        // 查询用户账户
+        UserAccount userAccount = getUserAccountByUserId(userId);
+        if (userAccount == null) {
+            throw new BusinessException("用户账户不存在");
+        }
+
+        // 更新账户余额
+        BigDecimal beforeBalance = userAccount.getBalance();
+        BigDecimal afterBalance = beforeBalance.add(amount);
+        userAccount.setBalance(afterBalance);
+        userAccount.setUpdateTime(new Date());
+
+        // 更新数据库
+        int rows = userAccountMapper.updateById(userAccount);
+        if (rows <= 0) {
+            throw new RuntimeException("更新账户余额失败");
+        }
+
+        // 创建交易记录
+        AccountTransaction transaction = new AccountTransaction();
+        transaction.setUserId(userId);
+        transaction.setAccountId(userAccount.getId());
+        transaction.setType(3); // 3表示退款
+        transaction.setAmount(amount);
+        transaction.setBeforeBalance(beforeBalance);
+        transaction.setAfterBalance(afterBalance);
+        transaction.setBalance(afterBalance);
+        transaction.setStatus(1); // 1表示成功
+        transaction.setPaymentMethod("wallet");
+        transaction.setTransactionNo(generateTransactionNo());
+        transaction.setDescription(description);
+        transaction.setCreateTime(new Date());
+        transaction.setUpdateTime(new Date());
+
+        // 保存交易记录
+        accountTransactionMapper.insert(transaction);
+
+        log.info("钱包退款完成: userId={}, amount={}, 交易ID={}", userId, amount, transaction.getId());
     }
 }

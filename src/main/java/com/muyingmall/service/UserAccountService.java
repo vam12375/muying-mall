@@ -118,11 +118,20 @@ public interface UserAccountService {
 
     /**
      * 使用钱包余额支付订单
-     * 
+     *
      * @param userId  用户ID
      * @param orderId 订单ID
      * @param amount  支付金额
      * @return 是否支付成功
      */
     boolean payOrderByWallet(Integer userId, Integer orderId, BigDecimal amount);
+
+    /**
+     * 退款到钱包
+     *
+     * @param userId      用户ID
+     * @param amount      退款金额
+     * @param description 退款描述
+     */
+    void refundToWallet(Integer userId, BigDecimal amount, String description);
 }

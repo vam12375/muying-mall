@@ -1,0 +1,32 @@
+{
+  "index": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "max_result_window": 10000,
+    "analysis": {
+      "analyzer": {
+        "ik_max_word": {
+          "type": "ik_max_word"
+        },
+        "ik_smart": {
+          "type": "ik_smart"
+        },
+        "pinyin_analyzer": {
+          "tokenizer": "my_pinyin",
+          "filter": ["lowercase", "unique"]
+        }
+      },
+      "tokenizer": {
+        "my_pinyin": {
+          "type": "pinyin",
+          "keep_separate_first_letter": false,
+          "keep_full_pinyin": true,
+          "keep_original": true,
+          "limit_first_letter_length": 16,
+          "lowercase": true,
+          "remove_duplicated_term": true
+        }
+      }
+    }
+  }
+}

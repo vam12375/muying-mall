@@ -20,6 +20,7 @@ import com.muyingmall.service.PaymentService;
 import com.muyingmall.service.RefundLogService;
 import com.muyingmall.service.RefundService;
 import com.muyingmall.service.RefundStateService;
+import com.muyingmall.service.UserAccountService;
 import com.muyingmall.service.UserService;
 import com.muyingmall.statemachine.OrderEvent;
 import com.muyingmall.statemachine.PaymentEvent;
@@ -50,6 +51,7 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
     private final OrderService orderService;
     private final PaymentService paymentService;
     private final UserService userService;
+    private final UserAccountService userAccountService;
     private final RefundStateService refundStateService;
     private final RefundLogService refundLogService;
     private final AlipayRefundService alipayRefundService;
@@ -253,6 +255,28 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
                 refundLogService.logStatusChange(refundId, refund.getRefundNo(), refund.getStatus(), refund.getStatus(),
                         "SYSTEM", null, "系统", "查询支付宝退款状态失败: " + e.getMessage());
             }
+        }
+
+        // 处理钱包退款
+        try {
+            // 查询订单信息，获取支付方式
+            Order order = orderService.getById(refund.getOrderId());
+            if (order != null && "wallet".equals(order.getPaymentMethod())) {
+                // 钱包支付的订单，退款到钱包
+                log.info("处理钱包退款: 订单ID={}, 用户ID={}, 退款金额={}",
+                        order.getOrderId(), order.getUserId(), refund.getAmount());
+
+                // 调用钱包退款方法
+                userAccountService.refundToWallet(order.getUserId(), refund.getAmount(),
+                        "订单退款：" + order.getOrderNo());
+
+                log.info("钱包退款完成: 订单ID={}, 退款金额={}", order.getOrderId(), refund.getAmount());
+            }
+        } catch (Exception e) {
+            log.error("处理钱包退款失败: 退款ID={}, 错误={}", refundId, e.getMessage(), e);
+            // 钱包退款失败不影响退款状态流转，但需要记录日志
+            refundLogService.logStatusChange(refundId, refund.getRefundNo(), refund.getStatus(), refund.getStatus(),
+                    "SYSTEM", null, "系统", "钱包退款失败: " + e.getMessage());
         }
 
         // 更新退款信息

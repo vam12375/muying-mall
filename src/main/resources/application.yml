@@ -103,12 +103,14 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    database-id: mysql
   global-config:
     db-config:
       id-type: auto
       logic-delete-field: is_deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
+      db-type: mysql
 
 # SpringDoc配置
 springdoc:

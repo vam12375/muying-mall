@@ -1,31 +1,53 @@
 package com.muyingmall.controller;
 
+import com.muyingmall.annotation.AdminOperationLog;
 import com.muyingmall.common.api.CommonResult;
 import com.muyingmall.dto.AdminLoginDTO;
+import com.muyingmall.entity.AdminLoginRecord;
 import com.muyingmall.entity.User;
+import com.muyingmall.service.AdminLoginRecordService;
+import com.muyingmall.service.AdminOperationLogService;
+import com.muyingmall.service.ExcelExportService;
 import com.muyingmall.service.UserService;
+import com.muyingmall.websocket.AdminStatsWebSocket;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
  * 管理员控制器
  */
+@Slf4j
 @RestController
 @RequestMapping("/admin")
 public class AdminController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AdminLoginRecordService loginRecordService;
+
+    @Autowired
+    private AdminOperationLogService operationLogService;
+
+    @Autowired
+    private ExcelExportService excelExportService;
 
     @Value("${file.upload.path}")
     private String uploadPath;
@@ -75,6 +97,7 @@ public class AdminController {
      * 获取当前管理员信息
      */
     @GetMapping("/info")
+    @PreAuthorize("hasAuthority('admin')")
     public CommonResult<Map<String, Object>> getUserInfo(@RequestHeader("Authorization") String authHeader) {
         // 从token中解析用户信息
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -170,6 +193,7 @@ public class AdminController {
      * 管理员头像上传接口
      */
     @PostMapping("/avatar/upload")
+    @PreAuthorize("hasAuthority('admin')")
     public CommonResult<Map<String, String>> uploadAvatar(
             @RequestParam("file") MultipartFile file,
             @RequestHeader("Authorization") String authHeader) {
@@ -208,6 +232,7 @@ public class AdminController {
      * 更新管理员信息
      */
     @PutMapping("/update")
+    @PreAuthorize("hasAuthority('admin')")
     public CommonResult<Map<String, Object>> updateAdminInfo(
             @RequestBody User adminInfo,
             @RequestHeader("Authorization") String authHeader) {
@@ -269,6 +294,7 @@ public class AdminController {
      * 管理员修改密码
      */
     @PutMapping("/password")
+    @PreAuthorize("hasAuthority('admin')")
     public CommonResult updatePassword(
             @RequestBody Map<String, String> passwordMap,
             @RequestHeader("Authorization") String authHeader) {
@@ -305,6 +331,358 @@ public class AdminController {
             }
         } catch (Exception e) {
             return CommonResult.failed("密码修改失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取管理员登录记录
+     */
+    @GetMapping("/login-records")
+    @PreAuthorize("hasAuthority('admin')")
+    @AdminOperationLog(operation = "查看登录记录", module = "管理员管理", operationType = "READ")
+    public CommonResult<Map<String, Object>> getLoginRecords(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) String loginStatus,
+            @RequestParam(required = false) String ipAddress) {
+
+        try {
+            // 解析时间参数
+            java.time.LocalDateTime startDateTime = null;
+            java.time.LocalDateTime endDateTime = null;
+
+            if (startTime != null && !startTime.isEmpty()) {
+                startDateTime = java.time.LocalDateTime.parse(startTime + "T00:00:00");
+            }
+            if (endTime != null && !endTime.isEmpty()) {
+                endDateTime = java.time.LocalDateTime.parse(endTime + "T23:59:59");
+            }
+
+            // 查询登录记录
+            com.baomidou.mybatisplus.core.metadata.IPage<AdminLoginRecord> loginRecordsPage = loginRecordService
+                    .getLoginRecordsPage(page, size, null, startDateTime, endDateTime,
+                            loginStatus, ipAddress);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("records", loginRecordsPage.getRecords());
+            result.put("total", loginRecordsPage.getTotal());
+            result.put("current", loginRecordsPage.getCurrent());
+            result.put("size", loginRecordsPage.getSize());
+
+            return CommonResult.success(result);
+        } catch (Exception e) {
+            return CommonResult.failed("获取登录记录失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取系统日志 (兼容前端路由)
+     */
+    @GetMapping("/system/logs")
+    @PreAuthorize("hasAuthority('admin')")
+    @AdminOperationLog(operation = "查看系统日志", module = "系统管理", operationType = "READ")
+    public CommonResult<Map<String, Object>> getSystemLogs(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) String operationType,
+            @RequestParam(required = false) String module,
+            @RequestParam(required = false) String operationResult) {
+
+        try {
+            log.info(
+                    "获取系统日志请求 - page: {}, size: {}, startTime: {}, endTime: {}, operationType: {}, module: {}, operationResult: {}",
+                    page, size, startTime, endTime, operationType, module, operationResult);
+
+            // 解析时间参数
+            java.time.LocalDateTime startDateTime = null;
+            java.time.LocalDateTime endDateTime = null;
+
+            if (startTime != null && !startTime.isEmpty()) {
+                startDateTime = java.time.LocalDateTime.parse(startTime + "T00:00:00");
+                log.info("解析开始时间: {}", startDateTime);
+            }
+            if (endTime != null && !endTime.isEmpty()) {
+                endDateTime = java.time.LocalDateTime.parse(endTime + "T23:59:59");
+                log.info("解析结束时间: {}", endDateTime);
+            }
+
+            // 查询操作记录
+            com.baomidou.mybatisplus.core.metadata.IPage<com.muyingmall.entity.AdminOperationLog> operationLogsPage = operationLogService
+                    .getOperationLogsPage(page, size, null, startDateTime, endDateTime,
+                            operationType, module, operationResult);
+
+            log.info("查询结果 - total: {}, records size: {}", operationLogsPage.getTotal(),
+                    operationLogsPage.getRecords().size());
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("records", operationLogsPage.getRecords());
+            result.put("total", operationLogsPage.getTotal());
+            result.put("current", operationLogsPage.getCurrent());
+            result.put("size", operationLogsPage.getSize());
+
+            return CommonResult.success(result);
+        } catch (Exception e) {
+            log.error("获取系统日志失败", e);
+            return CommonResult.failed("获取系统日志失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取系统日志详情
+     */
+    @GetMapping("/system/logs/{id}")
+    @PreAuthorize("hasAuthority('admin')")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "查看系统日志详情", module = "系统管理", operationType = "READ")
+    public CommonResult<com.muyingmall.entity.AdminOperationLog> getSystemLogDetail(@PathVariable Long id) {
+        try {
+            com.muyingmall.entity.AdminOperationLog logDetail = operationLogService.getById(id);
+            if (logDetail == null) {
+                return CommonResult.failed("日志不存在");
+            }
+            return CommonResult.success(logDetail);
+        } catch (Exception e) {
+            log.error("获取系统日志详情失败", e);
+            return CommonResult.failed("获取系统日志详情失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取管理员操作记录
+     */
+    @GetMapping("/operation-records")
+    @PreAuthorize("hasAuthority('admin')")
+    @AdminOperationLog(operation = "查看操作记录", module = "管理员管理", operationType = "READ")
+    public CommonResult<Map<String, Object>> getOperationRecords(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) String operationType,
+            @RequestParam(required = false) String module,
+            @RequestParam(required = false) String operationResult) {
+
+        try {
+            // 解析时间参数
+            java.time.LocalDateTime startDateTime = null;
+            java.time.LocalDateTime endDateTime = null;
+
+            if (startTime != null && !startTime.isEmpty()) {
+                startDateTime = java.time.LocalDateTime.parse(startTime + "T00:00:00");
+            }
+            if (endTime != null && !endTime.isEmpty()) {
+                endDateTime = java.time.LocalDateTime.parse(endTime + "T23:59:59");
+            }
+
+            // 查询操作记录
+            com.baomidou.mybatisplus.core.metadata.IPage<com.muyingmall.entity.AdminOperationLog> operationLogsPage = operationLogService
+                    .getOperationLogsPage(page, size, null, startDateTime, endDateTime,
+                            operationType, module, operationResult);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("records", operationLogsPage.getRecords());
+            result.put("total", operationLogsPage.getTotal());
+            result.put("current", operationLogsPage.getCurrent());
+            result.put("size", operationLogsPage.getSize());
+
+            return CommonResult.success(result);
+        } catch (Exception e) {
+            return CommonResult.failed("获取操作记录失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取管理员统计信息
+     */
+    @GetMapping("/statistics")
+    @PreAuthorize("hasAuthority('admin')")
+    @AdminOperationLog(operation = "查看统计信息", module = "管理员管理", operationType = "READ")
+    public CommonResult<Map<String, Object>> getAdminStatistics() {
+
+        try {
+            Map<String, Object> statistics = new HashMap<>();
+
+            // 获取登录统计
+            Map<String, Object> loginStats = loginRecordService.getLoginStatistics(null, 30);
+            statistics.putAll(loginStats);
+
+            // 获取操作统计
+            Map<String, Object> operationStats = operationLogService.getOperationStatistics(null, 30);
+            statistics.putAll(operationStats);
+
+            // 获取24小时活跃度
+            int[] activeHours = loginRecordService.getHourlyActiveStats(null, 7);
+            statistics.put("activeHours", activeHours);
+
+            // 获取操作类型分布
+            Map<String, Integer> operationTypes = operationLogService.getOperationTypeDistribution(null, 30);
+            statistics.put("operationTypes", operationTypes);
+
+            // 添加一些固定统计信息
+            statistics.put("accountAge", 365);
+            statistics.put("securityScore", 95);
+
+            return CommonResult.success(statistics);
+        } catch (Exception e) {
+            return CommonResult.failed("获取统计信息失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 导出登录记录
+     */
+    @GetMapping("/login-records/export")
+    @PreAuthorize("hasAuthority('admin')")
+    @AdminOperationLog(operation = "导出登录记录", module = "管理员管理", operationType = "EXPORT")
+    public void exportLoginRecords(
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) String loginStatus,
+            @RequestParam(required = false) String ipAddress,
+            HttpServletResponse response) {
+
+        try {
+            // 解析时间参数
+            java.time.LocalDateTime startDateTime = null;
+            java.time.LocalDateTime endDateTime = null;
+
+            if (startTime != null && !startTime.isEmpty()) {
+                startDateTime = java.time.LocalDateTime.parse(startTime + "T00:00:00");
+            }
+            if (endTime != null && !endTime.isEmpty()) {
+                endDateTime = java.time.LocalDateTime.parse(endTime + "T23:59:59");
+            }
+
+            excelExportService.exportLoginRecords(response, null, startDateTime, endDateTime,
+                    loginStatus, ipAddress);
+        } catch (Exception e) {
+            log.error("导出登录记录失败: {}", e.getMessage(), e);
+            response.setStatus(500);
+        }
+    }
+
+    /**
+     * 导出操作记录
+     */
+    @GetMapping("/operation-records/export")
+    @PreAuthorize("hasAuthority('admin')")
+    @AdminOperationLog(operation = "导出操作记录", module = "管理员管理", operationType = "EXPORT")
+    public void exportOperationRecords(
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) String operationType,
+            @RequestParam(required = false) String module,
+            @RequestParam(required = false) String operationResult,
+            HttpServletResponse response) {
+
+        try {
+            // 解析时间参数
+            java.time.LocalDateTime startDateTime = null;
+            java.time.LocalDateTime endDateTime = null;
+
+            if (startTime != null && !startTime.isEmpty()) {
+                startDateTime = java.time.LocalDateTime.parse(startTime + "T00:00:00");
+            }
+            if (endTime != null && !endTime.isEmpty()) {
+                endDateTime = java.time.LocalDateTime.parse(endTime + "T23:59:59");
+            }
+
+            excelExportService.exportOperationLogs(response, null, startDateTime, endDateTime,
+                    operationType, module, operationResult);
+        } catch (Exception e) {
+            log.error("导出操作记录失败: {}", e.getMessage(), e);
+            response.setStatus(500);
+        }
+    }
+
+    /**
+     * 获取WebSocket连接状态
+     */
+    @GetMapping("/websocket/status")
+    @PreAuthorize("hasAuthority('admin')")
+    @AdminOperationLog(operation = "查看WebSocket状态", module = "管理员管理", operationType = "READ")
+    public CommonResult<Map<String, Object>> getWebSocketStatus() {
+        try {
+            Map<String, Object> status = new HashMap<>();
+            status.put("onlineCount", AdminStatsWebSocket.getOnlineCount());
+            status.put("onlineAdmins", AdminStatsWebSocket.getWebSocketMap().keySet());
+            status.put("timestamp", System.currentTimeMillis());
+
+            return CommonResult.success(status);
+        } catch (Exception e) {
+            return CommonResult.failed("获取WebSocket状态失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 发送系统通知
+     */
+    @PostMapping("/notification/send")
+    @PreAuthorize("hasAuthority('admin')")
+    @AdminOperationLog(operation = "发送系统通知", module = "管理员管理", operationType = "CREATE")
+    public CommonResult<String> sendSystemNotification(
+            @RequestBody Map<String, Object> notificationData) {
+        try {
+            String message = (String) notificationData.get("message");
+            Integer targetAdminId = (Integer) notificationData.get("targetAdminId");
+
+            if (message == null || message.trim().isEmpty()) {
+                return CommonResult.failed("通知消息不能为空");
+            }
+
+            // 直接通过WebSocket发送通知
+            if (targetAdminId != null) {
+                AdminStatsWebSocket.sendInfo(message, targetAdminId.toString());
+            } else {
+                AdminStatsWebSocket.broadcast(message);
+            }
+
+            return CommonResult.success("系统通知发送成功");
+        } catch (Exception e) {
+            return CommonResult.failed("发送系统通知失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 手动触发统计数据推送
+     */
+    @PostMapping("/stats/push")
+    @PreAuthorize("hasAuthority('admin')")
+    @AdminOperationLog(operation = "推送统计数据", module = "管理员管理", operationType = "UPDATE")
+    public CommonResult<String> pushStatsUpdate() {
+        try {
+            // 获取最新统计数据并推送
+            Map<String, Object> stats = new HashMap<>();
+
+            // 获取登录统计
+            Map<String, Object> loginStats = loginRecordService.getLoginStatistics(null, 30);
+            stats.putAll(loginStats);
+
+            // 获取操作统计
+            Map<String, Object> operationStats = operationLogService.getOperationStatistics(null, 30);
+            stats.putAll(operationStats);
+
+            // 获取24小时活跃度
+            int[] activeHours = loginRecordService.getHourlyActiveStats(null, 7);
+            stats.put("activeHours", activeHours);
+
+            // 获取操作类型分布
+            Map<String, Integer> operationTypes = operationLogService.getOperationTypeDistribution(null, 30);
+            stats.put("operationTypes", operationTypes);
+
+            // 添加当前在线管理员数量
+            stats.put("onlineAdmins", AdminStatsWebSocket.getOnlineCount());
+            stats.put("updateTime", System.currentTimeMillis());
+
+            // 广播统计数据
+            AdminStatsWebSocket.broadcastStats(stats);
+
+            return CommonResult.success("统计数据推送成功");
+        } catch (Exception e) {
+            return CommonResult.failed("推送统计数据失败: " + e.getMessage());
         }
     }
 }
