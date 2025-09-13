@@ -739,7 +739,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
                 // 添加新的排名数据，使用销量*10 + 评分作为分数
                 for (Product product : hotProducts) {
-                    double score = product.getSales() * 10 + (product.getRating() != null ? product.getRating().doubleValue() : 0);
+                    double score = product.getSales() * 10
+                            + (product.getRating() != null ? product.getRating().doubleValue() : 0);
                     redisUtil.zAdd(hotProductsRankKey, product.getProductId(), score);
                 }
 

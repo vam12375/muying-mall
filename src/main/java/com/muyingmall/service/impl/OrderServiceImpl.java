@@ -1,5 +1,4 @@
 package com.muyingmall.service.impl;
-
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -195,6 +194,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             order.setActualAmount(order.getActualAmount().add(shippingFee));
         }
 
+        // 计算优惠金额
+        BigDecimal couponAmount = BigDecimal.ZERO;
+
         // 处理优惠券（如果有）
         if (couponId != null && couponId > 0) {
             // 获取用户优惠券
@@ -206,7 +208,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 if (coupon != null && "ACTIVE".equals(coupon.getStatus())) {
                     // 验证优惠券是否可用
                     if (order.getTotalAmount().compareTo(coupon.getMinSpend()) >= 0) {
-                        BigDecimal couponAmount = coupon.getValue();
+                        couponAmount = coupon.getValue();
                         // 记录使用的优惠券
                         order.setCouponId(couponId);
                         order.setCouponAmount(couponAmount);
@@ -231,6 +233,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
         }
 
+        // 计算积分抵扣金额
+        BigDecimal pointsAmount = BigDecimal.ZERO;
+
         // 处理积分抵扣（如果有）
         if (pointsUsed != null && pointsUsed > 0) {
             // 获取用户当前积分
@@ -240,28 +245,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
 
             // 计算积分抵扣金额（每100积分抵扣1元）
-            BigDecimal pointsDiscountAmount = new BigDecimal(pointsUsed).divide(new BigDecimal("100"), 2,
-                    RoundingMode.DOWN);
+            pointsAmount = new BigDecimal(pointsUsed).divide(new BigDecimal("100"), 2, RoundingMode.DOWN);
 
             // 限制最大抵扣金额为50元
             BigDecimal maxDiscount = new BigDecimal("50");
-            if (pointsDiscountAmount.compareTo(maxDiscount) > 0) {
-                pointsDiscountAmount = maxDiscount;
+            if (pointsAmount.compareTo(maxDiscount) > 0) {
+                pointsAmount = maxDiscount;
                 // 重新计算实际使用的积分
                 pointsUsed = 5000; // 最多使用5000积分
             }
 
-            // 确保抵扣金额不超过应付金额
-            if (pointsDiscountAmount.compareTo(order.getActualAmount()) > 0) {
-                pointsDiscountAmount = order.getActualAmount();
-                // 重新计算实际使用的积分
-                pointsUsed = pointsDiscountAmount.multiply(new BigDecimal("100")).intValue();
-            }
-
-            // 更新订单信息
+            // 记录使用的积分
             order.setPointsUsed(pointsUsed);
-            order.setPointsDiscount(pointsDiscountAmount);
-            order.setActualAmount(order.getActualAmount().subtract(pointsDiscountAmount));
+            order.setPointsDiscount(pointsAmount);
 
             // 扣减用户积分
             boolean deductSuccess = pointsService.deductPoints(userId, pointsUsed, "order", orderNo, "订单抵扣");
@@ -269,8 +265,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 throw new BusinessException("积分扣减失败");
             }
 
-            log.info("订单 {} 使用积分 {} 抵扣金额 {}", orderNo, pointsUsed, pointsDiscountAmount);
+            log.info("订单 {} 使用积分 {} 抵扣金额 {}", orderNo, pointsUsed, pointsAmount);
         }
+
+        // 计算实际支付金额
+        BigDecimal actualAmount = order.getTotalAmount()
+                .add(order.getShippingFee())
+                .subtract(couponAmount)
+                .subtract(pointsAmount);
+        // 确保金额不为负数
+        order.setActualAmount(actualAmount.max(BigDecimal.ZERO));
 
         // 保存订单
         save(order);

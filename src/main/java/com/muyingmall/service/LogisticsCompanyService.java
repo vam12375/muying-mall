@@ -67,4 +67,19 @@ public interface LogisticsCompanyService extends IService<LogisticsCompany> {
      * @return 物流公司信息
      */
     LogisticsCompany getCompanyByCode(String code);
+
+    /**
+     * 根据名称获取物流公司
+     *
+     * @param name 物流公司名称
+     * @return 物流公司信息
+     */
+    LogisticsCompany getByName(String name);
+
+    /**
+     * 获取启用的物流公司列表
+     *
+     * @return 启用的物流公司列表
+     */
+    List<LogisticsCompany> getEnabledCompanies();
 }

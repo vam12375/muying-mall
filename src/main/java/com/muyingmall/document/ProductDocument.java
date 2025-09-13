@@ -1,6 +1,7 @@
 package com.muyingmall.document;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,9 +21,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = "products", createIndex = true)
-@Setting(settingPath = "elasticsearch/product-settings.json")
-@Mapping(mappingPath = "elasticsearch/product-mapping.json")
+@Document(indexName = "products", createIndex = false)
 public class ProductDocument {
 
     /**
@@ -35,6 +34,7 @@ public class ProductDocument {
      * 商品名称 - 支持中文分词搜索
      */
     @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
+    @JsonProperty("name")
     private String productName;
 
     /**
@@ -53,6 +53,7 @@ public class ProductDocument {
      * 商品价格
      */
     @Field(type = FieldType.Double)
+    @JsonProperty("price")
     private BigDecimal productPrice;
 
     /**
@@ -101,6 +102,7 @@ public class ProductDocument {
      * 商品主图
      */
     @Field(type = FieldType.Keyword, index = false)
+    @JsonProperty("image")
     private String productImage;
 
     /**

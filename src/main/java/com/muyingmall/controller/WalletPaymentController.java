@@ -267,6 +267,216 @@ public class WalletPaymentController {
     }
 
     /**
+     * 手动完成充值（调试用）
+     */
+    @PostMapping("/manual-complete")
+    public CommonResult<Map<String, Object>> manualCompleteRecharge(@RequestParam String orderNo) {
+        log.info("手动完成充值请求: {}", orderNo);
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // 查询充值记录
+            AccountTransaction transaction = accountTransactionMapper.selectOne(
+                    new LambdaQueryWrapper<AccountTransaction>()
+                            .eq(AccountTransaction::getTransactionNo, orderNo)
+                            .eq(AccountTransaction::getType, 1) // 1表示充值
+            );
+
+            if (transaction == null) {
+                log.warn("手动完成充值 - 未找到充值记录: {}", orderNo);
+                result.put("success", false);
+                result.put("message", "未找到充值记录");
+                return CommonResult.success(result);
+            }
+
+            log.info("找到充值记录: ID={}, 用户ID={}, 金额={}, 状态={}, 账户ID={}",
+                    transaction.getId(), transaction.getUserId(), transaction.getAmount(),
+                    transaction.getStatus(), transaction.getAccountId());
+
+            result.put("transaction", Map.of(
+                    "id", transaction.getId(),
+                    "userId", transaction.getUserId(),
+                    "accountId", transaction.getAccountId(),
+                    "amount", transaction.getAmount(),
+                    "status", transaction.getStatus()));
+
+            if (transaction.getStatus() == 1) {
+                log.info("手动完成充值 - 充值已完成: {}", orderNo);
+                result.put("success", true);
+                result.put("message", "充值已完成");
+                return CommonResult.success(result);
+            }
+
+            // 检查用户账户是否存在
+            UserAccount userAccount = userAccountMapper.selectById(transaction.getAccountId());
+            if (userAccount == null) {
+                log.error("手动完成充值 - 用户账户不存在: accountId={}", transaction.getAccountId());
+                result.put("success", false);
+                result.put("message", "用户账户不存在，accountId=" + transaction.getAccountId());
+                return CommonResult.success(result);
+            }
+
+            log.info("找到用户账户: accountId={}, userId={}, balance={}",
+                    userAccount.getId(), userAccount.getUserId(), userAccount.getBalance());
+
+            // 简化的充值逻辑，直接在这里执行，避免调用复杂的方法
+            try {
+                // 1. 更新用户账户余额
+                BigDecimal beforeBalance = userAccount.getBalance();
+                BigDecimal afterBalance = beforeBalance.add(transaction.getAmount());
+
+                userAccount.setBalance(afterBalance);
+                userAccount.setUpdateTime(new Date());
+                int rows = userAccountMapper.updateById(userAccount);
+
+                if (rows <= 0) {
+                    log.error("充值失败: 更新用户账户余额失败, accountId={}", transaction.getAccountId());
+                    result.put("success", false);
+                    result.put("message", "更新用户账户余额失败");
+                    return CommonResult.success(result);
+                }
+
+                log.info("充值 - 更新账户余额成功: beforeBalance={}, afterBalance={}", beforeBalance, afterBalance);
+
+                // 2. 更新交易记录状态
+                transaction.setStatus(1); // 1表示成功
+                transaction.setBalance(afterBalance);
+                transaction.setRemark("手动完成充值: " + System.currentTimeMillis());
+                transaction.setUpdateTime(new Date());
+
+                int transactionResult = accountTransactionMapper.updateById(transaction);
+                if (transactionResult <= 0) {
+                    log.error("充值失败: 更新交易记录状态失败, transactionId={}", transaction.getId());
+                    result.put("success", false);
+                    result.put("message", "更新交易记录状态失败");
+                    return CommonResult.success(result);
+                }
+
+                log.info("充值 - 更新交易记录状态成功: transactionId={}, status=1(成功)", transaction.getId());
+
+                result.put("success", true);
+                result.put("message", "充值完成成功");
+                result.put("beforeBalance", beforeBalance);
+                result.put("afterBalance", afterBalance);
+                result.put("amount", transaction.getAmount());
+
+                return CommonResult.success(result);
+
+            } catch (Exception e) {
+                log.error("充值操作执行异常: {}", e.getMessage(), e);
+                result.put("success", false);
+                result.put("message", "充值操作执行异常: " + e.getMessage());
+                result.put("error", e.getClass().getSimpleName());
+                return CommonResult.success(result);
+            }
+
+        } catch (Exception e) {
+            log.error("手动完成充值失败: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "充值完成失败: " + e.getMessage());
+            result.put("error", e.getClass().getSimpleName());
+            return CommonResult.success(result);
+        }
+    }
+
+    /**
+     * 查询充值记录详情（调试用）
+     */
+    @GetMapping("/query-recharge")
+    public CommonResult<Map<String, Object>> queryRechargeRecord(@RequestParam String orderNo) {
+        log.info("查询充值记录请求: {}", orderNo);
+
+        try {
+            // 查询充值记录
+            AccountTransaction transaction = accountTransactionMapper.selectOne(
+                    new LambdaQueryWrapper<AccountTransaction>()
+                            .eq(AccountTransaction::getTransactionNo, orderNo)
+                            .eq(AccountTransaction::getType, 1) // 1表示充值
+            );
+
+            Map<String, Object> result = new HashMap<>();
+
+            if (transaction == null) {
+                log.warn("查询充值记录 - 未找到充值记录: {}", orderNo);
+                result.put("found", false);
+                result.put("message", "未找到充值记录");
+                return CommonResult.success(result);
+            }
+
+            log.info("查询到充值记录: ID={}, 用户ID={}, 金额={}, 状态={}, 账户ID={}",
+                    transaction.getId(), transaction.getUserId(), transaction.getAmount(),
+                    transaction.getStatus(), transaction.getAccountId());
+
+            result.put("found", true);
+            result.put("id", transaction.getId());
+            result.put("userId", transaction.getUserId());
+            result.put("accountId", transaction.getAccountId());
+            result.put("amount", transaction.getAmount());
+            result.put("status", transaction.getStatus());
+            result.put("transactionNo", transaction.getTransactionNo());
+            result.put("createTime", transaction.getCreateTime());
+            result.put("updateTime", transaction.getUpdateTime());
+
+            return CommonResult.success(result);
+
+        } catch (Exception e) {
+            log.error("查询充值记录失败: {}", e.getMessage(), e);
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("error", true);
+            errorResult.put("message", e.getMessage());
+            return CommonResult.success(errorResult);
+        }
+    }
+
+    /**
+     * 检查交易状态（调试用）
+     */
+    @GetMapping("/check-status")
+    public CommonResult<Map<String, Object>> checkTransactionStatus(@RequestParam String orderNo) {
+        log.info("检查交易状态请求: {}", orderNo);
+
+        try {
+            // 查询本地充值记录
+            AccountTransaction transaction = accountTransactionMapper.selectOne(
+                    new LambdaQueryWrapper<AccountTransaction>()
+                            .eq(AccountTransaction::getTransactionNo, orderNo)
+                            .eq(AccountTransaction::getType, 1) // 1表示充值
+            );
+
+            Map<String, Object> result = new HashMap<>();
+
+            if (transaction != null) {
+                result.put("localTransaction", transaction);
+                result.put("localStatus", transaction.getStatus());
+                result.put("localAmount", transaction.getAmount());
+
+                // 查询用户账户
+                UserAccount userAccount = userAccountMapper.selectOne(
+                        new LambdaQueryWrapper<UserAccount>()
+                                .eq(UserAccount::getUserId, transaction.getUserId()));
+                result.put("userAccount", userAccount);
+
+                // 如果是支付宝订单，查询支付宝状态
+                try {
+                    AlipayTradeQueryResponse queryResponse = queryAlipayTradeStatus(orderNo);
+                    result.put("alipayStatus", queryResponse.getTradeStatus());
+                    result.put("alipayResponse", queryResponse);
+                } catch (Exception e) {
+                    result.put("alipayError", e.getMessage());
+                }
+            } else {
+                result.put("error", "未找到本地交易记录");
+            }
+
+            return CommonResult.success(result);
+
+        } catch (Exception e) {
+            log.error("检查交易状态失败: {}", e.getMessage(), e);
+            return CommonResult.failed("检查失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 微信充值回调
      */
     @PostMapping("/wechat/notify")
@@ -443,137 +653,184 @@ public class WalletPaymentController {
 
     /**
      * 完成充值操作
-     * 
+     *
      * @param transaction 充值交易记录
      * @param tradeNo     第三方交易号
      * @return 是否成功
      */
     @Transactional(rollbackFor = Exception.class)
     public boolean completeRecharge(AccountTransaction transaction, String tradeNo) {
-        log.info("开始执行充值操作: 交易ID={}, 用户ID={}, 金额={}",
-                transaction.getId(), transaction.getUserId(), transaction.getAmount());
+        log.info("开始执行充值操作: 交易ID={}, 用户ID={}, 金额={}, 账户ID={}",
+                transaction.getId(), transaction.getUserId(), transaction.getAmount(), transaction.getAccountId());
 
         try {
+            // 防止重复处理
+            if (transaction.getStatus() == 1) {
+                log.info("充值已完成，跳过重复处理: transactionId={}", transaction.getId());
+                return true;
+            }
+
             // 1. 更新用户账户余额
             UserAccount userAccount = userAccountMapper.selectById(transaction.getAccountId());
             if (userAccount == null) {
                 log.error("充值失败: 未找到用户账户, accountId={}", transaction.getAccountId());
-                throw new BusinessException("未找到用户账户");
+                throw new BusinessException("未找到用户账户，accountId=" + transaction.getAccountId());
             }
+
+            log.info("找到用户账户: accountId={}, userId={}, 当前余额={}",
+                    userAccount.getId(), userAccount.getUserId(), userAccount.getBalance());
 
             BigDecimal beforeBalance = userAccount.getBalance();
             BigDecimal afterBalance = beforeBalance.add(transaction.getAmount());
 
+            // 只更新存在的字段
             userAccount.setBalance(afterBalance);
-            userAccount.setLastRechargeTime(new Date());
             userAccount.setUpdateTime(new Date());
-            int rows = userAccountMapper.updateById(userAccount);
 
+            int rows = userAccountMapper.updateById(userAccount);
             if (rows <= 0) {
-                log.error("充值失败: 更新用户账户余额失败, accountId={}", transaction.getAccountId());
+                log.error("充值失败: 更新用户账户余额失败, accountId={}, 影响行数={}",
+                        transaction.getAccountId(), rows);
                 throw new BusinessException("更新用户账户余额失败");
             }
 
-            log.info("充值 - 更新账户余额成功: beforeBalance={}, afterBalance={}", beforeBalance, afterBalance);
+            log.info("充值 - 更新账户余额成功: beforeBalance={}, afterBalance={}, 影响行数={}",
+                    beforeBalance, afterBalance, rows);
 
             // 2. 更新交易记录状态
             transaction.setStatus(1); // 1表示成功
-            transaction.setAfterBalance(afterBalance);
-            transaction.setBalance(afterBalance);
+            transaction.setBalance(afterBalance); // 设置交易后余额
             transaction.setRemark("第三方交易号: " + tradeNo);
             transaction.setUpdateTime(new Date());
 
             int result = accountTransactionMapper.updateById(transaction);
             if (result <= 0) {
-                log.error("充值失败: 更新交易记录状态失败, transactionId={}", transaction.getId());
+                log.error("充值失败: 更新交易记录状态失败, transactionId={}, 影响行数={}",
+                        transaction.getId(), result);
                 throw new BusinessException("更新交易记录状态失败");
             }
 
-            log.info("充值 - 更新交易记录状态成功: transactionId={}, status=1(成功)", transaction.getId());
+            log.info("充值 - 更新交易记录状态成功: transactionId={}, status=1(成功), 影响行数={}",
+                    transaction.getId(), result);
+
+            log.info("充值操作完成: 用户ID={}, 充值金额={}, 充值前余额={}, 充值后余额={}",
+                    transaction.getUserId(), transaction.getAmount(), beforeBalance, afterBalance);
 
             return true;
+        } catch (BusinessException e) {
+            log.error("充值操作业务异常: {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
             log.error("充值操作执行异常: {}", e.getMessage(), e);
-            throw e;
+            throw new BusinessException("充值操作执行异常: " + e.getMessage());
         }
     }
 
     /**
-     * 手动完成充值（仅用于测试）
+     * 查询用户账户详情（调试用）
      */
-    @Operation(summary = "手动完成充值（仅用于测试）")
-    @PostMapping("/manual-complete")
-    public CommonResult<Map<String, Object>> manualCompleteRecharge(@RequestParam String orderNo) {
-        log.info("手动完成充值，orderNo={}", orderNo);
+    @GetMapping("/query-account")
+    public CommonResult<Map<String, Object>> queryUserAccount(@RequestParam Integer accountId) {
+        log.info("查询用户账户请求: accountId={}", accountId);
+        Map<String, Object> result = new HashMap<>();
 
         try {
-            // 查询充值记录
-            log.info("开始查询充值记录，orderNo={}", orderNo);
-            AccountTransaction transaction = accountTransactionMapper.selectOne(
-                    new LambdaQueryWrapper<AccountTransaction>()
-                            .eq(AccountTransaction::getTransactionNo, orderNo)
-                            .eq(AccountTransaction::getType, 1) // 1表示充值
-            );
+            // 查询用户账户
+            UserAccount userAccount = userAccountMapper.selectById(accountId);
 
-            if (transaction == null) {
-                log.error("手动完成充值失败：订单不存在，orderNo={}", orderNo);
-
-                // 尝试不带类型条件查询，看看是否能找到记录
-                AccountTransaction anyTransaction = accountTransactionMapper.selectOne(
-                        new LambdaQueryWrapper<AccountTransaction>()
-                                .eq(AccountTransaction::getTransactionNo, orderNo));
-
-                if (anyTransaction != null) {
-                    log.info("找到了订单号匹配但类型不匹配的记录：orderNo={}, type={}", orderNo, anyTransaction.getType());
-                } else {
-                    log.info("数据库中不存在订单号为{}的记录", orderNo);
-                }
-
-                return CommonResult.validateFailed("充值订单不存在");
+            if (userAccount == null) {
+                log.warn("查询用户账户 - 未找到账户: accountId={}", accountId);
+                result.put("found", false);
+                result.put("message", "未找到账户");
+                return CommonResult.success(result);
             }
 
-            log.info("找到充值记录：id={}, userId={}, accountId={}, amount={}, status={}",
-                    transaction.getId(), transaction.getUserId(), transaction.getAccountId(),
-                    transaction.getAmount(), transaction.getStatus());
+            log.info("查询到用户账户: accountId={}, userId={}, balance={}, status={}",
+                    userAccount.getId(), userAccount.getUserId(), userAccount.getBalance(), userAccount.getStatus());
 
-            // 如果充值已经成功，避免重复处理
-            if (transaction.getStatus() == 1) { // 1表示成功
-                log.info("手动完成充值：充值已处理，跳过: {}", orderNo);
-                return CommonResult.success(null, "充值已处理，无需重复操作");
-            }
+            result.put("found", true);
+            result.put("id", userAccount.getId());
+            result.put("userId", userAccount.getUserId());
+            result.put("balance", userAccount.getBalance());
+            result.put("status", userAccount.getStatus());
+            result.put("createTime", userAccount.getCreateTime());
+            result.put("updateTime", userAccount.getUpdateTime());
 
-            // 验证账户ID是否正确
-            if (transaction.getAccountId() == null || transaction.getAccountId() <= 0) {
-                log.error("充值失败：账户ID无效，accountId={}", transaction.getAccountId());
-                return CommonResult.failed("账户ID无效");
-            }
+            return CommonResult.success(result);
 
-            // 执行充值操作
-            try {
-                log.info("开始执行充值操作");
-                boolean result = completeRecharge(transaction, "manual-" + System.currentTimeMillis());
-                if (result) {
-                    log.info("手动完成充值：充值成功: {}", orderNo);
-
-                    // 返回结果
-                    Map<String, Object> resultMap = new HashMap<>();
-                    resultMap.put("orderNo", orderNo);
-                    resultMap.put("amount", transaction.getAmount());
-                    resultMap.put("status", "SUCCESS");
-                    resultMap.put("message", "充值成功");
-
-                    return CommonResult.success(resultMap);
-                } else {
-                    log.error("手动完成充值：充值处理失败: {}", orderNo);
-                    return CommonResult.failed("充值处理失败");
-                }
-            } catch (Exception e) {
-                log.error("执行充值操作异常", e);
-                return CommonResult.failed("执行充值操作异常: " + e.getMessage());
-            }
         } catch (Exception e) {
-            log.error("手动完成充值异常", e);
-            return CommonResult.failed("手动完成充值异常: " + e.getMessage());
+            log.error("查询用户账户失败: {}", e.getMessage(), e);
+            result.put("error", true);
+            result.put("message", e.getMessage());
+            return CommonResult.success(result);
         }
     }
+
+    /**
+     * 创建测试充值记录（调试用）
+     */
+    @PostMapping("/create-test-recharge")
+    public CommonResult<Map<String, Object>> createTestRecharge(
+            @RequestParam Integer userId,
+            @RequestParam BigDecimal amount) {
+        log.info("创建测试充值记录: userId={}, amount={}", userId, amount);
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // 查询用户账户
+            UserAccount userAccount = userAccountMapper.selectOne(
+                    new LambdaQueryWrapper<UserAccount>()
+                            .eq(UserAccount::getUserId, userId));
+
+            if (userAccount == null) {
+                result.put("success", false);
+                result.put("message", "用户账户不存在");
+                return CommonResult.success(result);
+            }
+
+            // 生成测试订单号
+            String orderNo = "TEST_RCH" + System.currentTimeMillis();
+
+            // 创建充值交易记录
+            AccountTransaction transaction = new AccountTransaction();
+            transaction.setUserId(userId);
+            transaction.setAccountId(userAccount.getId());
+            transaction.setType(1); // 1表示充值
+            transaction.setAmount(amount);
+            transaction.setBalance(userAccount.getBalance()); // 设置当前余额
+            transaction.setStatus(0); // 0表示待处理
+            transaction.setPaymentMethod("test");
+            transaction.setTransactionNo(orderNo);
+            transaction.setDescription("测试充值");
+            transaction.setRemark("测试创建的充值记录");
+            transaction.setCreateTime(new Date());
+            transaction.setUpdateTime(new Date());
+
+            // 保存交易记录
+            int rows = accountTransactionMapper.insert(transaction);
+            if (rows <= 0) {
+                result.put("success", false);
+                result.put("message", "创建充值记录失败");
+                return CommonResult.success(result);
+            }
+
+            log.info("创建测试充值记录成功: transactionId={}, orderNo={}", transaction.getId(), orderNo);
+
+            result.put("success", true);
+            result.put("message", "创建测试充值记录成功");
+            result.put("transactionId", transaction.getId());
+            result.put("orderNo", orderNo);
+            result.put("userId", userId);
+            result.put("amount", amount);
+
+            return CommonResult.success(result);
+
+        } catch (Exception e) {
+            log.error("创建测试充值记录失败: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "创建测试充值记录失败: " + e.getMessage());
+            return CommonResult.success(result);
+        }
+    }
+
 }

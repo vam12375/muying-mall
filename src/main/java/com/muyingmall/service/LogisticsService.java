@@ -69,4 +69,13 @@ public interface LogisticsService extends IService<Logistics> {
      * @return 生成的物流单号
      */
     String generateTrackingNo(String companyCode);
+
+    /**
+     * 生成标准物流轨迹
+     *
+     * @param logisticsId 物流ID
+     * @param operator    操作人
+     * @return 是否生成成功
+     */
+    boolean generateStandardTracks(Long logisticsId, String operator);
 }

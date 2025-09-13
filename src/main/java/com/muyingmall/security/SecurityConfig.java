@@ -41,14 +41,25 @@ public class SecurityConfig {
                 .requestMatchers("/user/register", "/user/login").permitAll()
                 // 允许访问管理员登录接口
                 .requestMatchers("/admin/login").permitAll()
-                // 允许访问商品和分类相关接口
-                .requestMatchers("/products/**", "/categories/**").permitAll()
+                // 允许访问商品、分类和品牌相关接口
+                .requestMatchers("/products/**", "/categories/**", "/brands/**").permitAll()
+                // 允许访问搜索相关接口
+                .requestMatchers("/search/**").permitAll()
                 // 允许访问测试连接接口
                 .requestMatchers("/test/connection", "/test/jwt-demo", "/test/**").permitAll()
                 // 允许访问支付回调接口
                 .requestMatchers("/payment/alipay/notify", "/payment/wechat/notify").permitAll()
                 .requestMatchers("/payment/alipay/return").permitAll() // 支付宝同步回调通常也需放行
                 .requestMatchers("/payment/wallet/manual-complete").permitAll() // 允许访问手动完成充值接口（仅用于测试）
+                .requestMatchers("/payment/wallet/query-recharge").permitAll() // 允许访问查询充值记录接口（仅用于测试）
+                .requestMatchers("/payment/wallet/query-account").permitAll() // 允许访问查询账户接口（仅用于测试）
+                .requestMatchers("/payment/wallet/check-status").permitAll() // 允许访问检查状态接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/manual-complete").permitAll() // 允许访问手动完成充值接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/query-recharge").permitAll() // 允许访问查询充值记录接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/query-account").permitAll() // 允许访问查询账户接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/check-status").permitAll() // 允许访问检查状态接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/create-test-recharge").permitAll() // 允许访问创建测试充值记录接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/**").permitAll() // 允许访问钱包支付相关接口
                 .requestMatchers("/api/payment/alipay/refund/notify").permitAll() // 支付宝退款异步通知
                 // 允许访问静态资源
                 .requestMatchers("/upload/**", "/static/**").permitAll()

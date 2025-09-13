@@ -1,6 +1,7 @@
 package com.muyingmall.controller;
 
 import com.muyingmall.common.Result;
+import com.muyingmall.common.dto.PageResult;
 import com.muyingmall.document.ProductDocument;
 import com.muyingmall.service.ProductSearchService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +31,7 @@ public class SearchController {
 
     @GetMapping("/products")
     @Operation(summary = "搜索商品", description = "根据关键词和筛选条件搜索商品")
-    public Result<Page<ProductDocument>> searchProducts(
+    public Result<PageResult<ProductDocument>> searchProducts(
             @Parameter(description = "搜索关键词") @RequestParam(required = false) String keyword,
             @Parameter(description = "分类ID") @RequestParam(required = false) Integer categoryId,
             @Parameter(description = "品牌ID") @RequestParam(required = false) Integer brandId,
@@ -42,9 +43,12 @@ public class SearchController {
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "12") int size) {
 
         try {
-            Page<ProductDocument> result = productSearchService.searchProducts(
-                    keyword, categoryId, brandId, minPrice, maxPrice, 
+            Page<ProductDocument> searchResult = productSearchService.searchProducts(
+                    keyword, categoryId, brandId, minPrice, maxPrice,
                     sortBy, sortOrder, page, size);
+
+            // 转换为可序列化的分页结果
+            PageResult<ProductDocument> result = PageResult.from(searchResult);
             return Result.success(result);
         } catch (Exception e) {
             log.error("搜索商品失败: {}", e.getMessage(), e);
@@ -117,7 +121,7 @@ public class SearchController {
 
         try {
             productSearchService.syncProductToIndex(productId);
-            return Result.success(null, "商品同步成功");
+            return Result.success("商品同步成功", null);
         } catch (Exception e) {
             log.error("同步商品到搜索索引失败: {}", e.getMessage(), e);
             return Result.error("同步失败");
@@ -131,7 +135,7 @@ public class SearchController {
 
         try {
             productSearchService.batchSyncProductsToIndex(productIds);
-            return Result.success(null, "批量同步成功");
+            return Result.success("批量同步成功", null);
         } catch (Exception e) {
             log.error("批量同步商品到搜索索引失败: {}", e.getMessage(), e);
             return Result.error("批量同步失败");
@@ -145,7 +149,7 @@ public class SearchController {
 
         try {
             productSearchService.deleteProductFromIndex(productId);
-            return Result.success(null, "删除成功");
+            return Result.success("删除成功", null);
         } catch (Exception e) {
             log.error("从搜索索引删除商品失败: {}", e.getMessage(), e);
             return Result.error("删除失败");
@@ -158,7 +162,7 @@ public class SearchController {
 
         try {
             productSearchService.rebuildSearchIndex();
-            return Result.success(null, "重建索引成功");
+            return Result.success("重建索引成功", null);
         } catch (Exception e) {
             log.error("重建搜索索引失败: {}", e.getMessage(), e);
             return Result.error("重建索引失败");

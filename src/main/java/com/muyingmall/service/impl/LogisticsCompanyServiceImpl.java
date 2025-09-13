@@ -141,4 +141,34 @@ public class LogisticsCompanyServiceImpl extends ServiceImpl<LogisticsCompanyMap
         queryWrapper.eq(LogisticsCompany::getCode, code);
         return getOne(queryWrapper);
     }
+
+    /**
+     * 根据名称获取物流公司
+     *
+     * @param name 物流公司名称
+     * @return 物流公司信息
+     */
+    @Override
+    public LogisticsCompany getByName(String name) {
+        if (!StringUtils.hasText(name)) {
+            return null;
+        }
+
+        LambdaQueryWrapper<LogisticsCompany> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(LogisticsCompany::getName, name);
+        return getOne(queryWrapper);
+    }
+
+    /**
+     * 获取启用的物流公司列表
+     *
+     * @return 启用的物流公司列表
+     */
+    @Override
+    public List<LogisticsCompany> getEnabledCompanies() {
+        LambdaQueryWrapper<LogisticsCompany> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(LogisticsCompany::getStatus, 1);
+        queryWrapper.orderByAsc(LogisticsCompany::getSortOrder);
+        return list(queryWrapper);
+    }
 }

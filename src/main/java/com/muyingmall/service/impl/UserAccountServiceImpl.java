@@ -575,7 +575,10 @@ public class UserAccountServiceImpl implements UserAccountService {
                 }
             }
         }
-        return null;
+
+        // 如果无法获取用户ID，抛出异常而不是返回null
+        System.out.println("无法获取当前用户ID，用户可能未登录");
+        throw new BusinessException("用户未登录或登录状态已失效");
     }
 
     @Override

@@ -69,13 +69,16 @@ public class AdminLogisticsController {
     @Operation(summary = "获取物流详情")
     public CommonResult<Logistics> getLogisticsDetail(@PathVariable("id") Long id) {
         try {
+            log.info("获取物流详情请求，物流ID: {}", id);
             Logistics logistics = logisticsService.getLogisticsById(id);
             if (logistics == null) {
+                log.warn("物流不存在，物流ID: {}", id);
                 return CommonResult.failed("物流不存在");
             }
+            log.info("成功获取物流详情，物流单号: {}, 状态: {}", logistics.getTrackingNo(), logistics.getStatus());
             return CommonResult.success(logistics);
         } catch (Exception e) {
-            log.error("获取物流详情失败", e);
+            log.error("获取物流详情失败，物流ID: {}", id, e);
             return CommonResult.failed("获取物流详情失败: " + e.getMessage());
         }
     }
@@ -133,11 +136,11 @@ public class AdminLogisticsController {
      *
      * @param logisticsId 物流ID
      * @param track       轨迹信息
-     * @return 添加结果
+     * @return 添加的轨迹信息
      */
     @PostMapping("/{logisticsId}/tracks")
     @Operation(summary = "添加物流轨迹")
-    public CommonResult<Boolean> addLogisticsTrack(
+    public CommonResult<LogisticsTrack> addLogisticsTrack(
             @PathVariable("logisticsId") Long logisticsId,
             @RequestBody LogisticsTrack track) {
         try {
@@ -145,7 +148,8 @@ public class AdminLogisticsController {
             track.setLogisticsId(logisticsId);
             boolean result = logisticsTrackService.addTrack(track);
             if (result) {
-                return CommonResult.success(true, "添加物流轨迹成功");
+                // 返回添加的轨迹信息
+                return CommonResult.success(track, "添加物流轨迹成功");
             } else {
                 return CommonResult.failed("添加物流轨迹失败");
             }
@@ -154,25 +158,36 @@ public class AdminLogisticsController {
             return CommonResult.failed("添加物流轨迹失败: " + e.getMessage());
         }
     }
-    
+
     /**
      * 批量添加物流轨迹
      *
      * @param logisticsId 物流ID
-     * @param tracks 轨迹列表
-     * @return 添加结果
+     * @param tracks      轨迹列表
+     * @return 最新的轨迹列表
      */
     @PostMapping("/{logisticsId}/batch-tracks")
     @Operation(summary = "批量添加物流轨迹")
-    public CommonResult<Boolean> batchAddLogisticsTracks(
+    public CommonResult<List<LogisticsTrack>> batchAddLogisticsTracks(
             @PathVariable("logisticsId") Long logisticsId,
             @RequestBody List<LogisticsTrack> tracks) {
         try {
             log.info("接收到批量添加物流轨迹请求，物流ID: {}, 轨迹数量: {}", logisticsId, tracks.size());
-            
+
+            // 首先验证物流信息是否存在
+            Logistics logistics = logisticsService.getById(logisticsId);
+            if (logistics == null) {
+                log.error("找不到物流信息，物流ID: {}", logisticsId);
+                return CommonResult.failed("找不到该物流信息，请确认物流ID是否正确");
+            }
+
+            log.info("找到物流信息，物流单号: {}, 状态: {}", logistics.getTrackingNo(), logistics.getStatus());
+
             boolean result = logisticsTrackService.batchAddTracks(logisticsId, tracks);
             if (result) {
-                return CommonResult.success(true, "批量添加物流轨迹成功");
+                // 返回最新的轨迹列表
+                List<LogisticsTrack> latestTracks = logisticsTrackService.getTracksByLogisticsId(logisticsId);
+                return CommonResult.success(latestTracks, "批量添加物流轨迹成功");
             } else {
                 return CommonResult.failed("批量添加物流轨迹失败");
             }

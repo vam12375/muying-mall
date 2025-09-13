@@ -71,9 +71,9 @@ public class SecurityUtil {
             System.out.println("警告: 无法确定当前用户ID。Principal类型: " +
                     (principal != null ? principal.getClass().getName() : "null"));
 
-            // 临时返回固定值，用于测试阶段，生产环境应该返回null或抛出异常
-            System.out.println("临时返回用户ID为2用于测试");
-            return 2;
+            // 生产环境应该返回null或抛出异常
+            System.out.println("无法获取当前用户ID，返回null");
+            return null;
         }
         return null;
     }

@@ -53,11 +53,11 @@ spring:
       namespace: muying:session
       flush-mode: on_save  # 确保会话变更立即写入Redis
       
-  # Elasticsearch配置（当服务不可用时禁用连接尝试）
+  # Elasticsearch配置
   elasticsearch:
     uris: localhost:9200 # Elasticsearch访问地址
-    connection-timeout: 1s # 连接超时设置为较短时间，防止长时间等待
-    socket-timeout: 1s # 套接字超时设置为较短时间
+    connection-timeout: 5s # 连接超时时间
+    socket-timeout: 30s # 套接字超时时间
     username: # 如果有认证信息，可在此处配置
     password: # 如果有认证信息，可在此处配置
 
@@ -65,7 +65,7 @@ spring:
 management:
   health:
     elasticsearch:
-      enabled: false # 禁用Elasticsearch健康检查
+      enabled: false # 禁用Elasticsearch健康检查，避免启动失败
   endpoint:
     health:
       show-details: always # 显示详细健康信息
@@ -183,9 +183,12 @@ alipay:
   # private-key已移至application-private.yml
   # public-key已移至application-private.yml
   gateway-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do  # 沙箱环境网关，正式环境需修改
-  return-url: http://localhost:8080/api/payment/alipay/return #支付成功后的跳转地址
-  notify-url: http://localhost:8080/api/payment/alipay/notify #异步回调地址
+  return-url: http://localhost:8080/api/payment/alipay/return #钱包充值成功后的跳转地址
+  notify-url: http://localhost:8080/api/payment/alipay/notify #钱包充值异步回调地址
   refund-notify-url: http://localhost:8080/api/payment/alipay/refund/notify #退款异步回调地址
+  # 订单支付回调地址（如果需要区分）
+  wellet-return-url: http://localhost:8080/api/payment/alipay/return #订单支付成功后的跳转地址
+  wellet-notify-url: http://localhost:8080/api/payment/alipay/notify #订单支付异步回调地址
 
 # 微信支付配置 - 敏感信息已移至application-private.yml
 wechat:

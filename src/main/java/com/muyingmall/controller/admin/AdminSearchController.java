@@ -33,7 +33,7 @@ public class AdminSearchController {
         try {
             boolean success = searchIndexService.createProductIndex();
             if (success) {
-                return Result.success(null, "索引创建成功");
+                return Result.success("索引创建成功", null);
             } else {
                 return Result.error("索引创建失败");
             }
@@ -49,7 +49,7 @@ public class AdminSearchController {
         try {
             boolean success = searchIndexService.deleteProductIndex();
             if (success) {
-                return Result.success(null, "索引删除成功");
+                return Result.success("索引删除成功", null);
             } else {
                 return Result.error("索引删除失败");
             }
@@ -64,7 +64,7 @@ public class AdminSearchController {
     public Result<Void> rebuildIndex() {
         try {
             productSearchService.rebuildSearchIndex();
-            return Result.success(null, "索引重建成功");
+            return Result.success("索引重建成功", null);
         } catch (Exception e) {
             log.error("重建搜索索引失败: {}", e.getMessage(), e);
             return Result.error("重建索引失败: " + e.getMessage());
@@ -104,7 +104,7 @@ public class AdminSearchController {
         try {
             boolean success = searchIndexService.refreshIndex(indexName);
             if (success) {
-                return Result.success(null, "索引刷新成功");
+                return Result.success("索引刷新成功", null);
             } else {
                 return Result.error("索引刷新失败");
             }
@@ -121,7 +121,7 @@ public class AdminSearchController {
         try {
             boolean success = searchIndexService.optimizeIndex(indexName);
             if (success) {
-                return Result.success(null, "索引优化成功");
+                return Result.success("索引优化成功", null);
             } else {
                 return Result.error("索引优化失败");
             }
@@ -137,7 +137,7 @@ public class AdminSearchController {
             @Parameter(description = "商品ID") @PathVariable Integer productId) {
         try {
             productSearchService.syncProductToIndex(productId);
-            return Result.success(null, "商品同步成功");
+            return Result.success("商品同步成功", null);
         } catch (Exception e) {
             log.error("同步商品失败: {}", e.getMessage(), e);
             return Result.error("同步商品失败: " + e.getMessage());
@@ -150,7 +150,7 @@ public class AdminSearchController {
             @Parameter(description = "商品ID列表") @RequestBody List<Integer> productIds) {
         try {
             productSearchService.batchSyncProductsToIndex(productIds);
-            return Result.success(null, "批量同步成功");
+            return Result.success("批量同步成功", null);
         } catch (Exception e) {
             log.error("批量同步商品失败: {}", e.getMessage(), e);
             return Result.error("批量同步失败: " + e.getMessage());
@@ -163,7 +163,7 @@ public class AdminSearchController {
             @Parameter(description = "商品ID") @PathVariable Integer productId) {
         try {
             productSearchService.deleteProductFromIndex(productId);
-            return Result.success(null, "删除成功");
+            return Result.success("删除成功", null);
         } catch (Exception e) {
             log.error("删除商品索引失败: {}", e.getMessage(), e);
             return Result.error("删除失败: " + e.getMessage());
@@ -190,7 +190,7 @@ public class AdminSearchController {
         try {
             boolean success = searchIndexService.setIndexAlias(indexName, aliasName);
             if (success) {
-                return Result.success(null, "设置别名成功");
+                return Result.success("设置别名成功", null);
             } else {
                 return Result.error("设置别名失败");
             }
@@ -208,7 +208,7 @@ public class AdminSearchController {
         try {
             boolean success = searchIndexService.removeIndexAlias(indexName, aliasName);
             if (success) {
-                return Result.success(null, "删除别名成功");
+                return Result.success("删除别名成功", null);
             } else {
                 return Result.error("删除别名失败");
             }
