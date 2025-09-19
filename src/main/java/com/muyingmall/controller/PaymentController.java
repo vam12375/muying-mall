@@ -23,6 +23,8 @@ import com.muyingmall.service.UserService;
 import com.muyingmall.service.UserAccountService;
 import com.muyingmall.service.CacheRefreshService;
 import com.muyingmall.service.OrderNotificationService;
+import com.muyingmall.service.MessageProducerService;
+import com.muyingmall.dto.PaymentMessage;
 import com.muyingmall.util.EnumUtil;
 import com.muyingmall.common.exception.BusinessException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -76,6 +78,7 @@ public class PaymentController {
     private final AlipayConfig alipayConfig;
     private final CacheRefreshService cacheRefreshService; // 注入缓存刷新服务
     private final OrderNotificationService orderNotificationService; // 注入订单通知服务
+    private final MessageProducerService messageProducerService; // 注入消息发送服务
     @Autowired
     private OrderMapper orderMapper; // 注入OrderMapper
 
@@ -147,6 +150,16 @@ public class PaymentController {
             order.setPaymentMethod("alipay");
             order.setUpdateTime(LocalDateTime.now());
             orderService.updateById(order);
+
+            // 发送支付请求消息到RabbitMQ
+            try {
+                PaymentMessage paymentMessage = PaymentMessage.createRequestMessage(payment);
+                messageProducerService.sendPaymentMessage(paymentMessage);
+                log.info("支付宝支付请求消息发送成功: paymentId={}", payment.getId());
+            } catch (Exception e) {
+                log.error("支付宝支付请求消息发送失败: paymentId={}, error={}", payment.getId(), e.getMessage(), e);
+                // 消息发送失败不影响支付流程
+            }
 
             // 调用支付宝接口获取支付链接
             AlipayClient alipayClient = new DefaultAlipayClient(
@@ -246,6 +259,16 @@ public class PaymentController {
             order.setPaymentMethod("wechat");
             order.setUpdateTime(LocalDateTime.now());
             orderService.updateById(order);
+
+            // 发送支付请求消息到RabbitMQ
+            try {
+                PaymentMessage paymentMessage = PaymentMessage.createRequestMessage(payment);
+                messageProducerService.sendPaymentMessage(paymentMessage);
+                log.info("微信支付请求消息发送成功: paymentId={}", payment.getId());
+            } catch (Exception e) {
+                log.error("微信支付请求消息发送失败: paymentId={}, error={}", payment.getId(), e.getMessage(), e);
+                // 消息发送失败不影响支付流程
+            }
 
             // --- 模拟微信沙箱支付成功 ---
             String mockTransactionId = "WX" + UUID.randomUUID().toString().replace("-", "");
@@ -393,6 +416,16 @@ public class PaymentController {
             orderService.updateById(order);
             log.info("订单支付信息更新成功: OrderID={}, PaymentID={}", order.getOrderId(), payment.getId());
 
+            // 发送支付请求消息到RabbitMQ（钱包支付立即成功）
+            try {
+                PaymentMessage paymentMessage = PaymentMessage.createRequestMessage(payment);
+                messageProducerService.sendPaymentMessage(paymentMessage);
+                log.info("钱包支付请求消息发送成功: paymentId={}", payment.getId());
+            } catch (Exception e) {
+                log.error("钱包支付请求消息发送失败: paymentId={}, error={}", payment.getId(), e.getMessage(), e);
+                // 消息发送失败不影响支付流程
+            }
+
             // 更新支付和订单状态 (订单状态将变为待发货等)
             updatePaymentAndOrderStatus(payment.getId(), payment.getTransactionId());
             log.info("支付和订单状态更新成功");
@@ -483,6 +516,16 @@ public class PaymentController {
                         return "success";
                     } catch (Exception e) {
                         log.error("异步通知 - 更新支付记录和订单状态失败: {}", e.getMessage(), e);
+                        
+                        // 发送支付失败消息到RabbitMQ
+                        try {
+                            PaymentMessage paymentMessage = PaymentMessage.createFailedMessage(payment, "支付状态更新失败: " + e.getMessage());
+                            messageProducerService.sendPaymentMessage(paymentMessage);
+                            log.info("支付失败消息发送成功: paymentId={}", payment.getId());
+                        } catch (Exception msgException) {
+                            log.error("支付失败消息发送失败: paymentId={}, error={}", payment.getId(), msgException.getMessage(), msgException);
+                        }
+                        
                         // 支付宝异步通知，返回failure会触发重试
                         return "failure";
                     }
@@ -492,6 +535,16 @@ public class PaymentController {
                         payment.setStatus(PaymentStatus.CLOSED);
                         payment.setUpdateTime(LocalDateTime.now());
                         paymentService.updateById(payment);
+                        
+                        // 发送支付失败消息到RabbitMQ
+                        try {
+                            PaymentMessage paymentMessage = PaymentMessage.createFailedMessage(payment, "交易关闭");
+                            messageProducerService.sendPaymentMessage(paymentMessage);
+                            log.info("交易关闭消息发送成功: paymentId={}", payment.getId());
+                        } catch (Exception msgException) {
+                            log.error("交易关闭消息发送失败: paymentId={}, error={}", payment.getId(), msgException.getMessage(), msgException);
+                        }
+                        
                         log.info("异步通知 - 交易关闭状态更新成功: {}", paymentNo);
                         return "success";
                     } catch (Exception e) {
@@ -701,6 +754,16 @@ public class PaymentController {
         boolean result = paymentService.updateById(payment);
 
         if (result) {
+            // 发送支付关闭消息到RabbitMQ
+            try {
+                PaymentMessage paymentMessage = PaymentMessage.createFailedMessage(payment, "用户主动关闭支付");
+                messageProducerService.sendPaymentMessage(paymentMessage);
+                log.info("支付关闭消息发送成功: paymentId={}", payment.getId());
+            } catch (Exception e) {
+                log.error("支付关闭消息发送失败: paymentId={}, error={}", payment.getId(), e.getMessage(), e);
+                // 消息发送失败不影响关闭流程
+            }
+
             // 更新订单状态为已取消
             Order order = orderService.getById(payment.getOrderId());
             if (order != null) {
@@ -931,6 +994,16 @@ public class PaymentController {
             log.info("支付状态更新结果: {}, Payment ID: {}", paymentUpdated, paymentId);
 
             if (paymentUpdated) {
+                // 发送支付成功消息到RabbitMQ
+                try {
+                    PaymentMessage paymentMessage = PaymentMessage.createSuccessMessage(payment);
+                    messageProducerService.sendPaymentMessage(paymentMessage);
+                    log.info("支付成功消息发送成功: paymentId={}", payment.getId());
+                } catch (Exception e) {
+                    log.error("支付成功消息发送失败: paymentId={}, error={}", payment.getId(), e.getMessage(), e);
+                    // 消息发送失败不影响支付流程
+                }
+
                 // 更新订单状态
                 updateOrderStatusAfterPayment(payment);
             } else {
@@ -1032,6 +1105,72 @@ public class PaymentController {
 
         } catch (Exception e) {
             log.error("发布订单状态变更事件失败: orderId={}, error={}", order.getOrderId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 处理退款
+     */
+    @PostMapping("/refund/{paymentId}")
+    @Operation(summary = "处理退款")
+    @Transactional
+    public Result<Boolean> processRefund(@PathVariable("paymentId") Long paymentId,
+                                       @RequestBody Map<String, Object> refundRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        try {
+            Payment payment = paymentService.getById(paymentId);
+            if (payment == null) {
+                return Result.error(404, "支付记录不存在");
+            }
+
+            if (!payment.getUserId().equals(user.getUserId())) {
+                return Result.error(403, "无权操作此支付记录");
+            }
+
+            // 获取退款金额和原因
+            BigDecimal refundAmount = null;
+            String reason = (String) refundRequest.get("reason");
+            
+            Object amountObj = refundRequest.get("amount");
+            if (amountObj != null) {
+                if (amountObj instanceof Number) {
+                    refundAmount = new BigDecimal(amountObj.toString());
+                } else if (amountObj instanceof String) {
+                    refundAmount = new BigDecimal((String) amountObj);
+                }
+            }
+
+            // 如果没有指定退款金额，默认全额退款
+            if (refundAmount == null) {
+                refundAmount = payment.getAmount();
+            }
+
+            if (reason == null || reason.trim().isEmpty()) {
+                reason = "用户申请退款";
+            }
+
+            boolean success = paymentService.processRefund(payment.getPaymentNo(), refundAmount, reason);
+            
+            if (success) {
+                return Result.success("退款申请提交成功", true);
+            } else {
+                return Result.error("退款申请失败");
+            }
+
+        } catch (Exception e) {
+            log.error("处理退款失败", e);
+            return Result.error("处理退款失败: " + e.getMessage());
         }
     }
 

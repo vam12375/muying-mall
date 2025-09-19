@@ -40,4 +40,14 @@ public interface PaymentService extends IService<Payment> {
      * @return 支付信息
      */
     Payment getByOrderNo(String orderNo);
+
+    /**
+     * 处理退款
+     * 
+     * @param paymentNo 支付单号
+     * @param refundAmount 退款金额
+     * @param reason 退款原因
+     * @return 退款是否成功
+     */
+    boolean processRefund(String paymentNo, java.math.BigDecimal refundAmount, String reason);
 }
