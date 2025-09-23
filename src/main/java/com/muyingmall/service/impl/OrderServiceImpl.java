@@ -31,6 +31,8 @@ import com.muyingmall.service.ProductService;
 import com.muyingmall.service.PointsService;
 import com.muyingmall.service.CouponService;
 import com.muyingmall.service.UserCouponService;
+import com.muyingmall.service.MessageProducerService;
+import com.muyingmall.dto.OrderMessage;
 import com.muyingmall.util.EnumUtil;
 import com.muyingmall.util.RedisUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -82,6 +84,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private final ObjectMapper objectMapper;
     private final CouponService couponService;
     private final UserCouponService userCouponService;
+    private final MessageProducerService messageProducerService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -347,6 +350,22 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 userCoupon.setOrderId(order.getOrderId().longValue());
                 userCouponService.updateById(userCoupon);
             }
+        }
+
+        // 发送订单创建消息
+        try {
+            OrderMessage orderMessage = OrderMessage.createOrderEvent(
+                    order.getOrderId(),
+                    order.getOrderNo(),
+                    order.getUserId(),
+                    order.getTotalAmount()
+            );
+            messageProducerService.sendOrderMessage(orderMessage);
+            log.info("订单创建消息发送成功: orderId={}, orderNo={}", order.getOrderId(), order.getOrderNo());
+        } catch (Exception e) {
+            // 消息发送失败不影响主流程，但需要记录日志
+            log.error("订单创建消息发送失败: orderId={}, orderNo={}, error={}", 
+                    order.getOrderId(), order.getOrderNo(), e.getMessage(), e);
         }
 
         return result;
@@ -1053,6 +1072,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      */
     private void sendOrderStatusChangeNotification(Order order, String oldStatus, String newStatus) {
         try {
+            log.info("发送订单状态变更通知: orderId={}, orderNo={}, oldStatus={}, newStatus={}", 
+                    order.getOrderId(), order.getOrderNo(), oldStatus, newStatus);
+
+            // 发送原有的Spring事件
             String extra = String.format("{\"orderId\":%d,\"oldStatus\":\"%s\",\"newStatus\":\"%s\"}",
                     order.getOrderId(), oldStatus, newStatus);
 
@@ -1066,6 +1089,51 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                     extra);
 
             eventPublisher.publishEvent(event);
+
+            // 发送RabbitMQ消息
+            try {
+                // 创建订单消息
+                OrderMessage orderMessage;
+                
+                // 根据新状态确定事件类型
+                if (ORDER_STATUS_CANCELLED.equals(newStatus)) {
+                    orderMessage = OrderMessage.cancelOrderEvent(
+                            order.getOrderId(),
+                            order.getOrderNo(),
+                            order.getUserId(),
+                            order.getTotalAmount()
+                    );
+                } else if (ORDER_STATUS_COMPLETED.equals(newStatus)) {
+                    orderMessage = OrderMessage.completeOrderEvent(
+                            order.getOrderId(),
+                            order.getOrderNo(),
+                            order.getUserId(),
+                            order.getTotalAmount()
+                    );
+                } else {
+                    // 通用状态变更事件
+                    orderMessage = OrderMessage.statusChangeEvent(
+                            order.getOrderId(),
+                            order.getOrderNo(),
+                            order.getUserId(),
+                            oldStatus,
+                            newStatus,
+                            order.getTotalAmount()
+                    );
+                }
+
+                // 发送消息（包含RabbitMQ和Redis通知）
+                messageProducerService.sendOrderMessage(orderMessage);
+                
+                log.info("订单状态变更RabbitMQ消息发送成功: orderId={}, eventType={}", 
+                        order.getOrderId(), orderMessage.getEventType());
+
+            } catch (Exception mqEx) {
+                // RabbitMQ消息发送失败不影响主流程，但需要记录日志
+                log.error("订单状态变更RabbitMQ消息发送失败: orderId={}, orderNo={}, oldStatus={}, newStatus={}, error={}", 
+                        order.getOrderId(), order.getOrderNo(), oldStatus, newStatus, mqEx.getMessage(), mqEx);
+            }
+
             log.info("已发送订单状态变更消息通知: orderId={}, userId={}, oldStatus={}, newStatus={}",
                     order.getOrderId(), order.getUserId(), oldStatus, newStatus);
         } catch (Exception e) {
@@ -1331,6 +1399,22 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             // 清除用户订单列表缓存
             clearUserOrderListCache(userId);
 
+            // 发送订单创建消息
+            try {
+                OrderMessage orderMessage = OrderMessage.createOrderEvent(
+                        order.getOrderId(),
+                        order.getOrderNo(),
+                        order.getUserId(),
+                        order.getTotalAmount()
+                );
+                messageProducerService.sendOrderMessage(orderMessage);
+                log.info("直接购买订单创建消息发送成功: orderId={}, orderNo={}", order.getOrderId(), order.getOrderNo());
+            } catch (Exception e) {
+                // 消息发送失败不影响主流程，但需要记录日志
+                log.error("直接购买订单创建消息发送失败: orderId={}, orderNo={}, error={}", 
+                        order.getOrderId(), order.getOrderNo(), e.getMessage(), e);
+            }
+
             return result;
         } catch (Exception e) {
             log.error("直接购买失败", e);
@@ -1399,4 +1483,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
         }
     }
+
+
 }

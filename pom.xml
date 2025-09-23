@@ -179,6 +179,12 @@
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 		
+		<!-- RabbitMQ 消息队列 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
+		
 		<!-- 显式添加micrometer-core依赖 -->
 		<dependency>
 			<groupId>io.micrometer</groupId>

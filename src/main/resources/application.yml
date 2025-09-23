@@ -53,6 +53,37 @@ spring:
       namespace: muying:session
       flush-mode: on_save  # 确保会话变更立即写入Redis
       
+  # RabbitMQ配置
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    connection-timeout: 15000
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+      retry:
+        enabled: true
+        initial-interval: 1000
+        max-attempts: 3
+        max-interval: 10000
+        multiplier: 2
+    listener:
+      simple:
+        acknowledge-mode: manual
+        concurrency: 5
+        max-concurrency: 10
+        prefetch: 1
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          max-interval: 10000
+          multiplier: 2
+      
   # Elasticsearch配置
   elasticsearch:
     uris: localhost:9200 # Elasticsearch访问地址
@@ -66,10 +97,22 @@ management:
   health:
     elasticsearch:
       enabled: false # 禁用Elasticsearch健康检查，避免启动失败
+    rabbitmq:
+      enabled: true # 启用RabbitMQ健康检查
   endpoint:
     health:
       show-details: always # 显示详细健康信息
       show-components: always # 显示所有组件健康状态
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,rabbitmq # 暴露健康检查和监控端点
+  metrics:
+    export:
+      prometheus:
+        enabled: true # 启用Prometheus指标导出
+    tags:
+      application: muying-mall # 添加应用标签
       
 # Redis自定义配置
 redis:
@@ -234,3 +277,32 @@ cache:
     max-size: 1000
     # 本地缓存过期时间（秒）
     ttl: 60
+
+# RabbitMQ自定义配置
+rabbitmq:
+  enabled: true  # 是否启用RabbitMQ功能
+  fallback-to-sync: true  # RabbitMQ不可用时是否回退到同步处理
+  # 错误处理配置
+  error-handling:
+    max-retry-attempts: 3  # 最大重试次数
+    retry-interval: 1000  # 重试间隔（毫秒）
+    dead-letter-enabled: true  # 是否启用死信队列
+    alert-enabled: true  # 是否启用告警
+    connection-timeout: 15000  # 连接超时时间（毫秒）
+    send-timeout: 5000  # 消息发送超时时间（毫秒）
+  # 监控配置
+  monitoring:
+    enabled: true  # 是否启用监控
+    health-check-interval: 30000  # 健康检查间隔（毫秒）
+    metrics-collection-enabled: true  # 是否启用指标收集
+    stats-retention-days: 7  # 统计数据保留天数
+    connection-status-enabled: true  # 是否启用连接状态监控
+    queue-length-alert-threshold: 1000  # 队列长度告警阈值
+  # 性能配置
+  performance:
+    concurrent-consumers: 5  # 消费者并发数
+    max-concurrent-consumers: 10  # 最大消费者并发数
+    prefetch-count: 1  # 预取数量
+    batch-size: 100  # 批量大小
+    batch-processing-enabled: false  # 是否启用批量处理
+    batch-timeout: 1000  # 批量处理超时时间（毫秒）
