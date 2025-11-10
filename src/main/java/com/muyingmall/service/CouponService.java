@@ -154,4 +154,21 @@ public interface CouponService extends IService<Coupon> {
      * @return 统计数据
      */
     Map<String, Object> getCouponStats();
+
+    /**
+     * 通过优惠码领取优惠券
+     *
+     * @param userId 用户ID
+     * @param code   优惠码
+     * @return 是否成功
+     */
+    boolean receiveCouponByCode(Integer userId, String code);
+
+    /**
+     * 获取用户优惠券统计数据
+     *
+     * @param userId 用户ID
+     * @return 统计数据
+     */
+    Map<String, Object> getUserCouponStats(Integer userId);
 }

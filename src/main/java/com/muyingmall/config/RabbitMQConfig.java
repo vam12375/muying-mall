@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -14,6 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
@@ -36,6 +38,45 @@ import org.springframework.retry.support.RetryTemplate;
 public class RabbitMQConfig {
 
     private final RabbitMQProperties rabbitMQProperties;
+    private final org.springframework.boot.autoconfigure.amqp.RabbitProperties rabbitProperties;
+    private final RabbitMQConnectionListener connectionListener;
+
+    /**
+     * 自定义连接工厂，配置连接重试策略
+     */
+    @Bean
+    @Primary
+    public CachingConnectionFactory customConnectionFactory() {
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+        
+        try {
+            // 设置RabbitMQ服务器地址和端口
+            connectionFactory.setHost(rabbitProperties.getHost());
+            connectionFactory.setPort(rabbitProperties.getPort());
+            connectionFactory.setUsername(rabbitProperties.getUsername());
+            connectionFactory.setPassword(rabbitProperties.getPassword());
+            connectionFactory.setVirtualHost(rabbitProperties.getVirtualHost());
+            
+            // 设置连接超时时间
+            connectionFactory.setConnectionTimeout(rabbitProperties.getConnectionTimeout() != null ? 
+                (int) rabbitProperties.getConnectionTimeout().toMillis() : 15000);
+            
+            // 设置发布确认
+            connectionFactory.setPublisherConfirmType(rabbitProperties.getPublisherConfirmType());
+            connectionFactory.setPublisherReturns(rabbitProperties.isPublisherReturns());
+            
+            // 添加连接监听器，限制错误日志输出
+            connectionFactory.addConnectionListener(connectionListener);
+            
+            log.info("RabbitMQ连接工厂配置完成 - Host: {}, Port: {}", 
+                    rabbitProperties.getHost(), rabbitProperties.getPort());
+            
+        } catch (Exception e) {
+            log.error("RabbitMQ连接工厂配置失败: {}", e.getMessage());
+        }
+        
+        return connectionFactory;
+    }
 
     /**
      * 配置消息转换器，使用JSON格式
@@ -94,7 +135,16 @@ public class RabbitMQConfig {
         // 配置重试机制
         factory.setRetryTemplate(retryTemplate());
         
-        log.info("RabbitMQ监听器容器工厂配置完成 - 并发消费者: {}, 最大并发: {}, 预取数量: {}", 
+        // 关键配置：禁用自动启动，防止启动时一直重试连接
+        factory.setAutoStartup(false);
+        
+        // 设置队列不存在时不抛出致命异常
+        factory.setMissingQueuesFatal(false);
+        
+        // 设置恢复间隔
+        factory.setRecoveryInterval(30000L);
+        
+        log.info("RabbitMQ监听器容器工厂配置完成 - 并发消费者: {}, 最大并发: {}, 预取数量: {}, 自动启动: false", 
                 performance.getConcurrentConsumers(), 
                 performance.getMaxConcurrentConsumers(), 
                 performance.getPrefetchCount());

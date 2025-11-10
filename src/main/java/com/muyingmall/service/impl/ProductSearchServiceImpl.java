@@ -357,30 +357,113 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     @Override
     public void syncProductToIndex(Integer productId) {
         try {
-            log.info("商品同步功能暂时不可用，商品ID: {}", productId);
-            // TODO: 实现基于ElasticsearchClient的同步逻辑
+            log.info("开始同步商品到搜索索引，商品ID: {}", productId);
+
+            // 从数据库获取商品信息
+            Product product = productService.getById(productId);
+            if (product == null) {
+                log.warn("商品不存在，无法同步到索引，商品ID: {}", productId);
+                return;
+            }
+
+            // 转换为ProductDocument
+            ProductDocument document = convertToDocument(product);
+
+            // 使用ElasticsearchClient保存到索引
+            elasticsearchClient.index(i -> i
+                    .index("products")
+                    .id(String.valueOf(productId))
+                    .document(document)
+            );
+
+            log.info("商品同步到搜索索引成功，商品ID: {}, 商品名称: {}", productId, product.getProductName());
+
         } catch (Exception e) {
             log.error("同步商品到搜索索引失败: {}, 错误: {}", productId, e.getMessage(), e);
+            throw new RuntimeException("同步商品到搜索索引失败: " + productId, e);
         }
     }
 
     @Override
     public void batchSyncProductsToIndex(List<Integer> productIds) {
         try {
-            log.info("批量商品同步功能暂时不可用，商品数量: {}", productIds.size());
-            // TODO: 实现基于ElasticsearchClient的批量同步逻辑
+            if (productIds == null || productIds.isEmpty()) {
+                log.warn("商品ID列表为空，无需同步");
+                return;
+            }
+
+            log.info("开始批量同步商品到搜索索引，商品数量: {}", productIds.size());
+
+            // 批量获取商品信息
+            List<Product> products = productService.listByIds(productIds);
+            if (products.isEmpty()) {
+                log.warn("未找到任何商品，无需同步");
+                return;
+            }
+
+            // 批量转换为ProductDocument
+            List<ProductDocument> documents = products.stream()
+                    .map(this::convertToDocument)
+                    .collect(Collectors.toList());
+
+            // 使用BulkRequest批量保存到索引
+            co.elastic.clients.elasticsearch.core.BulkRequest.Builder bulkBuilder =
+                new co.elastic.clients.elasticsearch.core.BulkRequest.Builder();
+
+            for (ProductDocument document : documents) {
+                bulkBuilder.operations(op -> op
+                        .index(idx -> idx
+                                .index("products")
+                                .id(String.valueOf(document.getProductId()))
+                                .document(document)
+                        )
+                );
+            }
+
+            co.elastic.clients.elasticsearch.core.BulkResponse bulkResponse =
+                elasticsearchClient.bulk(bulkBuilder.build());
+
+            // 检查是否有失败的操作
+            if (bulkResponse.errors()) {
+                long failedCount = bulkResponse.items().stream()
+                        .filter(item -> item.error() != null)
+                        .count();
+                log.warn("批量同步部分失败，成功: {}, 失败: {}",
+                        documents.size() - failedCount, failedCount);
+            } else {
+                log.info("批量同步商品到搜索索引成功，数量: {}", documents.size());
+            }
+
         } catch (Exception e) {
             log.error("批量同步商品到搜索索引失败: {}", e.getMessage(), e);
+            throw new RuntimeException("批量同步商品到搜索索引失败", e);
         }
     }
 
     @Override
     public void deleteProductFromIndex(Integer productId) {
         try {
-            log.info("商品删除功能暂时不可用，商品ID: {}", productId);
-            // TODO: 实现基于ElasticsearchClient的删除逻辑
+            log.info("开始从搜索索引删除商品，商品ID: {}", productId);
+
+            // 使用ElasticsearchClient删除文档
+            co.elastic.clients.elasticsearch.core.DeleteResponse deleteResponse =
+                elasticsearchClient.delete(d -> d
+                        .index("products")
+                        .id(String.valueOf(productId))
+                );
+
+            // 检查删除结果
+            if (deleteResponse.result() == co.elastic.clients.elasticsearch._types.Result.Deleted) {
+                log.info("商品从搜索索引删除成功，商品ID: {}", productId);
+            } else if (deleteResponse.result() == co.elastic.clients.elasticsearch._types.Result.NotFound) {
+                log.warn("商品在搜索索引中不存在，商品ID: {}", productId);
+            } else {
+                log.warn("商品删除状态未知，商品ID: {}, 结果: {}", productId, deleteResponse.result());
+            }
+
         } catch (Exception e) {
             log.error("从搜索索引删除商品失败: {}, 错误: {}", productId, e.getMessage(), e);
+            throw new RuntimeException("从搜索索引删除商品失败: " + productId, e);
         }
     }
 
@@ -410,8 +493,33 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                         .collect(Collectors.toList());
 
                 if (!documents.isEmpty()) {
-                    // TODO: 实现基于ElasticsearchClient的批量保存逻辑
-                    log.info("准备保存 {} 个商品文档到索引", documents.size());
+                    // 使用BulkRequest批量保存到索引
+                    co.elastic.clients.elasticsearch.core.BulkRequest.Builder bulkBuilder =
+                        new co.elastic.clients.elasticsearch.core.BulkRequest.Builder();
+
+                    for (ProductDocument document : documents) {
+                        bulkBuilder.operations(op -> op
+                                .index(idx -> idx
+                                        .index("products")
+                                        .id(String.valueOf(document.getProductId()))
+                                        .document(document)
+                                )
+                        );
+                    }
+
+                    co.elastic.clients.elasticsearch.core.BulkResponse bulkResponse =
+                        elasticsearchClient.bulk(bulkBuilder.build());
+
+                    // 检查是否有失败的操作
+                    if (bulkResponse.errors()) {
+                        long failedCount = bulkResponse.items().stream()
+                                .filter(item -> item.error() != null)
+                                .count();
+                        log.warn("批量保存部分失败，成功: {}, 失败: {}",
+                                documents.size() - failedCount, failedCount);
+                    } else {
+                        log.info("成功保存 {} 个商品文档到索引", documents.size());
+                    }
                 }
 
                 log.info("重建索引进度: 已处理第 {} 页，当前页商品数量: {}", page, documents.size());
@@ -438,11 +546,31 @@ public class ProductSearchServiceImpl implements ProductSearchService {
 
             if (indexExists) {
                 // 获取文档数量
-                // TODO: 实现基于ElasticsearchClient的文档计数逻辑
-                status.put("documentCount", "unknown");
+                try {
+                    co.elastic.clients.elasticsearch.core.CountRequest countRequest =
+                        co.elastic.clients.elasticsearch.core.CountRequest.of(c -> c
+                                .index("products")
+                        );
+                    co.elastic.clients.elasticsearch.core.CountResponse countResponse =
+                        elasticsearchClient.count(countRequest);
+                    status.put("documentCount", countResponse.count());
+                } catch (Exception e) {
+                    log.warn("获取文档数量失败: {}", e.getMessage());
+                    status.put("documentCount", "unknown");
+                }
 
                 // 检查集群健康状态
-                status.put("clusterHealth", "green"); // 简化实现
+                try {
+                    co.elastic.clients.elasticsearch.cluster.HealthResponse healthResponse =
+                        elasticsearchClient.cluster().health();
+                    status.put("clusterHealth", healthResponse.status().jsonValue());
+                    status.put("numberOfNodes", healthResponse.numberOfNodes());
+                    status.put("activeShards", healthResponse.activeShards());
+                } catch (Exception e) {
+                    log.warn("获取集群健康状态失败: {}", e.getMessage());
+                    status.put("clusterHealth", "unknown");
+                }
+
                 status.put("status", "healthy");
             } else {
                 status.put("status", "index_not_exists");
@@ -460,9 +588,79 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     @Override
     public List<ProductDocument> getSimilarProducts(Integer productId, int limit) {
         try {
-            log.info("相似商品推荐功能暂时不可用，商品ID: {}", productId);
-            // TODO: 实现基于ElasticsearchClient的相似商品查询逻辑
-            return Collections.emptyList();
+            log.info("开始获取相似商品推荐，商品ID: {}, 推荐数量: {}", productId, limit);
+
+            // 先从索引获取目标商品信息
+            co.elastic.clients.elasticsearch.core.GetResponse<ProductDocument> getResponse =
+                elasticsearchClient.get(g -> g
+                        .index("products")
+                        .id(String.valueOf(productId)),
+                    ProductDocument.class
+                );
+
+            if (!getResponse.found()) {
+                log.warn("商品在索引中不存在，无法推荐相似商品，商品ID: {}", productId);
+                return Collections.emptyList();
+            }
+
+            ProductDocument targetProduct = getResponse.source();
+            if (targetProduct == null) {
+                log.warn("商品数据为空，无法推荐相似商品，商品ID: {}", productId);
+                return Collections.emptyList();
+            }
+
+            // 构建相似商品查询：基于相同分类或品牌
+            BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+
+            // 优先推荐相同分类的商品
+            if (targetProduct.getCategoryId() != null) {
+                boolQueryBuilder.should(Query.of(q -> q
+                        .term(t -> t.field("categoryId").value(targetProduct.getCategoryId()))
+                ));
+            }
+
+            // 其次推荐相同品牌的商品
+            if (targetProduct.getBrandId() != null) {
+                boolQueryBuilder.should(Query.of(q -> q
+                        .term(t -> t.field("brandId").value(targetProduct.getBrandId()))
+                ));
+            }
+
+            // 只推荐上架商品
+            boolQueryBuilder.filter(Query.of(q -> q
+                    .term(t -> t.field("productStatus").value("上架"))
+            ));
+
+            // 排除目标商品本身
+            boolQueryBuilder.mustNot(Query.of(q -> q
+                    .term(t -> t.field("productId").value(productId))
+            ));
+
+            // 设置至少匹配一个条件
+            boolQueryBuilder.minimumShouldMatch("1");
+
+            // 构建搜索请求，按权重和销量排序
+            co.elastic.clients.elasticsearch.core.SearchRequest searchRequest =
+                co.elastic.clients.elasticsearch.core.SearchRequest.of(s -> s
+                        .index("products")
+                        .query(Query.of(q -> q.bool(boolQueryBuilder.build())))
+                        .sort(so -> so.field(f -> f.field("searchWeight").order(SortOrder.Desc)))
+                        .sort(so -> so.field(f -> f.field("salesCount").order(SortOrder.Desc)))
+                        .size(limit)
+                );
+
+            // 执行搜索
+            co.elastic.clients.elasticsearch.core.SearchResponse<ProductDocument> searchResponse =
+                elasticsearchClient.search(searchRequest, ProductDocument.class);
+
+            // 提取结果
+            List<ProductDocument> similarProducts = searchResponse.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            log.info("成功获取相似商品推荐，商品ID: {}, 推荐数量: {}", productId, similarProducts.size());
+            return similarProducts;
 
         } catch (Exception e) {
             log.error("获取相似商品失败: {}", e.getMessage(), e);

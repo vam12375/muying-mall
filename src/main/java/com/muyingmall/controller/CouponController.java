@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 优惠券控制器
@@ -124,5 +125,70 @@ public class CouponController {
 
         List<UserCoupon> userCoupons = couponService.getOrderCoupons(user.getUserId(), amount, productIds);
         return Result.success(userCoupons);
+    }
+
+    /**
+     * 通过优惠码领取优惠券
+     */
+    @PostMapping("/coupons/receive-by-code")
+    @Operation(summary = "通过优惠码领取优惠券")
+    public Result<Void> receiveCouponByCode(@RequestBody Map<String, String> request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        String code = request.get("code");
+        if (code == null || code.trim().isEmpty()) {
+            return Result.error("优惠码不能为空");
+        }
+
+        boolean success = couponService.receiveCouponByCode(user.getUserId(), code.trim());
+        if (!success) {
+            return Result.error("优惠码无效或已被使用");
+        }
+        return Result.success(null, "兑换成功");
+    }
+
+    /**
+     * 获取优惠券详情
+     */
+    @GetMapping("/coupons/{couponId}")
+    @Operation(summary = "获取优惠券详情")
+    public Result<Coupon> getCouponDetail(@PathVariable("couponId") Long couponId) {
+        Coupon coupon = couponService.getById(couponId);
+        if (coupon == null) {
+            return Result.error(404, "优惠券不存在");
+        }
+        return Result.success(coupon);
+    }
+
+    /**
+     * 获取优惠券统计数据
+     */
+    @GetMapping("/user/coupons/stats")
+    @Operation(summary = "获取用户优惠券统计数据")
+    public Result<Map<String, Object>> getCouponStats() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        Map<String, Object> stats = couponService.getUserCouponStats(user.getUserId());
+        return Result.success(stats);
     }
 }

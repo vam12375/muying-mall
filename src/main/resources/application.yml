@@ -77,11 +77,14 @@ spring:
         concurrency: 5
         max-concurrency: 10
         prefetch: 1
+        # 限制连接重试，防止日志刷屏
+        auto-startup: false  # 禁用自动启动监听器，需要手动启动
+        missing-queues-fatal: false  # 队列不存在时不抛出致命异常
         retry:
           enabled: true
-          initial-interval: 1000
-          max-attempts: 3
-          max-interval: 10000
+          initial-interval: 5000  # 增加初始重试间隔到5秒
+          max-attempts: 3  # 最多重试3次
+          max-interval: 30000  # 最大间隔30秒
           multiplier: 2
       
   # Elasticsearch配置
@@ -98,7 +101,7 @@ management:
     elasticsearch:
       enabled: false # 禁用Elasticsearch健康检查，避免启动失败
     rabbitmq:
-      enabled: true # 启用RabbitMQ健康检查
+      enabled: false # 禁用RabbitMQ健康检查，避免日志刷屏
   endpoint:
     health:
       show-details: always # 显示详细健康信息
@@ -251,6 +254,9 @@ logging:
     org.springframework.security: DEBUG
     org.springframework.data.redis: info # 添加Redis日志级别配置
     org.springframework.data.elasticsearch: WARN # 降低Elasticsearch相关日志级别
+    org.springframework.amqp: ERROR # 降低RabbitMQ日志级别，减少连接失败日志
+    org.springframework.amqp.rabbit.listener: ERROR # 降低RabbitMQ监听器日志级别
+    org.springframework.amqp.rabbit.connection: ERROR # 降低RabbitMQ连接日志级别
 
 # 前端应用地址 (用于支付回调重定向)
 frontend:

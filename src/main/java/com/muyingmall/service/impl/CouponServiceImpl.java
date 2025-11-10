@@ -132,14 +132,16 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
             throw new BusinessException("优惠券已被领完");
         }
 
-        // 检查用户是否已领取过该优惠券
-        LambdaQueryWrapper<UserCoupon> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(UserCoupon::getUserId, userId)
-                .eq(UserCoupon::getCouponId, couponId);
+        // 检查用户是否已领取过该优惠券（如果有限制）
+        if (coupon.getUserLimit() != null && coupon.getUserLimit() > 0) {
+            LambdaQueryWrapper<UserCoupon> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(UserCoupon::getUserId, userId)
+                    .eq(UserCoupon::getCouponId, couponId);
 
-        long count = userCouponMapper.selectCount(queryWrapper);
-        if (count >= coupon.getUserLimit()) {
-            throw new BusinessException("您已领取过该优惠券");
+            long count = userCouponMapper.selectCount(queryWrapper);
+            if (count >= coupon.getUserLimit()) {
+                throw new BusinessException("您已领取过该优惠券");
+            }
         }
 
         // 创建用户优惠券记录
@@ -356,6 +358,80 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         stats.put("receivedCount", receivedCount);
         stats.put("usedCoupons", usedCoupons);
         stats.put("expiredCoupons", expiredCoupons);
+
+        return stats;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean receiveCouponByCode(Integer userId, String code) {
+        // 根据优惠码查询优惠券
+        LambdaQueryWrapper<Coupon> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Coupon::getStatus, "ACTIVE")
+                .gt(Coupon::getEndTime, LocalDateTime.now());
+
+        List<Coupon> coupons = list(queryWrapper);
+        
+        // 查找匹配的优惠券（这里简化处理，实际应该有专门的code字段）
+        Coupon matchedCoupon = coupons.stream()
+                .filter(c -> code.equalsIgnoreCase(c.getName()) || 
+                            (c.getId().toString().equals(code)))
+                .findFirst()
+                .orElse(null);
+
+        if (matchedCoupon == null) {
+            throw new BusinessException("优惠码无效");
+        }
+
+        // 调用领取优惠券方法
+        return receiveCoupon(userId, matchedCoupon.getId());
+    }
+
+    @Override
+    public Map<String, Object> getUserCouponStats(Integer userId) {
+        Map<String, Object> stats = new HashMap<>();
+
+        // 查询可领取的优惠券数量
+        LambdaQueryWrapper<Coupon> availableQuery = new LambdaQueryWrapper<>();
+        availableQuery.eq(Coupon::getStatus, "ACTIVE")
+                .gt(Coupon::getEndTime, LocalDateTime.now());
+        long availableCount = count(availableQuery);
+
+        // 查询用户的优惠券数量
+        LambdaQueryWrapper<UserCoupon> mineQuery = new LambdaQueryWrapper<>();
+        mineQuery.eq(UserCoupon::getUserId, userId)
+                .eq(UserCoupon::getStatus, "UNUSED")
+                .gt(UserCoupon::getExpireTime, LocalDateTime.now());
+        long mineCount = userCouponMapper.selectCount(mineQuery);
+
+        // 查询已使用的优惠券数量
+        LambdaQueryWrapper<UserCoupon> usedQuery = new LambdaQueryWrapper<>();
+        usedQuery.eq(UserCoupon::getUserId, userId)
+                .eq(UserCoupon::getStatus, "USED");
+        long usedCount = userCouponMapper.selectCount(usedQuery);
+
+        // 查询已过期的优惠券数量
+        LambdaQueryWrapper<UserCoupon> expiredQuery = new LambdaQueryWrapper<>();
+        expiredQuery.eq(UserCoupon::getUserId, userId)
+                .eq(UserCoupon::getStatus, "UNUSED")
+                .le(UserCoupon::getExpireTime, LocalDateTime.now());
+        long expiredCount = userCouponMapper.selectCount(expiredQuery);
+
+        // 计算累计节省金额（简化计算）
+        BigDecimal totalSavings = BigDecimal.ZERO;
+        List<UserCoupon> usedCoupons = userCouponMapper.selectList(usedQuery);
+        for (UserCoupon uc : usedCoupons) {
+            Coupon coupon = getById(uc.getCouponId());
+            if (coupon != null && "FIXED".equals(coupon.getType())) {
+                totalSavings = totalSavings.add(coupon.getValue());
+            }
+        }
+
+        stats.put("availableCount", availableCount);
+        stats.put("mineCount", mineCount);
+        stats.put("usedCount", usedCount);
+        stats.put("expiredCount", expiredCount);
+        stats.put("totalSavings", "¥" + totalSavings.toString());
 
         return stats;
     }
