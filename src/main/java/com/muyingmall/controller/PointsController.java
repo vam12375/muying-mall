@@ -190,6 +190,74 @@ public class PointsController {
     }
 
     /**
+     * 获取用户兑换记录
+     */
+    @GetMapping("/exchanges")
+    @Operation(summary = "获取用户兑换记录")
+    public Result<Page<Map<String, Object>>> getUserExchanges(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) Integer status) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        Page<Map<String, Object>> exchangesPage = pointsExchangeService
+            .getUserExchangesWithProduct(user.getUserId(), page, pageSize, status);
+        return Result.success(exchangesPage);
+    }
+
+    /**
+     * 获取兑换详情
+     */
+    @GetMapping("/exchanges/{id}")
+    @Operation(summary = "获取兑换详情")
+    public Result<Map<String, Object>> getExchangeDetail(@PathVariable Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        Map<String, Object> detail = pointsExchangeService.getExchangeDetailWithInfo(id);
+        if (detail == null) {
+            return Result.error("兑换记录不存在");
+        }
+        
+        return Result.success(detail);
+    }
+
+    /**
+     * 获取用户兑换统计
+     */
+    @GetMapping("/exchanges/stats")
+    @Operation(summary = "获取用户兑换统计")
+    public Result<Map<String, Object>> getUserExchangeStats() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        Map<String, Object> stats = pointsExchangeService.getUserExchangeStats(user.getUserId());
+        return Result.success(stats);
+    }
+
+    /**
      * 获取签到日历
      */
     @GetMapping("/sign-in-calendar")
@@ -208,5 +276,83 @@ public class PointsController {
 
         Map<String, Object> calendar = pointsService.getSignInCalendar(user.getUserId(), month);
         return Result.success(calendar);
+    }
+
+    /**
+     * 获取用户兑换记录（带商品信息）
+     */
+    @GetMapping("/user-exchanges")
+    @Operation(summary = "获取用户兑换记录（带商品信息）")
+    public Result<Page<Map<String, Object>>> getUserExchangesWithProduct(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) Integer status) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        Page<Map<String, Object>> exchangesPage = pointsExchangeService
+            .getUserExchangesWithProduct(user.getUserId(), page, pageSize, status);
+        return Result.success(exchangesPage);
+    }
+
+    /**
+     * 取消积分兑换
+     */
+    @PostMapping("/exchanges/{id}/cancel")
+    @Operation(summary = "取消积分兑换")
+    public Result<Void> cancelExchange(@PathVariable Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        try {
+            pointsExchangeService.cancelExchange(id, user.getUserId());
+            return Result.success(null, "取消兑换成功，积分已退回");
+        } catch (Exception e) {
+            return Result.error("取消兑换失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 确认收货
+     */
+    @PostMapping("/exchanges/{id}/confirm")
+    @Operation(summary = "确认收货")
+    public Result<Void> confirmReceive(@PathVariable Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        try {
+            pointsExchangeService.confirmReceive(id, user.getUserId());
+            return Result.success(null, "确认收货成功");
+        } catch (Exception e) {
+            return Result.error("确认收货失败：" + e.getMessage());
+        }
     }
 }

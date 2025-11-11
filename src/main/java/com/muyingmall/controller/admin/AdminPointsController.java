@@ -243,6 +243,39 @@ public class AdminPointsController {
     }
 
     /**
+     * 积分兑换发货
+     */
+    @PostMapping("/exchange/{id}/ship")
+    @Operation(summary = "积分兑换发货")
+    public Result<Void> shipExchange(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> shipData) {
+
+        String logisticsCompany = (String) shipData.get("logisticsCompany");
+        String trackingNumber = (String) shipData.get("trackingNumber");
+        String shipRemark = (String) shipData.get("shipRemark");
+
+        boolean success = pointsService.shipExchange(id, logisticsCompany, trackingNumber, shipRemark);
+        if (!success) {
+            return Result.error("发货失败");
+        }
+        return Result.success(null, "发货成功");
+    }
+
+    /**
+     * 获取积分兑换详情
+     */
+    @GetMapping("/exchange/{id}")
+    @Operation(summary = "获取积分兑换详情")
+    public Result<PointsExchange> getExchangeDetail(@PathVariable Long id) {
+        PointsExchange exchange = pointsService.getExchangeById(id);
+        if (exchange == null) {
+            return Result.error(404, "兑换记录不存在");
+        }
+        return Result.success(exchange);
+    }
+
+    /**
      * 获取积分统计数据
      */
     @GetMapping("/stats")

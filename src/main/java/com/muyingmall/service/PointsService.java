@@ -201,6 +201,25 @@ public interface PointsService extends IService<UserPoints> {
     boolean updateExchangeStatus(Long id, String status);
 
     /**
+     * 积分兑换发货
+     *
+     * @param id                兑换记录ID
+     * @param logisticsCompany  物流公司
+     * @param trackingNumber    物流单号
+     * @param shipRemark        发货备注
+     * @return 是否成功
+     */
+    boolean shipExchange(Long id, String logisticsCompany, String trackingNumber, String shipRemark);
+
+    /**
+     * 获取积分兑换详情
+     *
+     * @param id 兑换记录ID
+     * @return 兑换记录
+     */
+    PointsExchange getExchangeById(Long id);
+
+    /**
      * 获取积分统计数据
      *
      * @param startDate 开始日期，可为空

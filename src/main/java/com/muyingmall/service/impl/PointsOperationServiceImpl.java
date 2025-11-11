@@ -126,7 +126,13 @@ public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMa
         }
 
         int currentActualPoints = userPoints.getPoints() == null ? 0 : userPoints.getPoints();
-        userPoints.setPoints(currentActualPoints + points);
+        int newPoints = currentActualPoints + points;
+        userPoints.setPoints(newPoints);
+        
+        // 步骤3: 根据新积分更新会员等级
+        String oldLevel = userPoints.getLevel();
+        String newLevel = calculateMemberLevel(newPoints);
+        userPoints.setLevel(newLevel);
         userPoints.setUpdateTime(LocalDateTime.now());
 
         boolean userPointsUpdated;
@@ -147,8 +153,14 @@ public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMa
         // 记录积分操作日志
         recordOperation(userId, "增加积分", points, userPoints.getPoints(), description, null);
 
+        // 如果等级发生变化，记录日志
+        if (!oldLevel.equals(newLevel)) {
+            log.info("会员等级升级 - 用户ID: {} 从 {} 升级到 {}，当前积分: {}", 
+                    userId, oldLevel, newLevel, newPoints);
+        }
+
         log.info("增加积分 - 成功为用户ID: {} 添加 {} 积分。来源: {}。user_points表中的新总积分: {}",
-                points, userId, source, userPoints.getPoints());
+                userId, points, source, userPoints.getPoints());
         return true;
     }
 
@@ -174,7 +186,13 @@ public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMa
             throw new BusinessException("积分不足");
         }
 
-        userPoints.setPoints(currentActualPoints - points);
+        int newPoints = currentActualPoints - points;
+        userPoints.setPoints(newPoints);
+        
+        // 步骤2: 根据新积分更新会员等级
+        String oldLevel = userPoints.getLevel();
+        String newLevel = calculateMemberLevel(newPoints);
+        userPoints.setLevel(newLevel);
         userPoints.setUpdateTime(LocalDateTime.now());
 
         boolean userPointsUpdated;
@@ -192,7 +210,7 @@ public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMa
             throw new BusinessException("更新用户总积分失败（扣除）");
         }
 
-        // 步骤2: 记录到积分历史表
+        // 步骤3: 记录到积分历史表
         PointsHistory history = new PointsHistory();
         history.setUserId(userId);
         history.setPoints(-points); // 记录为负值表示扣减
@@ -211,9 +229,15 @@ public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMa
         // 记录积分操作日志
         recordOperation(userId, "扣减积分", -points, userPoints.getPoints(), description, null);
 
+        // 如果等级发生变化，记录日志
+        if (!oldLevel.equals(newLevel)) {
+            log.info("会员等级变更 - 用户ID: {} 从 {} 变更到 {}，当前积分: {}", 
+                    userId, oldLevel, newLevel, newPoints);
+        }
+
         log.info(
                 "扣减积分 - 成功为用户ID: {} 扣除 {} 积分。来源: {}。user_points表中的新总积分: {}",
-                points, userId, source, userPoints.getPoints());
+                userId, points, source, userPoints.getPoints());
         return true;
     }
 
@@ -270,5 +294,31 @@ public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMa
         queryWrapper.orderByDesc(PointsOperationLog::getCreateTime);
 
         return page(pageParam, queryWrapper);
+    }
+
+    /**
+     * 根据积分计算会员等级
+     * 根据 member_level 表的规则：
+     * - 普通会员：0+ 积分
+     * - 银牌会员：3,000+ 积分
+     * - 金牌会员：10,000+ 积分
+     * - 钻石会员：30,000+ 积分
+     * - 至尊会员：100,000+ 积分
+     * 
+     * @param points 积分数量
+     * @return 会员等级
+     */
+    private String calculateMemberLevel(int points) {
+        if (points >= 100000) {
+            return "至尊会员";
+        } else if (points >= 30000) {
+            return "钻石会员";
+        } else if (points >= 10000) {
+            return "金牌会员";
+        } else if (points >= 3000) {
+            return "银牌会员";
+        } else {
+            return "普通会员";
+        }
     }
 }

@@ -59,19 +59,34 @@ public class PointsExchange implements Serializable {
     private String phone;
 
     /**
-     * 状态(0:待发货,1:已发货,2:已完成,3:已取消)
+     * 状态(pending:待处理,processing:处理中,shipped:已发货,completed:已完成,cancelled:已取消)
      */
-    private Integer status;
+    private String status;
 
     /**
      * 物流单号
      */
-    private String trackingNo;
+    private String trackingNumber;
 
     /**
      * 物流公司
      */
-    private String trackingCompany;
+    private String logisticsCompany;
+
+    /**
+     * 发货时间
+     */
+    private LocalDateTime shipTime;
+
+    /**
+     * 联系人
+     */
+    private String contact;
+
+    /**
+     * 收货地址
+     */
+    private String address;
 
     /**
      * 备注

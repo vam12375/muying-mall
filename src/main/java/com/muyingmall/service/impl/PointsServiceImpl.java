@@ -5,22 +5,27 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.common.exception.BusinessException;
-import com.muyingmall.entity.*;
+import com.muyingmall.common.CacheConstants;
+import com.muyingmall.entity.Order;
+import com.muyingmall.entity.PointsExchange;
+import com.muyingmall.entity.PointsHistory;
 import com.muyingmall.entity.PointsProduct;
+import com.muyingmall.entity.PointsRule;
+import com.muyingmall.entity.User;
+import com.muyingmall.entity.UserPoints;
+import com.muyingmall.enums.PointsOperationType;
+import com.muyingmall.event.CheckinEvent;
+import com.muyingmall.mapper.OrderMapper;
+import com.muyingmall.mapper.PointsExchangeMapper;
 import com.muyingmall.mapper.PointsHistoryMapper;
 import com.muyingmall.mapper.PointsRuleMapper;
+import com.muyingmall.mapper.UserPointsMapper;
 import com.muyingmall.service.MemberLevelService;
 import com.muyingmall.service.PointsExchangeService;
 import com.muyingmall.service.PointsOperationService;
 import com.muyingmall.service.PointsProductService;
 import com.muyingmall.service.PointsService;
-import com.muyingmall.enums.PointsOperationType;
-import com.muyingmall.entity.UserPoints;
-import com.muyingmall.mapper.UserPointsMapper;
-import com.muyingmall.mapper.OrderMapper;
 import com.muyingmall.service.UserService;
-import com.muyingmall.event.CheckinEvent;
-import com.muyingmall.common.CacheConstants;
 import com.muyingmall.util.RedisUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -57,6 +62,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
     private final UserService userService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final RedisUtil redisUtil;
+    private final PointsExchangeMapper pointsExchangeMapper;
 
     @Override
     public Integer getUserPoints(Integer userId) {
@@ -318,22 +324,22 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             // 获取历史最长连续签到天数
             int historyMaxContinuousDays = getHistoryMaxContinuousDays(userId, continuousDays);
 
-            // 获取用户总积分
+            // 获取用户总积分和会员等级（直接从user_points表读取）
             Integer totalPoints = 0;
-            try {
-                totalPoints = getUserPoints(userId);
-            } catch (Exception e) {
-                log.error("获取用户总积分失败: {}", e.getMessage());
-                // 继续执行，使用默认值0
-            }
-
-            // 获取会员等级
             String userLevel = "普通会员";
             try {
-                userLevel = memberLevelService.getLevelNameByPoints(totalPoints);
+                UserPoints userPoints = userPointsMapper.selectOne(
+                    new LambdaQueryWrapper<UserPoints>().eq(UserPoints::getUserId, userId.longValue())
+                );
+                if (userPoints != null) {
+                    totalPoints = userPoints.getPoints() != null ? userPoints.getPoints() : 0;
+                    userLevel = userPoints.getLevel() != null ? userPoints.getLevel() : "普通会员";
+                } else {
+                    log.warn("用户ID: {} 的积分记录不存在", userId);
+                }
             } catch (Exception e) {
-                log.error("获取会员等级失败: {}", e.getMessage());
-                // 继续使用默认值
+                log.error("获取用户积分和等级失败: {}", e.getMessage());
+                // 继续执行，使用默认值
             }
 
             // 获取累计获得的积分和已使用的积分
@@ -550,7 +556,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
         exchange.setPhone(phone);
         exchange.setOrderNo(generateExchangeOrderNo());
         exchange.setPoints(totalPoints);
-        exchange.setStatus(0); // 待发货
+        exchange.setStatus(String.valueOf(0)); // 待发货
         exchange.setCreateTime(LocalDateTime.now());
         exchange.setUpdateTime(LocalDateTime.now());
 
@@ -1051,12 +1057,6 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
         return result;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean updateExchangeStatus(Long id, String status) {
-        // 使用模拟数据，实际项目中应更新数据库
-        return true;
-    }
 
     @Override
     public Map<String, Object> getPointsStats(LocalDate startDate, LocalDate endDate) {
@@ -1107,5 +1107,67 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
         }
 
         return page;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateExchangeStatus(Long id, String status) {
+        if (id == null || status == null) {
+            log.warn("更新兑换状态 - 无效参数: id={}, status={}", id, status);
+            return false;
+        }
+
+        PointsExchange exchange = pointsExchangeMapper.selectById(id);
+        if (exchange == null) {
+            log.warn("更新兑换状态 - 兑换记录不存在: id={}", id);
+            return false;
+        }
+
+        // 如果是取消状态，需要退还积分
+        if ("cancelled".equals(status) && !"cancelled".equals(exchange.getStatus())) {
+            Integer userId = exchange.getUserId();
+            Integer points = exchange.getPoints() * exchange.getQuantity();
+            addPoints(userId, points, "exchange_cancel", id.toString(), "取消兑换退还积分");
+        }
+
+        exchange.setStatus(status);
+        exchange.setUpdateTime(LocalDateTime.now());
+        return pointsExchangeMapper.updateById(exchange) > 0;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean shipExchange(Long id, String logisticsCompany, String trackingNumber, String shipRemark) {
+        if (id == null || logisticsCompany == null || trackingNumber == null) {
+            log.warn("发货 - 无效参数: id={}, logisticsCompany={}, trackingNumber={}", 
+                id, logisticsCompany, trackingNumber);
+            return false;
+        }
+
+        PointsExchange exchange = pointsExchangeMapper.selectById(id);
+        if (exchange == null) {
+            log.warn("发货 - 兑换记录不存在: id={}", id);
+            return false;
+        }
+
+        // 更新物流信息和状态
+        exchange.setLogisticsCompany(logisticsCompany);
+        exchange.setTrackingNumber(trackingNumber);
+        if (shipRemark != null) {
+            exchange.setRemark(shipRemark);
+        }
+        exchange.setStatus("shipped");
+        exchange.setShipTime(LocalDateTime.now());
+        exchange.setUpdateTime(LocalDateTime.now());
+
+        return pointsExchangeMapper.updateById(exchange) > 0;
+    }
+
+    @Override
+    public PointsExchange getExchangeById(Long id) {
+        if (id == null) {
+            return null;
+        }
+        return pointsExchangeMapper.selectById(id);
     }
 }

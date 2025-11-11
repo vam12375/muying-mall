@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * 积分兑换服务实现类
@@ -29,6 +29,12 @@ public class PointsExchangeServiceImpl extends ServiceImpl<PointsExchangeMapper,
 
     private final PointsProductService pointsProductService;
     private final PointsOperationService pointsOperationService;
+
+    // 状态常量定义
+    private static final String STATUS_PENDING = "pending";     // 待发货/待处理
+    private static final String STATUS_SHIPPED = "shipped";     // 已发货
+    private static final String STATUS_COMPLETED = "completed"; // 已完成
+    private static final String STATUS_CANCELLED = "cancelled"; // 已取消
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -59,7 +65,7 @@ public class PointsExchangeServiceImpl extends ServiceImpl<PointsExchangeMapper,
         // 设置订单号
         exchange.setOrderNo(generateOrderNo());
         exchange.setPoints(totalPoints);
-        exchange.setStatus(0); // 待发货
+        exchange.setStatus(STATUS_PENDING); // 待发货
         exchange.setCreateTime(LocalDateTime.now());
         exchange.setUpdateTime(LocalDateTime.now());
 
@@ -96,8 +102,71 @@ public class PointsExchangeServiceImpl extends ServiceImpl<PointsExchangeMapper,
     }
 
     @Override
+    public Page<Map<String, Object>> getUserExchangesWithProduct(Integer userId, int page, int size, Integer status) {
+        Page<PointsExchange> pageParam = new Page<>(page, size);
+
+        LambdaQueryWrapper<PointsExchange> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PointsExchange::getUserId, userId);
+
+        if (status != null) {
+            queryWrapper.eq(PointsExchange::getStatus, status);
+        }
+
+        queryWrapper.orderByDesc(PointsExchange::getCreateTime);
+
+        // 查询兑换记录
+        Page<PointsExchange> exchangePage = page(pageParam, queryWrapper);
+
+        // 转换为包含商品信息的Map
+        List<Map<String, Object>> records = new ArrayList<>();
+        for (PointsExchange exchange : exchangePage.getRecords()) {
+            Map<String, Object> record = new HashMap<>();
+            record.put("id", exchange.getId());
+            record.put("orderNo", exchange.getOrderNo());
+            record.put("userId", exchange.getUserId());
+            record.put("productId", exchange.getProductId());
+            record.put("quantity", exchange.getQuantity());
+            record.put("points", exchange.getPoints());
+            record.put("addressId", exchange.getAddressId());
+            record.put("phone", exchange.getPhone());
+            record.put("status", exchange.getStatus());
+            record.put("trackingNo", exchange.getTrackingNumber());
+            record.put("trackingCompany", exchange.getLogisticsCompany());
+            record.put("remark", exchange.getRemark());
+            record.put("createTime", exchange.getCreateTime());
+            record.put("updateTime", exchange.getUpdateTime());
+
+            // 获取商品信息
+            PointsProduct product = pointsProductService.getById(exchange.getProductId());
+            if (product != null) {
+                record.put("productName", product.getName());
+                record.put("productImage", product.getImage());
+                record.put("productCategory", product.getCategory());
+                record.put("productDescription", product.getDescription());
+            }
+
+            records.add(record);
+        }
+
+        Page<Map<String, Object>> resultPage = new Page<>(page, size, exchangePage.getTotal());
+        resultPage.setRecords(records);
+
+        return resultPage;
+    }
+
+    @Override
     public PointsExchange getExchangeDetail(Long id) {
         return getById(id);
+    }
+
+    @Override
+    public Map<String, Object> getExchangeDetailWithInfo(Long id) {
+        return baseMapper.selectExchangeDetailById(id);
+    }
+
+    @Override
+    public Map<String, Object> getUserExchangeStats(Integer userId) {
+        return baseMapper.selectUserExchangeStats(userId);
     }
 
     @Override
@@ -108,13 +177,13 @@ public class PointsExchangeServiceImpl extends ServiceImpl<PointsExchangeMapper,
             throw new BusinessException("兑换记录不存在");
         }
 
-        if (exchange.getStatus() != 0) {
+        if (!STATUS_PENDING.equals(exchange.getStatus())) {
             throw new BusinessException("只有待发货状态才能发货");
         }
 
-        exchange.setStatus(1); // 已发货
-        exchange.setTrackingNo(trackingNo);
-        exchange.setTrackingCompany(trackingCompany);
+        exchange.setStatus(STATUS_SHIPPED); // 已发货
+        exchange.setTrackingNumber(trackingNo);
+        exchange.setLogisticsCompany(trackingCompany);
         exchange.setUpdateTime(LocalDateTime.now());
 
         return updateById(exchange);
@@ -128,11 +197,11 @@ public class PointsExchangeServiceImpl extends ServiceImpl<PointsExchangeMapper,
             throw new BusinessException("兑换记录不存在");
         }
 
-        if (exchange.getStatus() != 1) {
+        if (!STATUS_SHIPPED.equals(exchange.getStatus())) {
             throw new BusinessException("只有已发货状态才能完成");
         }
 
-        exchange.setStatus(2); // 已完成
+        exchange.setStatus(STATUS_COMPLETED); // 已完成
         exchange.setUpdateTime(LocalDateTime.now());
 
         return updateById(exchange);
@@ -146,11 +215,11 @@ public class PointsExchangeServiceImpl extends ServiceImpl<PointsExchangeMapper,
             throw new BusinessException("兑换记录不存在");
         }
 
-        if (exchange.getStatus() != 0) {
+        if (!STATUS_PENDING.equals(exchange.getStatus())) {
             throw new BusinessException("只有待发货状态才能取消");
         }
 
-        exchange.setStatus(3); // 已取消
+        exchange.setStatus(STATUS_CANCELLED); // 已取消
         exchange.setRemark(reason);
         exchange.setUpdateTime(LocalDateTime.now());
 
@@ -169,6 +238,70 @@ public class PointsExchangeServiceImpl extends ServiceImpl<PointsExchangeMapper,
         }
 
         return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean cancelExchange(Long id, Integer userId) {
+        PointsExchange exchange = getById(id);
+        if (exchange == null) {
+            throw new BusinessException("兑换记录不存在");
+        }
+
+        // 验证是否是用户自己的兑换记录
+        if (!exchange.getUserId().equals(userId)) {
+            throw new BusinessException("无权操作此兑换记录");
+        }
+
+        // 只有待发货状态才能取消
+        if (!STATUS_PENDING.equals(exchange.getStatus())) {
+            throw new BusinessException("只有待发货状态才能取消");
+        }
+
+        exchange.setStatus(STATUS_CANCELLED); // 已取消
+        exchange.setRemark("用户取消兑换");
+        exchange.setUpdateTime(LocalDateTime.now());
+
+        boolean result = updateById(exchange);
+
+        if (result) {
+            // 返还积分
+            int totalPoints = exchange.getPoints() * exchange.getQuantity();
+            pointsOperationService.addPoints(exchange.getUserId(), totalPoints, "exchange_cancel",
+                    exchange.getOrderNo(), "兑换取消返还积分");
+
+            // 恢复库存
+            pointsProductService.update(
+                    new LambdaUpdateWrapper<PointsProduct>()
+                            .eq(PointsProduct::getId, exchange.getProductId())
+                            .setSql("stock = stock + " + exchange.getQuantity()));
+        }
+
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean confirmReceive(Long id, Integer userId) {
+        PointsExchange exchange = getById(id);
+        if (exchange == null) {
+            throw new BusinessException("兑换记录不存在");
+        }
+
+        // 验证是否是用户自己的兑换记录
+        if (!exchange.getUserId().equals(userId)) {
+            throw new BusinessException("无权操作此兑换记录");
+        }
+
+        // 只有已发货状态才能确认收货
+        if (!STATUS_SHIPPED.equals(exchange.getStatus())) {
+            throw new BusinessException("只有已发货状态才能确认收货");
+        }
+
+        exchange.setStatus(STATUS_COMPLETED); // 已完成
+        exchange.setUpdateTime(LocalDateTime.now());
+
+        return updateById(exchange);
     }
 
     /**
