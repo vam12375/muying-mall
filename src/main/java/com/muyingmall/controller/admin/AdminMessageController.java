@@ -74,6 +74,10 @@ public class AdminMessageController {
                     .map(message -> {
                         UserMessageDTO dto = new UserMessageDTO();
                         BeanUtils.copyProperties(message, dto);
+                        
+                        // 设置ID字段（确保前端可以使用）
+                        dto.setMessageId(message.getMessageId());
+                        // 注意：由于messageId是String类型，这里不设置Long类型的id字段
 
                         // 添加消息类型描述
                         MessageType messageType = MessageType.getByCode(message.getType());
@@ -87,6 +91,10 @@ public class AdminMessageController {
                             dto.setUsername(user.getUsername());
                             dto.setAvatar(user.getAvatar());
                         }
+                        
+                        // 设置接收者信息
+                        dto.setRecipientType("user");
+                        dto.setRecipient(String.valueOf(message.getUserId()));
 
                         return dto;
                     })
@@ -98,6 +106,58 @@ public class AdminMessageController {
         } catch (Exception e) {
             log.error("获取消息列表失败: ", e);
             return CommonResult.failed("获取消息列表失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取消息详情
+     *
+     * @param id 消息ID
+     * @return 消息详情
+     */
+    @GetMapping("/{id}")
+    @Operation(summary = "获取消息详情", description = "根据ID获取消息详情")
+    public CommonResult<UserMessageDTO> getMessageDetail(
+            @Parameter(description = "消息ID") @PathVariable Long id) {
+        try {
+            UserMessage message = userMessageService.getById(id);
+            if (message == null) {
+                return CommonResult.failed("消息不存在");
+            }
+
+            UserMessageDTO dto = new UserMessageDTO();
+            BeanUtils.copyProperties(message, dto);
+            
+            // 设置ID字段（确保前端可以使用）
+            dto.setMessageId(message.getMessageId());
+            // 注意：由于messageId是String类型，这里不设置Long类型的id字段
+
+            // 添加消息类型描述
+            MessageType messageType = MessageType.getByCode(message.getType());
+            if (messageType != null) {
+                dto.setTypeDesc(messageType.getDesc());
+            }
+
+            // 添加用户信息
+            User user = userService.getById(message.getUserId());
+            if (user != null) {
+                dto.setUsername(user.getUsername());
+                dto.setAvatar(user.getAvatar());
+            }
+            
+            // 设置接收者信息（默认为指定用户）
+            dto.setRecipientType("user");
+            dto.setRecipient(String.valueOf(message.getUserId()));
+            
+            // 设置发送时间（如果消息已读，使用阅读时间作为发送时间）
+            if (message.getIsRead() == 1 && message.getReadTime() != null) {
+                dto.setSendTime(message.getReadTime());
+            }
+
+            return CommonResult.success(dto);
+        } catch (Exception e) {
+            log.error("获取消息详情失败: ", e);
+            return CommonResult.failed("获取消息详情失败: " + e.getMessage());
         }
     }
 
@@ -128,6 +188,9 @@ public class AdminMessageController {
                     .map(message -> {
                         UserMessageDTO dto = new UserMessageDTO();
                         BeanUtils.copyProperties(message, dto);
+                        
+                        // 设置ID字段（确保前端可以使用）
+                        dto.setMessageId(message.getMessageId());
 
                         // 添加消息类型描述
                         MessageType messageType = MessageType.getByCode(message.getType());
