@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.common.CacheConstants;
+import com.muyingmall.entity.MemberLevel;
 import com.muyingmall.entity.Order;
 import com.muyingmall.entity.PointsExchange;
 import com.muyingmall.entity.PointsHistory;
@@ -1052,9 +1053,69 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
     @Override
     public Page<PointsExchange> adminListPointsExchanges(Integer page, Integer size, Integer userId,
             Long productId, String status, LocalDate startDate, LocalDate endDate) {
-        // 使用模拟数据，实际项目中应查询数据库
-        Page<PointsExchange> result = new Page<>(page, size, 0);
-        return result;
+
+        Page<PointsExchange> pageParam = new Page<>(page, size);
+
+        // 构建查询条件
+        LambdaQueryWrapper<PointsExchange> queryWrapper = new LambdaQueryWrapper<>();
+
+        // 用户ID筛选
+        if (userId != null) {
+            queryWrapper.eq(PointsExchange::getUserId, userId);
+        }
+
+        // 商品ID筛选
+        if (productId != null) {
+            queryWrapper.eq(PointsExchange::getProductId, productId.intValue());
+        }
+
+        // 状态筛选
+        if (status != null && !status.isEmpty()) {
+            queryWrapper.eq(PointsExchange::getStatus, status);
+        }
+
+        // 时间范围筛选
+        if (startDate != null) {
+            LocalDateTime startDateTime = startDate.atStartOfDay();
+            queryWrapper.ge(PointsExchange::getCreateTime, startDateTime);
+        }
+        if (endDate != null) {
+            LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay();
+            queryWrapper.lt(PointsExchange::getCreateTime, endDateTime);
+        }
+
+        // 按创建时间倒序排序
+        queryWrapper.orderByDesc(PointsExchange::getCreateTime);
+
+        // 查询数据
+        Page<PointsExchange> resultPage = pointsExchangeMapper.selectPage(pageParam, queryWrapper);
+
+        // 填充用户和商品信息
+        List<PointsExchange> records = resultPage.getRecords();
+        if (records != null && !records.isEmpty()) {
+            for (PointsExchange exchange : records) {
+                // 获取并设置用户信息
+                if (exchange.getUserId() != null) {
+                    User user = userService.getById(exchange.getUserId().longValue());
+                    if (user != null) {
+                        exchange.setUser(user);
+                        exchange.setUsername(user.getUsername());
+                    }
+                }
+
+                // 获取并设置商品信息
+                if (exchange.getProductId() != null) {
+                    PointsProduct product = pointsProductService.getById(exchange.getProductId().longValue());
+                    if (product != null) {
+                        exchange.setProduct(product);
+                        exchange.setProductName(product.getName());
+                        exchange.setProductImage(product.getImage());
+                    }
+                }
+            }
+        }
+
+        return resultPage;
     }
 
 
@@ -1169,5 +1230,221 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             return null;
         }
         return pointsExchangeMapper.selectById(id);
+    }
+
+    @Override
+    public UserPoints getUserPointsWithStats(Integer userId) {
+        if (userId == null) {
+            log.warn("获取用户积分统计 - 用户ID为空");
+            return null;
+        }
+
+        // 查询用户积分基本信息
+        LambdaQueryWrapper<UserPoints> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(UserPoints::getUserId, userId.longValue());
+        UserPoints userPoints = userPointsMapper.selectOne(wrapper);
+
+        if (userPoints == null) {
+            log.warn("获取用户积分统计 - 用户积分记录不存在: userId={}", userId);
+            return null;
+        }
+
+        // 填充统计数据
+        fillUserPointsStats(userPoints);
+
+        // 关联用户信息
+        User user = userService.getById(userId.longValue());
+        userPoints.setUser(user);
+        
+        // 填充用户名（用于前端直接显示）
+        if (user != null) {
+            userPoints.setUsername(user.getUsername());
+        }
+        
+        // 填充会员等级信息（根据当前积分获取）
+        if (userPoints.getPoints() != null) {
+            MemberLevel memberLevel = memberLevelService.getLevelByPoints(userPoints.getPoints());
+            if (memberLevel != null) {
+                // 设置等级名称
+                userPoints.setLevelName(memberLevel.getLevelName());
+                // 计算等级数字（根据在所有等级中的位置）
+                List<MemberLevel> allLevels = memberLevelService.getAllLevels();
+                int levelNumber = 1;
+                for (int i = 0; i < allLevels.size(); i++) {
+                    if (allLevels.get(i).getId().equals(memberLevel.getId())) {
+                        levelNumber = i + 1;
+                        break;
+                    }
+                }
+                userPoints.setLevel(String.valueOf(levelNumber));
+            }
+        }
+
+        return userPoints;
+    }
+
+    @Override
+    public Page<UserPoints> pageUserPointsWithStats(Page<UserPoints> page, LambdaQueryWrapper<UserPoints> queryWrapper) {
+        // 先调用原有的分页查询方法
+        Page<UserPoints> resultPage = pageWithUser(page, queryWrapper);
+
+        // 为每条记录填充统计数据和会员等级信息
+        List<UserPoints> records = resultPage.getRecords();
+        if (records != null && !records.isEmpty()) {
+            for (UserPoints userPoints : records) {
+                // 填充统计数据
+                fillUserPointsStats(userPoints);
+                
+                // 填充用户名
+                if (userPoints.getUser() != null) {
+                    userPoints.setUsername(userPoints.getUser().getUsername());
+                }
+                
+                // 填充会员等级信息
+                if (userPoints.getPoints() != null) {
+                    MemberLevel memberLevel = memberLevelService.getLevelByPoints(userPoints.getPoints());
+                    if (memberLevel != null) {
+                        userPoints.setLevelName(memberLevel.getLevelName());
+                        // 计算等级数字（根据在所有等级中的位置）
+                        List<MemberLevel> allLevels = memberLevelService.getAllLevels();
+                        int levelNumber = 1;
+                        for (int i = 0; i < allLevels.size(); i++) {
+                            if (allLevels.get(i).getId().equals(memberLevel.getId())) {
+                                levelNumber = i + 1;
+                                break;
+                            }
+                        }
+                        userPoints.setLevel(String.valueOf(levelNumber));
+                    }
+                }
+            }
+        }
+
+        return resultPage;
+    }
+
+    /**
+     * 填充用户积分统计数据的私有方法
+     *
+     * @param userPoints 用户积分对象
+     */
+    private void fillUserPointsStats(UserPoints userPoints) {
+        if (userPoints == null || userPoints.getUserId() == null) {
+            return;
+        }
+
+        Integer userId = userPoints.getUserId().intValue();
+
+        // 统计已获得积分（type='earn'的积分总和）
+        LambdaQueryWrapper<PointsHistory> earnWrapper = new LambdaQueryWrapper<>();
+        earnWrapper.eq(PointsHistory::getUserId, userId)
+                   .eq(PointsHistory::getType, "earn");
+        List<PointsHistory> earnRecords = pointsHistoryMapper.selectList(earnWrapper);
+        Integer totalEarned = earnRecords.stream()
+                .mapToInt(record -> record.getPoints() != null ? record.getPoints() : 0)
+                .sum();
+
+        // 统计已使用积分（type='spend'的积分总和，取绝对值）
+        LambdaQueryWrapper<PointsHistory> spendWrapper = new LambdaQueryWrapper<>();
+        spendWrapper.eq(PointsHistory::getUserId, userId)
+                    .eq(PointsHistory::getType, "spend");
+        List<PointsHistory> spendRecords = pointsHistoryMapper.selectList(spendWrapper);
+        Integer totalUsed = spendRecords.stream()
+                .mapToInt(record -> record.getPoints() != null ? Math.abs(record.getPoints()) : 0)
+                .sum();
+
+        // 设置统计数据
+        userPoints.setTotalEarned(totalEarned);
+        userPoints.setTotalUsed(totalUsed);
+        userPoints.setAvailablePoints(userPoints.getPoints()); // 可用积分等同于当前积分
+        userPoints.setExpiredPoints(0); // 暂未实现过期机制，固定为0
+        userPoints.setExpiringSoonPoints(0); // 暂未实现过期机制，固定为0
+    }
+
+    @Override
+    public Map<String, Object> getExchangeStats(LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> stats = new HashMap<>();
+
+        // 构建基础查询条件
+        LambdaQueryWrapper<PointsExchange> baseWrapper = new LambdaQueryWrapper<>();
+
+        // 时间范围筛选
+        if (startDate != null) {
+            LocalDateTime startDateTime = startDate.atStartOfDay();
+            baseWrapper.ge(PointsExchange::getCreateTime, startDateTime);
+        }
+        if (endDate != null) {
+            LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay();
+            baseWrapper.lt(PointsExchange::getCreateTime, endDateTime);
+        }
+
+        // 查询所有兑换记录
+        List<PointsExchange> allExchanges = pointsExchangeMapper.selectList(baseWrapper);
+
+        // 统计总兑换次数
+        stats.put("totalCount", allExchanges.size());
+
+        // 统计总消耗积分
+        Integer totalPoints = allExchanges.stream()
+                .filter(e -> !"cancelled".equals(e.getStatus()))
+                .mapToInt(e -> (e.getPoints() != null ? e.getPoints() : 0) * (e.getQuantity() != null ? e.getQuantity() : 1))
+                .sum();
+        stats.put("totalPoints", totalPoints);
+
+        // 统计各状态的订单数
+        long pendingCount = allExchanges.stream().filter(e -> "pending".equals(e.getStatus())).count();
+        long processingCount = allExchanges.stream().filter(e -> "processing".equals(e.getStatus())).count();
+        long shippedCount = allExchanges.stream().filter(e -> "shipped".equals(e.getStatus())).count();
+        long completedCount = allExchanges.stream().filter(e -> "completed".equals(e.getStatus())).count();
+        long cancelledCount = allExchanges.stream().filter(e -> "cancelled".equals(e.getStatus())).count();
+
+        stats.put("pendingCount", pendingCount);
+        stats.put("processingCount", processingCount);
+        stats.put("shippedCount", shippedCount);
+        stats.put("completedCount", completedCount);
+        stats.put("cancelledCount", cancelledCount);
+
+        // 统计今日兑换数据
+        LocalDate today = LocalDate.now();
+        long todayCount = allExchanges.stream()
+                .filter(e -> e.getCreateTime() != null && e.getCreateTime().toLocalDate().equals(today))
+                .count();
+        stats.put("todayCount", todayCount);
+
+        Integer todayPoints = allExchanges.stream()
+                .filter(e -> e.getCreateTime() != null && e.getCreateTime().toLocalDate().equals(today))
+                .filter(e -> !"cancelled".equals(e.getStatus()))
+                .mapToInt(e -> (e.getPoints() != null ? e.getPoints() : 0) * (e.getQuantity() != null ? e.getQuantity() : 1))
+                .sum();
+        stats.put("todayPoints", todayPoints);
+
+        // 统计热门兑换商品 (Top 5)
+        Map<Integer, Long> productCountMap = allExchanges.stream()
+                .filter(e -> e.getProductId() != null && !"cancelled".equals(e.getStatus()))
+                .collect(Collectors.groupingBy(PointsExchange::getProductId, Collectors.counting()));
+
+        List<Map<String, Object>> topProducts = productCountMap.entrySet().stream()
+                .sorted(Map.Entry.<Integer, Long>comparingByValue().reversed())
+                .limit(5)
+                .map(entry -> {
+                    Map<String, Object> productInfo = new HashMap<>();
+                    Integer productId = entry.getKey();
+                    Long count = entry.getValue();
+
+                    PointsProduct product = pointsProductService.getById(productId.longValue());
+                    if (product != null) {
+                        productInfo.put("productId", productId);
+                        productInfo.put("productName", product.getName());
+                        productInfo.put("count", count);
+                        productInfo.put("points", product.getPoints());
+                    }
+                    return productInfo;
+                })
+                .filter(map -> !map.isEmpty())
+                .collect(Collectors.toList());
+
+        stats.put("topProducts", topProducts);
+
+        return stats;
     }
 }
