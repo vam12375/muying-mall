@@ -236,4 +236,32 @@ public interface PointsService extends IService<UserPoints> {
      * @return 分页结果
      */
     Page<UserPoints> pageWithUser(Page<UserPoints> page, LambdaQueryWrapper<UserPoints> queryWrapper);
+
+    /**
+     * 获取用户积分及统计信息
+     * 包含：总积分、可用积分、已获得积分、已使用积分、已过期积分、即将过期积分
+     *
+     * @param userId 用户ID
+     * @return 带统计信息的用户积分对象
+     */
+    UserPoints getUserPointsWithStats(Integer userId);
+
+    /**
+     * 分页查询用户积分列表并填充统计信息
+     * 包含：总积分、可用积分、已获得积分、已使用积分、已过期积分、即将过期积分
+     *
+     * @param page         分页参数
+     * @param queryWrapper 查询条件
+     * @return 带统计信息的分页结果
+     */
+    Page<UserPoints> pageUserPointsWithStats(Page<UserPoints> page, LambdaQueryWrapper<UserPoints> queryWrapper);
+
+    /**
+     * 获取积分兑换统计数据
+     *
+     * @param startDate 开始日期，可为空
+     * @param endDate   结束日期，可为空
+     * @return 统计数据Map，包含总兑换次数、总消耗积分、各状态订单数、热门商品等
+     */
+    Map<String, Object> getExchangeStats(LocalDate startDate, LocalDate endDate);
 }
