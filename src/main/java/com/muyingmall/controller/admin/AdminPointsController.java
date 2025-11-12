@@ -74,7 +74,8 @@ public class AdminPointsController {
     @GetMapping("/user/{userId}")
     @Operation(summary = "获取用户积分信息")
     public Result<UserPoints> getUserPoints(@PathVariable Integer userId) {
-        UserPoints userPoints = pointsService.getById(userId);
+        // 使用getUserPointsWithStats方法获取完整的用户积分信息，包括用户名、会员等级等
+        UserPoints userPoints = pointsService.getUserPointsWithStats(userId);
         if (userPoints == null) {
             return Result.error(404, "用户积分信息不存在");
         }
@@ -218,12 +219,35 @@ public class AdminPointsController {
             @RequestParam(required = false) Integer userId,
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String orderNo,
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate) {
 
         Page<PointsExchange> exchangePage = pointsService.adminListPointsExchanges(page, size, userId, productId,
                 status, startDate, endDate);
+
+        // 如果提供了订单号，进行额外筛选
+        if (orderNo != null && !orderNo.isEmpty()) {
+            List<PointsExchange> filteredRecords = exchangePage.getRecords().stream()
+                    .filter(e -> e.getOrderNo() != null && e.getOrderNo().contains(orderNo))
+                    .collect(java.util.stream.Collectors.toList());
+            exchangePage.setRecords(filteredRecords);
+        }
+
         return Result.success(exchangePage);
+    }
+
+    /**
+     * 获取积分兑换统计数据
+     */
+    @GetMapping("/exchange/stats")
+    @Operation(summary = "获取积分兑换统计数据")
+    public Result<Map<String, Object>> getExchangeStats(
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate) {
+
+        Map<String, Object> stats = pointsService.getExchangeStats(startDate, endDate);
+        return Result.success(stats);
     }
 
     /**
@@ -310,8 +334,8 @@ public class AdminPointsController {
         // 按创建时间倒序排序
         queryWrapper.orderByDesc(UserPoints::getCreateTime);
 
-        // 使用pageWithUser方法查询并关联用户信息
-        Page<UserPoints> resultPage = pointsService.pageWithUser(userPointsPage, queryWrapper);
+        // 使用pageUserPointsWithStats方法查询并关联用户信息及统计数据
+        Page<UserPoints> resultPage = pointsService.pageUserPointsWithStats(userPointsPage, queryWrapper);
 
         // 用户名称查询需要关联用户表，简化处理，只支持userId过滤
         // 如果有username参数，可以在service层实现复杂查询
