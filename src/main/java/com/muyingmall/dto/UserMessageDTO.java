@@ -17,6 +17,11 @@ public class UserMessageDTO implements Serializable {
     /**
      * 消息ID
      */
+    private Long id;
+    
+    /**
+     * 消息ID（兼容字段）
+     */
     private String messageId;
 
     /**
@@ -80,4 +85,20 @@ public class UserMessageDTO implements Serializable {
      * 用户头像（非必须）
      */
     private String avatar;
+    
+    /**
+     * 接收者类型：all-所有用户，user-指定用户，role-指定角色
+     */
+    private String recipientType;
+    
+    /**
+     * 接收者（用户ID或角色名称）
+     */
+    private String recipient;
+    
+    /**
+     * 发送时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime sendTime;
 }
