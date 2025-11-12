@@ -3,6 +3,7 @@ package com.muyingmall.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -102,4 +103,34 @@ public class PointsExchange implements Serializable {
      * 更新时间
      */
     private LocalDateTime updateTime;
+
+    /**
+     * 用户信息（非数据库字段）
+     */
+    @TableField(exist = false)
+    private User user;
+
+    /**
+     * 商品信息（非数据库字段）
+     */
+    @TableField(exist = false)
+    private PointsProduct product;
+
+    /**
+     * 用户名（非数据库字段，用于前端展示）
+     */
+    @TableField(exist = false)
+    private String username;
+
+    /**
+     * 商品名称（非数据库字段，用于前端展示）
+     */
+    @TableField(exist = false)
+    private String productName;
+
+    /**
+     * 商品图片（非数据库字段，用于前端展示）
+     */
+    @TableField(exist = false)
+    private String productImage;
 }

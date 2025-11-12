@@ -51,4 +51,46 @@ public class UserPoints implements Serializable {
      */
     @TableField(exist = false)
     private User user;
+
+    /**
+     * 已获得积分总数（非数据库字段，用于统计展示）
+     */
+    @TableField(exist = false)
+    private Integer totalEarned;
+
+    /**
+     * 已使用积分总数（非数据库字段，用于统计展示）
+     */
+    @TableField(exist = false)
+    private Integer totalUsed;
+
+    /**
+     * 可用积分（非数据库字段，当前等同于points）
+     */
+    @TableField(exist = false)
+    private Integer availablePoints;
+
+    /**
+     * 已过期积分（非数据库字段，暂未实现过期机制，默认为0）
+     */
+    @TableField(exist = false)
+    private Integer expiredPoints;
+
+    /**
+     * 即将过期积分（非数据库字段，暂未实现过期机制，默认为0）
+     */
+    @TableField(exist = false)
+    private Integer expiringSoonPoints;
+
+    /**
+     * 用户名（非数据库字段，用于前端展示）
+     */
+    @TableField(exist = false)
+    private String username;
+
+    /**
+     * 会员等级名称（非数据库字段，用于前端展示）
+     */
+    @TableField(exist = false)
+    private String levelName;
 } 
