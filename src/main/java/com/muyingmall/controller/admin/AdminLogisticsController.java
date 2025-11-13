@@ -20,7 +20,7 @@ import java.util.Map;
  * 管理后台物流管理控制器
  */
 @RestController
-@RequestMapping("/api/admin/logistics")
+@RequestMapping("/admin/logistics")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "管理后台物流管理", description = "管理后台物流查询、管理相关接口")

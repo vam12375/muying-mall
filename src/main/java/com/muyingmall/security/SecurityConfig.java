@@ -41,6 +41,8 @@ public class SecurityConfig {
                 .requestMatchers("/user/register", "/user/login").permitAll()
                 // 允许访问管理员登录接口
                 .requestMatchers("/admin/login").permitAll()
+                // 临时允许访问管理员退款相关接口
+                .requestMatchers("/admin/refund/**").permitAll()
                 // 允许访问商品、分类和品牌相关接口
                 .requestMatchers("/products/**", "/categories/**", "/brands/**").permitAll()
                 // 允许访问搜索相关接口
@@ -49,30 +51,27 @@ public class SecurityConfig {
                 .requestMatchers("/test/connection", "/test/jwt-demo", "/test/**").permitAll()
                 // 允许访问支付回调接口
                 .requestMatchers("/payment/alipay/notify", "/payment/wechat/notify").permitAll()
-                .requestMatchers("/payment/alipay/return").permitAll() // 支付宝同步回调通常也需放行
-                .requestMatchers("/payment/wallet/manual-complete").permitAll() // 允许访问手动完成充值接口（仅用于测试）
-                .requestMatchers("/payment/wallet/query-recharge").permitAll() // 允许访问查询充值记录接口（仅用于测试）
-                .requestMatchers("/payment/wallet/query-account").permitAll() // 允许访问查询账户接口（仅用于测试）
-                .requestMatchers("/payment/wallet/check-status").permitAll() // 允许访问检查状态接口（仅用于测试）
-                .requestMatchers("/api/payment/wallet/manual-complete").permitAll() // 允许访问手动完成充值接口（仅用于测试）
-                .requestMatchers("/api/payment/wallet/query-recharge").permitAll() // 允许访问查询充值记录接口（仅用于测试）
-                .requestMatchers("/api/payment/wallet/query-account").permitAll() // 允许访问查询账户接口（仅用于测试）
-                .requestMatchers("/api/payment/wallet/check-status").permitAll() // 允许访问检查状态接口（仅用于测试）
-                .requestMatchers("/api/payment/wallet/create-test-recharge").permitAll() // 允许访问创建测试充值记录接口（仅用于测试）
-                .requestMatchers("/api/payment/wallet/**").permitAll() // 允许访问钱包支付相关接口
-                .requestMatchers("/api/payment/alipay/refund/notify").permitAll() // 支付宝退款异步通知
+                .requestMatchers("/payment/alipay/return").permitAll()
+                .requestMatchers("/payment/wallet/manual-complete").permitAll()
+                .requestMatchers("/payment/wallet/query-recharge").permitAll()
+                .requestMatchers("/payment/wallet/query-account").permitAll()
+                .requestMatchers("/payment/wallet/check-status").permitAll()
+                .requestMatchers("/api/payment/wallet/manual-complete").permitAll()
+                .requestMatchers("/api/payment/wallet/query-recharge").permitAll()
+                .requestMatchers("/api/payment/wallet/query-account").permitAll()
+                .requestMatchers("/api/payment/wallet/check-status").permitAll()
+                .requestMatchers("/api/payment/wallet/create-test-recharge").permitAll()
+                .requestMatchers("/api/payment/wallet/**").permitAll()
+                .requestMatchers("/api/payment/alipay/refund/notify").permitAll()
                 // 允许访问静态资源
                 .requestMatchers("/upload/**", "/static/**").permitAll()
                 // 允许访问公开可用的优惠券列表
                 .requestMatchers("/coupons/available").permitAll()
-                // 允许访问所有退款相关接口，确保格式正确，移除前导斜杠
-                .requestMatchers("refund/**").permitAll()
-                // 临时允许访问管理员退款相关接口，用于调试，移除前导斜杠
-                .requestMatchers("admin/refund/**").permitAll() // 使用通配符匹配所有admin/refund路径
-                // 管理员接口需要admin权限（排除已经允许的登录接口和上面配置的路径）
-                .requestMatchers(request -> request.getRequestURI().startsWith("/api/admin/") &&
-                        !request.getRequestURI().equals("/api/admin/login") &&
-                        !request.getRequestURI().startsWith("/api/admin/refund/"))
+                // 允许访问所有退款相关接口
+                .requestMatchers("/refund/**").permitAll()
+                // 管理员接口需要admin权限
+                // 注意：由于context-path是/api，Spring Security接收到的路径不包含/api前缀
+                .requestMatchers("/admin/**")
                 .hasAuthority("admin")
                 // 钱包相关接口需要登录（明确配置）
                 .requestMatchers("/user/wallet/**").authenticated()

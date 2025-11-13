@@ -26,7 +26,7 @@ import java.util.Map;
  * 管理后台订单管理控制器
  */
 @RestController
-@RequestMapping("/api/admin/orders")
+@RequestMapping("/admin/orders")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "管理后台订单管理", description = "管理后台订单查询、管理相关接口")

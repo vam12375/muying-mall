@@ -18,7 +18,7 @@ import java.util.Map;
  * 管理后台物流公司控制器
  */
 @RestController
-@RequestMapping("/api/admin/logistics/companies")
+@RequestMapping("/admin/logistics/companies")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "管理后台物流公司管理", description = "管理后台物流公司管理相关接口")

@@ -62,7 +62,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
+        // 打印完整的异常堆栈，便于调试
         log.error("系统异常: {}", e.getMessage(), e);
+        log.error("异常类型: {}", e.getClass().getName());
+        log.error("异常堆栈: ", e);
         return Result.error(500, "系统繁忙，请稍后再试");
     }
 }

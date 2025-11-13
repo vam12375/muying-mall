@@ -339,6 +339,31 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         LambdaQueryWrapper<Coupon> totalQuery = new LambdaQueryWrapper<>();
         long totalCoupons = count(totalQuery);
 
+        // 查询活跃中的优惠券数量（状态为ACTIVE且未过期）
+        // 方法1：查询所有ACTIVE状态的优惠券，然后在代码中过滤
+        LambdaQueryWrapper<Coupon> activeQuery = new LambdaQueryWrapper<>();
+        activeQuery.eq(Coupon::getStatus, "ACTIVE");
+        List<Coupon> activeCouponList = list(activeQuery);
+        
+        // 过滤出未过期的优惠券
+        LocalDateTime now = LocalDateTime.now();
+        long activeCoupons = activeCouponList.stream()
+                .filter(c -> c.getEndTime() == null || c.getEndTime().isAfter(now))
+                .count();
+        
+        // 添加调试日志
+        log.info("优惠券统计 - 总数: {}, 活跃中: {}", totalCoupons, activeCoupons);
+        
+        // 如果活跃数量为0，打印所有优惠券的状态用于调试
+        if (activeCoupons == 0 && totalCoupons > 0) {
+            List<Coupon> allCoupons = list();
+            log.warn("活跃优惠券数量为0，当前所有优惠券状态:");
+            for (Coupon c : allCoupons) {
+                log.warn("ID: {}, 名称: {}, 状态: {}, 结束时间: {}", 
+                    c.getId(), c.getName(), c.getStatus(), c.getEndTime());
+            }
+        }
+
         // 查询已领取的优惠券数量
         LambdaQueryWrapper<UserCoupon> receivedQuery = new LambdaQueryWrapper<>();
         long receivedCount = userCouponMapper.selectCount(receivedQuery);
@@ -348,13 +373,20 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         usedQuery.eq(UserCoupon::getStatus, "USED");
         long usedCoupons = userCouponMapper.selectCount(usedQuery);
 
-        // 查询已过期的优惠券数量
-        LambdaQueryWrapper<UserCoupon> expiredQuery = new LambdaQueryWrapper<>();
-        expiredQuery.eq(UserCoupon::getStatus, "UNUSED")
-                .le(UserCoupon::getExpireTime, LocalDateTime.now());
-        long expiredCoupons = userCouponMapper.selectCount(expiredQuery);
+        // 查询已过期的优惠券数量（状态为EXPIRED或已过结束时间）
+        LambdaQueryWrapper<Coupon> expiredQuery = new LambdaQueryWrapper<>();
+        expiredQuery.and(wrapper -> wrapper
+                .eq(Coupon::getStatus, "EXPIRED")
+                .or()
+                .and(w -> w
+                    .isNotNull(Coupon::getEndTime)
+                    .le(Coupon::getEndTime, LocalDateTime.now())
+                )
+        );
+        long expiredCoupons = count(expiredQuery);
 
         stats.put("totalCoupons", totalCoupons);
+        stats.put("activeCoupons", activeCoupons);
         stats.put("receivedCount", receivedCount);
         stats.put("usedCoupons", usedCoupons);
         stats.put("expiredCoupons", expiredCoupons);
