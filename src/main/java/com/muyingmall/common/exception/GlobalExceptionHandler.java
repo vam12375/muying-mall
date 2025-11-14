@@ -58,6 +58,18 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理 Spring Boot 3.x 的 NoResourceFoundException
+     * 当请求的路径不是静态资源也不是 API 接口时抛出
+     */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public Result<Void> handleNoResourceFoundException(org.springframework.web.servlet.resource.NoResourceFoundException e) {
+        log.error("找不到资源: {}", e.getMessage());
+        log.error("请求路径: {}", e.getResourcePath());
+        // 这个异常通常表示路径配置有问题，返回 404
+        return Result.error(404, "请求的资源不存在: " + e.getResourcePath());
+    }
+
+    /**
      * 处理未知异常
      */
     @ExceptionHandler(Exception.class)
