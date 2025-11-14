@@ -58,7 +58,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Value("${upload.avatar.path:/avatars}")
     private String avatarPath;
 
-    @Value("${upload.domain:http://localhost:5173}")
+    @Value("${upload.domain:http://localhost:3073}")
     private String domain;
 
     // @Value("${jwt.expiration:86400}")
@@ -271,6 +271,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("文件不能为空");
         }
 
+        // 验证文件大小（最大5MB）
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new BusinessException("文件大小不能超过5MB");
+        }
+
         // 获取文件后缀
         String originalFilename = file.getOriginalFilename();
         String suffix = "";
@@ -284,9 +289,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("只支持jpg、jpeg、png、gif格式的图片");
         }
 
+        // 生成存储路径：保存到前端项目的public目录
+        String relativeDir = "/avatars/" + userId;
+        String storageDir = "G:/muying/muying-admin/public" + relativeDir;
+        
         // 确保上传目录存在
-        String userAvatarPath = uploadPath + avatarPath + "/" + userId;
-        Path uploadDir = Paths.get(userAvatarPath);
+        Path uploadDir = Paths.get(storageDir);
         if (!Files.exists(uploadDir)) {
             Files.createDirectories(uploadDir);
         }
@@ -296,14 +304,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Path filePath = uploadDir.resolve(filename);
 
         // 保存文件
-        Files.copy(file.getInputStream(), filePath);
+        Files.copy(file.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-        // 生成访问URL
-        String avatarUrl = domain + avatarPath + "/" + userId + "/" + filename;
+        // 生成访问URL（使用前端开发服务器的地址）
+        String avatarUrl = "http://localhost:3000" + relativeDir + "/" + filename;
 
         // 更新用户头像
         user.setAvatar(avatarUrl);
         updateById(user);
+        
+        log.info("用户头像已更新: userId={}, avatar={}", userId, avatarUrl);
         return avatarUrl;
     }
 
@@ -703,5 +713,66 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         } catch (Exception e) {
             log.error("清除用户缓存失败: userId={}, error={}", user.getUserId(), e.getMessage());
         }
+    }
+}
+    /
+**
+     * 上传用户头像（base64格式）
+     * 
+     * @param userId   用户ID
+     * @param fileName 文件名
+     * @param fileData base64编码的文件数据
+     * @return 头像访问URL
+     * @throws Exception 上传过程中的异常
+     */
+    @Override
+    public String uploadAvatarBase64(Integer userId, String fileName, String fileData) throws Exception {
+        // 验证数据
+        if (fileData == null || fileData.isEmpty()) {
+            throw new IllegalArgumentException("文件数据不能为空");
+        }
+
+        // 解析base64数据（去掉data:image/xxx;base64,前缀）
+        String base64Data = fileData;
+        if (fileData.contains(",")) {
+            base64Data = fileData.split(",")[1];
+        }
+
+        // 获取文件后缀
+        String suffix = ".jpg"; // 默认jpg
+        if (fileName != null && fileName.contains(".")) {
+            suffix = fileName.substring(fileName.lastIndexOf("."));
+        }
+
+        // 生成存储路径：avatars/用户ID/文件名
+        String relativeDir = "/avatars/" + userId;
+        String storageDir = "G:/muying/muying-admin/public" + relativeDir;
+
+        // 确保目录存在
+        java.nio.file.Path uploadDir = java.nio.file.Paths.get(storageDir);
+        if (!java.nio.file.Files.exists(uploadDir)) {
+            java.nio.file.Files.createDirectories(uploadDir);
+        }
+
+        // 生成文件名
+        String newFileName = java.util.UUID.randomUUID().toString().replace("-", "") + suffix;
+        java.nio.file.Path filePath = uploadDir.resolve(newFileName);
+
+        // 解码base64并保存文件
+        byte[] decodedBytes = java.util.Base64.getDecoder().decode(base64Data);
+        java.nio.file.Files.write(filePath, decodedBytes);
+
+        // 生成访问URL（使用前端开发服务器的地址）
+        String fileUrl = "http://localhost:3000" + relativeDir + "/" + newFileName;
+
+        // 更新数据库中的avatar字段
+        User user = getById(userId);
+        if (user != null) {
+            user.setAvatar(fileUrl);
+            updateById(user);
+            log.info("用户头像已更新: userId={}, avatar={}", userId, fileUrl);
+        }
+
+        return fileUrl;
     }
 }

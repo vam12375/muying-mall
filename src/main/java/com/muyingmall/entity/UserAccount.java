@@ -35,6 +35,16 @@ public class UserAccount {
     private BigDecimal balance;
 
     /**
+     * 累计充值金额
+     */
+    private BigDecimal totalRecharge;
+
+    /**
+     * 累计消费金额
+     */
+    private BigDecimal totalConsumption;
+
+    /**
      * 冻结金额
      */
     @TableField(exist = false)
@@ -78,4 +88,28 @@ public class UserAccount {
      */
     @TableField(exist = false)
     private User user;
+
+    /**
+     * 用户名（从user表关联查询，非数据库字段）
+     */
+    @TableField(exist = false)
+    private String username;
+
+    /**
+     * 昵称（从user表关联查询，非数据库字段）
+     */
+    @TableField(exist = false)
+    private String nickname;
+
+    /**
+     * 邮箱（从user表关联查询，非数据库字段）
+     */
+    @TableField(exist = false)
+    private String email;
+
+    /**
+     * 手机号（从user表关联查询，非数据库字段）
+     */
+    @TableField(exist = false)
+    private String phone;
 }

@@ -76,6 +76,17 @@ public interface UserService extends IService<User> {
     String uploadAvatar(Integer userId, MultipartFile file) throws Exception;
 
     /**
+     * 上传用户头像（base64格式）
+     *
+     * @param userId   用户ID
+     * @param fileName 文件名
+     * @param fileData base64编码的文件数据
+     * @return 头像访问URL
+     * @throws Exception 上传过程中的异常
+     */
+    String uploadAvatarBase64(Integer userId, String fileName, String fileData) throws Exception;
+
+    /**
      * 管理员登录
      *
      * @param adminLoginDTO 管理员登录信息
@@ -128,28 +139,20 @@ public interface UserService extends IService<User> {
      *
      * @param page    页码
      * @param size    每页大小
-     * @param keyword 关键字（用户名、邮箱、昵称）
+     * @param keyword 关键字（用户名、邮箱、昵称、手机号）
      * @param status  状态筛选
      * @param role    角色筛选
      * @return 用户分页数据
      */
-    Page<User> getUserPage(int page, int size, String keyword, String status, String role);
+    com.muyingmall.common.PageResult<User> getUserPage(Integer page, Integer size, String keyword, Integer status, String role);
 
     /**
-     * 添加用户（管理员权限）
+     * 创建用户（管理员权限）
      *
      * @param user 用户信息
-     * @return 添加成功的用户
+     * @return 创建成功的用户
      */
-    User addUser(User user);
-
-    /**
-     * 更新用户信息（管理员权限）
-     *
-     * @param user 用户信息
-     * @return 是否成功
-     */
-    boolean updateUserByAdmin(User user);
+    User createUser(User user);
 
     /**
      * 删除用户
@@ -160,13 +163,13 @@ public interface UserService extends IService<User> {
     boolean deleteUser(Integer userId);
 
     /**
-     * 冻结/解冻用户
+     * 更新用户状态
      *
      * @param userId 用户ID
      * @param status 状态值：0-禁用，1-正常
      * @return 是否成功
      */
-    boolean toggleUserStatus(Integer userId, Integer status);
+    boolean updateUserStatus(Integer userId, Integer status);
 
     /**
      * 修改用户角色
@@ -177,9 +180,51 @@ public interface UserService extends IService<User> {
      */
     boolean updateUserRole(Integer userId, String role);
 
+    /**
+     * 重置用户密码
+     *
+     * @param userId      用户ID
+     * @param newPassword 新密码
+     * @return 是否成功
+     */
+    boolean resetPassword(Integer userId, String newPassword);
+
+    /**
+     * 通过邮箱获取用户
+     *
+     * @param email 邮箱
+     * @return 用户对象
+     */
+    User getUserByEmail(String email);
+
+    /**
+     * 通过手机号获取用户
+     *
+     * @param phone 手机号
+     * @return 用户对象
+     */
+    User getUserByPhone(String phone);
+
+    /**
+     * 根据用户ID获取用户信息
+     *
+     * @param userId 用户ID
+     * @return 用户对象
+     */
     User getUserById(Integer userId);
 
+    /**
+     * 更新用户信息
+     *
+     * @param user 用户对象
+     */
     void updateUser(User user);
 
+    /**
+     * 扣除用户余额
+     *
+     * @param userId          用户ID
+     * @param amountToDeduct  扣除金额
+     */
     void deductBalance(Integer userId, BigDecimal amountToDeduct);
 }
