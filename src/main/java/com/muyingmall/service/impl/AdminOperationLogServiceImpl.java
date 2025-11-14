@@ -1,35 +1,30 @@
 package com.muyingmall.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.muyingmall.entity.AdminOperationLog;
-import com.muyingmall.event.AdminOperationEvent;
 import com.muyingmall.mapper.AdminOperationLogMapper;
 import com.muyingmall.service.AdminOperationLogService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 管理员操作日志服务实现类
+ * 
+ * Source: 基于 AdminOperationLogService 接口实现
+ * 遵循 KISS, YAGNI, SOLID 原则
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AdminOperationLogServiceImpl extends ServiceImpl<AdminOperationLogMapper, AdminOperationLog>
         implements AdminOperationLogService {
-
-    private final AdminOperationLogMapper operationLogMapper;
-    private final ObjectMapper objectMapper;
-    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Long recordOperation(Integer adminId, String adminName, String operation, String module,
@@ -38,197 +33,305 @@ public class AdminOperationLogServiceImpl extends ServiceImpl<AdminOperationLogM
             String operationResult, String errorMessage, Long executionTimeMs,
             String description) {
         try {
-            AdminOperationLog operationLog = new AdminOperationLog();
-            operationLog.setAdminId(adminId);
-            operationLog.setAdminName(adminName);
-            operationLog.setOperation(operation);
-            operationLog.setModule(module);
-            operationLog.setOperationType(operationType);
-            operationLog.setTargetType(targetType);
-            operationLog.setTargetId(targetId);
-            operationLog.setResponseStatus(responseStatus);
-            operationLog.setOperationResult(operationResult);
-            operationLog.setErrorMessage(errorMessage);
-            operationLog.setExecutionTimeMs(executionTimeMs);
-
-            if (request != null) {
-                operationLog.setRequestMethod(request.getMethod());
-                operationLog.setRequestUrl(request.getRequestURI());
-                operationLog.setRequestParams(parseRequestParams(request));
-                operationLog.setIpAddress(getClientIpAddress(request));
-                operationLog.setUserAgent(request.getHeader("User-Agent"));
-            }
-
-            // 生成操作描述
-            if (!StringUtils.hasText(description)) {
-                description = generateOperationDescription(operation, module, targetType, targetId);
-            }
-            operationLog.setDescription(description);
-
-            save(operationLog);
-
-            // 发布操作事件
-            eventPublisher.publishEvent(new AdminOperationEvent(this, operationLog));
-
-            log.info("记录管理员操作日志成功: adminId={}, operation={}, module={}",
-                    adminId, operation, module);
-
-            return operationLog.getId();
+            // 获取客户端IP
+            String ipAddress = getClientIpAddress(request);
+            
+            // 获取User-Agent
+            String userAgent = request.getHeader("User-Agent");
+            
+            // 获取请求信息
+            String requestMethod = request.getMethod();
+            String requestUrl = request.getRequestURI();
+            String requestParams = parseRequestParams(request);
+            
+            // 创建操作日志
+            AdminOperationLog log = new AdminOperationLog();
+            log.setAdminId(adminId);
+            log.setAdminName(adminName);
+            log.setOperation(operation);
+            log.setModule(module);
+            log.setOperationType(operationType);
+            log.setTargetType(targetType);
+            log.setTargetId(targetId);
+            log.setRequestMethod(requestMethod);
+            log.setRequestUrl(requestUrl);
+            log.setRequestParams(requestParams);
+            log.setResponseStatus(responseStatus);
+            log.setIpAddress(ipAddress);
+            log.setUserAgent(userAgent);
+            log.setOperationResult(operationResult);
+            log.setErrorMessage(errorMessage);
+            log.setExecutionTimeMs(executionTimeMs);
+            log.setDescription(description != null ? description : 
+                    generateOperationDescription(operation, module, targetType, targetId));
+            
+            // 保存日志
+            save(log);
+            
+            AdminOperationLogServiceImpl.log.info("记录管理员操作: adminId={}, operation={}, module={}, result={}", 
+                    adminId, operation, module, operationResult);
+            
+            return log.getId();
         } catch (Exception e) {
-            log.error("记录管理员操作日志失败: adminId={}, operation={}, error={}",
-                    adminId, operation, e.getMessage(), e);
+            AdminOperationLogServiceImpl.log.error("记录操作日志失败", e);
             return null;
         }
     }
 
     @Override
     public IPage<AdminOperationLog> getOperationLogsPage(Integer page, Integer size, Integer adminId,
-            LocalDateTime startTime, LocalDateTime endTime,
-            String operationType, String module,
+            LocalDateTime startTime, LocalDateTime endTime, String operationType, String module,
             String operationResult) {
-        log.info(
-                "Service层查询参数 - page: {}, size: {}, adminId: {}, startTime: {}, endTime: {}, operationType: {}, module: {}, operationResult: {}",
-                page, size, adminId, startTime, endTime, operationType, module, operationResult);
-
+        
         Page<AdminOperationLog> pageParam = new Page<>(page, size);
-        IPage<AdminOperationLog> result = operationLogMapper.selectOperationLogsPage(pageParam, adminId, startTime,
-                endTime,
-                operationType, module, operationResult);
-
-        log.info("Service层查询结果 - total: {}, records: {}", result.getTotal(), result.getRecords().size());
-        return result;
+        LambdaQueryWrapper<AdminOperationLog> wrapper = new LambdaQueryWrapper<>();
+        
+        // 条件查询
+        if (adminId != null) {
+            wrapper.eq(AdminOperationLog::getAdminId, adminId);
+        }
+        if (startTime != null) {
+            wrapper.ge(AdminOperationLog::getCreateTime, startTime);
+        }
+        if (endTime != null) {
+            wrapper.le(AdminOperationLog::getCreateTime, endTime);
+        }
+        if (operationType != null && !operationType.isEmpty()) {
+            wrapper.eq(AdminOperationLog::getOperationType, operationType);
+        }
+        if (module != null && !module.isEmpty()) {
+            wrapper.eq(AdminOperationLog::getModule, module);
+        }
+        if (operationResult != null && !operationResult.isEmpty()) {
+            wrapper.eq(AdminOperationLog::getOperationResult, operationResult);
+        }
+        
+        // 按创建时间倒序
+        wrapper.orderByDesc(AdminOperationLog::getCreateTime);
+        
+        return page(pageParam, wrapper);
     }
 
     @Override
     public Map<String, Object> getOperationStatistics(Integer adminId, Integer days) {
-        Map<String, Object> statistics = new HashMap<>();
-
-        LocalDateTime endTime = LocalDateTime.now();
-        LocalDateTime startTime = endTime.minusDays(days);
-
+        Map<String, Object> stats = new HashMap<>();
+        
+        LocalDateTime startTime = LocalDateTime.now().minusDays(days);
+        LambdaQueryWrapper<AdminOperationLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(AdminOperationLog::getCreateTime, startTime);
+        
+        if (adminId != null) {
+            wrapper.eq(AdminOperationLog::getAdminId, adminId);
+        }
+        
         // 总操作次数
-        Long totalOperations = operationLogMapper.countOperations(adminId, null, null, null);
-        statistics.put("totalOperations", totalOperations != null ? totalOperations : 0);
-
+        long totalOperations = count(wrapper);
+        stats.put("totalOperations", totalOperations);
+        
+        // 成功操作次数
+        LambdaQueryWrapper<AdminOperationLog> successWrapper = new LambdaQueryWrapper<>();
+        successWrapper.ge(AdminOperationLog::getCreateTime, startTime)
+                     .eq(AdminOperationLog::getOperationResult, "success");
+        if (adminId != null) {
+            successWrapper.eq(AdminOperationLog::getAdminId, adminId);
+        }
+        long successOperations = count(successWrapper);
+        stats.put("successOperations", successOperations);
+        
+        // 失败操作次数
+        stats.put("failedOperations", totalOperations - successOperations);
+        
         // 今日操作次数
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
-        LocalDateTime todayEnd = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
-        Long todayOperations = operationLogMapper.countOperations(adminId, todayStart, todayEnd, null);
-        statistics.put("todayOperations", todayOperations != null ? todayOperations : 0);
-
+        LambdaQueryWrapper<AdminOperationLog> todayWrapper = new LambdaQueryWrapper<>();
+        todayWrapper.ge(AdminOperationLog::getCreateTime, todayStart);
+        if (adminId != null) {
+            todayWrapper.eq(AdminOperationLog::getAdminId, adminId);
+        }
+        long todayOperations = count(todayWrapper);
+        stats.put("todayOperations", todayOperations);
+        
         // 本周操作次数
         LocalDateTime weekStart = LocalDateTime.now().minusDays(7);
-        Long weekOperations = operationLogMapper.countOperations(adminId, weekStart, endTime, null);
-        statistics.put("weekOperations", weekOperations != null ? weekOperations : 0);
-
+        LambdaQueryWrapper<AdminOperationLog> weekWrapper = new LambdaQueryWrapper<>();
+        weekWrapper.ge(AdminOperationLog::getCreateTime, weekStart);
+        if (adminId != null) {
+            weekWrapper.eq(AdminOperationLog::getAdminId, adminId);
+        }
+        long weekOperations = count(weekWrapper);
+        stats.put("weekOperations", weekOperations);
+        
         // 本月操作次数
         LocalDateTime monthStart = LocalDateTime.now().minusDays(30);
-        Long monthOperations = operationLogMapper.countOperations(adminId, monthStart, endTime, null);
-        statistics.put("monthOperations", monthOperations != null ? monthOperations : 0);
-
-        return statistics;
+        LambdaQueryWrapper<AdminOperationLog> monthWrapper = new LambdaQueryWrapper<>();
+        monthWrapper.ge(AdminOperationLog::getCreateTime, monthStart);
+        if (adminId != null) {
+            monthWrapper.eq(AdminOperationLog::getAdminId, adminId);
+        }
+        long monthOperations = count(monthWrapper);
+        stats.put("monthOperations", monthOperations);
+        
+        return stats;
     }
 
     @Override
     public List<AdminOperationLog> getRecentOperations(Integer adminId, Integer limit) {
-        return operationLogMapper.selectRecentOperations(adminId, limit);
+        LambdaQueryWrapper<AdminOperationLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AdminOperationLog::getAdminId, adminId)
+               .orderByDesc(AdminOperationLog::getCreateTime)
+               .last("LIMIT " + limit);
+        
+        return list(wrapper);
     }
 
     @Override
     public Map<String, Integer> getOperationTypeDistribution(Integer adminId, Integer days) {
-        List<Map<String, Object>> typeStats = operationLogMapper.selectOperationTypeStats(adminId, days);
-        Map<String, Integer> distribution = new HashMap<>();
-
-        for (Map<String, Object> stat : typeStats) {
-            String operationType = (String) stat.get("operation_type");
-            Long count = (Long) stat.get("count");
-            distribution.put(operationType, count.intValue());
+        LocalDateTime startTime = LocalDateTime.now().minusDays(days);
+        LambdaQueryWrapper<AdminOperationLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(AdminOperationLog::getCreateTime, startTime);
+        
+        if (adminId != null) {
+            wrapper.eq(AdminOperationLog::getAdminId, adminId);
         }
-
+        
+        List<AdminOperationLog> logs = list(wrapper);
+        
+        // 按操作类型分组统计
+        Map<String, Integer> distribution = logs.stream()
+                .collect(Collectors.groupingBy(
+                        log -> log.getOperationType() != null ? log.getOperationType() : "UNKNOWN",
+                        Collectors.collectingAndThen(Collectors.counting(), Long::intValue)
+                ));
+        
         return distribution;
     }
 
     @Override
     public List<Map<String, Object>> getModuleOperationStats(Integer adminId, Integer days) {
-        return operationLogMapper.selectModuleStats(adminId, days);
+        LocalDateTime startTime = LocalDateTime.now().minusDays(days);
+        LambdaQueryWrapper<AdminOperationLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(AdminOperationLog::getCreateTime, startTime);
+        
+        if (adminId != null) {
+            wrapper.eq(AdminOperationLog::getAdminId, adminId);
+        }
+        
+        List<AdminOperationLog> logs = list(wrapper);
+        
+        // 按模块分组统计
+        Map<String, Long> moduleStats = logs.stream()
+                .collect(Collectors.groupingBy(
+                        log -> log.getModule() != null ? log.getModule() : "未知模块",
+                        Collectors.counting()
+                ));
+        
+        // 转换为List<Map>格式
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : moduleStats.entrySet()) {
+            Map<String, Object> stat = new HashMap<>();
+            stat.put("module", entry.getKey());
+            stat.put("count", entry.getValue());
+            result.add(stat);
+        }
+        
+        // 按操作次数降序排序
+        result.sort((a, b) -> Long.compare((Long) b.get("count"), (Long) a.get("count")));
+        
+        return result;
     }
 
     @Override
     public String parseRequestParams(HttpServletRequest request) {
         try {
-            Map<String, Object> params = new HashMap<>();
-
-            // 获取查询参数
-            if (request.getParameterMap() != null) {
-                for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
-                    String key = entry.getKey();
-                    String[] values = entry.getValue();
-                    if (values.length == 1) {
-                        params.put(key, values[0]);
+            Map<String, String[]> paramMap = request.getParameterMap();
+            if (paramMap.isEmpty()) {
+                return null;
+            }
+            
+            StringBuilder params = new StringBuilder();
+            for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
+                if (params.length() > 0) {
+                    params.append("&");
+                }
+                params.append(entry.getKey()).append("=");
+                
+                String[] values = entry.getValue();
+                if (values.length == 1) {
+                    // 过滤敏感信息
+                    if (entry.getKey().toLowerCase().contains("password") || 
+                        entry.getKey().toLowerCase().contains("pwd")) {
+                        params.append("******");
                     } else {
-                        params.put(key, Arrays.asList(values));
+                        params.append(values[0]);
                     }
+                } else {
+                    params.append(Arrays.toString(values));
                 }
             }
-
-            // 过滤敏感信息
-            params.remove("password");
-            params.remove("oldPassword");
-            params.remove("newPassword");
-            params.remove("token");
-
-            return objectMapper.writeValueAsString(params);
+            
+            // 限制参数长度
+            String result = params.toString();
+            if (result.length() > 500) {
+                result = result.substring(0, 500) + "...";
+            }
+            
+            return result;
         } catch (Exception e) {
-            log.warn("解析请求参数失败: {}", e.getMessage());
-            return "{}";
+            AdminOperationLogServiceImpl.log.error("解析请求参数失败", e);
+            return null;
         }
     }
 
     @Override
     public String generateOperationDescription(String operation, String module, String targetType, String targetId) {
-        StringBuilder description = new StringBuilder();
-
-        if (StringUtils.hasText(operation)) {
-            description.append("执行了").append(operation);
+        StringBuilder desc = new StringBuilder();
+        
+        if (module != null && !module.isEmpty()) {
+            desc.append("[").append(module).append("] ");
         }
-
-        if (StringUtils.hasText(module)) {
-            description.append("，模块：").append(module);
+        
+        if (operation != null && !operation.isEmpty()) {
+            desc.append(operation);
         }
-
-        if (StringUtils.hasText(targetType) && StringUtils.hasText(targetId)) {
-            description.append("，操作对象：").append(targetType).append("(ID:").append(targetId).append(")");
+        
+        if (targetType != null && !targetType.isEmpty()) {
+            desc.append(" ").append(targetType);
         }
-
-        return description.toString();
+        
+        if (targetId != null && !targetId.isEmpty()) {
+            desc.append("(ID:").append(targetId).append(")");
+        }
+        
+        return desc.toString();
     }
-
+    
     /**
      * 获取客户端真实IP
      */
     private String getClientIpAddress(HttpServletRequest request) {
-        String ipAddress = request.getHeader("X-Forwarded-For");
-        if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("Proxy-Client-IP");
+        String ip = request.getHeader("X-Forwarded-For");
+        
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
         }
-        if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("WL-Proxy-Client-IP");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
         }
-        if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("HTTP_CLIENT_IP");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
         }
-        if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("HTTP_X_FORWARDED_FOR");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
         }
-        if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getRemoteAddr();
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
         }
-
-        // 如果是多个IP地址，取第一个
-        if (ipAddress != null && ipAddress.contains(",")) {
-            ipAddress = ipAddress.split(",")[0].trim();
+        
+        // 处理多个IP的情况，取第一个
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
         }
-
-        return ipAddress;
+        
+        return ip;
     }
 }

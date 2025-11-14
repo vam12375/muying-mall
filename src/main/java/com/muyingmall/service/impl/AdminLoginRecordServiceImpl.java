@@ -5,84 +5,66 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.entity.AdminLoginRecord;
-import com.muyingmall.event.AdminLoginEvent;
 import com.muyingmall.mapper.AdminLoginRecordMapper;
 import com.muyingmall.service.AdminLoginRecordService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * 管理员登录记录服务实现类
+ * 
+ * Source: 基于 AdminLoginRecordService 接口实现
+ * 遵循 KISS, YAGNI, SOLID 原则
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AdminLoginRecordServiceImpl extends ServiceImpl<AdminLoginRecordMapper, AdminLoginRecord>
         implements AdminLoginRecordService {
-
-    private final AdminLoginRecordMapper loginRecordMapper;
-    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Long recordLogin(Integer adminId, String adminName, HttpServletRequest request,
             String loginStatus, String failureReason) {
         try {
+            // 获取客户端IP
+            String ipAddress = getClientIpAddress(request);
+            
+            // 获取User-Agent
+            String userAgent = request.getHeader("User-Agent");
+            
+            // 解析设备信息
+            Map<String, String> deviceInfo = parseDeviceInfo(userAgent);
+            
+            // 获取地理位置
+            String location = getLocationByIp(ipAddress);
+            
+            // 创建登录记录
             AdminLoginRecord record = new AdminLoginRecord();
             record.setAdminId(adminId);
             record.setAdminName(adminName);
             record.setLoginTime(LocalDateTime.now());
+            record.setIpAddress(ipAddress);
+            record.setLocation(location);
+            record.setUserAgent(userAgent);
+            record.setDeviceType(deviceInfo.get("deviceType"));
+            record.setBrowser(deviceInfo.get("browser"));
+            record.setOs(deviceInfo.get("os"));
             record.setLoginStatus(loginStatus);
             record.setFailureReason(failureReason);
-
-            // 获取IP地址
-            String ipAddress = getClientIpAddress(request);
-            record.setIpAddress(ipAddress);
-
-            // 获取地理位置
-            String location = getLocationByIp(ipAddress);
-            record.setLocation(location);
-
-            // 解析用户代理信息
-            String userAgent = request.getHeader("User-Agent");
-            record.setUserAgent(userAgent);
-
-            if (StringUtils.hasText(userAgent)) {
-                Map<String, String> deviceInfo = parseDeviceInfo(userAgent);
-                record.setDeviceType(deviceInfo.get("deviceType"));
-                record.setBrowser(deviceInfo.get("browser"));
-                record.setOs(deviceInfo.get("os"));
-            }
-
-            // 生成会话ID
-            if (AdminLoginRecord.LoginStatus.SUCCESS.getCode().equals(loginStatus)) {
-                String sessionId = UUID.randomUUID().toString();
-                record.setSessionId(sessionId);
-                // 将会话ID存储到session中，用于后续的登出记录
-                request.getSession().setAttribute("adminSessionId", sessionId);
-            }
-
+            record.setSessionId(request.getSession().getId());
+            
+            // 保存记录
             save(record);
-            log.info("记录管理员登录信息成功: adminId={}, loginStatus={}, ip={}",
-                    adminId, loginStatus, ipAddress);
-
-            // 发布登录事件
-            if (AdminLoginRecord.LoginStatus.SUCCESS.getCode().equals(loginStatus)) {
-                eventPublisher.publishEvent(new AdminLoginEvent(this, record));
-            }
-
+            
+            log.info("记录管理员登录: adminId={}, adminName={}, ip={}, status={}", 
+                    adminId, adminName, ipAddress, loginStatus);
+            
             return record.getId();
         } catch (Exception e) {
-            log.error("记录管理员登录信息失败: adminId={}, error={}", adminId, e.getMessage(), e);
+            log.error("记录登录信息失败", e);
             return null;
         }
     }
@@ -90,257 +72,298 @@ public class AdminLoginRecordServiceImpl extends ServiceImpl<AdminLoginRecordMap
     @Override
     public boolean recordLogout(String sessionId) {
         try {
-            if (!StringUtils.hasText(sessionId)) {
-                return false;
-            }
-
-            LambdaQueryWrapper<AdminLoginRecord> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(AdminLoginRecord::getSessionId, sessionId)
-                    .isNull(AdminLoginRecord::getLogoutTime);
-
-            AdminLoginRecord record = getOne(queryWrapper);
+            LambdaQueryWrapper<AdminLoginRecord> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(AdminLoginRecord::getSessionId, sessionId)
+                   .isNull(AdminLoginRecord::getLogoutTime)
+                   .orderByDesc(AdminLoginRecord::getLoginTime)
+                   .last("LIMIT 1");
+            
+            AdminLoginRecord record = getOne(wrapper);
             if (record != null) {
-                LocalDateTime logoutTime = LocalDateTime.now();
-                record.setLogoutTime(logoutTime);
-
+                record.setLogoutTime(LocalDateTime.now());
+                
                 // 计算会话时长
                 if (record.getLoginTime() != null) {
-                    long durationSeconds = ChronoUnit.SECONDS.between(record.getLoginTime(), logoutTime);
-                    record.setDurationSeconds((int) durationSeconds);
+                    long seconds = java.time.Duration.between(record.getLoginTime(), 
+                            record.getLogoutTime()).getSeconds();
+                    record.setDurationSeconds((int) seconds);
                 }
-
+                
                 updateById(record);
-                log.info("记录管理员登出信息成功: sessionId={}, duration={}秒",
-                        sessionId, record.getDurationSeconds());
+                log.info("记录管理员登出: sessionId={}", sessionId);
                 return true;
             }
+            return false;
         } catch (Exception e) {
-            log.error("记录管理员登出信息失败: sessionId={}, error={}", sessionId, e.getMessage(), e);
+            log.error("记录登出信息失败", e);
+            return false;
         }
-        return false;
     }
 
     @Override
     public boolean updateSessionDuration(String sessionId, Integer durationSeconds) {
         try {
-            if (!StringUtils.hasText(sessionId) || durationSeconds == null) {
-                return false;
-            }
-
-            LambdaQueryWrapper<AdminLoginRecord> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(AdminLoginRecord::getSessionId, sessionId);
-
-            AdminLoginRecord record = getOne(queryWrapper);
+            LambdaQueryWrapper<AdminLoginRecord> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(AdminLoginRecord::getSessionId, sessionId)
+                   .orderByDesc(AdminLoginRecord::getLoginTime)
+                   .last("LIMIT 1");
+            
+            AdminLoginRecord record = getOne(wrapper);
             if (record != null) {
                 record.setDurationSeconds(durationSeconds);
                 updateById(record);
                 return true;
             }
+            return false;
         } catch (Exception e) {
-            log.error("更新会话时长失败: sessionId={}, error={}", sessionId, e.getMessage(), e);
+            log.error("更新会话时长失败", e);
+            return false;
         }
-        return false;
     }
 
     @Override
     public IPage<AdminLoginRecord> getLoginRecordsPage(Integer page, Integer size, Integer adminId,
-            LocalDateTime startTime, LocalDateTime endTime,
-            String loginStatus, String ipAddress) {
+            LocalDateTime startTime, LocalDateTime endTime, String loginStatus, String ipAddress) {
+        
         Page<AdminLoginRecord> pageParam = new Page<>(page, size);
-        return loginRecordMapper.selectLoginRecordsPage(pageParam, adminId, startTime, endTime,
-                loginStatus, ipAddress);
+        LambdaQueryWrapper<AdminLoginRecord> wrapper = new LambdaQueryWrapper<>();
+        
+        // 条件查询
+        if (adminId != null) {
+            wrapper.eq(AdminLoginRecord::getAdminId, adminId);
+        }
+        if (startTime != null) {
+            wrapper.ge(AdminLoginRecord::getLoginTime, startTime);
+        }
+        if (endTime != null) {
+            wrapper.le(AdminLoginRecord::getLoginTime, endTime);
+        }
+        if (loginStatus != null && !loginStatus.isEmpty()) {
+            wrapper.eq(AdminLoginRecord::getLoginStatus, loginStatus);
+        }
+        if (ipAddress != null && !ipAddress.isEmpty()) {
+            wrapper.like(AdminLoginRecord::getIpAddress, ipAddress);
+        }
+        
+        // 按登录时间倒序
+        wrapper.orderByDesc(AdminLoginRecord::getLoginTime);
+        
+        return page(pageParam, wrapper);
     }
 
     @Override
     public Map<String, Object> getLoginStatistics(Integer adminId, Integer days) {
-        Map<String, Object> statistics = new HashMap<>();
-
-        LocalDateTime endTime = LocalDateTime.now();
-        LocalDateTime startTime = endTime.minusDays(days);
-
+        Map<String, Object> stats = new HashMap<>();
+        
+        LocalDateTime startTime = LocalDateTime.now().minusDays(days);
+        LambdaQueryWrapper<AdminLoginRecord> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(AdminLoginRecord::getLoginTime, startTime);
+        
+        if (adminId != null) {
+            wrapper.eq(AdminLoginRecord::getAdminId, adminId);
+        }
+        
         // 总登录次数
-        Long totalLogins = loginRecordMapper.countSuccessLogins(adminId, null, null);
-        statistics.put("totalLogins", totalLogins != null ? totalLogins : 0);
-
+        long totalLogins = count(wrapper);
+        stats.put("totalLogins", totalLogins);
+        
+        // 成功登录次数
+        LambdaQueryWrapper<AdminLoginRecord> successWrapper = new LambdaQueryWrapper<>();
+        successWrapper.ge(AdminLoginRecord::getLoginTime, startTime)
+                     .eq(AdminLoginRecord::getLoginStatus, "success");
+        if (adminId != null) {
+            successWrapper.eq(AdminLoginRecord::getAdminId, adminId);
+        }
+        long successLogins = count(successWrapper);
+        stats.put("successLogins", successLogins);
+        
+        // 失败登录次数
+        stats.put("failedLogins", totalLogins - successLogins);
+        
         // 今日登录次数
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
-        LocalDateTime todayEnd = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
-        Long todayLogins = loginRecordMapper.countSuccessLogins(adminId, todayStart, todayEnd);
-        statistics.put("todayLogins", todayLogins != null ? todayLogins : 0);
-
+        LambdaQueryWrapper<AdminLoginRecord> todayWrapper = new LambdaQueryWrapper<>();
+        todayWrapper.ge(AdminLoginRecord::getLoginTime, todayStart);
+        if (adminId != null) {
+            todayWrapper.eq(AdminLoginRecord::getAdminId, adminId);
+        }
+        long todayLogins = count(todayWrapper);
+        stats.put("todayLogins", todayLogins);
+        
         // 本周登录次数
         LocalDateTime weekStart = LocalDateTime.now().minusDays(7);
-        Long weekLogins = loginRecordMapper.countSuccessLogins(adminId, weekStart, endTime);
-        statistics.put("weekLogins", weekLogins != null ? weekLogins : 0);
-
+        LambdaQueryWrapper<AdminLoginRecord> weekWrapper = new LambdaQueryWrapper<>();
+        weekWrapper.ge(AdminLoginRecord::getLoginTime, weekStart);
+        if (adminId != null) {
+            weekWrapper.eq(AdminLoginRecord::getAdminId, adminId);
+        }
+        long weekLogins = count(weekWrapper);
+        stats.put("weekLogins", weekLogins);
+        
         // 本月登录次数
         LocalDateTime monthStart = LocalDateTime.now().minusDays(30);
-        Long monthLogins = loginRecordMapper.countSuccessLogins(adminId, monthStart, endTime);
-        statistics.put("monthLogins", monthLogins != null ? monthLogins : 0);
-
-        // 平均在线时长
-        Double avgOnlineTime = loginRecordMapper.selectAvgOnlineTime(adminId, days);
-        statistics.put("avgOnlineTime", avgOnlineTime != null ? avgOnlineTime / 3600.0 : 0.0); // 转换为小时
-
-        // 最长会话时长
-        Integer maxSessionTime = loginRecordMapper.selectMaxSessionTime(adminId, days);
-        statistics.put("longestSession", maxSessionTime != null ? maxSessionTime / 3600.0 : 0.0); // 转换为小时
-
-        // 最后登录时间
-        List<AdminLoginRecord> recentLogins = getRecentLogins(adminId, 1);
-        if (!recentLogins.isEmpty()) {
-            statistics.put("lastLoginTime", recentLogins.get(0).getLoginTime());
+        LambdaQueryWrapper<AdminLoginRecord> monthWrapper = new LambdaQueryWrapper<>();
+        monthWrapper.ge(AdminLoginRecord::getLoginTime, monthStart);
+        if (adminId != null) {
+            monthWrapper.eq(AdminLoginRecord::getAdminId, adminId);
         }
-
-        return statistics;
+        long monthLogins = count(monthWrapper);
+        stats.put("monthLogins", monthLogins);
+        
+        // 平均会话时长（秒）
+        List<AdminLoginRecord> records = list(wrapper);
+        if (!records.isEmpty()) {
+            long totalDuration = records.stream()
+                    .filter(r -> r.getDurationSeconds() != null)
+                    .mapToLong(AdminLoginRecord::getDurationSeconds)
+                    .sum();
+            long avgDuration = records.stream()
+                    .filter(r -> r.getDurationSeconds() != null)
+                    .count() > 0 ? totalDuration / records.stream()
+                    .filter(r -> r.getDurationSeconds() != null)
+                    .count() : 0;
+            stats.put("avgSessionDuration", avgDuration);
+        } else {
+            stats.put("avgSessionDuration", 0);
+        }
+        
+        return stats;
     }
 
     @Override
     public List<AdminLoginRecord> getRecentLogins(Integer adminId, Integer limit) {
-        return loginRecordMapper.selectRecentLogins(adminId, limit);
+        LambdaQueryWrapper<AdminLoginRecord> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AdminLoginRecord::getAdminId, adminId)
+               .orderByDesc(AdminLoginRecord::getLoginTime)
+               .last("LIMIT " + limit);
+        
+        return list(wrapper);
     }
 
     @Override
     public int[] getHourlyActiveStats(Integer adminId, Integer days) {
-        List<Map<String, Object>> hourlyStats = loginRecordMapper.selectHourlyLoginStats(adminId, days);
-        int[] activeHours = new int[24];
-
-        for (Map<String, Object> stat : hourlyStats) {
-            Integer hour = (Integer) stat.get("hour");
-            Long count = (Long) stat.get("count");
-            if (hour != null && hour >= 0 && hour < 24) {
-                activeHours[hour] = count.intValue();
+        int[] hourlyStats = new int[24];
+        
+        LocalDateTime startTime = LocalDateTime.now().minusDays(days);
+        LambdaQueryWrapper<AdminLoginRecord> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(AdminLoginRecord::getLoginTime, startTime);
+        
+        if (adminId != null) {
+            wrapper.eq(AdminLoginRecord::getAdminId, adminId);
+        }
+        
+        List<AdminLoginRecord> records = list(wrapper);
+        
+        // 统计每小时的登录次数
+        for (AdminLoginRecord record : records) {
+            if (record.getLoginTime() != null) {
+                int hour = record.getLoginTime().getHour();
+                hourlyStats[hour]++;
             }
         }
-
-        return activeHours;
+        
+        return hourlyStats;
     }
 
     @Override
     public Map<String, String> parseDeviceInfo(String userAgent) {
         Map<String, String> deviceInfo = new HashMap<>();
-
-        if (!StringUtils.hasText(userAgent)) {
+        
+        if (userAgent == null || userAgent.isEmpty()) {
+            deviceInfo.put("deviceType", "Unknown");
+            deviceInfo.put("browser", "Unknown");
+            deviceInfo.put("os", "Unknown");
             return deviceInfo;
         }
-
-        // 检测设备类型
+        
+        // 解析设备类型
         String deviceType = "Desktop";
-        if (userAgent.toLowerCase().contains("mobile")) {
+        if (userAgent.contains("Mobile") || userAgent.contains("Android") || userAgent.contains("iPhone")) {
             deviceType = "Mobile";
-        } else if (userAgent.toLowerCase().contains("tablet") || userAgent.toLowerCase().contains("ipad")) {
+        } else if (userAgent.contains("Tablet") || userAgent.contains("iPad")) {
             deviceType = "Tablet";
         }
         deviceInfo.put("deviceType", deviceType);
-
-        // 检测浏览器
+        
+        // 解析浏览器
         String browser = "Unknown";
-        if (userAgent.contains("Chrome")) {
-            Pattern pattern = Pattern.compile("Chrome/([\\d.]+)");
-            Matcher matcher = pattern.matcher(userAgent);
-            if (matcher.find()) {
-                browser = "Chrome " + matcher.group(1);
-            }
+        if (userAgent.contains("Edge")) {
+            browser = "Edge";
+        } else if (userAgent.contains("Chrome")) {
+            browser = "Chrome";
         } else if (userAgent.contains("Firefox")) {
-            Pattern pattern = Pattern.compile("Firefox/([\\d.]+)");
-            Matcher matcher = pattern.matcher(userAgent);
-            if (matcher.find()) {
-                browser = "Firefox " + matcher.group(1);
-            }
-        } else if (userAgent.contains("Safari") && !userAgent.contains("Chrome")) {
-            Pattern pattern = Pattern.compile("Version/([\\d.]+).*Safari");
-            Matcher matcher = pattern.matcher(userAgent);
-            if (matcher.find()) {
-                browser = "Safari " + matcher.group(1);
-            }
-        } else if (userAgent.contains("Edge")) {
-            Pattern pattern = Pattern.compile("Edge/([\\d.]+)");
-            Matcher matcher = pattern.matcher(userAgent);
-            if (matcher.find()) {
-                browser = "Edge " + matcher.group(1);
-            }
+            browser = "Firefox";
+        } else if (userAgent.contains("Safari")) {
+            browser = "Safari";
+        } else if (userAgent.contains("Opera") || userAgent.contains("OPR")) {
+            browser = "Opera";
         }
         deviceInfo.put("browser", browser);
-
-        // 检测操作系统
+        
+        // 解析操作系统
         String os = "Unknown";
-        if (userAgent.contains("Windows NT 10.0")) {
-            os = "Windows 10";
-        } else if (userAgent.contains("Windows NT 6.3")) {
-            os = "Windows 8.1";
-        } else if (userAgent.contains("Windows NT 6.1")) {
-            os = "Windows 7";
-        } else if (userAgent.contains("Mac OS X")) {
-            Pattern pattern = Pattern.compile("Mac OS X ([\\d_]+)");
-            Matcher matcher = pattern.matcher(userAgent);
-            if (matcher.find()) {
-                os = "macOS " + matcher.group(1).replace("_", ".");
-            }
+        if (userAgent.contains("Windows")) {
+            os = "Windows";
+        } else if (userAgent.contains("Mac OS")) {
+            os = "macOS";
         } else if (userAgent.contains("Linux")) {
             os = "Linux";
         } else if (userAgent.contains("Android")) {
-            Pattern pattern = Pattern.compile("Android ([\\d.]+)");
-            Matcher matcher = pattern.matcher(userAgent);
-            if (matcher.find()) {
-                os = "Android " + matcher.group(1);
-            }
-        } else if (userAgent.contains("iPhone OS")) {
-            Pattern pattern = Pattern.compile("iPhone OS ([\\d_]+)");
-            Matcher matcher = pattern.matcher(userAgent);
-            if (matcher.find()) {
-                os = "iOS " + matcher.group(1).replace("_", ".");
-            }
+            os = "Android";
+        } else if (userAgent.contains("iOS") || userAgent.contains("iPhone") || userAgent.contains("iPad")) {
+            os = "iOS";
         }
         deviceInfo.put("os", os);
-
+        
         return deviceInfo;
     }
 
     @Override
     public String getLocationByIp(String ipAddress) {
-        // 简单的IP地址地理位置映射，实际项目中可以使用第三方IP地理位置服务
-        if (!StringUtils.hasText(ipAddress)) {
+        // 简单的IP地址归属地判断
+        // 实际项目中应该使用IP地址库（如GeoIP2）进行精确定位
+        
+        if (ipAddress == null || ipAddress.isEmpty()) {
             return "未知";
         }
-
-        // 本地IP地址
-        if (ipAddress.startsWith("192.168.") || ipAddress.startsWith("10.") ||
-                ipAddress.startsWith("172.") || ipAddress.equals("127.0.0.1") ||
-                ipAddress.equals("0:0:0:0:0:0:0:1") || ipAddress.equals("::1")) {
-            return "本地网络";
+        
+        // 本地IP
+        if (ipAddress.startsWith("127.") || ipAddress.equals("0:0:0:0:0:0:0:1") || 
+            ipAddress.equals("::1") || ipAddress.startsWith("192.168.") || 
+            ipAddress.startsWith("10.") || ipAddress.startsWith("172.")) {
+            return "本地";
         }
-
-        // 这里可以集成第三方IP地理位置服务，如高德、百度等
-        // 目前返回模拟数据
-        String[] locations = { "北京", "上海", "广州", "深圳", "杭州", "南京", "成都", "武汉" };
-        int index = Math.abs(ipAddress.hashCode()) % locations.length;
-        return locations[index];
+        
+        // 这里可以集成第三方IP地址库或API
+        // 暂时返回"中国"作为默认值
+        return "中国";
     }
 
     @Override
     public String getClientIpAddress(HttpServletRequest request) {
-        String ipAddress = request.getHeader("X-Forwarded-For");
-        if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("Proxy-Client-IP");
+        String ip = request.getHeader("X-Forwarded-For");
+        
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
         }
-        if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("WL-Proxy-Client-IP");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
         }
-        if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("HTTP_CLIENT_IP");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
         }
-        if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("HTTP_X_FORWARDED_FOR");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
         }
-        if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getRemoteAddr();
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
         }
-
-        // 如果是多个IP地址，取第一个
-        if (ipAddress != null && ipAddress.contains(",")) {
-            ipAddress = ipAddress.split(",")[0].trim();
+        
+        // 处理多个IP的情况，取第一个
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
         }
-
-        return ipAddress;
+        
+        return ip;
     }
 }

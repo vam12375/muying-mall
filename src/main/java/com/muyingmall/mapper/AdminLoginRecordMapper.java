@@ -66,16 +66,18 @@ public interface AdminLoginRecordMapper extends BaseMapper<AdminLoginRecord> {
         /**
          * 获取登录统计数据
          */
-        @Select("SELECT " +
+        @Select("<script>" +
+                        "SELECT " +
                         "DATE(login_time) as date, " +
                         "COUNT(*) as count, " +
                         "COUNT(CASE WHEN login_status = 'success' THEN 1 END) as success_count, " +
                         "COUNT(CASE WHEN login_status = 'failed' THEN 1 END) as failed_count " +
                         "FROM admin_login_records " +
-                        "WHERE login_time >= #{startTime} AND login_time <= #{endTime} " +
+                        "WHERE login_time >= #{startTime} AND login_time &lt;= #{endTime} " +
                         "<if test='adminId != null'> AND admin_id = #{adminId} </if>" +
                         "GROUP BY DATE(login_time) " +
-                        "ORDER BY date DESC")
+                        "ORDER BY date DESC" +
+                        "</script>")
         List<Map<String, Object>> selectLoginStatistics(@Param("adminId") Integer adminId,
                         @Param("startTime") LocalDateTime startTime,
                         @Param("endTime") LocalDateTime endTime);
@@ -100,22 +102,26 @@ public interface AdminLoginRecordMapper extends BaseMapper<AdminLoginRecord> {
         /**
          * 获取平均在线时长
          */
-        @Select("SELECT AVG(duration_seconds) as avg_duration " +
+        @Select("<script>" +
+                        "SELECT AVG(duration_seconds) as avg_duration " +
                         "FROM admin_login_records " +
                         "WHERE duration_seconds IS NOT NULL AND login_status = 'success' " +
                         "<if test='adminId != null'> AND admin_id = #{adminId} </if>" +
-                        "<if test='days != null'> AND login_time >= DATE_SUB(NOW(), INTERVAL #{days} DAY) </if>")
+                        "<if test='days != null'> AND login_time >= DATE_SUB(NOW(), INTERVAL #{days} DAY) </if>" +
+                        "</script>")
         Double selectAvgOnlineTime(@Param("adminId") Integer adminId,
                         @Param("days") Integer days);
 
         /**
          * 获取最长会话时长
          */
-        @Select("SELECT MAX(duration_seconds) as max_duration " +
+        @Select("<script>" +
+                        "SELECT MAX(duration_seconds) as max_duration " +
                         "FROM admin_login_records " +
                         "WHERE duration_seconds IS NOT NULL AND login_status = 'success' " +
                         "<if test='adminId != null'> AND admin_id = #{adminId} </if>" +
-                        "<if test='days != null'> AND login_time >= DATE_SUB(NOW(), INTERVAL #{days} DAY) </if>")
+                        "<if test='days != null'> AND login_time >= DATE_SUB(NOW(), INTERVAL #{days} DAY) </if>" +
+                        "</script>")
         Integer selectMaxSessionTime(@Param("adminId") Integer adminId,
                         @Param("days") Integer days);
 }
