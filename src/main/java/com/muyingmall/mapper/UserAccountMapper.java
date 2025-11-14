@@ -26,17 +26,16 @@ public interface UserAccountMapper extends BaseMapper<UserAccount> {
                         "<script>",
                         "SELECT",
                         "  ua.id, ua.user_id, ua.balance, ua.status, ua.create_time, ua.update_time,",
-                        "  u.id as u_id, u.username as u_username, u.nickname as u_nickname, u.email as u_email, u.phone as u_phone",
+                        "  u.user_id as u_id, u.username as u_username, u.nickname as u_nickname, u.email as u_email",
                         "FROM",
                         "  user_account ua",
                         "LEFT JOIN",
-                        "  user u ON ua.user_id = u.id",
+                        "  user u ON ua.user_id = u.user_id",
                         "<where>",
                         "  <if test='keyword != null and keyword != \"\"'>",
                         "    AND (u.username LIKE CONCAT('%', #{keyword}, '%')",
                         "    OR u.nickname LIKE CONCAT('%', #{keyword}, '%')",
-                        "    OR u.email LIKE CONCAT('%', #{keyword}, '%')",
-                        "    OR u.phone LIKE CONCAT('%', #{keyword}, '%'))",
+                        "    OR u.email LIKE CONCAT('%', #{keyword}, '%'))",
                         "  </if>",
                         "  <if test='status != null'>",
                         "    AND ua.status = #{status}",
@@ -107,16 +106,26 @@ public interface UserAccountMapper extends BaseMapper<UserAccount> {
          *
          * @param page    分页参数
          * @param keyword 搜索关键字(用户名/昵称/邮箱/手机)
+         * @param status  账户状态
          * @return 分页结果
          */
         @Select({
                         "<script>",
                         "SELECT",
-                        "  ua.*, u.username, u.nickname, u.email, u.phone",
-                        "FROM",
-                        "  user_account ua",
-                        "LEFT JOIN",
-                        "  user u ON ua.user_id = u.id",
+                        "  ua.account_id AS account_id,",
+                        "  ua.user_id AS user_id,",
+                        "  ua.balance AS balance,",
+                        "  ua.total_recharge AS total_recharge,",
+                        "  ua.total_consumption AS total_consumption,",
+                        "  ua.status AS status,",
+                        "  ua.create_time AS create_time,",
+                        "  ua.update_time AS update_time,",
+                        "  u.username AS username,",
+                        "  u.nickname AS nickname,",
+                        "  u.email AS email,",
+                        "  u.phone AS phone",
+                        "FROM user_account ua",
+                        "LEFT JOIN user u ON ua.user_id = u.user_id",
                         "<where>",
                         "  <if test='keyword != null and keyword != \"\"'>",
                         "    AND (u.username LIKE CONCAT('%', #{keyword}, '%')",
@@ -124,11 +133,28 @@ public interface UserAccountMapper extends BaseMapper<UserAccount> {
                         "    OR u.email LIKE CONCAT('%', #{keyword}, '%')",
                         "    OR u.phone LIKE CONCAT('%', #{keyword}, '%'))",
                         "  </if>",
+                        "  <if test='status != null'>",
+                        "    AND ua.status = #{status}",
+                        "  </if>",
                         "</where>",
                         "ORDER BY ua.create_time DESC",
                         "</script>"
         })
-        IPage<UserAccount> getUserAccountPage(Page<UserAccount> page, @Param("keyword") String keyword);
+        @Results({
+                        @Result(id = true, column = "account_id", property = "id"),
+                        @Result(column = "user_id", property = "userId"),
+                        @Result(column = "balance", property = "balance"),
+                        @Result(column = "total_recharge", property = "totalRecharge"),
+                        @Result(column = "total_consumption", property = "totalConsumption"),
+                        @Result(column = "status", property = "status"),
+                        @Result(column = "create_time", property = "createTime"),
+                        @Result(column = "update_time", property = "updateTime"),
+                        @Result(column = "username", property = "username"),
+                        @Result(column = "nickname", property = "nickname"),
+                        @Result(column = "email", property = "email"),
+                        @Result(column = "phone", property = "phone")
+        })
+        IPage<UserAccount> getUserAccountPage(Page<UserAccount> page, @Param("keyword") String keyword, @Param("status") Integer status);
 
         /**
          * 根据用户ID获取账户信息

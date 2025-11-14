@@ -64,16 +64,8 @@ public class UserAccountServiceImpl implements UserAccountService {
     public PageResult<UserAccount> getUserAccountPage(Integer page, Integer size, String keyword, Integer status) {
         Page<UserAccount> pageParam = new Page<>(page, size);
 
-        // 构建查询条件
-        LambdaQueryWrapper<UserAccount> queryWrapper = new LambdaQueryWrapper<>();
-
-        // 添加状态条件
-        if (status != null) {
-            queryWrapper.eq(UserAccount::getStatus, status);
-        }
-
-        // 执行查询
-        IPage<UserAccount> pageResult = userAccountMapper.getUserAccountPage(pageParam, keyword);
+        // 执行查询，直接传递status参数到Mapper
+        IPage<UserAccount> pageResult = userAccountMapper.getUserAccountPage(pageParam, keyword, status);
 
         // 转换为自定义PageResult
         return new PageResult<UserAccount>(
