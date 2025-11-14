@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
@@ -59,22 +60,37 @@ public class AdminController {
      * 管理员登录
      */
     @PostMapping("/login")
-    public CommonResult login(@RequestBody AdminLoginDTO loginParam) {
+    public CommonResult login(@RequestBody AdminLoginDTO loginParam, HttpServletRequest request) {
         // 根据用户名查询用户
         User user = userService.getUserByUsername(loginParam.getAdmin_name());
 
         // 用户不存在或密码错误
         if (user == null || !userService.verifyPassword(user, loginParam.getAdmin_pass())) {
+            // 记录登录失败
+            if (user != null) {
+                loginRecordService.recordLogin(user.getUserId(), user.getUsername(), request, 
+                        "failed", "密码错误");
+            } else {
+                loginRecordService.recordLogin(null, loginParam.getAdmin_name(), request, 
+                        "failed", "用户不存在");
+            }
             return CommonResult.failed("用户名或密码错误");
         }
 
         // 检查用户角色是否为管理员
         if (!"admin".equals(user.getRole())) {
+            // 记录登录失败
+            loginRecordService.recordLogin(user.getUserId(), user.getUsername(), request, 
+                    "failed", "非管理员账号");
             return CommonResult.failed("该账号没有管理员权限");
         }
 
         // 用户存在且验证通过，生成token
         String token = userService.generateToken(user);
+
+        // 记录登录成功
+        loginRecordService.recordLogin(user.getUserId(), user.getUsername(), request, 
+                "success", null);
 
         // 封装返回结果
         Map<String, Object> result = new HashMap<>();
@@ -114,19 +130,32 @@ public class AdminController {
             return CommonResult.forbidden("该账号没有管理员权限");
         }
 
+        // 获取登录统计信息
+        Map<String, Object> loginStats = loginRecordService.getLoginStatistics(user.getUserId(), 365);
+        
+        // 获取最近一次登录记录
+        List<AdminLoginRecord> recentLogins = loginRecordService.getRecentLogins(user.getUserId(), 2);
+        String lastLoginTime = null;
+        if (recentLogins.size() > 1) {
+            // 获取倒数第二次登录时间（最后一次是当前登录）
+            lastLoginTime = recentLogins.get(1).getLoginTime().toString();
+        } else if (!recentLogins.isEmpty()) {
+            lastLoginTime = recentLogins.get(0).getLoginTime().toString();
+        }
+
         // 封装完整的用户信息
         Map<String, Object> userInfo = new HashMap<>();
-        userInfo.put("id", user.getUserId());
+        userInfo.put("userId", user.getUserId());
         userInfo.put("username", user.getUsername());
         userInfo.put("nickname", user.getNickname());
         userInfo.put("avatar", user.getAvatar());
-        userInfo.put("email", user.getEmail()); // 添加邮箱
-        userInfo.put("phone", user.getPhone()); // 添加手机号
+        userInfo.put("email", user.getEmail());
+        userInfo.put("phone", user.getPhone());
         userInfo.put("role", user.getRole());
-        userInfo.put("status", user.getStatus()); // 添加状态
-        userInfo.put("createTime", user.getCreateTime()); // 添加创建时间
-        userInfo.put("lastLogin", null); // 添加最后登录时间（暂无数据）
-        userInfo.put("loginCount", 0); // 添加登录次数（暂无数据）
+        userInfo.put("status", user.getStatus());
+        userInfo.put("createTime", user.getCreateTime());
+        userInfo.put("lastLoginTime", lastLoginTime); // 最后登录时间
+        userInfo.put("loginCount", loginStats.get("totalLogins")); // 总登录次数
 
         return CommonResult.success(userInfo);
     }
@@ -214,7 +243,12 @@ public class AdminController {
         }
 
         try {
-            // 调用上传头像服务
+            // 验证文件大小（最大5MB）
+            if (file.getSize() > 5 * 1024 * 1024) {
+                return CommonResult.failed("文件大小不能超过5MB");
+            }
+
+            // 调用上传头像服务（保存到前端目录）
             String avatarUrl = userService.uploadAvatar(user.getUserId(), file);
 
             // 返回结果
