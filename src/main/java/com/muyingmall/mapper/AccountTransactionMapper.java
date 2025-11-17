@@ -86,13 +86,23 @@ public interface AccountTransactionMapper extends BaseMapper<AccountTransaction>
 
         /**
          * 根据ID查询交易记录
+         * 注意：计算 beforeBalance 和 afterBalance
          *
          * @param id 交易记录ID
          * @return 交易记录
          */
-        @Select("SELECT transaction_id as id, user_id, account_id, type, amount, balance, status, payment_method, " +
-                        "transaction_no, related_id as relatedId, create_time, update_time, description, remark " +
-                        "FROM account_transaction WHERE transaction_id = #{id}")
+        @Select("<script>" +
+                        "SELECT transaction_id as id, user_id, account_id, type, amount, balance, status, payment_method, " +
+                        "transaction_no, related_id as relatedId, create_time, update_time, description, remark, " +
+                        "balance as afterBalance, " +
+                        "CASE " +
+                        "  WHEN type IN (1, 3, 4) AND amount &gt; 0 THEN balance - amount " +
+                        "  WHEN type IN (1, 3, 4) AND amount &lt; 0 THEN balance - amount " +
+                        "  WHEN type = 2 THEN balance + amount " +
+                        "  ELSE balance " +
+                        "END as beforeBalance " +
+                        "FROM account_transaction WHERE transaction_id = #{id}" +
+                        "</script>")
         @Results({
                         @Result(id = true, column = "id", property = "id"),
                         @Result(column = "user_id", property = "userId"),
@@ -107,7 +117,9 @@ public interface AccountTransactionMapper extends BaseMapper<AccountTransaction>
                         @Result(column = "create_time", property = "createTime"),
                         @Result(column = "update_time", property = "updateTime"),
                         @Result(column = "description", property = "description"),
-                        @Result(column = "remark", property = "remark")
+                        @Result(column = "remark", property = "remark"),
+                        @Result(column = "beforeBalance", property = "beforeBalance"),
+                        @Result(column = "afterBalance", property = "afterBalance")
         })
         AccountTransaction selectById(@Param("id") Integer id);
 
@@ -170,13 +182,23 @@ public interface AccountTransactionMapper extends BaseMapper<AccountTransaction>
 
         /**
          * 根据用户ID查询交易记录列表
+         * 注意：计算 beforeBalance 和 afterBalance
          *
          * @param userId 用户ID
          * @return 交易记录列表
          */
-        @Select("SELECT transaction_id as id, user_id, account_id, type, amount, balance, status, payment_method, " +
-                        "transaction_no, related_id as relatedId, create_time, update_time, description, remark " +
-                        "FROM account_transaction WHERE user_id = #{userId} ORDER BY create_time DESC")
+        @Select("<script>" +
+                        "SELECT transaction_id as id, user_id, account_id, type, amount, balance, status, payment_method, " +
+                        "transaction_no, related_id as relatedId, create_time, update_time, description, remark, " +
+                        "balance as afterBalance, " +
+                        "CASE " +
+                        "  WHEN type IN (1, 3, 4) AND amount &gt; 0 THEN balance - amount " +
+                        "  WHEN type IN (1, 3, 4) AND amount &lt; 0 THEN balance - amount " +
+                        "  WHEN type = 2 THEN balance + amount " +
+                        "  ELSE balance " +
+                        "END as beforeBalance " +
+                        "FROM account_transaction WHERE user_id = #{userId} ORDER BY create_time DESC" +
+                        "</script>")
         @Results({
                         @Result(id = true, column = "id", property = "id"),
                         @Result(column = "user_id", property = "userId"),
@@ -191,12 +213,17 @@ public interface AccountTransactionMapper extends BaseMapper<AccountTransaction>
                         @Result(column = "create_time", property = "createTime"),
                         @Result(column = "update_time", property = "updateTime"),
                         @Result(column = "description", property = "description"),
-                        @Result(column = "remark", property = "remark")
+                        @Result(column = "remark", property = "remark"),
+                        @Result(column = "beforeBalance", property = "beforeBalance"),
+                        @Result(column = "afterBalance", property = "afterBalance")
         })
         List<AccountTransaction> selectByUserId(@Param("userId") Integer userId);
 
         /**
          * 分页查询交易记录列表
+         * 注意：计算 beforeBalance 和 afterBalance
+         * - afterBalance = balance（交易后余额）
+         * - beforeBalance = balance - amount（充值/退款类型：1,3）或 balance + amount（消费类型：2）
          *
          * @param page     分页参数
          * @param queryDTO 查询条件
@@ -207,7 +234,14 @@ public interface AccountTransactionMapper extends BaseMapper<AccountTransaction>
                         "SELECT",
                         "  t.transaction_id as id, t.user_id, t.account_id, t.type, t.amount, t.balance, t.status,",
                         "  t.payment_method, t.transaction_no, t.related_id as relatedId, t.description, t.remark,",
-                        "  t.create_time, t.update_time",
+                        "  t.create_time, t.update_time,",
+                        "  t.balance as afterBalance,",
+                        "  CASE",
+                        "    WHEN t.type IN (1, 3, 4) AND t.amount &gt; 0 THEN t.balance - t.amount",
+                        "    WHEN t.type IN (1, 3, 4) AND t.amount &lt; 0 THEN t.balance - t.amount",
+                        "    WHEN t.type = 2 THEN t.balance + t.amount",
+                        "    ELSE t.balance",
+                        "  END as beforeBalance",
                         "FROM",
                         "  account_transaction t",
                         "<where>",
