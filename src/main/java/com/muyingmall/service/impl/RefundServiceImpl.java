@@ -457,6 +457,25 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
             log.warn("未找到符合条件的退款记录，请检查查询条件或数据库");
         }
 
+        // 关联查询用户信息
+        if (!resultPage.getRecords().isEmpty()) {
+            log.debug("开始关联查询用户信息，退款记录数: {}", resultPage.getRecords().size());
+            for (Refund refund : resultPage.getRecords()) {
+                if (refund.getUserId() != null) {
+                    try {
+                        User user = userService.getById(refund.getUserId());
+                        if (user != null) {
+                            refund.setUsername(user.getUsername());
+                            log.debug("为退款单 {} 设置用户名: {}", refund.getRefundNo(), user.getUsername());
+                        }
+                    } catch (Exception e) {
+                        log.warn("获取用户信息失败，用户ID: {}, 错误: {}", refund.getUserId(), e.getMessage());
+                    }
+                }
+            }
+            log.debug("用户信息关联查询完成");
+        }
+
         return resultPage;
     }
 

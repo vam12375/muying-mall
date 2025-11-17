@@ -685,4 +685,197 @@ public class AdminController {
             return CommonResult.failed("推送统计数据失败: " + e.getMessage());
         }
     }
+
+    /**
+     * 获取系统日志统计信息
+     * Source: 新增功能，遵循KISS/YAGNI/SOLID原则
+     */
+    @GetMapping("/system/logs/statistics")
+    @PreAuthorize("hasAuthority('admin')")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "查看系统日志统计", module = "系统管理", operationType = "READ")
+    public CommonResult<Map<String, Object>> getSystemLogStatistics(
+            @RequestParam(required = false) Integer adminId,
+            @RequestParam(defaultValue = "7") Integer days) {
+        try {
+            Map<String, Object> statistics = new HashMap<>();
+            
+            // 构建时间范围查询条件
+            java.time.LocalDateTime startTime = java.time.LocalDateTime.now().minusDays(days);
+            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.muyingmall.entity.AdminOperationLog> queryWrapper = 
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+            queryWrapper.ge(com.muyingmall.entity.AdminOperationLog::getCreateTime, startTime);
+            
+            if (adminId != null) {
+                queryWrapper.eq(com.muyingmall.entity.AdminOperationLog::getAdminId, adminId);
+            }
+            
+            // 总日志数
+            long totalLogs = operationLogService.count(queryWrapper);
+            statistics.put("totalLogs", totalLogs);
+            
+            // 成功数和失败数
+            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.muyingmall.entity.AdminOperationLog> successWrapper = 
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+            successWrapper.ge(com.muyingmall.entity.AdminOperationLog::getCreateTime, startTime);
+            if (adminId != null) {
+                successWrapper.eq(com.muyingmall.entity.AdminOperationLog::getAdminId, adminId);
+            }
+            successWrapper.eq(com.muyingmall.entity.AdminOperationLog::getOperationResult, "success");
+            long successCount = operationLogService.count(successWrapper);
+            statistics.put("successCount", successCount);
+            
+            long failedCount = totalLogs - successCount;
+            statistics.put("failedCount", failedCount);
+            
+            // 成功率
+            double successRate = totalLogs > 0 ? (successCount * 100.0 / totalLogs) : 0.0;
+            statistics.put("successRate", Math.round(successRate * 100.0) / 100.0);
+            
+            // 平均响应时间、最大最小响应时间
+            List<com.muyingmall.entity.AdminOperationLog> logs = operationLogService.list(queryWrapper);
+            if (!logs.isEmpty()) {
+                List<Long> executionTimes = logs.stream()
+                    .map(com.muyingmall.entity.AdminOperationLog::getExecutionTimeMs)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(java.util.stream.Collectors.toList());
+                
+                if (!executionTimes.isEmpty()) {
+                    double avgTime = executionTimes.stream()
+                        .mapToLong(Long::longValue)
+                        .average()
+                        .orElse(0.0);
+                    statistics.put("avgExecutionTime", Math.round(avgTime * 100.0) / 100.0);
+                    
+                    statistics.put("maxExecutionTime", executionTimes.stream()
+                        .max(Long::compareTo)
+                        .orElse(0L));
+                    
+                    statistics.put("minExecutionTime", executionTimes.stream()
+                        .min(Long::compareTo)
+                        .orElse(0L));
+                }
+            }
+            
+            // 今日日志数
+            java.time.LocalDateTime todayStart = java.time.LocalDateTime.of(java.time.LocalDate.now(), java.time.LocalTime.MIN);
+            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.muyingmall.entity.AdminOperationLog> todayWrapper = 
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+            todayWrapper.ge(com.muyingmall.entity.AdminOperationLog::getCreateTime, todayStart);
+            if (adminId != null) {
+                todayWrapper.eq(com.muyingmall.entity.AdminOperationLog::getAdminId, adminId);
+            }
+            long todayLogs = operationLogService.count(todayWrapper);
+            statistics.put("todayLogs", todayLogs);
+            
+            // 操作类型分布
+            Map<String, Long> operationTypeDistribution = logs.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                    logItem -> logItem.getOperationType() != null ? logItem.getOperationType() : "UNKNOWN",
+                    java.util.stream.Collectors.counting()
+                ));
+            statistics.put("operationTypeDistribution", operationTypeDistribution);
+            
+            // 模块操作统计
+            Map<String, Long> moduleStats = logs.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                    logItem -> logItem.getModule() != null ? logItem.getModule() : "未知模块",
+                    java.util.stream.Collectors.counting()
+                ));
+            
+            List<Map<String, Object>> moduleStatsList = moduleStats.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> stat = new HashMap<>();
+                    stat.put("module", entry.getKey());
+                    stat.put("count", entry.getValue());
+                    return stat;
+                })
+                .sorted((a, b) -> Long.compare((Long) b.get("count"), (Long) a.get("count")))
+                .limit(10)
+                .collect(java.util.stream.Collectors.toList());
+            statistics.put("moduleStats", moduleStatsList);
+            
+            // 每日日志趋势（最近N天）
+            List<Map<String, Object>> dailyTrend = new ArrayList<>();
+            for (int i = days - 1; i >= 0; i--) {
+                java.time.LocalDate date = java.time.LocalDate.now().minusDays(i);
+                java.time.LocalDateTime dayStart = java.time.LocalDateTime.of(date, java.time.LocalTime.MIN);
+                java.time.LocalDateTime dayEnd = java.time.LocalDateTime.of(date, java.time.LocalTime.MAX);
+                
+                com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.muyingmall.entity.AdminOperationLog> dayWrapper = 
+                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+                dayWrapper.between(com.muyingmall.entity.AdminOperationLog::getCreateTime, dayStart, dayEnd);
+                if (adminId != null) {
+                    dayWrapper.eq(com.muyingmall.entity.AdminOperationLog::getAdminId, adminId);
+                }
+                
+                long dayCount = operationLogService.count(dayWrapper);
+                
+                Map<String, Object> dayData = new HashMap<>();
+                dayData.put("date", date.toString());
+                dayData.put("count", dayCount);
+                dailyTrend.add(dayData);
+            }
+            statistics.put("dailyTrend", dailyTrend);
+            
+            return CommonResult.success(statistics);
+        } catch (Exception e) {
+            log.error("获取系统日志统计失败", e);
+            return CommonResult.failed("获取系统日志统计失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 批量删除系统日志
+     * Source: 新增功能，遵循KISS/YAGNI/SOLID原则
+     */
+    @DeleteMapping("/system/logs/batch")
+    @PreAuthorize("hasAuthority('admin')")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "批量删除系统日志", module = "系统管理", operationType = "DELETE")
+    public CommonResult<Void> batchDeleteSystemLogs(@RequestBody List<Long> ids) {
+        try {
+            if (ids == null || ids.isEmpty()) {
+                return CommonResult.failed("请选择要删除的日志");
+            }
+            
+            boolean success = operationLogService.removeByIds(ids);
+            if (success) {
+                return CommonResult.success(null, "删除成功");
+            } else {
+                return CommonResult.failed("删除失败");
+            }
+        } catch (Exception e) {
+            log.error("批量删除系统日志失败", e);
+            return CommonResult.failed("批量删除系统日志失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 清空指定天数之前的日志
+     * Source: 新增功能，遵循KISS/YAGNI/SOLID原则
+     */
+    @DeleteMapping("/system/logs/clear")
+    @PreAuthorize("hasAuthority('admin')")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "清空历史日志", module = "系统管理", operationType = "DELETE")
+    public CommonResult<Void> clearOldSystemLogs(@RequestParam Integer days) {
+        try {
+            if (days == null || days < 1) {
+                return CommonResult.failed("天数参数无效");
+            }
+            
+            java.time.LocalDateTime beforeTime = java.time.LocalDateTime.now().minusDays(days);
+            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.muyingmall.entity.AdminOperationLog> queryWrapper = 
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+            queryWrapper.lt(com.muyingmall.entity.AdminOperationLog::getCreateTime, beforeTime);
+            
+            boolean success = operationLogService.remove(queryWrapper);
+            if (success) {
+                return CommonResult.success(null, "清空成功");
+            } else {
+                return CommonResult.failed("清空失败");
+            }
+        } catch (Exception e) {
+            log.error("清空历史日志失败", e);
+            return CommonResult.failed("清空历史日志失败：" + e.getMessage());
+        }
+    }
 }

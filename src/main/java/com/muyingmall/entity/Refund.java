@@ -137,6 +137,12 @@ public class Refund implements Serializable {
     private LocalDateTime updateTime;
 
     /**
+     * 用户名（非数据库字段，用于前端显示）
+     */
+    @TableField(exist = false)
+    private String username;
+
+    /**
      * 关联的订单信息（非数据库字段）
      */
     @TableField(exist = false)

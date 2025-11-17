@@ -31,6 +31,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/comment/**")
                 .addResourceLocations("file:" + uploadPath + "/comment/");
 
+        // 配置商品图片的访问路径
+        registry.addResourceHandler("/products/**")
+                .addResourceLocations("file:" + uploadPath + "/products/");
+
         // 配置上传文件的访问路径
         registry.addResourceHandler("/upload/**")
                 .addResourceLocations("file:" + uploadPath + "/");
