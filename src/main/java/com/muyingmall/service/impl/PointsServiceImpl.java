@@ -1123,20 +1123,43 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
     public Map<String, Object> getPointsStats(LocalDate startDate, LocalDate endDate) {
         Map<String, Object> stats = new HashMap<>();
 
-        // 累计发放积分
-        Integer totalEarned = 0;
-        // 累计消费积分
-        Integer totalSpent = 0;
-        // 今日发放积分
-        Integer todayEarned = 0;
-        // 今日消费积分
-        Integer todaySpent = 0;
+        // 查询所有用户积分记录
+        List<UserPoints> allUserPoints = userPointsMapper.selectList(null);
+        
+        // 统计总用户数
+        long totalUsers = allUserPoints.size();
+        
+        // 统计活跃用户数（有积分的用户）
+        long activeUsers = allUserPoints.stream()
+                .filter(up -> up.getPoints() != null && up.getPoints() > 0)
+                .count();
 
-        // 使用模拟数据，实际项目中应查询数据库
+        // 统计累计发放积分（所有earn类型的积分总和）
+        LambdaQueryWrapper<PointsHistory> earnWrapper = new LambdaQueryWrapper<>();
+        earnWrapper.eq(PointsHistory::getType, "earn");
+        List<PointsHistory> earnRecords = pointsHistoryMapper.selectList(earnWrapper);
+        Integer totalEarned = earnRecords.stream()
+                .mapToInt(record -> record.getPoints() != null ? record.getPoints() : 0)
+                .sum();
+
+        // 统计累计消费积分（所有spend类型的积分总和，取绝对值）
+        LambdaQueryWrapper<PointsHistory> spendWrapper = new LambdaQueryWrapper<>();
+        spendWrapper.eq(PointsHistory::getType, "spend");
+        List<PointsHistory> spendRecords = pointsHistoryMapper.selectList(spendWrapper);
+        Integer totalSpent = spendRecords.stream()
+                .mapToInt(record -> record.getPoints() != null ? Math.abs(record.getPoints()) : 0)
+                .sum();
+
+        // 统计总积分数（所有用户当前积分总和）
+        Integer totalPoints = allUserPoints.stream()
+                .mapToInt(up -> up.getPoints() != null ? up.getPoints() : 0)
+                .sum();
+
+        stats.put("totalUsers", totalUsers);
+        stats.put("activeUsers", activeUsers);
+        stats.put("totalPoints", totalPoints);
         stats.put("totalEarned", totalEarned);
         stats.put("totalSpent", totalSpent);
-        stats.put("todayEarned", todayEarned);
-        stats.put("todaySpent", todaySpent);
 
         return stats;
     }
