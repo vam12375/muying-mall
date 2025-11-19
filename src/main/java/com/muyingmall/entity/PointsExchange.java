@@ -67,26 +67,31 @@ public class PointsExchange implements Serializable {
     /**
      * 物流单号
      */
+    @TableField("tracking_no")
     private String trackingNumber;
 
     /**
      * 物流公司
      */
+    @TableField("tracking_company")
     private String logisticsCompany;
 
     /**
-     * 发货时间
+     * 发货时间（非数据库字段，用于前端展示）
      */
+    @TableField(exist = false)
     private LocalDateTime shipTime;
 
     /**
-     * 联系人
+     * 联系人（非数据库字段，用于前端展示）
      */
+    @TableField(exist = false)
     private String contact;
 
     /**
-     * 收货地址
+     * 收货地址（非数据库字段，用于前端展示）
      */
+    @TableField(exist = false)
     private String address;
 
     /**

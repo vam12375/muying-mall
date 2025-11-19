@@ -138,7 +138,10 @@ public class AdminController {
      * @return 上传结果，包含文件URL
      */
     @PostMapping("/upload")
-    public CommonResult<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
+    public CommonResult<Map<String, String>> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "folder", required = false, defaultValue = "images") String folder,
+            @RequestParam(value = "filename", required = false) String customFilename) {
         try {
             // 验证文件
             if (file == null || file.isEmpty()) {
@@ -154,12 +157,13 @@ public class AdminController {
 
             // 限制文件类型
             if (!".jpg".equalsIgnoreCase(suffix) && !".jpeg".equalsIgnoreCase(suffix) &&
-                    !".png".equalsIgnoreCase(suffix) && !".gif".equalsIgnoreCase(suffix)) {
-                return CommonResult.failed("只支持jpg、jpeg、png、gif格式的图片");
+                    !".png".equalsIgnoreCase(suffix) && !".gif".equalsIgnoreCase(suffix) &&
+                    !".webp".equalsIgnoreCase(suffix)) {
+                return CommonResult.failed("只支持jpg、jpeg、png、gif、webp格式的图片");
             }
 
-            // 生成存储路径
-            String relativeDir = "/images/" + UUID.randomUUID().toString().substring(0, 8);
+            // 生成存储路径（支持指定文件夹）
+            String relativeDir = "/" + folder;
             String storageDir = uploadPath + relativeDir;
 
             // 确保目录存在
@@ -168,9 +172,23 @@ public class AdminController {
                 Files.createDirectories(uploadDir);
             }
 
-            // 生成文件名
-            String filename = UUID.randomUUID().toString().replace("-", "") + suffix;
+            // 生成文件名（支持自定义文件名）
+            String filename;
+            if (customFilename != null && !customFilename.isEmpty()) {
+                // 使用自定义文件名，但保留原始后缀
+                filename = customFilename + suffix;
+            } else {
+                // 使用UUID生成随机文件名
+                filename = UUID.randomUUID().toString().replace("-", "") + suffix;
+            }
+            
             Path filePath = uploadDir.resolve(filename);
+
+            // 如果文件已存在，先删除旧文件（支持覆盖）
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+                log.info("删除旧文件: {}", filePath);
+            }
 
             // 保存文件
             Files.copy(file.getInputStream(), filePath);
@@ -181,6 +199,7 @@ public class AdminController {
             // 返回结果
             Map<String, String> result = new HashMap<>();
             result.put("url", fileUrl);
+            result.put("filename", filename);  // 返回文件名
             result.put("name", originalFilename);
 
             return CommonResult.success(result);
