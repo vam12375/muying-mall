@@ -15,6 +15,7 @@ spring:
   # 引入私有配置文件
   profiles:
     include: private
+    active: performance
   
   # 数据库配置
   datasource:
