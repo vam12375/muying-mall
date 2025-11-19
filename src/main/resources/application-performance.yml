@@ -1,0 +1,121 @@
+# 性能优化配置
+# Source: 性能优化 - 数据库和连接池配置
+# 遵循协议: AURA-X-KYS (KISS/YAGNI/SOLID)
+
+spring:
+  # 数据源配置优化
+  datasource:
+    hikari:
+      # 连接池大小
+      minimum-idle: 10
+      maximum-pool-size: 50
+      # 连接超时
+      connection-timeout: 20000
+      # 空闲超时
+      idle-timeout: 300000
+      # 最大生命周期
+      max-lifetime: 1200000
+      # 连接测试查询
+      connection-test-query: SELECT 1
+      # 自动提交
+      auto-commit: true
+      # 连接池名称
+      pool-name: HikariPool-Performance
+      # 泄漏检测阈值
+      leak-detection-threshold: 60000
+
+  # Redis配置优化
+  data:
+    redis:
+      # 连接池配置
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 3000
+        # 关闭超时
+        shutdown-timeout: 100ms
+      # 超时配置
+      timeout: 3000ms
+      # 连接超时
+      connect-timeout: 3000ms
+
+  # JPA配置优化
+  jpa:
+    properties:
+      hibernate:
+        # 批量操作大小
+        jdbc:
+          batch_size: 50
+          fetch_size: 50
+        # 二级缓存
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+        # SQL格式化（生产环境关闭）
+        format_sql: false
+        # 显示SQL（生产环境关闭）
+        show_sql: false
+        # 统计信息
+        generate_statistics: false
+
+# MyBatis Plus配置优化
+mybatis-plus:
+  configuration:
+    # 缓存
+    cache-enabled: true
+    # 懒加载
+    lazy-loading-enabled: true
+    aggressive-lazy-loading: false
+    # 多结果集
+    multiple-result-sets-enabled: true
+    # 列名映射
+    use-column-label: true
+    # 自动映射
+    auto-mapping-behavior: partial
+    # 默认执行器类型
+    default-executor-type: reuse
+    # 超时时间
+    default-statement-timeout: 25000
+    # 日志实现（生产环境使用NO_LOGGING）
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    # 刷新Mapper
+    refresh: false
+    db-config:
+      # 逻辑删除
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# 服务器配置优化
+server:
+  # Tomcat配置
+  tomcat:
+    threads:
+      # 最大线程数
+      max: 200
+      # 最小空闲线程数
+      min-spare: 10
+    # 最大连接数
+    max-connections: 10000
+    # 接受队列大小
+    accept-count: 100
+    # 连接超时
+    connection-timeout: 20000
+  # 压缩
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
+    min-response-size: 1024
+
+# 日志配置（生产环境）
+logging:
+  level:
+    root: INFO
+    com.muyingmall: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+    com.baomidou.mybatisplus: WARN
