@@ -7,7 +7,7 @@ import java.lang.annotation.*;
  * 用于标记需要清除缓存的方法
  * 
  * Source: 性能优化 - Redis缓存增强
- * 遵循协议: AURA-X-KYS (KISS/YAGNI/SOLID)
+ * 
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

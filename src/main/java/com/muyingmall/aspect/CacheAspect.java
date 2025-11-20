@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * 处理@Cacheable和@CacheEvict注解
  * 
  * Source: 性能优化 - Redis缓存增强
- * 遵循协议: AURA-X-KYS (KISS/YAGNI/SOLID)
+ * 
  */
 @Aspect
 @Component
