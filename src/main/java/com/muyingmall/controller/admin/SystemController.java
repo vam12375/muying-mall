@@ -1,6 +1,6 @@
 package com.muyingmall.controller.admin;
 
-import com.muyingmall.common.result.Result;
+import com.muyingmall.common.api.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;

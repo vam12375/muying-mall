@@ -104,10 +104,8 @@ public class RabbitMQConfig {
         });
         
         // 配置消息返回回调
-        template.setReturnsCallback(returned -> {
-            log.error("消息被退回: {}, 退回原因: {}, 路由键: {}", 
-                returned.getMessage(), returned.getReplyText(), returned.getRoutingKey());
-        });
+        template.setReturnsCallback(returned -> log.error("消息被退回: {}, 退回原因: {}, 路由键: {}",
+            returned.getMessage(), returned.getReplyText(), returned.getRoutingKey()));
         
         return template;
     }

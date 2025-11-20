@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.muyingmall.common.CacheConstants;
+import com.muyingmall.common.constants.CacheConstants;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.entity.User;
 import com.muyingmall.entity.UserMessage;

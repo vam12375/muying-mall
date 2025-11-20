@@ -1,8 +1,13 @@
 package com.muyingmall.common.api;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * 通用返回结果类
  */
+@Setter
+@Getter
 public class CommonResult<T> {
     private long code;
     private String message;
@@ -21,21 +26,21 @@ public class CommonResult<T> {
      * 成功返回结果
      */
     public static <T> CommonResult<T> success(T data) {
-        return new CommonResult<T>(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), data);
+        return new CommonResult<>(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), data);
     }
 
     /**
      * 成功返回结果
      */
     public static <T> CommonResult<T> success(T data, String message) {
-        return new CommonResult<T>(ResultCode.SUCCESS.getCode(), message, data);
+        return new CommonResult<>(ResultCode.SUCCESS.getCode(), message, data);
     }
 
     /**
      * 失败返回结果
      */
     public static <T> CommonResult<T> failed(String message) {
-        return new CommonResult<T>(ResultCode.FAILED.getCode(), message, null);
+        return new CommonResult<>(ResultCode.FAILED.getCode(), message, null);
     }
 
     /**
@@ -49,44 +54,21 @@ public class CommonResult<T> {
      * 参数验证失败返回结果
      */
     public static <T> CommonResult<T> validateFailed(String message) {
-        return new CommonResult<T>(ResultCode.VALIDATE_FAILED.getCode(), message, null);
+        return new CommonResult<>(ResultCode.VALIDATE_FAILED.getCode(), message, null);
     }
 
     /**
      * 未登录返回结果
      */
     public static <T> CommonResult<T> unauthorized(String message) {
-        return new CommonResult<T>(ResultCode.UNAUTHORIZED.getCode(), message, null);
+        return new CommonResult<>(ResultCode.UNAUTHORIZED.getCode(), message, null);
     }
 
     /**
      * 未授权返回结果
      */
     public static <T> CommonResult<T> forbidden(String message) {
-        return new CommonResult<T>(ResultCode.FORBIDDEN.getCode(), message, null);
+        return new CommonResult<>(ResultCode.FORBIDDEN.getCode(), message, null);
     }
 
-    public long getCode() {
-        return code;
-    }
-
-    public void setCode(long code) {
-        this.code = code;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public T getData() {
-        return data;
-    }
-
-    public void setData(T data) {
-        this.data = data;
-    }
-} 
+}

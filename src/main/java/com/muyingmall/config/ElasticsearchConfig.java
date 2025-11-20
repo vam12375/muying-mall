@@ -33,7 +33,7 @@ public class ElasticsearchConfig {
     public RestClient restClient() {
         try {
             // 解析URL
-            String[] urlParts = elasticsearchUrl.replace("http://", "").replace("https://", "").split(":");
+            String[] urlParts = elasticsearchUrl.replace("https://", "").replace("https://", "").split(":");
             String host = urlParts[0];
             int port = urlParts.length > 1 ? Integer.parseInt(urlParts[1]) : 9200;
 

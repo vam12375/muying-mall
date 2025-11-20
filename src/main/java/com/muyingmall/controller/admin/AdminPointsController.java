@@ -2,7 +2,7 @@ package com.muyingmall.controller.admin;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.muyingmall.common.response.Result;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.entity.*;
 import com.muyingmall.service.PointsOperationService;
 import com.muyingmall.service.PointsProductService;

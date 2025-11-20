@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 /**
  * 缓存切面
  * 处理@Cacheable和@CacheEvict注解
- * 
  * Source: 性能优化 - Redis缓存增强
  * 
  */
@@ -42,7 +41,10 @@ public class CacheAspect {
         Cacheable cacheable = method.getAnnotation(Cacheable.class);
 
         // 生成缓存键
-        String cacheKey = generateCacheKey(cacheable.keyPrefix(), joinPoint.getArgs(), cacheable.useParams());
+        String cacheKey = null;
+        if (cacheable != null) {
+            cacheKey = generateCacheKey(cacheable.keyPrefix(), joinPoint.getArgs(), cacheable.useParams());
+        }
 
         // 尝试从缓存获取
         Object cachedValue = redisUtil.get(cacheKey);
@@ -57,8 +59,12 @@ public class CacheAspect {
 
         // 缓存结果（如果不为null）
         if (result != null) {
-            redisUtil.set(cacheKey, result, cacheable.expireTime());
-            log.debug("结果已缓存: {}, 过期时间: {}秒", cacheKey, cacheable.expireTime());
+            if (cacheable != null) {
+                redisUtil.set(cacheKey, result, cacheable.expireTime());
+            }
+            if (cacheable != null) {
+                log.debug("结果已缓存: {}, 过期时间: {}秒", cacheKey, cacheable.expireTime());
+            }
         }
 
         return result;
@@ -78,18 +84,20 @@ public class CacheAspect {
         Object result = joinPoint.proceed();
 
         // 清除缓存
-        for (String keyPrefix : cacheEvict.keyPrefixes()) {
-            if (cacheEvict.allEntries()) {
-                // 清除所有匹配的键
-                Set<String> keys = redisUtil.keys(keyPrefix + "*");
-                if (keys != null && !keys.isEmpty()) {
-                    redisUtil.del(keys.toArray(new String[0]));
-                    log.debug("已清除缓存: {} (共{}个键)", keyPrefix, keys.size());
+        if (cacheEvict != null) {
+            for (String keyPrefix : cacheEvict.keyPrefixes()) {
+                if (cacheEvict.allEntries()) {
+                    // 清除所有匹配的键
+                    Set<String> keys = redisUtil.keys(keyPrefix + "*");
+                    if (keys != null && !keys.isEmpty()) {
+                        redisUtil.del(keys.toArray(new String[0]));
+                        log.debug("已清除缓存: {} (共{}个键)", keyPrefix, keys.size());
+                    }
+                } else {
+                    // 只清除精确匹配的键
+                    redisUtil.del(keyPrefix);
+                    log.debug("已清除缓存: {}", keyPrefix);
                 }
-            } else {
-                // 只清除精确匹配的键
-                redisUtil.del(keyPrefix);
-                log.debug("已清除缓存: {}", keyPrefix);
             }
         }
 

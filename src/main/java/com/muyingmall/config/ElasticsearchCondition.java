@@ -3,6 +3,7 @@ package com.muyingmall.config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
@@ -14,13 +15,13 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 public class ElasticsearchCondition implements Condition {
 
     @Override
-    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+    public boolean matches(@NotNull ConditionContext context, @NotNull AnnotatedTypeMetadata metadata) {
         try {
             String elasticsearchUrl = context.getEnvironment().getProperty(
                     "spring.data.elasticsearch.uris", "localhost:9200");
             
             // 解析URL
-            String[] urlParts = elasticsearchUrl.replace("http://", "").replace("https://", "").split(":");
+            String[] urlParts = elasticsearchUrl.replace("https://", "").replace("https://", "").split(":");
             String host = urlParts[0];
             int port = urlParts.length > 1 ? Integer.parseInt(urlParts[1]) : 9200;
 

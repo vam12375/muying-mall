@@ -9,7 +9,6 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.ExternalDocumentation;
-import io.swagger.v3.oas.models.tags.Tag;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +18,6 @@ import java.util.Arrays;
 /**
  * OpenAPI (Swagger) 配置类
  * 提供完整的中文API文档，优化分组结构
- * 
  * Source: OpenAPI 配置优化
  * 
  */

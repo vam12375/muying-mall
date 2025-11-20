@@ -2,7 +2,7 @@ package com.muyingmall.controller.admin;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.muyingmall.common.result.Result;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.entity.Order;
 import com.muyingmall.entity.Product;
 import com.muyingmall.entity.User;

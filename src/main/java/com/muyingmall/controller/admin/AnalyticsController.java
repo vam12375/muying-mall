@@ -1,7 +1,7 @@
 package com.muyingmall.controller.admin;
 
-import com.muyingmall.common.CacheConstants;
-import com.muyingmall.common.result.Result;
+import com.muyingmall.common.constants.CacheConstants;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.util.CacheProtectionUtil;
 import com.muyingmall.util.RedisUtil;
 import io.swagger.v3.oas.annotations.Operation;

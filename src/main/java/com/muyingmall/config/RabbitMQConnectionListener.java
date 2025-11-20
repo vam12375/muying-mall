@@ -2,6 +2,7 @@ package com.muyingmall.config;
 
 import com.rabbitmq.client.ShutdownSignalException;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionListener;
 import org.springframework.stereotype.Component;
@@ -29,21 +30,21 @@ public class RabbitMQConnectionListener implements ConnectionListener {
     private volatile boolean hasConnectedBefore = false;
 
     @Override
-    public void onCreate(Connection connection) {
+    public void onCreate(@NotNull Connection connection) {
         hasConnectedBefore = true;
         failureCount.set(0); // 重置计数器
         log.info("✓ RabbitMQ连接已建立: {}", connection);
     }
 
     @Override
-    public void onClose(Connection connection) {
+    public void onClose(@NotNull Connection connection) {
         if (hasConnectedBefore) {
             log.warn("RabbitMQ连接已关闭: {}", connection);
         }
     }
 
     @Override
-    public void onShutDown(ShutdownSignalException signal) {
+    public void onShutDown(@NotNull ShutdownSignalException signal) {
         int currentCount = failureCount.incrementAndGet();
         
         if (currentCount <= MAX_FAILURE_LOGS) {
@@ -60,7 +61,7 @@ public class RabbitMQConnectionListener implements ConnectionListener {
     }
 
     @Override
-    public void onFailed(Exception exception) {
+    public void onFailed(@NotNull Exception exception) {
         int currentCount = failureCount.incrementAndGet();
         
         if (currentCount <= MAX_FAILURE_LOGS) {

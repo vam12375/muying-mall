@@ -173,26 +173,19 @@ public class AdminOperationLogAspect {
         }
 
         // 根据HTTP方法推断操作类型
-        switch (httpMethod.toUpperCase()) {
-            case "GET":
-                return OperationType.READ.getCode();
-            case "POST":
-                return OperationType.CREATE.getCode();
-            case "PUT":
-            case "PATCH":
-                return OperationType.UPDATE.getCode();
-            case "DELETE":
-                return OperationType.DELETE.getCode();
-            default:
-                return OperationType.READ.getCode();
-        }
+        return switch (httpMethod.toUpperCase()) {
+            case "POST" -> OperationType.CREATE.getCode();
+            case "PUT", "PATCH" -> OperationType.UPDATE.getCode();
+            case "DELETE" -> OperationType.DELETE.getCode();
+            default -> OperationType.READ.getCode();
+        };
     }
 
     /**
      * 解析目标ID
      */
     private String parseTargetId(Object[] args) {
-        if (args == null || args.length == 0) {
+        if (args == null) {
             return null;
         }
 

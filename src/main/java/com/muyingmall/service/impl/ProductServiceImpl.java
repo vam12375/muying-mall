@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.muyingmall.common.CacheConstants;
+import com.muyingmall.common.constants.CacheConstants;
 import com.muyingmall.entity.Category;
 import com.muyingmall.entity.Product;
 import com.muyingmall.entity.ProductImage;

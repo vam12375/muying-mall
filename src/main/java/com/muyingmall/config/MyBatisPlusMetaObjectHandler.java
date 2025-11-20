@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 /**
  * MyBatis-Plus 自动填充字段处理器
- * 用于自动填充 @TableField(fill = FieldFill.INSERT) 和 @TableField(fill =
+ * 用于自动填充 @TableField(fill = FieldFill. INSERT) 和 @TableField(fill =
  * FieldFill.INSERT_UPDATE) 注解的字段
  */
 @Slf4j

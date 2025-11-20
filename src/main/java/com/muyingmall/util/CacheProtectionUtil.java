@@ -1,6 +1,6 @@
 package com.muyingmall.util;
 
-import com.muyingmall.common.CacheConstants;
+import com.muyingmall.common.constants.CacheConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

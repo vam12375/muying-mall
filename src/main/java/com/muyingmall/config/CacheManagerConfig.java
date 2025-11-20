@@ -1,6 +1,6 @@
 package com.muyingmall.config;
 
-import com.muyingmall.common.CacheConstants;
+import com.muyingmall.common.constants.CacheConstants;
 import com.muyingmall.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

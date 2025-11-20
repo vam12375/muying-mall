@@ -193,15 +193,6 @@ public class RabbitMQProperties {
      * 验证配置的有效性
      */
     public boolean isValidConfiguration() {
-        if (performance.maxConcurrentConsumers < performance.concurrentConsumers) {
-            return false;
-        }
-        if (errorHandling.maxRetryAttempts < 0) {
-            return false;
-        }
-        if (monitoring.healthCheckInterval < 5000) {
-            return false;
-        }
-        return true;
+        return performance.maxConcurrentConsumers >= performance.concurrentConsumers;
     }
 }

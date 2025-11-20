@@ -86,7 +86,7 @@ public class CorsConfig {
             }
         }
 
-        // 确保常用的请求头被允许
+        // 确保常用地请求头被允许
         config.addAllowedHeader("Authorization");
         config.addAllowedHeader("Content-Type");
         config.addAllowedHeader("Accept");

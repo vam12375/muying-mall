@@ -1,7 +1,7 @@
 package com.muyingmall.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.muyingmall.common.PageResult;
+import com.muyingmall.common.api.PageResult;
 import com.muyingmall.dto.RechargeRequestDTO;
 import com.muyingmall.dto.TransactionQueryDTO;
 import com.muyingmall.entity.AccountTransaction;

@@ -132,9 +132,8 @@ public class TccTransactionManager {
             }
 
             // 执行Try阶段
-            R result = action.tryAction(params);
 
-            return result;
+            return action.tryAction(params);
         } finally {
             // 释放锁
             distributedLock.releaseLock(lockKey, requestId);
@@ -301,7 +300,7 @@ public class TccTransactionManager {
      */
     public boolean deleteTransaction(String transactionId) {
         String key = getTccTransactionKey(transactionId);
-        return Boolean.TRUE.equals(redisTemplate.delete(key));
+        return redisTemplate.delete(key);
     }
 
     /**

@@ -2,7 +2,7 @@ package com.muyingmall.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.muyingmall.annotation.Cacheable;
-import com.muyingmall.common.CacheConstants;
+import com.muyingmall.common.constants.CacheConstants;
 import com.muyingmall.entity.Brand;
 import com.muyingmall.entity.Category;
 import com.muyingmall.entity.Product;

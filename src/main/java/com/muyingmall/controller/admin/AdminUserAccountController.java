@@ -1,7 +1,7 @@
 package com.muyingmall.controller.admin;
 
-import com.muyingmall.common.PageResult;
-import com.muyingmall.common.Result;
+import com.muyingmall.common.api.PageResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.dto.RechargeRequestDTO;
 import com.muyingmall.dto.TransactionQueryDTO;
 import com.muyingmall.entity.UserAccount;

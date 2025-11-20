@@ -1,6 +1,6 @@
 package com.muyingmall.config;
 
-import com.muyingmall.common.CacheConstants;
+import com.muyingmall.common.constants.CacheConstants;
 import com.muyingmall.entity.Product;
 import com.muyingmall.service.ProductService;
 import com.muyingmall.util.RedisUtil;

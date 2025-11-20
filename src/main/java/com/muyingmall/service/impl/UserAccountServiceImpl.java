@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.muyingmall.common.PageResult;
+import com.muyingmall.common.api.PageResult;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.config.AlipayConfig;
 import com.muyingmall.dto.RechargeRequestDTO;
