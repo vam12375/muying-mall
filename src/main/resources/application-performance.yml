@@ -1,6 +1,6 @@
 # 性能优化配置
 # Source: 性能优化 - 数据库和连接池配置
-# 遵循协议: AURA-X-KYS (KISS/YAGNI/SOLID)
+# 
 
 spring:
   # 数据源配置优化
