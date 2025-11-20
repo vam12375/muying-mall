@@ -13,7 +13,7 @@ import java.util.Map;
  * 用于优化N+1查询问题
  * 
  * Source: 性能优化 - 批量查询
- * 遵循协议: AURA-X-KYS (KISS/YAGNI/SOLID)
+ * 
  */
 public interface BatchQueryService {
     

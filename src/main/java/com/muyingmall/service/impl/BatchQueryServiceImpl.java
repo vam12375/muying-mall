@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * 批量查询服务实现
  * 
  * Source: 性能优化 - 批量查询实现
- * 遵循协议: AURA-X-KYS (KISS/YAGNI/SOLID)
+ * 
  */
 @Service
 @RequiredArgsConstructor
