@@ -21,7 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/brands")
 @RequiredArgsConstructor
-@Tag(name = "品牌管理", description = "品牌查询、管理相关接口")
+@Tag(name = "品牌管理", description = "品牌查询相关接口")
 public class BrandController {
 
     private final BrandService brandService;

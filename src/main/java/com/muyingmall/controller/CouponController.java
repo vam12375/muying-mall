@@ -22,7 +22,7 @@ import java.util.Map;
  */
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "优惠券管理", description = "优惠券查询、领取等接口")
+@Tag(name = "优惠券", description = "优惠券查询、领取等接口")
 public class CouponController {
 
     private final CouponService couponService;

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/session")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "系统功能", description = "会话管理、会话同步等功能")
 public class SessionController {
 
     private final JwtUtils jwtUtils;

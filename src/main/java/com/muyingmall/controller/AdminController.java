@@ -35,6 +35,7 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/admin")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "后台-用户管理", description = "管理员登录、信息管理、文件上传等功能")
 public class AdminController {
 
     @Autowired

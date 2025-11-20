@@ -24,7 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/cart")
 @RequiredArgsConstructor
-@Tag(name = "购物车管理", description = "购物车添加、更新、删除等接口")
+@Tag(name = "购物车", description = "购物车添加、更新、删除等接口")
 public class CartController {
 
     private final CartService cartService;

@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/admin/dashboard")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "仪表盘数据", description = "提供后台管理系统首页所需的统计数据")
+@Tag(name = "后台-仪表盘", description = "提供后台管理系统首页所需的统计数据")
 public class DashboardController {
 
     private final UserService userService;

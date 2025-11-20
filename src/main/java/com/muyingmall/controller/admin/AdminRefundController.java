@@ -8,6 +8,7 @@ import com.muyingmall.enums.RefundStatus;
 import com.muyingmall.service.AlipayRefundService;
 import com.muyingmall.service.RefundService;
 import com.muyingmall.service.RefundStateService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import java.util.Map;
 @RequestMapping("/admin/refund")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "后台-退款管理", description = "退款列表、退款审核、退款处理等功能")
 public class AdminRefundController {
 
     private final RefundService refundService;

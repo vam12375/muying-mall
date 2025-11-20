@@ -18,6 +18,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/test")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "系统功能", description = "测试接口、连接测试、认证测试等功能")
 public class TestController {
 
     @Autowired

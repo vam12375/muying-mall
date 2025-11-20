@@ -21,7 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/user/addresses")
 @RequiredArgsConstructor
-@Tag(name = "用户地址管理", description = "用户收货地址的增删改查")
+@Tag(name = "地址管理", description = "用户收货地址的增删改查")
 public class AddressController {
 
     private final AddressService addressService;

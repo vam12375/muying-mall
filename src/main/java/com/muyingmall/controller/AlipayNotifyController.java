@@ -20,6 +20,7 @@ import java.util.Map;
 @RequestMapping("/api/payment/alipay")
 @RequiredArgsConstructor
 @Slf4j
+@io.swagger.v3.oas.annotations.tags.Tag(name = "支付管理", description = "支付宝支付回调通知处理")
 public class AlipayNotifyController {
 
     private final AlipayRefundService alipayRefundService;

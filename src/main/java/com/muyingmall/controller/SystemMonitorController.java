@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/admin/system/monitor")
 @RequiredArgsConstructor
+@io.swagger.v3.oas.annotations.tags.Tag(name = "后台-系统设置", description = "系统监控、性能指标、健康检查等功能")
 public class SystemMonitorController {
 
     private final SystemMonitorService systemMonitorService;

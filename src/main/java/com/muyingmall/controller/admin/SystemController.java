@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/admin/system")
 @RequiredArgsConstructor
 @Slf4j
+@io.swagger.v3.oas.annotations.tags.Tag(name = "后台-系统设置", description = "系统监控、缓存管理、Redis管理等功能")
 public class SystemController {
 
     private final RedisTemplate<String, Object> redisTemplate;

@@ -20,6 +20,7 @@ import java.util.Map;
 @RequestMapping("/refund")
 @RequiredArgsConstructor
 @Slf4j
+@io.swagger.v3.oas.annotations.tags.Tag(name = "退款管理", description = "申请退款、查询退款列表、退款详情等功能")
 public class RefundController {
 
     private final RefundService refundService;

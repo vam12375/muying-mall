@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/test/refund")
 @RequiredArgsConstructor
 @Slf4j
+@io.swagger.v3.oas.annotations.tags.Tag(name = "系统功能", description = "退款功能测试接口")
 public class RefundTestController {
 
     private final RefundService refundService;
