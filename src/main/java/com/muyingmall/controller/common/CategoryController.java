@@ -124,7 +124,7 @@ public class CategoryController {
             }
 
             // 获取分类下的商品
-            return Result.success(productService.getProductPage(page, size, id, null, null, null, null));
+            return Result.success(productService.getProductPage(page, size, id, null, null, null, null, null));
         } catch (Exception e) {
             log.error("获取分类商品失败: categoryId={}, 错误: {}", id, e.getMessage(), e);
             return Result.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "获取分类商品失败: " + e.getMessage());
