@@ -487,7 +487,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
 
             while (hasNext) {
                 com.baomidou.mybatisplus.extension.plugins.pagination.Page<Product> mybatisPlusPage = productService
-                        .getProductPage(page, size, null, null, null, null, null);
+                        .getProductPage(page, size, null, null, null, null, null, null);
                 List<ProductDocument> documents = mybatisPlusPage.getRecords().stream()
                         .map(this::convertToDocument)
                         .collect(Collectors.toList());

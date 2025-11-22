@@ -19,13 +19,14 @@ public interface ProductService extends IService<Product> {
          * @param page        页码
          * @param size        每页大小
          * @param categoryId  分类ID
+         * @param brandId     品牌ID
          * @param isHot       是否热门
          * @param isNew       是否新品
          * @param isRecommend 是否推荐
          * @param keyword     关键词
          * @return 商品分页对象
          */
-        Page<Product> getProductPage(int page, int size, Integer categoryId, Boolean isHot, Boolean isNew,
+        Page<Product> getProductPage(int page, int size, Integer categoryId, Integer brandId, Boolean isHot, Boolean isNew,
                         Boolean isRecommend, String keyword);
 
         /**
