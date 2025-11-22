@@ -86,4 +86,13 @@ public interface CartService extends IService<Cart> {
      * @return 已选中的购物车项列表
      */
     List<Cart> getSelectedCarts(Integer userId);
+
+    /**
+     * 批量删除购物车项
+     *
+     * @param userId  用户ID
+     * @param cartIds 购物车ID列表
+     * @return 删除的数量
+     */
+    int batchDeleteCarts(Integer userId, List<Integer> cartIds);
 }

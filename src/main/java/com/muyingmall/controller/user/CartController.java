@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 购物车控制器
@@ -198,5 +199,25 @@ public class CartController {
         }
         
         return Result.success(true, "验证通过");
+    }
+
+    /**
+     * 批量删除购物车项
+     */
+    @DeleteMapping("/batch-remove")
+    @Operation(summary = "批量删除购物车项")
+    public Result<Void> batchRemove(@RequestBody Map<String, List<Integer>> request) {
+        User user = getCurrentAuthenticatedUser();
+        if (user == null) {
+            return Result.error(401, "用户未认证");
+        }
+
+        List<Integer> itemIds = request.get("itemIds");
+        if (itemIds == null || itemIds.isEmpty()) {
+            return Result.error("请选择要删除的商品");
+        }
+
+        int deletedCount = cartService.batchDeleteCarts(user.getUserId(), itemIds);
+        return Result.success(null, "成功删除 " + deletedCount + " 件商品");
     }
 }

@@ -359,4 +359,40 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         
         return selectedCarts;
     }
+
+    /**
+     * 批量删除购物车项
+     *
+     * @param userId  用户ID
+     * @param cartIds 购物车ID列表
+     * @return 删除的数量
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int batchDeleteCarts(Integer userId, List<Integer> cartIds) {
+        if (userId == null || cartIds == null || cartIds.isEmpty()) {
+            return 0;
+        }
+
+        log.info("批量删除购物车项: userId={}, cartIds={}", userId, cartIds);
+
+        // 构建删除条件
+        LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Cart::getUserId, userId)
+                .in(Cart::getCartId, cartIds);
+
+        // 执行删除
+        int deletedCount = baseMapper.delete(queryWrapper);
+
+        // 清除缓存
+        if (deletedCount > 0) {
+            String cacheKey = CacheConstants.USER_CART_KEY + userId;
+            String selectedCacheKey = CacheConstants.CART_SELECTED_KEY + userId;
+            redisUtil.del(cacheKey);
+            redisUtil.del(selectedCacheKey);
+            log.info("批量删除购物车项成功并清除缓存: userId={}, deletedCount={}", userId, deletedCount);
+        }
+
+        return deletedCount;
+    }
 }
