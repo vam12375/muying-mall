@@ -35,7 +35,7 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    @Operation(summary = "获取商品列表", description = "分页查询商品列表，支持按分类、热门、新品、推荐等条件筛选，支持关键词搜索")
+    @Operation(summary = "获取商品列表", description = "分页查询商品列表，支持按分类、品牌、热门、新品、推荐等条件筛选，支持关键词搜索")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Result.class))),
             @ApiResponse(responseCode = "400", description = "参数错误"),
@@ -48,6 +48,8 @@ public class ProductController {
 
             @Parameter(description = "商品分类ID，不传则查询所有分类", example = "1") @RequestParam(required = false) Integer categoryId,
 
+            @Parameter(description = "品牌ID，不传则查询所有品牌", example = "1") @RequestParam(required = false) Integer brandId,
+
             @Parameter(description = "是否热门商品", example = "true") @RequestParam(required = false) Boolean isHot,
 
             @Parameter(description = "是否新品", example = "false") @RequestParam(required = false) Boolean isNew,
@@ -56,7 +58,7 @@ public class ProductController {
 
             @Parameter(description = "搜索关键词，支持商品名称和描述搜索", example = "奶瓶") @RequestParam(required = false) String keyword) {
 
-        Page<Product> productPage = productService.getProductPage(page, size, categoryId, isHot, isNew, isRecommend,
+        Page<Product> productPage = productService.getProductPage(page, size, categoryId, brandId, isHot, isNew, isRecommend,
                 keyword);
         return Result.success(productPage);
     }

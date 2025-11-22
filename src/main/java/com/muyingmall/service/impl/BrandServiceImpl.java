@@ -92,8 +92,8 @@ public class BrandServiceImpl extends ServiceImpl<BrandMapper, Brand> implements
                         .like(Brand::getDescription, keyword);
             }
 
-            // 只查询状态为正常的品牌
-            queryWrapper.eq(Brand::getStatus, 1);
+            // 暂时不过滤status，显示所有品牌
+            // queryWrapper.eq(Brand::getStatus, 1);
 
             // 默认按排序值和创建时间排序
             queryWrapper.orderByAsc(Brand::getSortOrder)
@@ -174,8 +174,8 @@ public class BrandServiceImpl extends ServiceImpl<BrandMapper, Brand> implements
             brand = getById(id);
 
             if (brand != null) {
-                // 检查状态是否正常
-                if (brand.getStatus() != 1) {
+                // 检查状态是否正常（status为null或1都认为是正常）
+                if (brand.getStatus() != null && brand.getStatus() != 1) {
                     log.debug("品牌状态不正常: id={}, status={}", id, brand.getStatus());
                     return null;
                 }

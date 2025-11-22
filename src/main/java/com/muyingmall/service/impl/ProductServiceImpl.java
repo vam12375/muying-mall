@@ -50,7 +50,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     private final CategoryMapper categoryMapper;
 
     @Override
-    public Page<Product> getProductPage(int page, int size, Integer categoryId, Boolean isHot, Boolean isNew,
+    public Page<Product> getProductPage(int page, int size, Integer categoryId, Integer brandId, Boolean isHot, Boolean isNew,
             Boolean isRecommend, String keyword) {
         // 构建缓存键
         StringBuilder cacheKey = new StringBuilder(CacheConstants.PRODUCT_LIST_KEY);
@@ -59,6 +59,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
         if (categoryId != null) {
             cacheKey.append("_category_").append(categoryId);
+        }
+
+        if (brandId != null) {
+            cacheKey.append("_brand_").append(brandId);
         }
 
         if (isHot != null && isHot) {
@@ -93,6 +97,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         // 条件查询
         if (categoryId != null) {
             queryWrapper.eq(Product::getCategoryId, categoryId);
+        }
+
+        if (brandId != null) {
+            queryWrapper.eq(Product::getBrandId, brandId);
         }
 
         if (isHot != null && isHot) {
