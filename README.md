@@ -24,7 +24,10 @@
 
 ### 📹 系统功能演示视频
 
-https://github.com/user-attachments/assets/demo.mp4
+<video width="800" controls>
+  <source src="docs/demo.mp4" type="video/mp4">
+  您的浏览器不支持视频播放，请<a href="docs/demo.mp4">点击下载</a>观看
+</video>
 
 *完整展示系统核心功能和用户界面*
 
