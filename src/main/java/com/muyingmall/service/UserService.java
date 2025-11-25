@@ -9,6 +9,7 @@ import com.muyingmall.entity.User;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * 用户服务接口
@@ -182,4 +183,12 @@ public interface UserService extends IService<User> {
     void updateUser(User user);
 
     void deductBalance(Integer userId, BigDecimal amountToDeduct);
+
+    /**
+     * 获取用户统计数据
+     *
+     * @param userId 用户ID
+     * @return 统计数据Map，包含orderCount、favoriteCount、commentCount
+     */
+    Map<String, Object> getUserStats(Integer userId);
 }

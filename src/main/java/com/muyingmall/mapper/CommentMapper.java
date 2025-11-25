@@ -72,4 +72,20 @@ public interface CommentMapper extends BaseMapper<Comment> {
                         "</script>"
         })
         List<Map<String, Object>> getRatingDistribution(@Param("productId") Integer productId);
+
+        /**
+         * 获取商品评价的标签统计
+         * 
+         * @param productId 商品ID
+         * @return 标签统计列表
+         */
+        @Select("SELECT ct.tag_name, COUNT(*) as count " +
+                        "FROM comment_tag_relation ctr " +
+                        "JOIN comment_tag ct ON ctr.tag_id = ct.tag_id " +
+                        "JOIN comment c ON ctr.comment_id = c.comment_id " +
+                        "WHERE c.product_id = #{productId} AND c.status = 1 " +
+                        "GROUP BY ct.tag_id, ct.tag_name " +
+                        "ORDER BY count DESC " +
+                        "LIMIT 10")
+        List<Map<String, Object>> getProductCommentTags(@Param("productId") Integer productId);
 }

@@ -3,7 +3,9 @@ package com.muyingmall.controller.common;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.common.api.Result;
 import com.muyingmall.entity.Product;
+import com.muyingmall.entity.ProductParam;
 import com.muyingmall.entity.ProductSpecs;
+import com.muyingmall.service.ProductParamService;
 import com.muyingmall.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,6 +35,7 @@ import java.util.Random;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductParamService productParamService;
 
     @GetMapping
     @Operation(summary = "获取商品列表", description = "分页查询商品列表，支持按分类、品牌、热门、新品、推荐等条件筛选，支持关键词搜索")
@@ -90,36 +93,18 @@ public class ProductController {
             }
 
             Map<String, Object> result = new HashMap<>();
+            result.put("goods", product);
 
             // 获取商品规格
             List<ProductSpecs> specsList = product.getSpecsList();
             result.put("specs", specsList);
 
-            // 获取商品参数（如果需要添加其他参数信息）
-            List<Map<String, String>> params = new ArrayList<>();
-            if (product.getCategoryId() != null) {
-                Map<String, String> categoryParam = new HashMap<>();
-                categoryParam.put("name", "分类");
-                categoryParam.put("value", product.getCategoryName() != null ? product.getCategoryName() : "未分类");
-                params.add(categoryParam);
-            }
+            // 从数据库获取真实的商品参数
+            List<ProductParam> productParams = productParamService.getParamsByProductId(id);
+            result.put("params", productParams);
 
-            if (product.getBrandId() != null) {
-                Map<String, String> brandParam = new HashMap<>();
-                brandParam.put("name", "品牌");
-                brandParam.put("value", product.getBrandName() != null ? product.getBrandName() : "暂无品牌");
-                params.add(brandParam);
-            }
-
-            // 增加更多商品参数信息
-            Map<String, String> storeParam = new HashMap<>();
-            storeParam.put("name", "库存");
-            storeParam.put("value", String.valueOf(product.getStock()));
-            params.add(storeParam);
-
-            result.put("params", params);
-
-            log.info("获取商品详情和参数成功，商品ID：{}，规格数量：{}", id, specsList != null ? specsList.size() : 0);
+            log.info("获取商品详情和参数成功，商品ID：{}，规格数量：{}，参数数量：{}", 
+                    id, specsList != null ? specsList.size() : 0, productParams.size());
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取商品详情和参数失败", e);

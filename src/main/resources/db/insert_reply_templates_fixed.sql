@@ -2,14 +2,14 @@
 -- 用于评价管理的推荐回复功能
 
 -- 清空现有模板（可选）
--- DELETE FROM comment_template WHERE template_id >= 8;
+DELETE FROM comment_template WHERE template_id >= 8;
 
 -- 插入商家回复模板
 INSERT INTO `comment_template` 
 (`template_id`, `template_name`, `template_content`, `template_type`, `min_rating`, `max_rating`, `category_id`, `use_count`, `user_id`, `weight`, `status`, `create_time`, `update_time`) 
 VALUES
 -- 好评回复模板（4-5星）
-(8, '商家回复-感谢好评', '非常抱歉给您带来不满意的购物体验！我们会认真对待您的反馈，不断改进产品和服务质量。如有任何问题，请随时联系我们的客服团队，我们会竭诚为您解决。期待下次能为您提供更好的服务！', 1, 4, 5, NULL, 0, NULL, 100, 1, NOW(), NOW()),
+(8, '商家回复-感谢好评', '非常感谢您的好评！看到您和宝宝都满意我们的产品，我们感到非常开心。我们会继续努力，为您提供更优质的产品和服务。期待您的再次光临！', 1, 4, 5, NULL, 0, NULL, 100, 1, NOW(), NOW()),
 
 (9, '商家回复-产品推荐', '感谢您的支持和认可！我们一直致力于为宝宝提供安全、优质的产品。如果您对其他产品感兴趣，欢迎咨询我们的客服，我们会根据宝宝的需求为您推荐合适的产品。祝宝宝健康成长！', 1, 4, 5, NULL, 0, NULL, 90, 1, NOW(), NOW()),
 
@@ -29,4 +29,4 @@ VALUES
 (15, '商家回复-质量保证', '感谢您的评价！我们所有产品都经过严格的质量检测，确保安全无害。如果您对产品有任何疑问，欢迎咨询我们的客服团队。我们会继续为您提供优质的产品和服务！', 1, NULL, NULL, NULL, 0, NULL, 70, 1, NOW(), NOW());
 
 -- 查看插入结果
-SELECT * FROM comment_template WHERE template_id >= 8 ORDER BY weight DESC;
+SELECT template_id, template_name, weight, status FROM comment_template WHERE template_id >= 8 ORDER BY weight DESC;

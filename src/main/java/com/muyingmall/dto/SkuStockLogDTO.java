@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * SKU库存日志DTO
  * 
- * @author AI Assistant
+ * @author 青柠檬
  * @date 2024-11-24
  */
 @Data

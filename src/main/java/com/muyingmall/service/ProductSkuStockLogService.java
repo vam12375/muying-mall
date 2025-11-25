@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * SKU库存日志 Service
  * 
- * @author AI Assistant
+ * @author 青柠檬
  * @date 2024-11-24
  */
 public interface ProductSkuStockLogService extends IService<ProductSkuStockLog> {

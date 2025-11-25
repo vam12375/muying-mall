@@ -1,4 +1,4 @@
-package com.muyingmall.controller;
+package com.muyingmall.controller.user;
 
 import com.muyingmall.common.api.Result;
 import com.muyingmall.dto.ProductSkuDTO;
@@ -16,12 +16,12 @@ import java.util.stream.Collectors;
 /**
  * 商品SKU控制器（前台）
  * 
- * @author AI Assistant
+ * @author 青柠檬
  * @date 2024-11-24
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/products")
 @RequiredArgsConstructor
 @Tag(name = "商品SKU（前台）")
 public class ProductSkuController {
@@ -32,12 +32,21 @@ public class ProductSkuController {
     @Operation(summary = "获取商品的SKU列表")
     public Result<List<ProductSkuDTO>> getProductSkus(
             @Parameter(description = "商品ID") @PathVariable Integer productId) {
-        List<ProductSkuDTO> skuList = productSkuService.getSkuListByProductId(productId);
-        // 只返回启用状态的SKU
-        List<ProductSkuDTO> enabledSkus = skuList.stream()
-                .filter(sku -> sku.getStatus() == 1)
-                .collect(Collectors.toList());
-        return Result.success(enabledSkus);
+        try {
+            log.info("开始获取商品SKU列表，商品ID: {}", productId);
+            List<ProductSkuDTO> skuList = productSkuService.getSkuListByProductId(productId);
+            log.info("查询到SKU数量: {}", skuList != null ? skuList.size() : 0);
+            
+            // 只返回启用状态的SKU
+            List<ProductSkuDTO> enabledSkus = skuList.stream()
+                    .filter(sku -> sku.getStatus() == 1)
+                    .collect(Collectors.toList());
+            log.info("启用状态的SKU数量: {}", enabledSkus.size());
+            return Result.success(enabledSkus);
+        } catch (Exception e) {
+            log.error("获取商品SKU列表失败，商品ID: {}", productId, e);
+            throw e;
+        }
     }
 
     @GetMapping("/skus/{skuId}")

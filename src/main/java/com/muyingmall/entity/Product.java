@@ -94,6 +94,21 @@ public class Product implements Serializable {
     private String productStatus;
 
     /**
+     * 是否有SKU：0-否，1-是
+     */
+    private Integer hasSku;
+
+    /**
+     * 最低价格
+     */
+    private BigDecimal minPrice;
+
+    /**
+     * 最高价格
+     */
+    private BigDecimal maxPrice;
+
+    /**
      * 是否热门：0-否，1-是
      */
     private Integer isHot;

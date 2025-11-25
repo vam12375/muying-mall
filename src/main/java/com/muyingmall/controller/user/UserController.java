@@ -8,6 +8,8 @@ import com.muyingmall.entity.User;
 import com.muyingmall.service.UserService;
 import com.muyingmall.util.JwtUtils;
 
+import java.util.Map;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -29,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
  * 用户控制器
  */
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/user")
 @RequiredArgsConstructor
 @Tag(name = "用户管理", description = "用户注册、登录、信息管理等接口")
 public class UserController {
@@ -262,6 +264,32 @@ public class UserController {
         } else {
             return Result.error(500, "修改失败，旧密码错误或服务异常");
         }
+    }
+
+    /**
+     * 获取用户统计数据
+     */
+    @GetMapping("/stats")
+    @Operation(summary = "获取用户统计数据", description = "获取当前用户的订单、收藏、评价等统计信息", tags = { "用户管理" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "401", description = "用户未认证")
+    })
+    public Result<Map<String, Object>> getUserStats() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        Map<String, Object> stats = userService.getUserStats(user.getUserId());
+        return Result.success(stats);
     }
 
     /**

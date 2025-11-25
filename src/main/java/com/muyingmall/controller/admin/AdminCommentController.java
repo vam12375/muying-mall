@@ -1,5 +1,6 @@
 package com.muyingmall.controller.admin;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.muyingmall.common.api.CommonResult;
 import com.muyingmall.dto.CommentDTO;
@@ -218,6 +219,17 @@ public class AdminCommentController {
             statsDTO.setRatingDistribution((Map<Integer, Integer>) stats.get("totalRatingCounts"));
             statsDTO.setDateLabels((List<String>) stats.get("dateLabels"));
             statsDTO.setDailyRatingData((List<Map<String, Object>>) stats.get("dailyRatingData"));
+            
+            // 统计各状态的评价数量
+            long pendingCount = commentService.count(new LambdaQueryWrapper<Comment>().eq(Comment::getStatus, 0));
+            long approvedCount = commentService.count(new LambdaQueryWrapper<Comment>().eq(Comment::getStatus, 1));
+            long rejectedCount = commentService.count(new LambdaQueryWrapper<Comment>().eq(Comment::getStatus, 2));
+            long repliedCount = commentService.count(new LambdaQueryWrapper<Comment>().eq(Comment::getHasReplied, true));
+            
+            statsDTO.setPendingComments((int) pendingCount);
+            statsDTO.setApprovedComments((int) approvedCount);
+            statsDTO.setRejectedComments((int) rejectedCount);
+            statsDTO.setRepliedComments((int) repliedCount);
 
             // 计算评价率
             Map<Integer, Integer> ratingCounts = (Map<Integer, Integer>) stats.get("totalRatingCounts");

@@ -10,8 +10,8 @@ import java.util.List;
 /**
  * 商品SKU Service
  * 
- * @author AI Assistant
- * @date 2024-11-24
+ * @author 青柠檬
+ * @date 2025-11-24
  */
 public interface ProductSkuService extends IService<ProductSku> {
 

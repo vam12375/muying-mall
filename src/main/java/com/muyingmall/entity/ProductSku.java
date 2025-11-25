@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 /**
  * 商品SKU实体类
  * 
- * @author AI Assistant
+ * @author 青柠檬
  * @date 2024-11-24
  */
 @Data

@@ -60,4 +60,24 @@ public class CommentStatsDTO {
      * 匿名评价数量
      */
     private Integer anonymousComments;
+
+    /**
+     * 待审核评价数量
+     */
+    private Integer pendingComments;
+
+    /**
+     * 已通过评价数量
+     */
+    private Integer approvedComments;
+
+    /**
+     * 已拒绝评价数量
+     */
+    private Integer rejectedComments;
+
+    /**
+     * 已回复评价数量
+     */
+    private Integer repliedComments;
 }

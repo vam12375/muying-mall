@@ -35,6 +35,18 @@ public class CartAddDTO implements Serializable {
 
     /**
      * 商品规格，key为规格名，value为规格值
+     * @deprecated 使用 skuId 替代
      */
+    @Deprecated
     private Map<String, String> specs;
+
+    /**
+     * SKU ID（有SKU的商品必传）
+     */
+    private Long skuId;
+
+    /**
+     * SKU名称（可选，用于显示）
+     */
+    private String skuName;
 }

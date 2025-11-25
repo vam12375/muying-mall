@@ -44,13 +44,27 @@ public class Cart implements Serializable {
 
     /**
      * 商品规格JSON
+     * @deprecated 使用 skuId 替代
      */
+    @Deprecated
     private String specs;
 
     /**
      * 商品规格哈希值，用于唯一索引
+     * @deprecated 使用 skuId 替代
      */
+    @Deprecated
     private String specsHash;
+
+    /**
+     * SKU ID
+     */
+    private Long skuId;
+
+    /**
+     * SKU名称
+     */
+    private String skuName;
 
     /**
      * 价格快照

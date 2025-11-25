@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 20/07/2025 10:28:50
+ Date: 24/11/2025 11:10:29
 */
 
 SET NAMES utf8mb4;
@@ -45,7 +45,7 @@ CREATE TABLE `account_transaction`  (
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
   CONSTRAINT `fk_transaction_account` FOREIGN KEY (`account_id`) REFERENCES `user_account` (`account_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_transaction_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 36 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '账户交易记录表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 47 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '账户交易记录表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of account_transaction
@@ -80,6 +80,17 @@ INSERT INTO `account_transaction` VALUES (32, 'RCH17522114485211903', 5, 8, 1000
 INSERT INTO `account_transaction` VALUES (33, 'RCH17522184329235882', 6, 9, 1000.00, 4241.00, 1, 'wechat', 1, NULL, '账户充值', '手动完成充值: 1752218438252', '2025-07-11 15:20:33', '2025-07-11 15:20:38');
 INSERT INTO `account_transaction` VALUES (34, 'TR1752663370682d38514e9', 5, 8, 179.00, 18844.00, 2, 'wallet', 1, '265', '账户消费扣款', NULL, '2025-07-16 18:56:11', '2025-07-16 18:56:11');
 INSERT INTO `account_transaction` VALUES (35, 'RCH17581850045207100', 5, 8, 100.00, 18944.00, 1, 'wechat', 1, NULL, '账户充值', '手动完成充值: 1758185008730', '2025-09-18 16:43:25', '2025-09-18 16:43:29');
+INSERT INTO `account_transaction` VALUES (36, 'RCH17624146755453701', 5, 8, 100.00, 19044.00, 1, 'wechat', 1, NULL, '账户充值', '手动完成充值: 1762414680344', '2025-11-06 15:37:56', '2025-11-06 15:38:00');
+INSERT INTO `account_transaction` VALUES (37, 'TR17629211932553513f886', 5, 8, 1000.00, 20044.00, 1, 'admin', 1, NULL, '管理员充值', NULL, '2025-11-12 12:19:53', '2025-11-12 12:19:53');
+INSERT INTO `account_transaction` VALUES (38, 'TR176292533202785a8c7bd', 5, 8, 179.90, 19864.10, 2, 'wallet', 1, '270', '账户消费扣款', NULL, '2025-11-12 13:28:52', '2025-11-12 13:28:52');
+INSERT INTO `account_transaction` VALUES (39, 'TR176329134997156715754', 5, 8, 1880.00, 17984.10, 2, 'wallet', 1, '271', '账户消费扣款', NULL, '2025-11-16 19:09:10', '2025-11-16 19:09:10');
+INSERT INTO `account_transaction` VALUES (40, 'TR17633479423983121887e', 5, 8, 179.00, 18163.10, 3, 'wallet', 1, NULL, '订单退款：OD1752663366489bad395', NULL, '2025-11-17 10:52:22', '2025-11-17 10:52:22');
+INSERT INTO `account_transaction` VALUES (41, 'TR1763357110414980da632', 5, 8, 2000.00, 20163.10, 4, 'admin', 1, NULL, '管理员调整余额', '管理员添加', '2025-11-17 13:25:10', '2025-11-17 13:25:10');
+INSERT INTO `account_transaction` VALUES (42, 'TR17634419697078cf2055e', 6, 9, 348.00, 3893.00, 2, 'wallet', 1, '274', '账户消费扣款', NULL, '2025-11-18 12:59:30', '2025-11-18 12:59:30');
+INSERT INTO `account_transaction` VALUES (43, 'RCH17637116942421539', 5, 8, 200.00, 20363.10, 1, 'wechat', 1, NULL, '账户充值', '手动完成充值: 1763711698315', '2025-11-21 15:54:54', '2025-11-21 15:54:58');
+INSERT INTO `account_transaction` VALUES (44, 'RCH17637156058526357', 5, 8, 500.00, 20863.10, 1, 'wechat', 1, NULL, '账户充值', '手动完成充值: 1763715610753', '2025-11-21 17:00:06', '2025-11-21 17:00:11');
+INSERT INTO `account_transaction` VALUES (45, 'TR17637830175836485e60d', 5, 8, 398.00, 20465.10, 2, 'wallet', 1, '278', '账户消费扣款', NULL, '2025-11-22 11:43:38', '2025-11-22 11:43:38');
+INSERT INTO `account_transaction` VALUES (46, 'TR1763784725729ccd2a020', 5, 8, 378.00, 20087.10, 2, 'wallet', 1, '282', '账户消费扣款', NULL, '2025-11-22 12:12:06', '2025-11-22 12:12:06');
 
 -- ----------------------------
 -- Table structure for admin_login_records
@@ -87,13 +98,13 @@ INSERT INTO `account_transaction` VALUES (35, 'RCH17581850045207100', 5, 8, 100.
 DROP TABLE IF EXISTS `admin_login_records`;
 CREATE TABLE `admin_login_records`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `admin_id` int NOT NULL COMMENT '管理员ID',
+  `admin_id` int UNSIGNED NOT NULL COMMENT '管理员ID（关联user表的user_id，role=admin）',
   `admin_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '管理员用户名',
   `login_time` datetime NOT NULL COMMENT '登录时间',
   `logout_time` datetime NULL DEFAULT NULL COMMENT '登出时间',
-  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'IP地址',
+  `ip_address` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'IP地址',
   `location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '登录地点',
-  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '用户代理信息',
+  `user_agent` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '用户代理信息',
   `device_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '设备类型(Desktop/Mobile/Tablet)',
   `browser` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '浏览器信息',
   `os` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '操作系统',
@@ -107,12 +118,15 @@ CREATE TABLE `admin_login_records`  (
   INDEX `idx_admin_id`(`admin_id` ASC) USING BTREE,
   INDEX `idx_login_time`(`login_time` ASC) USING BTREE,
   INDEX `idx_ip_address`(`ip_address` ASC) USING BTREE,
-  INDEX `idx_login_status`(`login_status` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '管理员登录记录表' ROW_FORMAT = Dynamic;
+  INDEX `idx_session_id`(`session_id` ASC) USING BTREE,
+  CONSTRAINT `fk_admin_login_user` FOREIGN KEY (`admin_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '管理员登录记录表（admin_id关联user表）' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of admin_login_records
 -- ----------------------------
+INSERT INTO `admin_login_records` VALUES (1, 1, 'admin', '2025-11-14 17:41:02', NULL, '127.0.0.1', '本地', NULL, 'Desktop', 'Chrome', 'Windows', 'success', NULL, 'test-session-1', NULL, '2025-11-14 17:41:02', '2025-11-14 17:41:02');
+INSERT INTO `admin_login_records` VALUES (2, 1, 'admin', '2025-11-13 17:41:02', NULL, '127.0.0.1', '本地', NULL, 'Mobile', 'Safari', 'iOS', 'success', NULL, 'test-session-2', NULL, '2025-11-14 17:41:02', '2025-11-14 17:41:02');
 
 -- ----------------------------
 -- Table structure for admin_online_status
@@ -120,23 +134,23 @@ CREATE TABLE `admin_login_records`  (
 DROP TABLE IF EXISTS `admin_online_status`;
 CREATE TABLE `admin_online_status`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `admin_id` int NOT NULL COMMENT '管理员ID',
+  `admin_id` int UNSIGNED NOT NULL COMMENT '管理员ID（关联user表的user_id，role=admin）',
   `admin_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '管理员用户名',
   `session_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '会话ID',
   `login_time` datetime NOT NULL COMMENT '登录时间',
   `last_activity_time` datetime NOT NULL COMMENT '最后活动时间',
-  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'IP地址',
-  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '用户代理信息',
+  `ip_address` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'IP地址',
+  `user_agent` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '用户代理信息',
   `is_online` tinyint(1) NOT NULL DEFAULT 1 COMMENT '是否在线(1:在线,0:离线)',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `admin_id`(`admin_id` ASC) USING BTREE,
+  UNIQUE INDEX `uk_session_id`(`session_id` ASC) USING BTREE,
   INDEX `idx_admin_id`(`admin_id` ASC) USING BTREE,
-  INDEX `idx_session_id`(`session_id` ASC) USING BTREE,
   INDEX `idx_is_online`(`is_online` ASC) USING BTREE,
-  INDEX `idx_last_activity_time`(`last_activity_time` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '管理员在线状态表' ROW_FORMAT = Dynamic;
+  INDEX `idx_last_activity_time`(`last_activity_time` ASC) USING BTREE,
+  CONSTRAINT `fk_admin_online_user` FOREIGN KEY (`admin_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '管理员在线状态表（admin_id关联user表）' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of admin_online_status
@@ -172,47 +186,7 @@ CREATE TABLE `admin_operation_logs`  (
   INDEX `idx_module`(`module` ASC) USING BTREE,
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
   INDEX `idx_operation_result`(`operation_result` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 37 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '管理员操作日志表' ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of admin_operation_logs
--- ----------------------------
-INSERT INTO `admin_operation_logs` VALUES (1, 1, 'admin', '查看统计信息', '管理员管理', 'READ', '', NULL, 'GET', '/api/admin/statistics', '{\"_t\":\"1750949164532\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36', 'success', NULL, 106, '执行了查看统计信息，模块：管理员管理', '2025-06-26 22:46:05');
-INSERT INTO `admin_operation_logs` VALUES (2, 1, 'admin', '查看统计信息', '管理员管理', 'READ', '', NULL, 'GET', '/api/admin/statistics', '{\"_t\":\"1750949164532\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36', 'success', NULL, 106, '执行了查看统计信息，模块：管理员管理', '2025-06-26 22:46:05');
-INSERT INTO `admin_operation_logs` VALUES (3, 1, 'admin', '查看统计信息', '管理员管理', 'READ', '', NULL, 'GET', '/api/admin/statistics', '{\"_t\":\"1750996443184\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 6, '执行了查看统计信息，模块：管理员管理', '2025-06-27 11:54:03');
-INSERT INTO `admin_operation_logs` VALUES (4, 1, 'admin', '查看统计信息', '管理员管理', 'READ', '', NULL, 'GET', '/api/admin/statistics', '{\"_t\":\"1750996443185\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 5, '执行了查看统计信息，模块：管理员管理', '2025-06-27 11:54:03');
-INSERT INTO `admin_operation_logs` VALUES (5, 1, 'admin', '查看统计信息', '管理员管理', 'READ', '', NULL, 'GET', '/api/admin/statistics', '{\"_t\":\"1750996735426\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 108, '执行了查看统计信息，模块：管理员管理', '2025-06-27 11:58:56');
-INSERT INTO `admin_operation_logs` VALUES (6, 1, 'admin', '查看统计信息', '管理员管理', 'READ', '', NULL, 'GET', '/api/admin/statistics', '{\"_t\":\"1750996735426\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 108, '执行了查看统计信息，模块：管理员管理', '2025-06-27 11:58:56');
-INSERT INTO `admin_operation_logs` VALUES (7, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997111481\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 11, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:05:12');
-INSERT INTO `admin_operation_logs` VALUES (8, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997111481\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 11, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:05:12');
-INSERT INTO `admin_operation_logs` VALUES (9, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997303003\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 90, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:08:23');
-INSERT INTO `admin_operation_logs` VALUES (10, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997303002\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 90, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:08:23');
-INSERT INTO `admin_operation_logs` VALUES (11, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997618885\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 18, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:13:39');
-INSERT INTO `admin_operation_logs` VALUES (12, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997618885\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 17, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:13:39');
-INSERT INTO `admin_operation_logs` VALUES (13, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997631909\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 3, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:13:52');
-INSERT INTO `admin_operation_logs` VALUES (14, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997631909\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 5, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:13:52');
-INSERT INTO `admin_operation_logs` VALUES (15, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997631938\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 4, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:13:52');
-INSERT INTO `admin_operation_logs` VALUES (16, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997631938\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 4, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:13:52');
-INSERT INTO `admin_operation_logs` VALUES (17, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997713185\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 4, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:15:13');
-INSERT INTO `admin_operation_logs` VALUES (18, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997713185\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 5, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:15:13');
-INSERT INTO `admin_operation_logs` VALUES (19, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997751715\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 3, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:15:52');
-INSERT INTO `admin_operation_logs` VALUES (20, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997751715\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 3, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:15:52');
-INSERT INTO `admin_operation_logs` VALUES (21, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997755230\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 3, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:15:55');
-INSERT INTO `admin_operation_logs` VALUES (22, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997755230\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 3, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:15:55');
-INSERT INTO `admin_operation_logs` VALUES (23, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997822457\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 3, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:17:02');
-INSERT INTO `admin_operation_logs` VALUES (24, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1750997822457\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 3, '执行了查看系统日志，模块：系统管理', '2025-06-27 12:17:02');
-INSERT INTO `admin_operation_logs` VALUES (25, 1, 'admin', '查看统计信息', '管理员管理', 'READ', '', NULL, 'GET', '/api/admin/statistics', '{\"_t\":\"1750997835357\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 84, '执行了查看统计信息，模块：管理员管理', '2025-06-27 12:17:15');
-INSERT INTO `admin_operation_logs` VALUES (26, 1, 'admin', '查看统计信息', '管理员管理', 'READ', '', NULL, 'GET', '/api/admin/statistics', '{\"_t\":\"1750997835356\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 84, '执行了查看统计信息，模块：管理员管理', '2025-06-27 12:17:15');
-INSERT INTO `admin_operation_logs` VALUES (27, 1, 'admin', '查看操作记录', '管理员管理', 'READ', '', '1', 'GET', '/api/admin/operation-records', '{\"size\":\"10\",\"_t\":\"1750997838133\",\"module\":\"\",\"page\":\"1\",\"operation\":\"\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 4, '执行了查看操作记录，模块：管理员管理', '2025-06-27 12:17:18');
-INSERT INTO `admin_operation_logs` VALUES (28, 1, 'admin', '查看操作记录', '管理员管理', 'READ', '', '1', 'GET', '/api/admin/operation-records', '{\"size\":\"10\",\"_t\":\"1750997838133\",\"module\":\"\",\"page\":\"1\",\"operation\":\"\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 4, '执行了查看操作记录，模块：管理员管理', '2025-06-27 12:17:18');
-INSERT INTO `admin_operation_logs` VALUES (29, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1752033714160\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 7, '执行了查看系统日志，模块：系统管理', '2025-07-09 12:01:54');
-INSERT INTO `admin_operation_logs` VALUES (30, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1752033714160\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 7, '执行了查看系统日志，模块：系统管理', '2025-07-09 12:01:54');
-INSERT INTO `admin_operation_logs` VALUES (31, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '3', 'GET', '/api/admin/system/logs', '{\"_t\":\"1752033723123\",\"pageSize\":\"10\",\"page\":\"3\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 6, '执行了查看系统日志，模块：系统管理', '2025-07-09 12:02:03');
-INSERT INTO `admin_operation_logs` VALUES (32, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '2', 'GET', '/api/admin/system/logs', '{\"_t\":\"1752033725063\",\"pageSize\":\"10\",\"page\":\"2\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 5, '执行了查看系统日志，模块：系统管理', '2025-07-09 12:02:05');
-INSERT INTO `admin_operation_logs` VALUES (33, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1752033726191\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 4, '执行了查看系统日志，模块：系统管理', '2025-07-09 12:02:06');
-INSERT INTO `admin_operation_logs` VALUES (34, 1, 'admin', '查看系统日志详情', '系统管理', 'READ', '', '32', 'GET', '/api/admin/system/logs/32', '{\"_t\":\"1752033728699\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 2, '执行了查看系统日志详情，模块：系统管理', '2025-07-09 12:02:09');
-INSERT INTO `admin_operation_logs` VALUES (35, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1754529442678\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 95, '执行了查看系统日志，模块：系统管理', '2025-08-07 09:17:23');
-INSERT INTO `admin_operation_logs` VALUES (36, 1, 'admin', '查看系统日志', '系统管理', 'READ', '', '1', 'GET', '/api/admin/system/logs', '{\"_t\":\"1754529442678\",\"pageSize\":\"10\",\"page\":\"1\"}', 200, '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'success', NULL, 95, '执行了查看系统日志，模块：系统管理', '2025-08-07 09:17:23');
+) ENGINE = InnoDB AUTO_INCREMENT = 1402 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '管理员操作日志表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for brand
@@ -233,11 +207,11 @@ CREATE TABLE `brand`  (
 -- ----------------------------
 -- Records of brand
 -- ----------------------------
-INSERT INTO `brand` VALUES (1, '惠氏', 'brands/wyeth.png', '惠氏营养品是全球知名的婴幼儿营养品牌', 1, 1, '2025-03-05 21:58:47', '2025-05-20 10:16:40');
-INSERT INTO `brand` VALUES (2, '美素佳儿', 'brands/friso.png', '美素佳儿是荷兰皇家菲仕兰旗下的婴幼儿奶粉品牌', 2, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
-INSERT INTO `brand` VALUES (3, '帮宝适', 'brands/pampers.png', '帮宝适是宝洁公司旗下的婴儿纸尿裤品牌', 3, 1, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
-INSERT INTO `brand` VALUES (4, '花王', 'brands/huawang.png', '花王是日本著名的个人护理用品品牌', 4, 1, '2025-03-05 21:58:47', '2025-03-17 16:10:15');
-INSERT INTO `brand` VALUES (5, '爱他美', 'brands/aptamil.png', '爱他美是来自德国的高端婴幼儿配方奶粉品牌，专注婴幼儿营养研究超过40年', 5, 1, '2025-05-18 10:30:00', '2025-05-15 19:55:42');
+INSERT INTO `brand` VALUES (1, '惠氏', 'brands/wyeth.png', '惠氏营养品是全球知名的婴幼儿营养品牌', 1, 1, '2025-03-05 21:58:47', '2025-11-16 22:21:03');
+INSERT INTO `brand` VALUES (2, '美素佳儿', 'brands/friso.png', '美素佳儿是荷兰皇家菲仕兰旗下的婴幼儿奶粉品牌', 2, 1, '2025-03-05 21:58:47', '2025-11-17 12:16:31');
+INSERT INTO `brand` VALUES (3, '帮宝适', 'brands/pampers.png', '帮宝适是宝洁公司旗下的婴儿纸尿裤品牌', 3, 1, '2025-03-05 21:58:47', '2025-11-17 12:16:35');
+INSERT INTO `brand` VALUES (4, '花王', 'brands/huawang.png', '花王是日本著名的个人护理用品品牌', 4, 1, '2025-03-05 21:58:47', '2025-11-17 12:16:38');
+INSERT INTO `brand` VALUES (5, '爱他美', 'brands/aptamil.png', '爱他美是来自德国的高端婴幼儿配方奶粉品牌，专注婴幼儿营养研究超过40年', 5, 1, '2025-05-18 10:30:00', '2025-11-17 12:16:42');
 INSERT INTO `brand` VALUES (6, '费雪', 'brands/fisher-price.png', '费雪是全球著名玩具品牌，专注于儿童早期发展和教育玩具设计', 6, 1, '2025-05-18 10:32:15', '2025-05-15 19:55:44');
 INSERT INTO `brand` VALUES (7, '飞利浦新安怡', 'brands/avent.png', '飞利浦新安怡是全球领先的婴幼儿喂养用品品牌，专注于研发安全舒适的喂养产品', 7, 1, '2025-05-18 10:34:30', '2025-05-15 19:55:46');
 INSERT INTO `brand` VALUES (8, '美德乐', 'brands/medela.png', '美德乐是源自瑞士的全球知名母乳喂养解决方案品牌，专注于吸奶器和母乳喂养辅助产品', 8, 1, '2025-05-18 10:36:45', '2025-03-18 10:36:45');
@@ -252,6 +226,8 @@ CREATE TABLE `cart`  (
   `cart_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '购物车ID',
   `user_id` int UNSIGNED NOT NULL COMMENT '用户ID',
   `product_id` int UNSIGNED NOT NULL COMMENT '商品ID',
+  `sku_id` bigint UNSIGNED NULL DEFAULT NULL COMMENT 'SKU ID',
+  `sku_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'SKU名称',
   `quantity` int NOT NULL DEFAULT 1 COMMENT '数量',
   `selected` tinyint(1) NULL DEFAULT 1 COMMENT '是否选中：0-否，1-是',
   `specs` json NULL COMMENT '规格信息',
@@ -266,15 +242,14 @@ CREATE TABLE `cart`  (
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_product_id`(`product_id` ASC) USING BTREE,
   INDEX `idx_update_time`(`update_time` ASC) USING BTREE,
+  INDEX `idx_sku_id`(`sku_id` ASC) USING BTREE,
   CONSTRAINT `fk_cart_goods` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_cart_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 155 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '购物车表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 169 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '购物车表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of cart
 -- ----------------------------
-INSERT INTO `cart` VALUES (152, 8, 104, 1, 0, NULL, 'd41d8cd98f00b204e9800998ecf8427e', 180.00, 1, NULL, '2025-09-19 12:11:39', '2025-09-19 12:11:48');
-INSERT INTO `cart` VALUES (153, 8, 100, 1, 0, NULL, 'd41d8cd98f00b204e9800998ecf8427e', 179.00, 1, NULL, '2025-09-19 12:11:41', '2025-09-19 12:11:48');
 
 -- ----------------------------
 -- Table structure for category
@@ -296,12 +271,12 @@ CREATE TABLE `category`  (
 -- ----------------------------
 -- Records of category
 -- ----------------------------
-INSERT INTO `category` VALUES (1, 0, '奶粉', 'categorys/milk.png', 1, 1, '2025-03-05 21:58:47', '2025-05-09 10:53:45');
+INSERT INTO `category` VALUES (1, 0, '奶粉', 'categorys/milk.png', 1, 1, '2025-03-05 21:58:47', '2025-11-17 12:16:23');
 INSERT INTO `category` VALUES (2, 0, '护理', 'categorys/diaper.png', 2, 1, '2025-03-05 21:58:47', '2025-05-09 10:53:49');
 INSERT INTO `category` VALUES (3, 0, '服饰', 'categorys/clothing.png', 3, 1, '2025-03-05 21:58:47', '2025-05-09 10:53:53');
 INSERT INTO `category` VALUES (4, 0, '玩具', 'categorys/toy.png', 4, 1, '2025-03-05 21:58:47', '2025-05-09 10:53:56');
 INSERT INTO `category` VALUES (5, 0, '洗护', 'categorys/care.png', 5, 1, '2025-03-05 21:58:47', '2025-05-09 10:54:02');
-INSERT INTO `category` VALUES (6, 0, '喂养', 'categorys/feeding.png', 6, 1, '2025-03-05 21:58:47', '2025-05-09 10:54:05');
+INSERT INTO `category` VALUES (6, 0, '喂养', 'categorys/feeding.png', 6, 1, '2025-03-05 21:58:47', '2025-11-13 17:18:09');
 
 -- ----------------------------
 -- Table structure for comment
@@ -325,7 +300,7 @@ CREATE TABLE `comment`  (
   INDEX `idx_product_id`(`product_id` ASC) USING BTREE,
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
   INDEX `idx_product_rating_time`(`product_id` ASC, `rating` ASC, `create_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 215 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 217 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of comment
@@ -540,6 +515,8 @@ INSERT INTO `comment` VALUES (211, 8, 56, 207, '质量非常好，物流很快�
 INSERT INTO `comment` VALUES (212, 8, 60, 236, '质量非常好，物流很快，包装也很完整，非常满意的一次购物体验！', 5, NULL, 0, 1, '2025-06-06 09:47:15', '2025-06-06 09:54:28', 1);
 INSERT INTO `comment` VALUES (213, 8, 60, 237, '不太喜欢啊', 2, NULL, 0, 1, '2025-06-06 13:37:45', '2025-06-06 13:39:09', 0);
 INSERT INTO `comment` VALUES (214, 8, 95, 260, '一般般，不太喜欢', 3, NULL, 0, 1, '2025-07-11 13:17:03', '2025-07-11 13:18:24', 0);
+INSERT INTO `comment` VALUES (215, 8, 93, 269, '收到货了，包装很好，物流很快，商品质量也不错，价格也实惠，很满意！', 5, NULL, 0, 1, '2025-11-12 10:37:49', '2025-11-12 13:21:20', 1);
+INSERT INTO `comment` VALUES (216, 8, 84, 271, '收到的商品与描述不符，质量较差，不太满意。', 1, NULL, 0, 1, '2025-11-16 19:10:01', '2025-11-16 19:10:01', 0);
 
 -- ----------------------------
 -- Table structure for comment_reply
@@ -555,7 +532,7 @@ CREATE TABLE `comment_reply`  (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`reply_id`) USING BTREE,
   INDEX `idx_comment_id`(`comment_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价回复表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价回复表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of comment_reply
@@ -563,6 +540,7 @@ CREATE TABLE `comment_reply`  (
 INSERT INTO `comment_reply` VALUES (1, 196, '质量非常好，物流很快，包装也很完整，非常满意的一次购物体验！', 1, 1, '2025-05-27 18:03:40', '2025-05-27 18:03:40');
 INSERT INTO `comment_reply` VALUES (2, 210, '亲爱的顾客，感谢您对我们产品的认可与支持！您的满意是我们最大的动力。如有任何关于产品使用的问题，欢迎随时联系我们的售后客服。我们将持续提供优质的母婴产品和服务，期待您的再次光临！', 1, 1, '2025-05-28 22:39:36', '2025-05-28 22:39:36');
 INSERT INTO `comment_reply` VALUES (3, 212, '亲爱的顾客，感谢您对我们产品的认可与支持！您的满意是我们最大的动力。如有任何关于产品使用的问题，欢迎随时联系我们的售后客服。我们将持续提供优质的母婴产品和服务，期待您的再次光临！非常好的用户', 1, 1, '2025-06-06 09:54:28', '2025-06-06 09:54:28');
+INSERT INTO `comment_reply` VALUES (4, 215, '亲爱的顾客，感谢您对我们产品的认可与支持！您的满意是我们最大的动力。如有任何关于产品使用的问题，欢迎随时联系我们的售后客服。我们将持续提供优质的母婴产品和服务，期待您的再次光临！', 1, 1, '2025-11-12 13:21:20', '2025-11-12 13:21:20');
 
 -- ----------------------------
 -- Table structure for comment_reward_config
@@ -738,8 +716,8 @@ CREATE TABLE `coupon`  (
 -- ----------------------------
 -- Records of coupon
 -- ----------------------------
-INSERT INTO `coupon` VALUES (1, '新用户优惠券', 1, 1, 'FIXED', 50.00, 50.01, NULL, 'ACTIVE', NULL, NULL, NULL, 0, 1010, 2, 7, '2025-04-22 19:54:13', '2025-09-23 00:00:00', '2025-04-23 19:54:13', '2025-05-13 15:55:33', 10);
-INSERT INTO `coupon` VALUES (2, '满100减15', 2, 2, 'FIXED', 15.00, 100.00, NULL, 'ACTIVE', NULL, NULL, NULL, 0, 500, 2, 2, '2025-04-22 19:54:13', '2025-05-23 19:54:13', '2025-04-23 19:54:13', '2025-04-24 13:58:53', 1);
+INSERT INTO `coupon` VALUES (1, '新用户优惠券', 1, 1, 'FIXED', 50.00, 50.55, NULL, 'ACTIVE', '', '', '', 0, 1010, 2, 10, '2025-04-22 19:54:13', '2027-09-18 00:00:00', '2025-04-23 19:54:13', '2025-11-18 14:39:44', 10);
+INSERT INTO `coupon` VALUES (2, '满100减15', 2, 2, 'FIXED', 15.00, 100.00, NULL, 'ACTIVE', '', '', '', 0, 500, 2, 2, '2025-04-22 19:54:13', '2027-05-15 19:54:13', '2025-04-23 19:54:13', '2025-10-16 11:02:08', 1);
 INSERT INTO `coupon` VALUES (3, '满200减30', 2, 2, 'FIXED', 30.00, 200.00, NULL, 'ACTIVE', NULL, NULL, NULL, 0, 300, 0, 2, '2025-04-22 19:54:13', '2025-05-23 19:54:13', '2025-04-23 19:54:13', '2025-04-23 20:33:22', 1);
 INSERT INTO `coupon` VALUES (4, '满300减50', 2, 2, 'FIXED', 50.00, 300.00, NULL, 'ACTIVE', NULL, NULL, NULL, 0, 200, 1, 1, '2025-04-22 19:54:13', '2025-05-23 19:54:13', '2025-04-23 19:54:13', '2025-04-23 21:36:07', 1);
 INSERT INTO `coupon` VALUES (5, '全场9折', 3, 3, 'PERCENTAGE', 0.90, 100.00, 50.00, 'ACTIVE', NULL, NULL, NULL, 0, 100, 0, 0, '2025-04-22 19:54:13', '2025-05-08 19:54:13', '2025-04-23 19:54:13', '2025-04-23 20:21:30', 1);
@@ -811,7 +789,7 @@ CREATE TABLE `favorite`  (
   PRIMARY KEY (`favorite_id`) USING BTREE,
   UNIQUE INDEX `idx_user_goods`(`user_id` ASC, `product_id` ASC) USING BTREE,
   INDEX `idx_user_goods_time`(`user_id` ASC, `product_id` ASC, `create_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 60 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '收藏表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 62 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '收藏表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of favorite
@@ -830,25 +808,20 @@ INSERT INTO `favorite` VALUES (27, 9, 8, '2025-04-26 15:17:51', '2025-04-26 15:1
 INSERT INTO `favorite` VALUES (28, 9, 56, '2025-04-28 22:49:38', '2025-04-28 22:49:38');
 INSERT INTO `favorite` VALUES (29, 9, 36, '2025-04-28 22:50:32', '2025-04-28 22:50:32');
 INSERT INTO `favorite` VALUES (32, 8, 58, '2025-05-09 18:28:59', '2025-05-09 18:28:59');
-INSERT INTO `favorite` VALUES (33, 8, 23, '2025-05-11 22:26:25', '2025-05-11 22:26:25');
-INSERT INTO `favorite` VALUES (35, 8, 54, '2025-05-12 21:03:47', '2025-05-12 21:03:47');
 INSERT INTO `favorite` VALUES (36, 8, 59, '2025-05-13 21:41:44', '2025-05-13 21:41:44');
 INSERT INTO `favorite` VALUES (37, 8, 66, '2025-05-15 22:08:22', '2025-05-15 22:08:22');
 INSERT INTO `favorite` VALUES (38, 8, 64, '2025-05-21 21:52:51', '2025-05-21 21:52:51');
 INSERT INTO `favorite` VALUES (39, 8, 35, '2025-05-22 17:43:46', '2025-05-22 17:43:46');
 INSERT INTO `favorite` VALUES (42, 8, 68, '2025-05-29 23:23:07', '2025-05-29 23:23:07');
 INSERT INTO `favorite` VALUES (43, 8, 93, '2025-05-30 11:33:35', '2025-05-30 11:33:35');
-INSERT INTO `favorite` VALUES (45, 8, 84, '2025-06-06 11:22:00', '2025-06-06 11:22:00');
 INSERT INTO `favorite` VALUES (47, 58, 113, '2025-06-09 22:40:32', '2025-06-09 22:40:32');
 INSERT INTO `favorite` VALUES (48, 58, 95, '2025-06-09 22:40:45', '2025-06-09 22:40:45');
 INSERT INTO `favorite` VALUES (49, 58, 60, '2025-06-09 22:42:12', '2025-06-09 22:42:12');
-INSERT INTO `favorite` VALUES (51, 8, 83, '2025-07-09 15:12:47', '2025-07-09 15:12:47');
 INSERT INTO `favorite` VALUES (52, 59, 85, '2025-07-10 14:32:13', '2025-07-10 14:32:13');
 INSERT INTO `favorite` VALUES (53, 59, 84, '2025-07-10 14:37:51', '2025-07-10 14:37:51');
 INSERT INTO `favorite` VALUES (54, 8, 95, '2025-07-11 13:14:10', '2025-07-11 13:14:10');
 INSERT INTO `favorite` VALUES (55, 9, 77, '2025-07-11 15:08:38', '2025-07-11 15:08:38');
 INSERT INTO `favorite` VALUES (56, 9, 104, '2025-07-11 15:15:52', '2025-07-11 15:15:52');
-INSERT INTO `favorite` VALUES (57, 8, 102, '2025-07-14 12:49:55', '2025-07-14 12:49:55');
 INSERT INTO `favorite` VALUES (58, 8, 69, '2025-07-14 13:04:47', '2025-07-14 13:04:47');
 INSERT INTO `favorite` VALUES (59, 8, 50, '2025-07-14 13:05:07', '2025-07-14 13:05:07');
 
@@ -880,7 +853,7 @@ CREATE TABLE `logistics`  (
   INDEX `idx_status`(`status` ASC) USING BTREE,
   CONSTRAINT `fk_logistics_company` FOREIGN KEY (`company_id`) REFERENCES `logistics_company` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_logistics_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 24 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '物流表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 32 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '物流表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of logistics
@@ -904,6 +877,14 @@ INSERT INTO `logistics` VALUES (17, 256, 3, 'YT2507092032483667', 'DELIVERED', N
 INSERT INTO `logistics` VALUES (18, 1, 1, 'SF2507106320', 'CREATED', NULL, NULL, NULL, '张三', '13800138000', '上海市浦东新区陆家嘴金融中心', '2025-07-10 14:26:02', NULL, NULL, '2025-07-10 14:26:02', '2025-07-10 14:26:02');
 INSERT INTO `logistics` VALUES (19, 259, 5, 'EMS2507101449400205', 'DELIVERED', NULL, NULL, NULL, 'pwz', '15222566568', '安徽省合肥市包河区西湖区10086号', '2025-07-10 14:49:41', '2025-07-10 15:32:56', '系统自动更新：物流已完成送达', '2025-07-10 14:49:41', '2025-07-10 14:49:41');
 INSERT INTO `logistics` VALUES (23, 260, 2, 'ZT2507111316109731', 'DELIVERED', NULL, NULL, NULL, '李狗蛋', '15777455256', '北京市北京市朝阳区胜利街道1887号', '2025-07-11 13:16:11', '2025-07-11 13:16:27', '系统自动更新：物流已完成送达', '2025-07-11 13:16:11', '2025-07-11 13:16:11');
+INSERT INTO `logistics` VALUES (24, 269, 1, 'SF2511121032009535', 'CREATED', NULL, NULL, NULL, '李狗蛋', '15777455256', '北京市北京市朝阳区胜利街道1887号', '2025-11-12 10:32:00', NULL, NULL, '2025-11-12 10:32:00', '2025-11-12 10:32:00');
+INSERT INTO `logistics` VALUES (25, 270, 8, 'JT2511121329284054', 'CREATED', NULL, NULL, NULL, '李狗蛋', '15777455256', '北京市北京市朝阳区胜利街道1887号', '2025-11-12 13:29:29', NULL, NULL, '2025-11-12 13:29:29', '2025-11-12 13:29:29');
+INSERT INTO `logistics` VALUES (26, 268, 5, 'EMS2511131840143946', 'CREATED', NULL, NULL, NULL, '王大锤', '13666522545', '广东省深圳市福田区紫阳大道1555号', '2025-11-13 18:40:15', NULL, NULL, '2025-11-13 18:40:15', '2025-11-13 18:40:15');
+INSERT INTO `logistics` VALUES (27, 267, 7, 'BEST2511161747318728', 'CREATED', NULL, NULL, NULL, '王大锤', '13666522545', '广东省深圳市福田区紫阳大道1555号', '2025-11-16 17:47:31', NULL, NULL, '2025-11-16 17:47:31', '2025-11-16 17:47:31');
+INSERT INTO `logistics` VALUES (28, 271, 1, 'SF2511161909369894', 'CREATED', NULL, NULL, NULL, '李狗蛋', '15777455256', '北京市北京市朝阳区胜利街道1887号', '2025-11-16 19:09:36', NULL, NULL, '2025-11-16 19:09:36', '2025-11-16 19:09:36');
+INSERT INTO `logistics` VALUES (29, 272, 12, 'HTKY2511161934490073', 'CREATED', NULL, NULL, NULL, '李狗蛋', '15777455256', '北京市北京市朝阳区胜利街道1887号', '2025-11-16 19:34:49', NULL, NULL, '2025-11-16 19:34:49', '2025-11-16 19:34:49');
+INSERT INTO `logistics` VALUES (30, 273, 9, 'JD2511171119404173', 'CREATED', NULL, NULL, NULL, '张三', '13666544577', '江苏省苏州市吴江区太湖公园18888号', '2025-11-17 11:19:40', NULL, NULL, '2025-11-17 11:19:40', '2025-11-17 11:19:40');
+INSERT INTO `logistics` VALUES (31, 275, 5, 'EMS2511191508118758', 'CREATED', NULL, NULL, NULL, '李狗蛋', '15777455256', '北京市北京市朝阳区胜利街道1887号', '2025-11-19 15:08:11', NULL, NULL, '2025-11-19 15:08:11', '2025-11-19 15:08:11');
 
 -- ----------------------------
 -- Table structure for logistics_company
@@ -928,7 +909,7 @@ CREATE TABLE `logistics_company`  (
 -- ----------------------------
 -- Records of logistics_company
 -- ----------------------------
-INSERT INTO `logistics_company` VALUES (1, 'SF', '顺丰速运', '客服', '95338', '深圳市宝安区福永大道', 1, 'logistics/sf.png', 1, '2025-05-09 11:40:42', '2025-05-09 11:40:42');
+INSERT INTO `logistics_company` VALUES (1, 'SF', '顺丰速运', '客服', '95338', '深圳市宝安区福永大道', 1, 'logistics/sf.png', 1, '2025-05-09 11:40:42', '2025-11-16 19:23:18');
 INSERT INTO `logistics_company` VALUES (2, 'ZT', '中通快递', '客服', '95311', '上海市青浦区华新镇华志路', 1, 'logistics/zt.png', 2, '2025-05-09 11:40:42', '2025-05-09 11:40:42');
 INSERT INTO `logistics_company` VALUES (3, 'YT', '圆通速递', '客服', '95554', '上海市青浦区华新镇华徐公路', 1, 'logistics/yt.png', 3, '2025-05-09 11:40:42', '2025-05-09 11:40:42');
 INSERT INTO `logistics_company` VALUES (4, 'YD', '韵达速递', '客服', '95546', '上海市青浦区盈港东路', 1, 'logistics/yd.png', 4, '2025-05-09 11:40:42', '2025-05-09 11:40:42');
@@ -936,8 +917,8 @@ INSERT INTO `logistics_company` VALUES (5, 'EMS', 'EMS快递', '客服', '11183'
 INSERT INTO `logistics_company` VALUES (6, 'STO', '申通快递', '客服', '95543', '上海市青浦区华徐公路', 1, 'logistics/sto.png', 6, '2025-05-09 18:01:59', '2025-05-09 18:01:59');
 INSERT INTO `logistics_company` VALUES (7, 'BEST', '百世快递', '客服', '95320', '杭州市萧山区经济技术开发区', 1, 'logistics/best.png', 7, '2025-05-09 18:01:59', '2025-05-09 18:01:59');
 INSERT INTO `logistics_company` VALUES (8, 'JT', '极兔速递', '客服', '950616', '上海市松江区', 1, 'logistics/jt.png', 8, '2025-05-09 18:01:59', '2025-05-09 18:01:59');
-INSERT INTO `logistics_company` VALUES (9, 'JD', '京东物流', '客服', '950616', '北京市通州区', 1, 'logistics/jd.png', 9, '2025-05-09 18:01:59', '2025-05-09 18:01:59');
-INSERT INTO `logistics_company` VALUES (10, 'DB', '德邦快递', '客服', '95353', '上海市青浦区', 1, 'logistics/db.png', 10, '2025-05-09 18:01:59', '2025-05-09 18:01:59');
+INSERT INTO `logistics_company` VALUES (9, 'JD', '京东物流', '客服', '950616', '北京市通州区', 1, 'logistics/jd.png', 9, '2025-05-09 18:01:59', '2025-11-16 19:21:47');
+INSERT INTO `logistics_company` VALUES (10, 'DB', '德邦快递', '客服', '95353', '上海市青浦区', 1, 'logistics/db.png', 10, '2025-05-09 18:01:59', '2025-11-16 19:21:43');
 INSERT INTO `logistics_company` VALUES (11, 'ZJS', '宅急送', '客服', '4006789000', '北京市顺义区', 1, 'logistics/zjs.png', 11, '2025-05-09 18:01:59', '2025-05-09 18:01:59');
 INSERT INTO `logistics_company` VALUES (12, 'HTKY', '百世快运', '客服', '4009565656', '上海市', 1, 'logistics/htky.png', 12, '2025-05-09 18:01:59', '2025-05-09 18:01:59');
 INSERT INTO `logistics_company` VALUES (13, 'YZPY', '邮政快递包裹', '客服', '11185', '北京市西城区', 1, 'logistics/yzpy.png', 13, '2025-05-09 18:01:59', '2025-05-09 18:01:59');
@@ -1012,7 +993,7 @@ CREATE TABLE `logistics_track`  (
   INDEX `idx_logistics_id`(`logistics_id` ASC) USING BTREE,
   INDEX `idx_tracking_time`(`tracking_time` ASC) USING BTREE,
   CONSTRAINT `fk_track_logistics` FOREIGN KEY (`logistics_id`) REFERENCES `logistics` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 73 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '物流轨迹表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 106 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '物流轨迹表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of logistics_track
@@ -1089,6 +1070,39 @@ INSERT INTO `logistics_track` VALUES (69, 23, '2025-07-11 14:16:27', '分拣中�
 INSERT INTO `logistics_track` VALUES (70, 23, '2025-07-11 14:46:27', '配送站', 'SHIPPING', '快件已到达配送站，等待配送', 'System', '2025-07-11 13:16:27', '{\"type\": \"autoGenerated\", \"isLast\": false, \"stepIndex\": 3, \"batchIndex\": 3, \"generatedAt\": \"2025-07-11T05:16:27.179Z\", \"templateName\": \"step_4\", \"additionalInfo\": {\"totalSteps\": 5, \"batchGenerated\": true}, \"batchGenerated\": true, \"batchTimestamp\": \"2025-07-11T13:16:27.208374300\"}');
 INSERT INTO `logistics_track` VALUES (71, 23, '2025-07-11 15:16:27', '收货地址', 'DELIVERED', '快件已被签收，感谢您使用我们的服务', 'System', '2025-07-11 13:16:27', '{\"type\": \"autoGenerated\", \"isLast\": true, \"stepIndex\": 4, \"batchIndex\": 4, \"generatedAt\": \"2025-07-11T05:16:27.179Z\", \"deliveryInfo\": {\"isDelivered\": true, \"deliveryMethod\": \"standard\", \"requiresSignature\": true}, \"templateName\": \"step_5\", \"additionalInfo\": {\"totalSteps\": 5, \"batchGenerated\": true}, \"batchGenerated\": true, \"batchTimestamp\": \"2025-07-11T13:16:27.208374300\"}');
 INSERT INTO `logistics_track` VALUES (72, 23, '2025-07-11 13:16:27', NULL, 'DELIVERED', '包裹已送达，备注：系统自动更新：物流已完成送达', '系统更新', '2025-07-11 13:16:27', '{\"type\": \"statusChange\", \"remark\": \"系统自动更新：物流已完成送达\", \"previousStatus\": \"DELIVERED\", \"systemGenerated\": true}');
+INSERT INTO `logistics_track` VALUES (73, 24, '2025-11-12 10:32:00', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-11-12 10:32:00', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 1, \"trackingNo\": \"SF2511121032009535\"}, \"systemGenerated\": true}');
+INSERT INTO `logistics_track` VALUES (74, 24, '2025-11-12 10:32:43', '发货仓库', 'SHIPPING', '快件已从仓库发出，正在运往分拣中心', 'System', '2025-11-12 10:32:43', '{\"type\": \"autoGenerated\", \"isLast\": false, \"stepIndex\": 0, \"batchIndex\": 0, \"generatedAt\": \"2025-11-12T02:32:43.348Z\", \"templateName\": \"step_1\", \"additionalInfo\": {\"totalSteps\": 5, \"batchGenerated\": true}, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-12T10:32:43.377560400\"}');
+INSERT INTO `logistics_track` VALUES (75, 24, '2025-11-12 11:02:43', '分拣中心', 'SHIPPING', '快件已到达分拣中心，正在分拣', 'System', '2025-11-12 10:32:43', '{\"type\": \"autoGenerated\", \"isLast\": false, \"stepIndex\": 1, \"batchIndex\": 1, \"generatedAt\": \"2025-11-12T02:32:43.348Z\", \"templateName\": \"step_2\", \"additionalInfo\": {\"totalSteps\": 5, \"batchGenerated\": true}, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-12T10:32:43.377560400\"}');
+INSERT INTO `logistics_track` VALUES (76, 24, '2025-11-12 11:32:43', '分拣中心', 'SHIPPING', '快件已从分拣中心发出，正在运往配送站', 'System', '2025-11-12 10:32:43', '{\"type\": \"autoGenerated\", \"isLast\": false, \"stepIndex\": 2, \"batchIndex\": 2, \"generatedAt\": \"2025-11-12T02:32:43.348Z\", \"templateName\": \"step_3\", \"additionalInfo\": {\"totalSteps\": 5, \"batchGenerated\": true}, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-12T10:32:43.377560400\"}');
+INSERT INTO `logistics_track` VALUES (77, 24, '2025-11-12 12:02:43', '配送站', 'SHIPPING', '快件已到达配送站，等待配送', 'System', '2025-11-12 10:32:43', '{\"type\": \"autoGenerated\", \"isLast\": false, \"stepIndex\": 3, \"batchIndex\": 3, \"generatedAt\": \"2025-11-12T02:32:43.348Z\", \"templateName\": \"step_4\", \"additionalInfo\": {\"totalSteps\": 5, \"batchGenerated\": true}, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-12T10:32:43.377560400\"}');
+INSERT INTO `logistics_track` VALUES (78, 24, '2025-11-12 12:32:43', '收货地址', 'DELIVERED', '快件已被签收，感谢您使用我们的服务', 'System', '2025-11-12 10:32:43', '{\"type\": \"autoGenerated\", \"isLast\": true, \"stepIndex\": 4, \"batchIndex\": 4, \"generatedAt\": \"2025-11-12T02:32:43.348Z\", \"deliveryInfo\": {\"isDelivered\": true, \"deliveryMethod\": \"standard\", \"requiresSignature\": true}, \"templateName\": \"step_5\", \"additionalInfo\": {\"totalSteps\": 5, \"batchGenerated\": true}, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-12T10:32:43.377560400\"}');
+INSERT INTO `logistics_track` VALUES (79, 25, '2025-11-12 13:29:29', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-11-12 13:29:29', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 8, \"trackingNo\": \"JT2511121329284054\"}, \"systemGenerated\": true}');
+INSERT INTO `logistics_track` VALUES (80, 26, '2025-11-13 18:40:15', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-11-13 18:40:15', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 5, \"trackingNo\": \"EMS2511131840143946\"}, \"systemGenerated\": true}');
+INSERT INTO `logistics_track` VALUES (81, 27, '2025-11-16 17:47:31', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-11-16 17:47:31', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 7, \"trackingNo\": \"BEST2511161747318728\"}, \"systemGenerated\": true}');
+INSERT INTO `logistics_track` VALUES (82, 28, '2025-11-16 19:09:36', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-11-16 19:09:36', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 1, \"trackingNo\": \"SF2511161909369894\"}, \"systemGenerated\": true}');
+INSERT INTO `logistics_track` VALUES (83, 28, '2025-11-16 11:30:58', '发货仓库', '已揽收', '快件已从仓库发出，正在运往分拣中心', 'System', '2025-11-16 19:30:58', '{\"batchIndex\": 0, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:30:58.107269500\"}');
+INSERT INTO `logistics_track` VALUES (84, 28, '2025-11-16 12:00:58', '分拣中心', '运输中', '快件已到达分拣中心，正在分拣', 'System', '2025-11-16 19:30:58', '{\"batchIndex\": 1, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:30:58.107269500\"}');
+INSERT INTO `logistics_track` VALUES (85, 28, '2025-11-16 12:30:58', '分拣中心', '运输中', '快件已从分拣中心发出，正在运往配送站', 'System', '2025-11-16 19:30:58', '{\"batchIndex\": 2, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:30:58.107269500\"}');
+INSERT INTO `logistics_track` VALUES (86, 28, '2025-11-16 13:00:58', '配送站', '派送中', '快件已到达配送站，等待配送', 'System', '2025-11-16 19:30:58', '{\"batchIndex\": 3, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:30:58.107269500\"}');
+INSERT INTO `logistics_track` VALUES (87, 28, '2025-11-16 13:30:58', '收货地址', '已签收', '快件已被签收，感谢您使用我们的服务', 'System', '2025-11-16 19:30:58', '{\"batchIndex\": 4, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:30:58.107269500\"}');
+INSERT INTO `logistics_track` VALUES (88, 29, '2025-11-16 19:34:49', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-11-16 19:34:49', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 12, \"trackingNo\": \"HTKY2511161934490073\"}, \"systemGenerated\": true}');
+INSERT INTO `logistics_track` VALUES (89, 29, '2025-11-16 11:41:30', '发货仓库', '已揽收', '快件已从仓库发出，正在运往分拣中心', 'System', '2025-11-16 19:41:30', '{\"batchIndex\": 0, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:41:30.327454100\"}');
+INSERT INTO `logistics_track` VALUES (90, 29, '2025-11-16 12:11:30', '分拣中心', '运输中', '快件已到达分拣中心，正在分拣', 'System', '2025-11-16 19:41:30', '{\"batchIndex\": 1, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:41:30.327454100\"}');
+INSERT INTO `logistics_track` VALUES (91, 29, '2025-11-16 12:41:30', '分拣中心', '运输中', '快件已从分拣中心发出，正在运往配送站', 'System', '2025-11-16 19:41:30', '{\"batchIndex\": 2, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:41:30.327454100\"}');
+INSERT INTO `logistics_track` VALUES (92, 29, '2025-11-16 13:11:30', '配送站', '派送中', '快件已到达配送站，等待配送', 'System', '2025-11-16 19:41:30', '{\"batchIndex\": 3, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:41:30.327454100\"}');
+INSERT INTO `logistics_track` VALUES (93, 29, '2025-11-16 13:41:30', '收货地址', '已签收', '快件已被签收，感谢您使用我们的服务', 'System', '2025-11-16 19:41:30', '{\"batchIndex\": 4, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:41:30.327454100\"}');
+INSERT INTO `logistics_track` VALUES (94, 29, '2025-11-16 11:41:54', '发货仓库', '已揽收', '快件已从仓库发出，正在运往分拣中心', 'System', '2025-11-16 19:41:54', '{\"batchIndex\": 0, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:41:54.315692\"}');
+INSERT INTO `logistics_track` VALUES (95, 29, '2025-11-16 12:11:54', '分拣中心', '运输中', '快件已到达分拣中心，正在分拣', 'System', '2025-11-16 19:41:54', '{\"batchIndex\": 1, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:41:54.315692\"}');
+INSERT INTO `logistics_track` VALUES (96, 29, '2025-11-16 12:41:54', '分拣中心', '运输中', '快件已从分拣中心发出，正在运往配送站', 'System', '2025-11-16 19:41:54', '{\"batchIndex\": 2, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:41:54.315692\"}');
+INSERT INTO `logistics_track` VALUES (97, 29, '2025-11-16 13:11:54', '配送站', '派送中', '快件已到达配送站，等待配送', 'System', '2025-11-16 19:41:54', '{\"batchIndex\": 3, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:41:54.315692\"}');
+INSERT INTO `logistics_track` VALUES (98, 29, '2025-11-16 13:41:54', '收货地址', '已签收', '快件已被签收，感谢您使用我们的服务', 'System', '2025-11-16 19:41:54', '{\"batchIndex\": 4, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-16T19:41:54.315692\"}');
+INSERT INTO `logistics_track` VALUES (99, 30, '2025-11-17 11:19:40', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-11-17 11:19:40', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 9, \"trackingNo\": \"JD2511171119404173\"}, \"systemGenerated\": true}');
+INSERT INTO `logistics_track` VALUES (100, 30, '2025-11-17 03:20:20', '发货仓库', '已揽收', '快件已从仓库发出，正在运往分拣中心', 'System', '2025-11-17 11:20:20', '{\"batchIndex\": 0, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-17T11:20:20.492304600\"}');
+INSERT INTO `logistics_track` VALUES (101, 30, '2025-11-17 03:50:20', '分拣中心', '运输中', '快件已到达分拣中心，正在分拣', 'System', '2025-11-17 11:20:20', '{\"batchIndex\": 1, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-17T11:20:20.492304600\"}');
+INSERT INTO `logistics_track` VALUES (102, 30, '2025-11-17 04:20:20', '分拣中心', '运输中', '快件已从分拣中心发出，正在运往配送站', 'System', '2025-11-17 11:20:20', '{\"batchIndex\": 2, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-17T11:20:20.492304600\"}');
+INSERT INTO `logistics_track` VALUES (103, 30, '2025-11-17 04:50:20', '配送站', '派送中', '快件已到达配送站，等待配送', 'System', '2025-11-17 11:20:20', '{\"batchIndex\": 3, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-17T11:20:20.492304600\"}');
+INSERT INTO `logistics_track` VALUES (104, 30, '2025-11-17 05:20:20', '收货地址', '已签收', '快件已被签收，感谢您使用我们的服务', 'System', '2025-11-17 11:20:20', '{\"batchIndex\": 4, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-17T11:20:20.492304600\"}');
+INSERT INTO `logistics_track` VALUES (105, 31, '2025-11-19 15:08:11', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-11-19 15:08:11', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 5, \"trackingNo\": \"EMS2511191508118758\"}, \"systemGenerated\": true}');
 
 -- ----------------------------
 -- Table structure for member_level
@@ -1167,7 +1181,7 @@ CREATE TABLE `order`  (
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
   INDEX `idx_user_status_create_time`(`user_id` ASC, `status` ASC, `create_time` ASC) USING BTREE,
   INDEX `idx_version`(`version` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 268 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 285 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of order
@@ -1347,7 +1361,7 @@ INSERT INTO `order` VALUES (222, 'OD1747320522379daa9d8', 8, 69.90, 69.90, 'comp
 INSERT INTO `order` VALUES (225, 'OD17478392282642a46ae', 8, 399.90, 399.90, 'refunded', 261, '2025-05-21 22:54:59', 'alipay', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-05-21 22:53:48', '2025-05-21 22:54:59', 4);
 INSERT INTO `order` VALUES (226, 'OD17478984664046d3f2b', 8, 25.80, 35.80, 'cancelled', NULL, NULL, 'alipay', NULL, 10.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '未支付已自动取消', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, '2025-05-22 15:27:00', '订单超时未支付，系统自动取消', 0, 0, '2025-05-22 15:21:06', '2025-05-22 15:27:00', 2);
 INSERT INTO `order` VALUES (227, 'OD17479041992960ab1fc', 8, 199.00, 199.00, 'cancelled', 263, '2025-05-22 17:01:49', 'wechat', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, '2025-05-22 18:09:35', NULL, 0, 0, '2025-05-22 16:56:39', '2025-05-22 18:09:35', 4);
-INSERT INTO `order` VALUES (228, 'OD1747922100745f8639c', 8, 716.00, 716.00, 'refunding', 264, '2025-05-22 21:56:21', 'alipay', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-05-22 21:55:01', '2025-05-22 21:56:21', 3);
+INSERT INTO `order` VALUES (228, 'OD1747922100745f8639c', 8, 716.00, 716.00, 'refunded', 264, '2025-05-22 21:56:21', 'alipay', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-05-22 21:55:01', '2025-05-22 21:56:21', 4);
 INSERT INTO `order` VALUES (229, 'OD1748085552938f9acc0', 8, 129.00, 129.00, 'shipped', 265, '2025-05-24 19:19:43', 'wechat', NULL, 0.00, 8, '王大锤', '13666522545', '广东省', '深圳市', '福田区', '紫阳大道1555号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-05-29 23:05:02', 'YD2505292305010709', '韵达速递', NULL, NULL, NULL, 0, 0, '2025-05-24 19:19:13', '2025-05-29 23:05:02', 3);
 INSERT INTO `order` VALUES (230, 'OD1748086365510710a7f', 8, 199.00, 199.00, 'cancelled', NULL, NULL, 'alipay', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '未支付已自动取消', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, '2025-05-24 19:38:00', '订单超时未支付，系统自动取消', 0, 0, '2025-05-24 19:32:46', '2025-05-24 19:38:00', 2);
 INSERT INTO `order` VALUES (231, 'OD174844173195788d6c7', 8, 756.00, 756.00, 'completed', 266, '2025-05-28 22:16:10', 'alipay', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-05-28 22:16:57', 'YT2505282216561622', '圆通速递', '2025-05-28 22:17:15', NULL, NULL, 1, 0, '2025-05-28 22:15:32', '2025-05-28 22:17:44', 4);
@@ -1384,9 +1398,26 @@ INSERT INTO `order` VALUES (261, 'OD1752217759425d955cc', 9, 378.00, 378.00, 'pe
 INSERT INTO `order` VALUES (262, 'OD1752218035911b8d529', 9, 180.00, 130.00, 'pending_shipment', 288, '2025-07-11 15:14:40', 'alipay', NULL, 0.00, 7, '王五', '13444522365', '上海市', '上海市', '静安区', '胜利达到157号', '', '', 0.00, 20, 50.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-07-11 15:13:56', '2025-07-11 15:14:40', 2);
 INSERT INTO `order` VALUES (263, 'OD175221820097485ae4b', 9, 1880.00, 1830.00, 'refunded', 290, '2025-07-11 15:17:49', 'alipay', NULL, 0.00, 7, '王五', '13444522365', '上海市', '上海市', '静安区', '胜利达到157号', '', '', 0.00, 21, 50.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-07-11 15:16:41', '2025-07-11 15:17:49', 5);
 INSERT INTO `order` VALUES (264, 'OD1752661153782d5f325', 8, 399.90, 399.90, 'refunded', 291, '2025-07-16 18:19:23', 'wechat', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-07-16 18:19:14', '2025-07-16 18:19:22', 4);
-INSERT INTO `order` VALUES (265, 'OD1752663366489bad395', 8, 179.00, 179.00, 'refunding', 292, '2025-07-16 18:56:11', 'wallet', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-07-16 18:56:06', '2025-07-16 18:56:10', 3);
+INSERT INTO `order` VALUES (265, 'OD1752663366489bad395', 8, 179.00, 179.00, 'refunded', 292, '2025-07-16 18:56:11', 'wallet', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-07-16 18:56:06', '2025-07-16 18:56:10', 4);
 INSERT INTO `order` VALUES (266, 'OD1758185044441fc2a2a', 8, 189.90, 189.90, 'pending_shipment', 294, '2025-09-18 16:45:31', 'alipay', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-09-18 16:44:04', '2025-09-18 16:45:31', 3);
-INSERT INTO `order` VALUES (267, 'OD17582551185296f4f05', 8, 1074.00, 1074.00, 'pending_shipment', 295, '2025-09-19 12:12:17', 'wechat', NULL, 0.00, 8, '王大锤', '13666522545', '广东省', '深圳市', '福田区', '紫阳大道1555号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-09-19 12:11:59', '2025-09-19 12:12:19', 2);
+INSERT INTO `order` VALUES (267, 'OD17582551185296f4f05', 8, 1074.00, 1074.00, 'shipped', 295, '2025-09-19 12:12:17', 'wechat', NULL, 0.00, 8, '王大锤', '13666522545', '广东省', '深圳市', '福田区', '紫阳大道1555号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-11-16 17:47:31', 'BEST2511161747318728', '百世快递', NULL, NULL, NULL, 0, 0, '2025-09-19 12:11:59', '2025-11-16 17:47:31', 3);
+INSERT INTO `order` VALUES (268, 'OD176282630155219a248', 8, 29.80, 39.80, 'shipped', 296, '2025-11-11 09:59:14', 'alipay', NULL, 10.00, 8, '王大锤', '13666522545', '广东省', '深圳市', '福田区', '紫阳大道1555号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-11-13 18:40:15', 'EMS2511131840143946', 'EMS快递', NULL, NULL, NULL, 0, 0, '2025-11-11 09:58:22', '2025-11-13 18:40:15', 3);
+INSERT INTO `order` VALUES (269, 'OD176282938025946e012', 8, 109.00, 109.00, 'completed', 297, '2025-11-11 10:49:56', 'wechat', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-11-12 10:32:00', 'SF2511121032009535', '顺丰速运', '2025-11-12 10:37:12', NULL, NULL, 1, 0, '2025-11-11 10:49:40', '2025-11-12 10:37:49', 4);
+INSERT INTO `order` VALUES (270, 'OD17629253243371244e1', 8, 229.90, 179.90, 'shipped', 298, '2025-11-12 13:28:52', 'wallet', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, 29, 50.00, 0.00, 0, 0.00, NULL, '2025-11-12 13:29:29', 'JT2511121329284054', '极兔速递', NULL, NULL, NULL, 0, 0, '2025-11-12 13:28:44', '2025-11-12 13:29:29', 3);
+INSERT INTO `order` VALUES (271, 'OD17632913246520bd2ce', 8, 1880.00, 1880.00, 'completed', 300, '2025-11-16 19:09:10', 'wallet', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-11-16 19:09:36', 'SF2511161909369894', '顺丰速运', '2025-11-16 19:09:46', NULL, NULL, 1, 0, '2025-11-16 19:08:45', '2025-11-16 19:10:01', 5);
+INSERT INTO `order` VALUES (272, 'OD1763292813353fcb46f', 8, 2580.00, 2580.00, 'completed', 301, '2025-11-16 19:34:20', 'alipay', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-11-16 19:34:49', 'HTKY2511161934490073', '百世快运', '2025-11-16 19:54:18', NULL, NULL, 0, 0, '2025-11-16 19:33:33', '2025-11-16 19:54:18', 4);
+INSERT INTO `order` VALUES (273, 'OD17633495350114a4d95', 9, 159.00, 159.00, 'refunded', 302, '2025-11-17 11:19:15', 'wechat', NULL, 0.00, 16, '张三', '13666544577', '江苏省', '苏州市', '吴江区', '太湖公园18888号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-11-17 11:19:40', 'JD2511171119404173', '京东物流', '2025-11-17 11:21:06', NULL, NULL, 0, 0, '2025-11-17 11:18:55', '2025-11-17 11:21:06', 6);
+INSERT INTO `order` VALUES (274, 'OD176344196086432cefc', 9, 398.00, 348.00, 'pending_shipment', 303, '2025-11-18 12:59:30', 'wallet', NULL, 0.00, 7, '王五', '13444522365', '上海市', '上海市', '静安区', '胜利达到157号', '', '', 0.00, NULL, 0.00, 0.00, 5000, 50.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-11-18 12:59:21', '2025-11-18 12:59:32', 2);
+INSERT INTO `order` VALUES (275, 'OD17635307389709c410a', 8, 29.80, 39.80, 'completed', 304, '2025-11-19 13:39:12', 'wechat', NULL, 10.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-11-19 15:08:11', 'EMS2511191508118758', 'EMS快递', '2025-11-21 15:25:39', NULL, NULL, 0, 0, '2025-11-19 13:38:59', '2025-11-21 15:25:39', 4);
+INSERT INTO `order` VALUES (276, 'OD176371172919058ae51', 8, 199.00, 149.00, 'pending_shipment', 305, '2025-11-21 15:55:44', 'wechat', NULL, 0.00, 8, '王大锤', '13666522545', '广东省', '深圳市', '福田区', '紫阳大道1555号', '', '', 0.00, 30, 50.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-11-21 15:55:30', '2025-11-21 15:55:47', 2);
+INSERT INTO `order` VALUES (277, 'OD17637821098265ca775', 8, 378.00, 378.00, 'cancelled', NULL, NULL, 'alipay', NULL, 0.00, 8, '王大锤', '13666522545', '广东省', '深圳市', '福田区', '紫阳大道1555号', '', '未支付已自动取消', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, '2025-11-22 11:34:00', '订单超时未支付，系统自动取消', 0, 0, '2025-11-22 11:28:30', '2025-11-22 11:34:00', 2);
+INSERT INTO `order` VALUES (278, 'OD1763782912767e60729', 8, 398.00, 398.00, 'pending_shipment', 306, '2025-11-22 11:43:38', 'wallet', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-11-22 11:41:53', '2025-11-22 11:43:40', 2);
+INSERT INTO `order` VALUES (279, 'OD176378326347211f8d7', 8, 189.00, 189.00, 'cancelled', NULL, NULL, 'alipay', NULL, 0.00, 4, '青柠檬', '13444588765', '广东省', '深圳市', '罗湖区', '三墩157号', '310000', '未支付已自动取消', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, '2025-11-22 11:53:00', '订单超时未支付，系统自动取消', 0, 0, '2025-11-22 11:47:43', '2025-11-22 11:53:00', 2);
+INSERT INTO `order` VALUES (280, 'OD17637842325279ad152', 8, 189.00, 189.00, 'pending_shipment', 308, '2025-11-22 12:04:49', 'alipay', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-11-22 12:03:53', '2025-11-22 12:04:52', 3);
+INSERT INTO `order` VALUES (281, 'OD17637846760888a58fe', 8, 199.00, 199.00, 'pending_shipment', 309, '2025-11-22 12:11:33', 'wechat', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-11-22 12:11:16', '2025-11-22 12:11:36', 2);
+INSERT INTO `order` VALUES (282, 'OD1763784714697ef21bc', 8, 378.00, 378.00, 'pending_shipment', 310, '2025-11-22 12:12:06', 'wallet', NULL, 0.00, 4, '青柠檬', '13444588765', '广东省', '深圳市', '罗湖区', '三墩157号', '310000', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-11-22 12:11:55', '2025-11-22 12:12:08', 2);
+INSERT INTO `order` VALUES (283, 'OD1763799393847087e57', 8, 388.00, 338.00, 'pending_shipment', 311, '2025-11-22 16:16:53', 'wechat', NULL, 0.00, 4, '青柠檬', '13444588765', '广东省', '深圳市', '罗湖区', '三墩157号', '310000', '', 0.00, 31, 50.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-11-22 16:16:34', '2025-11-22 16:16:55', 2);
+INSERT INTO `order` VALUES (284, 'OD1763953286856c29a14', 8, 298.00, 298.00, 'pending_shipment', 312, '2025-11-24 11:02:09', 'alipay', NULL, 0.00, 5, '李狗蛋', '15777455256', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, '2025-11-24 11:01:27', '2025-11-24 11:02:11', 2);
 
 -- ----------------------------
 -- Table structure for order_product
@@ -1396,6 +1427,9 @@ CREATE TABLE `order_product`  (
   `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `order_id` int UNSIGNED NOT NULL COMMENT '订单ID',
   `product_id` int UNSIGNED NOT NULL COMMENT '商品ID',
+  `sku_id` bigint UNSIGNED NULL DEFAULT NULL COMMENT 'SKU ID',
+  `sku_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'SKU编码',
+  `sku_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'SKU名称',
   `product_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '商品名称',
   `product_img` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '商品图片',
   `price` decimal(10, 2) NOT NULL COMMENT '商品价格',
@@ -1405,119 +1439,138 @@ CREATE TABLE `order_product`  (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
-  INDEX `idx_product_id`(`product_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 108 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单商品表' ROW_FORMAT = DYNAMIC;
+  INDEX `idx_product_id`(`product_id` ASC) USING BTREE,
+  INDEX `idx_sku_id`(`sku_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 126 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单商品表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of order_product
 -- ----------------------------
-INSERT INTO `order_product` VALUES (1, 1, 10, '惠氏启赋有机婴儿配方奶粉1段（0-6个月）', 'goods10.jpg', 298.00, 2, '{\"规格\": \"400g\", \"礼盒装\": \"是\"}', '2025-03-05 21:58:47', '2025-03-11 14:22:04');
-INSERT INTO `order_product` VALUES (2, 2, 11, '帮宝适超薄干爽纸尿裤M码（6-11kg）', 'goods11.jpg', 139.00, 1, '{\"包装\": \"中包装（56片）\"}', '2025-03-05 21:58:47', '2025-03-11 14:22:10');
-INSERT INTO `order_product` VALUES (3, 3, 12, '花王妙而舒纸尿裤L码（9-14kg）', 'goods12.jpg', 149.00, 1, '{\"包装\": \"大包装（76片）\"}', '2025-03-06 13:58:47', '2025-03-11 14:22:11');
-INSERT INTO `order_product` VALUES (4, 4, 13, '惠氏启赋有机婴儿配方奶粉1段（0-6个月）', 'goods13.jpg', 298.00, 1, '{\"规格\": \"400g\", \"礼盒装\": \"否\"}', '2025-03-05 14:58:47', '2025-03-11 14:22:13');
-INSERT INTO `order_product` VALUES (5, 71, 49, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-04-18 22:08:06', '2025-04-18 22:08:06');
-INSERT INTO `order_product` VALUES (6, 75, 49, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-04-19 14:28:49', '2025-04-19 14:28:49');
-INSERT INTO `order_product` VALUES (7, 85, 59, '孕妇维生素', 'goods59.jpg', 189.90, 2, '\"规格:默认\"', '2025-04-19 17:27:06', '2025-04-19 17:27:06');
-INSERT INTO `order_product` VALUES (8, 115, 49, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-04-21 13:41:36', '2025-04-21 13:41:36');
-INSERT INTO `order_product` VALUES (9, 131, 44, '婴儿指甲剪', 'goods44.jpg', 29.90, 1, NULL, '2025-04-21 15:46:07', '2025-04-21 15:46:07');
-INSERT INTO `order_product` VALUES (10, 135, 49, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-04-21 20:57:01', '2025-04-21 20:57:01');
-INSERT INTO `order_product` VALUES (11, 166, 50, '儿童识字卡片', 'goods50.jpg', 59.99, 1, NULL, '2025-04-22 20:28:16', '2025-04-22 20:28:16');
-INSERT INTO `order_product` VALUES (12, 184, 56, '婴儿音乐床铃', 'goods56.jpg', 129.90, 1, NULL, '2025-05-05 18:35:34', '2025-05-05 18:35:34');
-INSERT INTO `order_product` VALUES (13, 184, 57, '儿童智能手表', 'goods57.jpg', 299.90, 1, NULL, '2025-05-05 18:35:34', '2025-05-05 18:35:34');
-INSERT INTO `order_product` VALUES (14, 184, 59, '孕妇维生素', 'goods59.jpg', 189.90, 1, NULL, '2025-05-05 18:35:34', '2025-05-05 18:35:34');
-INSERT INTO `order_product` VALUES (15, 185, 58, '儿童防蓝光眼镜', 'goods48.jpg', 99.90, 1, NULL, '2025-05-05 18:41:12', '2025-05-05 18:41:12');
-INSERT INTO `order_product` VALUES (16, 186, 53, '儿童户外玩具', 'goods53.jpg', 199.90, 1, NULL, '2025-05-05 20:40:53', '2025-05-05 20:40:53');
-INSERT INTO `order_product` VALUES (17, 186, 54, '儿童电子学习机', 'goods54.jpg', 399.90, 1, NULL, '2025-05-05 20:40:53', '2025-05-05 20:40:53');
-INSERT INTO `order_product` VALUES (18, 187, 49, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
-INSERT INTO `order_product` VALUES (19, 187, 50, '儿童识字卡片', 'goods50.jpg', 59.99, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
-INSERT INTO `order_product` VALUES (20, 187, 53, '儿童户外玩具', 'goods53.jpg', 199.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
-INSERT INTO `order_product` VALUES (21, 187, 55, '婴儿摇铃玩具', 'goods55.jpg', 49.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
-INSERT INTO `order_product` VALUES (22, 187, 56, '婴儿音乐床铃', 'goods56.jpg', 129.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
-INSERT INTO `order_product` VALUES (23, 187, 58, '儿童防蓝光眼镜', 'goods48.jpg', 99.90, 2, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
-INSERT INTO `order_product` VALUES (24, 187, 59, '孕妇维生素', 'goods59.jpg', 189.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
-INSERT INTO `order_product` VALUES (25, 187, 60, '产后修复套装', 'goods60.jpg', 399.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
-INSERT INTO `order_product` VALUES (26, 188, 42, '婴儿润肤乳', 'goods42.jpg', 79.90, 1, NULL, '2025-05-06 10:06:39', '2025-05-06 10:06:39');
-INSERT INTO `order_product` VALUES (27, 189, 47, '儿童玩具车', 'goods47.jpg', 129.90, 1, NULL, '2025-05-06 17:52:59', '2025-05-06 17:52:59');
-INSERT INTO `order_product` VALUES (28, 189, 43, '儿童牙膏', 'goods43.jpg', 39.90, 1, NULL, '2025-05-06 17:52:59', '2025-05-06 17:52:59');
-INSERT INTO `order_product` VALUES (29, 190, 55, '婴儿摇铃玩具', 'goods55.jpg', 49.90, 1, NULL, '2025-05-06 18:08:27', '2025-05-06 18:08:27');
-INSERT INTO `order_product` VALUES (30, 191, 7, '费雪声光安抚海马', 'goods7.jpg', 129.00, 1, NULL, '2025-05-06 18:22:25', '2025-05-06 18:22:25');
-INSERT INTO `order_product` VALUES (31, 191, 5, '花王妙而舒纸尿裤L码（9-14kg）', 'goods5.jpg', 149.00, 1, NULL, '2025-05-06 18:22:25', '2025-05-06 18:22:25');
-INSERT INTO `order_product` VALUES (32, 192, 60, '产后修复套装', 'goods60.jpg', 399.90, 1, NULL, '2025-05-06 20:29:27', '2025-05-06 20:29:27');
-INSERT INTO `order_product` VALUES (33, 193, 9, '舒儿适婴儿抚触油', 'goods9.jpg', 89.90, 1, NULL, '2025-05-06 21:28:47', '2025-05-06 21:28:47');
-INSERT INTO `order_product` VALUES (34, 194, 53, '儿童户外玩具', 'goods53.jpg', 199.90, 1, NULL, '2025-05-06 21:39:57', '2025-05-06 21:39:57');
-INSERT INTO `order_product` VALUES (35, 195, 2, '婴儿奶粉）', 'goods2.jpg', 328.00, 1, NULL, '2025-05-06 22:13:05', '2025-05-06 22:13:05');
-INSERT INTO `order_product` VALUES (36, 196, 19, '孕妇护肤品', 'goods19.jpg', 159.90, 1, NULL, '2025-05-06 22:24:51', '2025-05-06 22:24:51');
-INSERT INTO `order_product` VALUES (37, 197, 23, '孕妇奶粉', 'goods23.jpg', 229.90, 1, NULL, '2025-05-06 22:31:38', '2025-05-06 22:31:38');
-INSERT INTO `order_product` VALUES (38, 198, 16, '儿童玩具', 'goods16.jpg', 49.90, 1, NULL, '2025-05-06 22:54:10', '2025-05-06 22:54:10');
-INSERT INTO `order_product` VALUES (39, 199, 15, '婴儿推车', 'goods15.jpg', 699.90, 1, NULL, '2025-05-06 22:57:54', '2025-05-06 22:57:54');
-INSERT INTO `order_product` VALUES (40, 200, 50, '儿童识字卡片', 'goods50.jpg', 59.99, 1, NULL, '2025-05-07 21:09:27', '2025-05-07 21:09:27');
-INSERT INTO `order_product` VALUES (41, 201, 56, '婴儿音乐床铃', 'goods56.jpg', 129.90, 1, NULL, '2025-05-07 21:42:10', '2025-05-07 21:42:10');
-INSERT INTO `order_product` VALUES (42, 202, 59, '孕妇维生素', 'goods59.jpg', 189.90, 1, NULL, '2025-05-07 22:21:38', '2025-05-07 22:21:38');
-INSERT INTO `order_product` VALUES (43, 203, 52, '儿童拼图游戏', 'goods52.jpg', 79.90, 1, NULL, '2025-05-08 12:58:37', '2025-05-08 12:58:37');
-INSERT INTO `order_product` VALUES (44, 204, 60, '产后修复套装', 'goods60.jpg', 399.90, 1, NULL, '2025-05-08 13:11:10', '2025-05-08 13:11:10');
-INSERT INTO `order_product` VALUES (45, 205, 56, '婴儿音乐床铃', 'goods56.jpg', 129.90, 1, NULL, '2025-05-08 13:17:23', '2025-05-08 13:17:23');
-INSERT INTO `order_product` VALUES (46, 206, 58, '儿童防蓝光眼镜', 'goods48.jpg', 99.90, 3, NULL, '2025-05-09 21:19:27', '2025-05-09 21:19:27');
-INSERT INTO `order_product` VALUES (47, 207, 56, '婴儿音乐床铃', 'goods56.jpg', 129.90, 2, NULL, '2025-05-09 22:07:43', '2025-05-09 22:07:43');
-INSERT INTO `order_product` VALUES (48, 208, 54, '儿童电子学习机', 'goods54.jpg', 399.90, 1, NULL, '2025-05-09 22:44:41', '2025-05-09 22:44:41');
-INSERT INTO `order_product` VALUES (49, 208, 59, '孕妇维生素', 'goods59.jpg', 189.90, 1, NULL, '2025-05-09 22:44:41', '2025-05-09 22:44:41');
-INSERT INTO `order_product` VALUES (50, 209, 23, '孕妇奶粉', 'goods23.jpg', 229.90, 1, NULL, '2025-05-10 22:57:47', '2025-05-10 22:57:47');
-INSERT INTO `order_product` VALUES (51, 209, 21, '孕妇装', 'goods21.jpg', 199.90, 1, NULL, '2025-05-10 22:57:47', '2025-05-10 22:57:47');
-INSERT INTO `order_product` VALUES (52, 210, 49, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-05-10 23:05:29', '2025-05-10 23:05:29');
-INSERT INTO `order_product` VALUES (53, 211, 56, '婴儿音乐床铃', 'goods56.jpg', 129.90, 2, NULL, '2025-05-11 10:01:58', '2025-05-11 10:01:58');
-INSERT INTO `order_product` VALUES (54, 212, 52, '儿童拼图游戏', 'goods52.jpg', 79.90, 1, NULL, '2025-05-11 12:04:05', '2025-05-11 12:04:05');
-INSERT INTO `order_product` VALUES (55, 213, 54, '儿童电子学习机', 'goods54.jpg', 399.90, 1, NULL, '2025-05-11 13:03:27', '2025-05-11 13:03:27');
-INSERT INTO `order_product` VALUES (56, 214, 59, '孕妇维生素', 'goods59.jpg', 189.90, 1, NULL, '2025-05-11 13:19:46', '2025-05-11 13:19:46');
-INSERT INTO `order_product` VALUES (57, 215, 43, '儿童牙膏', 'goods43.jpg', 39.90, 1, NULL, '2025-05-11 13:49:13', '2025-05-11 13:49:13');
-INSERT INTO `order_product` VALUES (58, 216, 55, '婴儿摇铃玩具', 'goods55.jpg', 49.90, 1, NULL, '2025-05-11 14:04:44', '2025-05-11 14:04:44');
-INSERT INTO `order_product` VALUES (59, 217, 46, '婴儿护臀膏', 'goods46.jpg', 59.90, 1, NULL, '2025-05-11 14:15:59', '2025-05-11 14:15:59');
-INSERT INTO `order_product` VALUES (60, 218, 47, '儿童玩具车', 'goods47.jpg', 129.90, 1, NULL, '2025-05-12 22:31:00', '2025-05-12 22:31:00');
-INSERT INTO `order_product` VALUES (61, 219, 60, '产后修复套装', 'goods60.jpg', 399.90, 1, NULL, '2025-05-12 22:35:15', '2025-05-12 22:35:15');
-INSERT INTO `order_product` VALUES (62, 220, 36, '儿童牙刷套装', 'goods36.jpg', 49.90, 1, NULL, '2025-05-12 22:40:00', '2025-05-12 22:40:00');
-INSERT INTO `order_product` VALUES (63, 221, 24, '孕妇内衣', 'goods24.jpg', 129.90, 1, NULL, '2025-05-15 12:59:06', '2025-05-15 12:59:06');
-INSERT INTO `order_product` VALUES (64, 222, 65, '贝亲婴儿柔湿巾80抽x6包', 'goods65.jpg', 69.90, 1, NULL, '2025-05-15 22:48:42', '2025-05-15 22:48:42');
-INSERT INTO `order_product` VALUES (65, 225, 60, '产后修复套装', 'goods60.jpg', 399.90, 1, '{\"类型\": \"孕中\"}', '2025-05-21 22:53:48', '2025-05-21 22:53:48');
-INSERT INTO `order_product` VALUES (66, 226, 66, '嘉宝星星泡芙香蕉味', 'goods66.jpg', 25.80, 1, NULL, '2025-05-22 15:21:06', '2025-05-22 15:21:06');
-INSERT INTO `order_product` VALUES (67, 227, 119, '帮宝适拉拉裤L号', 'goods119.jpg', 199.00, 1, '{\"规格\": \"默认\"}', '2025-05-22 16:56:39', '2025-05-22 16:56:39');
-INSERT INTO `order_product` VALUES (68, 228, 61, '爱他美卓萃有机婴儿配方奶粉1段', 'goods61.jpg', 358.00, 2, '{\"规格\": \"默认\"}', '2025-05-22 21:55:01', '2025-05-22 21:55:01');
-INSERT INTO `order_product` VALUES (69, 229, 63, '飞利浦新安怡宽口径玻璃奶瓶', 'goods63.jpg', 129.00, 1, NULL, '2025-05-24 19:19:13', '2025-05-24 19:19:13');
-INSERT INTO `order_product` VALUES (70, 230, 119, '帮宝适拉拉裤L号', 'goods119.jpg', 199.00, 1, '{\"规格\": \"默认\"}', '2025-05-24 19:32:46', '2025-05-24 19:32:46');
-INSERT INTO `order_product` VALUES (71, 231, 77, '惠氏S-26铂臻3段幼儿配方奶粉', 'goods77.jpg', 378.00, 2, NULL, '2025-05-28 22:15:32', '2025-05-28 22:15:32');
-INSERT INTO `order_product` VALUES (72, 232, 57, '儿童智能手表', 'goods57.jpg', 299.90, 1, '{\"颜色\": \"粉色;尺寸\"}', '2025-05-29 23:23:54', '2025-05-29 23:23:54');
-INSERT INTO `order_product` VALUES (73, 233, 68, '美素佳儿皇家美素佳儿3段幼儿配方奶粉', 'goods68.jpg', 368.00, 2, NULL, '2025-05-29 23:25:18', '2025-05-29 23:25:18');
-INSERT INTO `order_product` VALUES (74, 234, 89, '帮宝适特级棉柔纸尿裤M号', 'goods89.jpg', 179.00, 1, '{\"规格\": \"默认\"}', '2025-05-30 11:50:52', '2025-05-30 11:50:52');
-INSERT INTO `order_product` VALUES (75, 235, 80, '花王纸尿裤NB号', 'goods80.jpg', 169.00, 1, '{\"规格\": \"默认\"}', '2025-06-06 09:11:13', '2025-06-06 09:11:13');
-INSERT INTO `order_product` VALUES (76, 236, 60, '产后修复套装', 'goods60.jpg', 399.90, 2, '{\"类型\": \"孕中\"}', '2025-06-06 09:21:14', '2025-06-06 09:21:14');
-INSERT INTO `order_product` VALUES (77, 237, 60, '产后修复套装', 'goods60.jpg', 399.90, 1, NULL, '2025-06-06 13:35:54', '2025-06-06 13:35:54');
-INSERT INTO `order_product` VALUES (78, 238, 80, '花王纸尿裤NB号', 'goods80.jpg', 169.00, 1, '{}', '2025-06-10 19:48:24', '2025-06-10 19:48:24');
-INSERT INTO `order_product` VALUES (79, 239, 2, '婴儿奶粉）', 'goods2.jpg', 328.00, 1, NULL, '2025-06-11 14:22:06', '2025-06-11 14:22:06');
-INSERT INTO `order_product` VALUES (80, 240, 64, '美德乐丝韵翼双边电动吸奶器', 'goods64.jpg', 2580.00, 1, NULL, '2025-06-11 16:19:10', '2025-06-11 16:19:10');
-INSERT INTO `order_product` VALUES (81, 241, 3, '有机婴儿配方奶粉3段（1-3岁）', 'goods3.jpg', 358.00, 1, NULL, '2025-06-11 16:27:08', '2025-06-11 16:27:08');
-INSERT INTO `order_product` VALUES (82, 242, 12, '儿童套装', 'goods12.jpg', 129.90, 1, NULL, '2025-06-11 16:37:52', '2025-06-11 16:37:52');
-INSERT INTO `order_product` VALUES (83, 243, 66, '嘉宝星星泡芙香蕉味', 'goods66.jpg', 25.80, 1, '{}', '2025-06-11 16:44:32', '2025-06-11 16:44:32');
-INSERT INTO `order_product` VALUES (84, 244, 98, '美素佳儿金装较大婴儿配方奶粉2段', 'goods98.jpg', 358.00, 1, '{}', '2025-06-11 16:52:48', '2025-06-11 16:52:48');
-INSERT INTO `order_product` VALUES (85, 245, 69, '帮宝适一级帮纸尿裤M号', 'goods69.jpg', 189.00, 1, '{}', '2025-06-11 16:58:28', '2025-06-11 16:58:28');
-INSERT INTO `order_product` VALUES (86, 246, 100, '花王纸尿裤S号', 'goods100.jpg', 179.00, 1, '{}', '2025-06-11 17:05:56', '2025-06-11 17:05:56');
-INSERT INTO `order_product` VALUES (87, 247, 93, '飞利浦新安怡自然原生系列玻璃奶瓶', 'goods93.jpg', 109.00, 1, '{}', '2025-06-11 17:07:20', '2025-06-11 17:07:20');
-INSERT INTO `order_product` VALUES (88, 248, 96, '嘉宝磨牙饼干香蕉味', 'goods96.jpg', 29.80, 1, '{}', '2025-06-11 17:16:40', '2025-06-11 17:16:40');
-INSERT INTO `order_product` VALUES (89, 249, 97, '惠氏S-26铂臻2段较大婴儿配方奶粉', 'goods97.jpg', 388.00, 1, '{}', '2025-06-11 17:19:48', '2025-06-11 17:19:48');
-INSERT INTO `order_product` VALUES (90, 250, 98, '美素佳儿金装较大婴儿配方奶粉2段', 'goods98.jpg', 358.00, 1, '{}', '2025-06-11 17:34:27', '2025-06-11 17:34:27');
-INSERT INTO `order_product` VALUES (91, 251, 96, '嘉宝磨牙饼干香蕉味', 'goods96.jpg', 29.80, 1, '{}', '2025-06-11 17:41:12', '2025-06-11 17:41:12');
-INSERT INTO `order_product` VALUES (92, 252, 89, '帮宝适特级棉柔纸尿裤M号', 'goods89.jpg', 179.00, 1, '{}', '2025-06-11 17:50:26', '2025-06-11 17:50:26');
-INSERT INTO `order_product` VALUES (93, 253, 77, '惠氏S-26铂臻3段幼儿配方奶粉', 'goods77.jpg', 378.00, 1, '{}', '2025-06-12 19:06:49', '2025-06-12 19:06:49');
-INSERT INTO `order_product` VALUES (94, 254, 91, '爱他美卓萃婴儿配方奶粉2段', 'goods91.jpg', 388.00, 1, '{\"规格\": \"默认\"}', '2025-06-27 12:20:43', '2025-06-27 12:20:43');
-INSERT INTO `order_product` VALUES (95, 255, 83, '飞利浦新安怡婴儿辅食机', 'goods83.jpg', 899.00, 1, NULL, '2025-07-09 15:13:07', '2025-07-09 15:13:07');
-INSERT INTO `order_product` VALUES (96, 256, 94, '美德乐丝韵翼双边电动吸奶器', 'goods94.jpg', 2580.00, 1, '{\"规格\": \"默认\"}', '2025-07-09 20:32:13', '2025-07-09 20:32:13');
-INSERT INTO `order_product` VALUES (97, 257, 70, '花王妙而舒纸尿裤L号', 'goods70.jpg', 179.00, 1, NULL, '2025-07-09 20:59:20', '2025-07-09 20:59:20');
-INSERT INTO `order_product` VALUES (98, 258, 84, '美德乐丝韵单边电动吸奶器', 'goods84.jpg', 1880.00, 1, '{\"规格\": \"默认\"}', '2025-07-10 14:38:39', '2025-07-10 14:38:39');
-INSERT INTO `order_product` VALUES (99, 259, 85, '贝亲宽口径PPSU奶瓶', 'goods85.jpg', 119.00, 1, '{\"规格\": \"默认\"}', '2025-07-10 14:48:36', '2025-07-10 14:48:36');
-INSERT INTO `order_product` VALUES (100, 260, 95, '贝亲婴儿洗发沐浴露二合一', 'goods95.jpg', 79.90, 1, NULL, '2025-07-11 13:15:06', '2025-07-11 13:15:06');
-INSERT INTO `order_product` VALUES (101, 261, 77, '惠氏S-26铂臻3段幼儿配方奶粉', 'goods77.jpg', 378.00, 1, NULL, '2025-07-11 15:09:19', '2025-07-11 15:09:19');
-INSERT INTO `order_product` VALUES (102, 262, 104, '美德乐吸奶器配件', 'goods104.jpg', 180.00, 1, '{\"规格\": \"默认\"}', '2025-07-11 15:13:56', '2025-07-11 15:13:56');
-INSERT INTO `order_product` VALUES (103, 263, 84, '美德乐丝韵单边电动吸奶器', 'goods84.jpg', 1880.00, 1, '{\"规格\": \"默认\"}', '2025-07-11 15:16:41', '2025-07-11 15:16:41');
-INSERT INTO `order_product` VALUES (104, 264, 60, '产后修复套装', 'goods60.jpg', 399.90, 1, '{\"类型\": \"孕中\"}', '2025-07-16 18:19:14', '2025-07-16 18:19:14');
-INSERT INTO `order_product` VALUES (105, 265, 100, '花王纸尿裤S号', 'goods100.jpg', 179.00, 1, '{\"规格\": \"默认\"}', '2025-07-16 18:56:06', '2025-07-16 18:56:06');
-INSERT INTO `order_product` VALUES (106, 266, 59, '孕妇维生素', 'goods59.jpg', 189.90, 1, '{\"规格\": \"标准型\"}', '2025-09-18 16:44:04', '2025-09-18 16:44:04');
-INSERT INTO `order_product` VALUES (107, 267, 98, '美素佳儿金装较大婴儿配方奶粉2段', 'goods98.jpg', 358.00, 3, NULL, '2025-09-19 12:11:59', '2025-09-19 12:11:59');
+INSERT INTO `order_product` VALUES (1, 1, 10, NULL, NULL, NULL, '惠氏启赋有机婴儿配方奶粉1段（0-6个月）', 'goods10.jpg', 298.00, 2, '{\"规格\": \"400g\", \"礼盒装\": \"是\"}', '2025-03-05 21:58:47', '2025-03-11 14:22:04');
+INSERT INTO `order_product` VALUES (2, 2, 11, NULL, NULL, NULL, '帮宝适超薄干爽纸尿裤M码（6-11kg）', 'goods11.jpg', 139.00, 1, '{\"包装\": \"中包装（56片）\"}', '2025-03-05 21:58:47', '2025-03-11 14:22:10');
+INSERT INTO `order_product` VALUES (3, 3, 12, NULL, NULL, NULL, '花王妙而舒纸尿裤L码（9-14kg）', 'goods12.jpg', 149.00, 1, '{\"包装\": \"大包装（76片）\"}', '2025-03-06 13:58:47', '2025-03-11 14:22:11');
+INSERT INTO `order_product` VALUES (4, 4, 13, NULL, NULL, NULL, '惠氏启赋有机婴儿配方奶粉1段（0-6个月）', 'goods13.jpg', 298.00, 1, '{\"规格\": \"400g\", \"礼盒装\": \"否\"}', '2025-03-05 14:58:47', '2025-03-11 14:22:13');
+INSERT INTO `order_product` VALUES (5, 71, 49, NULL, NULL, NULL, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-04-18 22:08:06', '2025-04-18 22:08:06');
+INSERT INTO `order_product` VALUES (6, 75, 49, NULL, NULL, NULL, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-04-19 14:28:49', '2025-04-19 14:28:49');
+INSERT INTO `order_product` VALUES (7, 85, 59, NULL, NULL, NULL, '孕妇维生素', 'goods59.jpg', 189.90, 2, '\"规格:默认\"', '2025-04-19 17:27:06', '2025-04-19 17:27:06');
+INSERT INTO `order_product` VALUES (8, 115, 49, NULL, NULL, NULL, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-04-21 13:41:36', '2025-04-21 13:41:36');
+INSERT INTO `order_product` VALUES (9, 131, 44, NULL, NULL, NULL, '婴儿指甲剪', 'goods44.jpg', 29.90, 1, NULL, '2025-04-21 15:46:07', '2025-04-21 15:46:07');
+INSERT INTO `order_product` VALUES (10, 135, 49, NULL, NULL, NULL, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-04-21 20:57:01', '2025-04-21 20:57:01');
+INSERT INTO `order_product` VALUES (11, 166, 50, NULL, NULL, NULL, '儿童识字卡片', 'goods50.jpg', 59.99, 1, NULL, '2025-04-22 20:28:16', '2025-04-22 20:28:16');
+INSERT INTO `order_product` VALUES (12, 184, 56, NULL, NULL, NULL, '婴儿音乐床铃', 'goods56.jpg', 129.90, 1, NULL, '2025-05-05 18:35:34', '2025-05-05 18:35:34');
+INSERT INTO `order_product` VALUES (13, 184, 57, NULL, NULL, NULL, '儿童智能手表', 'goods57.jpg', 299.90, 1, NULL, '2025-05-05 18:35:34', '2025-05-05 18:35:34');
+INSERT INTO `order_product` VALUES (14, 184, 59, NULL, NULL, NULL, '孕妇维生素', 'goods59.jpg', 189.90, 1, NULL, '2025-05-05 18:35:34', '2025-05-05 18:35:34');
+INSERT INTO `order_product` VALUES (15, 185, 58, NULL, NULL, NULL, '儿童防蓝光眼镜', 'goods48.jpg', 99.90, 1, NULL, '2025-05-05 18:41:12', '2025-05-05 18:41:12');
+INSERT INTO `order_product` VALUES (16, 186, 53, NULL, NULL, NULL, '儿童户外玩具', 'goods53.jpg', 199.90, 1, NULL, '2025-05-05 20:40:53', '2025-05-05 20:40:53');
+INSERT INTO `order_product` VALUES (17, 186, 54, NULL, NULL, NULL, '儿童电子学习机', 'goods54.jpg', 399.90, 1, NULL, '2025-05-05 20:40:53', '2025-05-05 20:40:53');
+INSERT INTO `order_product` VALUES (18, 187, 49, NULL, NULL, NULL, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
+INSERT INTO `order_product` VALUES (19, 187, 50, NULL, NULL, NULL, '儿童识字卡片', 'goods50.jpg', 59.99, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
+INSERT INTO `order_product` VALUES (20, 187, 53, NULL, NULL, NULL, '儿童户外玩具', 'goods53.jpg', 199.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
+INSERT INTO `order_product` VALUES (21, 187, 55, NULL, NULL, NULL, '婴儿摇铃玩具', 'goods55.jpg', 49.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
+INSERT INTO `order_product` VALUES (22, 187, 56, NULL, NULL, NULL, '婴儿音乐床铃', 'goods56.jpg', 129.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
+INSERT INTO `order_product` VALUES (23, 187, 58, NULL, NULL, NULL, '儿童防蓝光眼镜', 'goods48.jpg', 99.90, 2, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
+INSERT INTO `order_product` VALUES (24, 187, 59, NULL, NULL, NULL, '孕妇维生素', 'goods59.jpg', 189.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
+INSERT INTO `order_product` VALUES (25, 187, 60, NULL, NULL, NULL, '产后修复套装', 'goods60.jpg', 399.90, 1, NULL, '2025-05-05 21:26:43', '2025-05-05 21:26:43');
+INSERT INTO `order_product` VALUES (26, 188, 42, NULL, NULL, NULL, '婴儿润肤乳', 'goods42.jpg', 79.90, 1, NULL, '2025-05-06 10:06:39', '2025-05-06 10:06:39');
+INSERT INTO `order_product` VALUES (27, 189, 47, NULL, NULL, NULL, '儿童玩具车', 'goods47.jpg', 129.90, 1, NULL, '2025-05-06 17:52:59', '2025-05-06 17:52:59');
+INSERT INTO `order_product` VALUES (28, 189, 43, NULL, NULL, NULL, '儿童牙膏', 'goods43.jpg', 39.90, 1, NULL, '2025-05-06 17:52:59', '2025-05-06 17:52:59');
+INSERT INTO `order_product` VALUES (29, 190, 55, NULL, NULL, NULL, '婴儿摇铃玩具', 'goods55.jpg', 49.90, 1, NULL, '2025-05-06 18:08:27', '2025-05-06 18:08:27');
+INSERT INTO `order_product` VALUES (30, 191, 7, NULL, NULL, NULL, '费雪声光安抚海马', 'goods7.jpg', 129.00, 1, NULL, '2025-05-06 18:22:25', '2025-05-06 18:22:25');
+INSERT INTO `order_product` VALUES (31, 191, 5, NULL, NULL, NULL, '花王妙而舒纸尿裤L码（9-14kg）', 'goods5.jpg', 149.00, 1, NULL, '2025-05-06 18:22:25', '2025-05-06 18:22:25');
+INSERT INTO `order_product` VALUES (32, 192, 60, NULL, NULL, NULL, '产后修复套装', 'goods60.jpg', 399.90, 1, NULL, '2025-05-06 20:29:27', '2025-05-06 20:29:27');
+INSERT INTO `order_product` VALUES (33, 193, 9, NULL, NULL, NULL, '舒儿适婴儿抚触油', 'goods9.jpg', 89.90, 1, NULL, '2025-05-06 21:28:47', '2025-05-06 21:28:47');
+INSERT INTO `order_product` VALUES (34, 194, 53, NULL, NULL, NULL, '儿童户外玩具', 'goods53.jpg', 199.90, 1, NULL, '2025-05-06 21:39:57', '2025-05-06 21:39:57');
+INSERT INTO `order_product` VALUES (35, 195, 2, NULL, NULL, NULL, '婴儿奶粉）', 'goods2.jpg', 328.00, 1, NULL, '2025-05-06 22:13:05', '2025-05-06 22:13:05');
+INSERT INTO `order_product` VALUES (36, 196, 19, NULL, NULL, NULL, '孕妇护肤品', 'goods19.jpg', 159.90, 1, NULL, '2025-05-06 22:24:51', '2025-05-06 22:24:51');
+INSERT INTO `order_product` VALUES (37, 197, 23, NULL, NULL, NULL, '孕妇奶粉', 'goods23.jpg', 229.90, 1, NULL, '2025-05-06 22:31:38', '2025-05-06 22:31:38');
+INSERT INTO `order_product` VALUES (38, 198, 16, NULL, NULL, NULL, '儿童玩具', 'goods16.jpg', 49.90, 1, NULL, '2025-05-06 22:54:10', '2025-05-06 22:54:10');
+INSERT INTO `order_product` VALUES (39, 199, 15, NULL, NULL, NULL, '婴儿推车', 'goods15.jpg', 699.90, 1, NULL, '2025-05-06 22:57:54', '2025-05-06 22:57:54');
+INSERT INTO `order_product` VALUES (40, 200, 50, NULL, NULL, NULL, '儿童识字卡片', 'goods50.jpg', 59.99, 1, NULL, '2025-05-07 21:09:27', '2025-05-07 21:09:27');
+INSERT INTO `order_product` VALUES (41, 201, 56, NULL, NULL, NULL, '婴儿音乐床铃', 'goods56.jpg', 129.90, 1, NULL, '2025-05-07 21:42:10', '2025-05-07 21:42:10');
+INSERT INTO `order_product` VALUES (42, 202, 59, NULL, NULL, NULL, '孕妇维生素', 'goods59.jpg', 189.90, 1, NULL, '2025-05-07 22:21:38', '2025-05-07 22:21:38');
+INSERT INTO `order_product` VALUES (43, 203, 52, NULL, NULL, NULL, '儿童拼图游戏', 'goods52.jpg', 79.90, 1, NULL, '2025-05-08 12:58:37', '2025-05-08 12:58:37');
+INSERT INTO `order_product` VALUES (44, 204, 60, NULL, NULL, NULL, '产后修复套装', 'goods60.jpg', 399.90, 1, NULL, '2025-05-08 13:11:10', '2025-05-08 13:11:10');
+INSERT INTO `order_product` VALUES (45, 205, 56, NULL, NULL, NULL, '婴儿音乐床铃', 'goods56.jpg', 129.90, 1, NULL, '2025-05-08 13:17:23', '2025-05-08 13:17:23');
+INSERT INTO `order_product` VALUES (46, 206, 58, NULL, NULL, NULL, '儿童防蓝光眼镜', 'goods48.jpg', 99.90, 3, NULL, '2025-05-09 21:19:27', '2025-05-09 21:19:27');
+INSERT INTO `order_product` VALUES (47, 207, 56, NULL, NULL, NULL, '婴儿音乐床铃', 'goods56.jpg', 129.90, 2, NULL, '2025-05-09 22:07:43', '2025-05-09 22:07:43');
+INSERT INTO `order_product` VALUES (48, 208, 54, NULL, NULL, NULL, '儿童电子学习机', 'goods54.jpg', 399.90, 1, NULL, '2025-05-09 22:44:41', '2025-05-09 22:44:41');
+INSERT INTO `order_product` VALUES (49, 208, 59, NULL, NULL, NULL, '孕妇维生素', 'goods59.jpg', 189.90, 1, NULL, '2025-05-09 22:44:41', '2025-05-09 22:44:41');
+INSERT INTO `order_product` VALUES (50, 209, 23, NULL, NULL, NULL, '孕妇奶粉', 'goods23.jpg', 229.90, 1, NULL, '2025-05-10 22:57:47', '2025-05-10 22:57:47');
+INSERT INTO `order_product` VALUES (51, 209, 21, NULL, NULL, NULL, '孕妇装', 'goods21.jpg', 199.90, 1, NULL, '2025-05-10 22:57:47', '2025-05-10 22:57:47');
+INSERT INTO `order_product` VALUES (52, 210, 49, NULL, NULL, NULL, '儿童绘本套装', 'goods49.jpg', 159.90, 1, NULL, '2025-05-10 23:05:29', '2025-05-10 23:05:29');
+INSERT INTO `order_product` VALUES (53, 211, 56, NULL, NULL, NULL, '婴儿音乐床铃', 'goods56.jpg', 129.90, 2, NULL, '2025-05-11 10:01:58', '2025-05-11 10:01:58');
+INSERT INTO `order_product` VALUES (54, 212, 52, NULL, NULL, NULL, '儿童拼图游戏', 'goods52.jpg', 79.90, 1, NULL, '2025-05-11 12:04:05', '2025-05-11 12:04:05');
+INSERT INTO `order_product` VALUES (55, 213, 54, NULL, NULL, NULL, '儿童电子学习机', 'goods54.jpg', 399.90, 1, NULL, '2025-05-11 13:03:27', '2025-05-11 13:03:27');
+INSERT INTO `order_product` VALUES (56, 214, 59, NULL, NULL, NULL, '孕妇维生素', 'goods59.jpg', 189.90, 1, NULL, '2025-05-11 13:19:46', '2025-05-11 13:19:46');
+INSERT INTO `order_product` VALUES (57, 215, 43, NULL, NULL, NULL, '儿童牙膏', 'goods43.jpg', 39.90, 1, NULL, '2025-05-11 13:49:13', '2025-05-11 13:49:13');
+INSERT INTO `order_product` VALUES (58, 216, 55, NULL, NULL, NULL, '婴儿摇铃玩具', 'goods55.jpg', 49.90, 1, NULL, '2025-05-11 14:04:44', '2025-05-11 14:04:44');
+INSERT INTO `order_product` VALUES (59, 217, 46, NULL, NULL, NULL, '婴儿护臀膏', 'goods46.jpg', 59.90, 1, NULL, '2025-05-11 14:15:59', '2025-05-11 14:15:59');
+INSERT INTO `order_product` VALUES (60, 218, 47, NULL, NULL, NULL, '儿童玩具车', 'goods47.jpg', 129.90, 1, NULL, '2025-05-12 22:31:00', '2025-05-12 22:31:00');
+INSERT INTO `order_product` VALUES (61, 219, 60, NULL, NULL, NULL, '产后修复套装', 'goods60.jpg', 399.90, 1, NULL, '2025-05-12 22:35:15', '2025-05-12 22:35:15');
+INSERT INTO `order_product` VALUES (62, 220, 36, NULL, NULL, NULL, '儿童牙刷套装', 'goods36.jpg', 49.90, 1, NULL, '2025-05-12 22:40:00', '2025-05-12 22:40:00');
+INSERT INTO `order_product` VALUES (63, 221, 24, NULL, NULL, NULL, '孕妇内衣', 'goods24.jpg', 129.90, 1, NULL, '2025-05-15 12:59:06', '2025-05-15 12:59:06');
+INSERT INTO `order_product` VALUES (64, 222, 65, NULL, NULL, NULL, '贝亲婴儿柔湿巾80抽x6包', 'goods65.jpg', 69.90, 1, NULL, '2025-05-15 22:48:42', '2025-05-15 22:48:42');
+INSERT INTO `order_product` VALUES (65, 225, 60, NULL, NULL, NULL, '产后修复套装', 'goods60.jpg', 399.90, 1, '{\"类型\": \"孕中\"}', '2025-05-21 22:53:48', '2025-05-21 22:53:48');
+INSERT INTO `order_product` VALUES (66, 226, 66, NULL, NULL, NULL, '嘉宝星星泡芙香蕉味', 'goods66.jpg', 25.80, 1, NULL, '2025-05-22 15:21:06', '2025-05-22 15:21:06');
+INSERT INTO `order_product` VALUES (67, 227, 119, NULL, NULL, NULL, '帮宝适拉拉裤L号', 'goods119.jpg', 199.00, 1, '{\"规格\": \"默认\"}', '2025-05-22 16:56:39', '2025-05-22 16:56:39');
+INSERT INTO `order_product` VALUES (68, 228, 61, NULL, NULL, NULL, '爱他美卓萃有机婴儿配方奶粉1段', 'goods61.jpg', 358.00, 2, '{\"规格\": \"默认\"}', '2025-05-22 21:55:01', '2025-05-22 21:55:01');
+INSERT INTO `order_product` VALUES (69, 229, 63, NULL, NULL, NULL, '飞利浦新安怡宽口径玻璃奶瓶', 'goods63.jpg', 129.00, 1, NULL, '2025-05-24 19:19:13', '2025-05-24 19:19:13');
+INSERT INTO `order_product` VALUES (70, 230, 119, NULL, NULL, NULL, '帮宝适拉拉裤L号', 'goods119.jpg', 199.00, 1, '{\"规格\": \"默认\"}', '2025-05-24 19:32:46', '2025-05-24 19:32:46');
+INSERT INTO `order_product` VALUES (71, 231, 77, NULL, NULL, NULL, '惠氏S-26铂臻3段幼儿配方奶粉', 'goods77.jpg', 378.00, 2, NULL, '2025-05-28 22:15:32', '2025-05-28 22:15:32');
+INSERT INTO `order_product` VALUES (72, 232, 57, NULL, NULL, NULL, '儿童智能手表', 'goods57.jpg', 299.90, 1, '{\"颜色\": \"粉色;尺寸\"}', '2025-05-29 23:23:54', '2025-05-29 23:23:54');
+INSERT INTO `order_product` VALUES (73, 233, 68, NULL, NULL, NULL, '美素佳儿皇家美素佳儿3段幼儿配方奶粉', 'goods68.jpg', 368.00, 2, NULL, '2025-05-29 23:25:18', '2025-05-29 23:25:18');
+INSERT INTO `order_product` VALUES (74, 234, 89, NULL, NULL, NULL, '帮宝适特级棉柔纸尿裤M号', 'goods89.jpg', 179.00, 1, '{\"规格\": \"默认\"}', '2025-05-30 11:50:52', '2025-05-30 11:50:52');
+INSERT INTO `order_product` VALUES (75, 235, 80, NULL, NULL, NULL, '花王纸尿裤NB号', 'goods80.jpg', 169.00, 1, '{\"规格\": \"默认\"}', '2025-06-06 09:11:13', '2025-06-06 09:11:13');
+INSERT INTO `order_product` VALUES (76, 236, 60, NULL, NULL, NULL, '产后修复套装', 'goods60.jpg', 399.90, 2, '{\"类型\": \"孕中\"}', '2025-06-06 09:21:14', '2025-06-06 09:21:14');
+INSERT INTO `order_product` VALUES (77, 237, 60, NULL, NULL, NULL, '产后修复套装', 'goods60.jpg', 399.90, 1, NULL, '2025-06-06 13:35:54', '2025-06-06 13:35:54');
+INSERT INTO `order_product` VALUES (78, 238, 80, NULL, NULL, NULL, '花王纸尿裤NB号', 'goods80.jpg', 169.00, 1, '{}', '2025-06-10 19:48:24', '2025-06-10 19:48:24');
+INSERT INTO `order_product` VALUES (79, 239, 2, NULL, NULL, NULL, '婴儿奶粉）', 'goods2.jpg', 328.00, 1, NULL, '2025-06-11 14:22:06', '2025-06-11 14:22:06');
+INSERT INTO `order_product` VALUES (80, 240, 64, NULL, NULL, NULL, '美德乐丝韵翼双边电动吸奶器', 'goods64.jpg', 2580.00, 1, NULL, '2025-06-11 16:19:10', '2025-06-11 16:19:10');
+INSERT INTO `order_product` VALUES (81, 241, 3, NULL, NULL, NULL, '有机婴儿配方奶粉3段（1-3岁）', 'goods3.jpg', 358.00, 1, NULL, '2025-06-11 16:27:08', '2025-06-11 16:27:08');
+INSERT INTO `order_product` VALUES (82, 242, 12, NULL, NULL, NULL, '儿童套装', 'goods12.jpg', 129.90, 1, NULL, '2025-06-11 16:37:52', '2025-06-11 16:37:52');
+INSERT INTO `order_product` VALUES (83, 243, 66, NULL, NULL, NULL, '嘉宝星星泡芙香蕉味', 'goods66.jpg', 25.80, 1, '{}', '2025-06-11 16:44:32', '2025-06-11 16:44:32');
+INSERT INTO `order_product` VALUES (84, 244, 98, NULL, NULL, NULL, '美素佳儿金装较大婴儿配方奶粉2段', 'goods98.jpg', 358.00, 1, '{}', '2025-06-11 16:52:48', '2025-06-11 16:52:48');
+INSERT INTO `order_product` VALUES (85, 245, 69, NULL, NULL, NULL, '帮宝适一级帮纸尿裤M号', 'goods69.jpg', 189.00, 1, '{}', '2025-06-11 16:58:28', '2025-06-11 16:58:28');
+INSERT INTO `order_product` VALUES (86, 246, 100, NULL, NULL, NULL, '花王纸尿裤S号', 'goods100.jpg', 179.00, 1, '{}', '2025-06-11 17:05:56', '2025-06-11 17:05:56');
+INSERT INTO `order_product` VALUES (87, 247, 93, NULL, NULL, NULL, '飞利浦新安怡自然原生系列玻璃奶瓶', 'goods93.jpg', 109.00, 1, '{}', '2025-06-11 17:07:20', '2025-06-11 17:07:20');
+INSERT INTO `order_product` VALUES (88, 248, 96, NULL, NULL, NULL, '嘉宝磨牙饼干香蕉味', 'goods96.jpg', 29.80, 1, '{}', '2025-06-11 17:16:40', '2025-06-11 17:16:40');
+INSERT INTO `order_product` VALUES (89, 249, 97, NULL, NULL, NULL, '惠氏S-26铂臻2段较大婴儿配方奶粉', 'goods97.jpg', 388.00, 1, '{}', '2025-06-11 17:19:48', '2025-06-11 17:19:48');
+INSERT INTO `order_product` VALUES (90, 250, 98, NULL, NULL, NULL, '美素佳儿金装较大婴儿配方奶粉2段', 'goods98.jpg', 358.00, 1, '{}', '2025-06-11 17:34:27', '2025-06-11 17:34:27');
+INSERT INTO `order_product` VALUES (91, 251, 96, NULL, NULL, NULL, '嘉宝磨牙饼干香蕉味', 'goods96.jpg', 29.80, 1, '{}', '2025-06-11 17:41:12', '2025-06-11 17:41:12');
+INSERT INTO `order_product` VALUES (92, 252, 89, NULL, NULL, NULL, '帮宝适特级棉柔纸尿裤M号', 'goods89.jpg', 179.00, 1, '{}', '2025-06-11 17:50:26', '2025-06-11 17:50:26');
+INSERT INTO `order_product` VALUES (93, 253, 77, NULL, NULL, NULL, '惠氏S-26铂臻3段幼儿配方奶粉', 'goods77.jpg', 378.00, 1, '{}', '2025-06-12 19:06:49', '2025-06-12 19:06:49');
+INSERT INTO `order_product` VALUES (94, 254, 91, NULL, NULL, NULL, '爱他美卓萃婴儿配方奶粉2段', 'goods91.jpg', 388.00, 1, '{\"规格\": \"默认\"}', '2025-06-27 12:20:43', '2025-06-27 12:20:43');
+INSERT INTO `order_product` VALUES (95, 255, 83, NULL, NULL, NULL, '飞利浦新安怡婴儿辅食机', 'goods83.jpg', 899.00, 1, NULL, '2025-07-09 15:13:07', '2025-07-09 15:13:07');
+INSERT INTO `order_product` VALUES (96, 256, 94, NULL, NULL, NULL, '美德乐丝韵翼双边电动吸奶器', 'goods94.jpg', 2580.00, 1, '{\"规格\": \"默认\"}', '2025-07-09 20:32:13', '2025-07-09 20:32:13');
+INSERT INTO `order_product` VALUES (97, 257, 70, NULL, NULL, NULL, '花王妙而舒纸尿裤L号', 'goods70.jpg', 179.00, 1, NULL, '2025-07-09 20:59:20', '2025-07-09 20:59:20');
+INSERT INTO `order_product` VALUES (98, 258, 84, NULL, NULL, NULL, '美德乐丝韵单边电动吸奶器', 'goods84.jpg', 1880.00, 1, '{\"规格\": \"默认\"}', '2025-07-10 14:38:39', '2025-07-10 14:38:39');
+INSERT INTO `order_product` VALUES (99, 259, 85, NULL, NULL, NULL, '贝亲宽口径PPSU奶瓶', 'goods85.jpg', 119.00, 1, '{\"规格\": \"默认\"}', '2025-07-10 14:48:36', '2025-07-10 14:48:36');
+INSERT INTO `order_product` VALUES (100, 260, 95, NULL, NULL, NULL, '贝亲婴儿洗发沐浴露二合一', 'goods95.jpg', 79.90, 1, NULL, '2025-07-11 13:15:06', '2025-07-11 13:15:06');
+INSERT INTO `order_product` VALUES (101, 261, 77, NULL, NULL, NULL, '惠氏S-26铂臻3段幼儿配方奶粉', 'goods77.jpg', 378.00, 1, NULL, '2025-07-11 15:09:19', '2025-07-11 15:09:19');
+INSERT INTO `order_product` VALUES (102, 262, 104, NULL, NULL, NULL, '美德乐吸奶器配件', 'goods104.jpg', 180.00, 1, '{\"规格\": \"默认\"}', '2025-07-11 15:13:56', '2025-07-11 15:13:56');
+INSERT INTO `order_product` VALUES (103, 263, 84, NULL, NULL, NULL, '美德乐丝韵单边电动吸奶器', 'goods84.jpg', 1880.00, 1, '{\"规格\": \"默认\"}', '2025-07-11 15:16:41', '2025-07-11 15:16:41');
+INSERT INTO `order_product` VALUES (104, 264, 60, NULL, NULL, NULL, '产后修复套装', 'goods60.jpg', 399.90, 1, '{\"类型\": \"孕中\"}', '2025-07-16 18:19:14', '2025-07-16 18:19:14');
+INSERT INTO `order_product` VALUES (105, 265, 100, NULL, NULL, NULL, '花王纸尿裤S号', 'goods100.jpg', 179.00, 1, '{\"规格\": \"默认\"}', '2025-07-16 18:56:06', '2025-07-16 18:56:06');
+INSERT INTO `order_product` VALUES (106, 266, 59, NULL, NULL, NULL, '孕妇维生素', 'goods59.jpg', 189.90, 1, '{\"规格\": \"标准型\"}', '2025-09-18 16:44:04', '2025-09-18 16:44:04');
+INSERT INTO `order_product` VALUES (107, 267, 98, NULL, NULL, NULL, '美素佳儿金装较大婴儿配方奶粉2段', 'goods98.jpg', 358.00, 3, NULL, '2025-09-19 12:11:59', '2025-09-19 12:11:59');
+INSERT INTO `order_product` VALUES (108, 268, 96, NULL, NULL, NULL, '嘉宝磨牙饼干香蕉味', 'goods96.jpg', 29.80, 1, NULL, '2025-11-11 09:58:22', '2025-11-11 09:58:22');
+INSERT INTO `order_product` VALUES (109, 269, 93, NULL, NULL, NULL, '飞利浦新安怡自然原生系列玻璃奶瓶', 'goods93.jpg', 109.00, 1, '{}', '2025-11-11 10:49:40', '2025-11-11 10:49:40');
+INSERT INTO `order_product` VALUES (110, 270, 23, NULL, NULL, NULL, '孕妇奶粉', 'goods23.jpg', 229.90, 1, '{\"尺寸\": \"中号(6-12个月)\"}', '2025-11-12 13:28:44', '2025-11-12 13:28:44');
+INSERT INTO `order_product` VALUES (111, 271, 84, NULL, NULL, NULL, '美德乐丝韵单边电动吸奶器', 'goods84.jpg', 1880.00, 1, '{\"规格\": \"默认\"}', '2025-11-16 19:08:45', '2025-11-16 19:08:45');
+INSERT INTO `order_product` VALUES (112, 272, 94, NULL, NULL, NULL, '美德乐丝韵翼双边电动吸奶器', 'goods94.jpg', 2580.00, 1, '{\"规格\": \"默认\"}', '2025-11-16 19:33:33', '2025-11-16 19:33:33');
+INSERT INTO `order_product` VALUES (113, 273, 72, NULL, NULL, NULL, '费雪海马声光安抚玩具', 'goods72.jpg', 159.00, 1, '{\"规格\": \"默认\"}', '2025-11-17 11:18:55', '2025-11-17 11:18:55');
+INSERT INTO `order_product` VALUES (114, 274, 87, NULL, NULL, NULL, '惠氏启赋蓝钻3段幼儿配方奶粉', 'goods87.jpg', 398.00, 1, NULL, '2025-11-18 12:59:21', '2025-11-18 12:59:21');
+INSERT INTO `order_product` VALUES (115, 275, 96, NULL, NULL, NULL, '嘉宝磨牙饼干香蕉味', 'goods96.jpg', 29.80, 1, '{\"规格\": \"默认\"}', '2025-11-19 13:38:59', '2025-11-19 13:38:59');
+INSERT INTO `order_product` VALUES (116, 276, 119, NULL, NULL, NULL, '帮宝适拉拉裤L号', 'goods119.jpg', 199.00, 1, '{\"规格\": \"默认\"}', '2025-11-21 15:55:30', '2025-11-21 15:55:30');
+INSERT INTO `order_product` VALUES (117, 277, 108, NULL, NULL, NULL, '美素佳儿皇家美素佳儿2段较大婴儿配方奶粉', 'goods108.jpg', 378.00, 1, NULL, '2025-11-22 11:28:30', '2025-11-22 11:28:30');
+INSERT INTO `order_product` VALUES (118, 278, 107, NULL, NULL, NULL, '惠氏启赋未来2段较大婴儿配方奶粉', 'goods107.jpg', 398.00, 1, NULL, '2025-11-22 11:41:53', '2025-11-22 11:41:53');
+INSERT INTO `order_product` VALUES (119, 279, 120, NULL, NULL, NULL, '花王纸尿裤NB号', 'goods120.jpg', 189.00, 1, '{\"规格\": \"默认\"}', '2025-11-22 11:47:43', '2025-11-22 11:47:43');
+INSERT INTO `order_product` VALUES (120, 280, 120, NULL, NULL, NULL, '花王纸尿裤NB号', 'goods120.jpg', 189.00, 1, '{\"规格\": \"默认\"}', '2025-11-22 12:03:53', '2025-11-22 12:03:53');
+INSERT INTO `order_product` VALUES (121, 281, 109, NULL, NULL, NULL, '帮宝适一级帮纸尿裤L号', 'goods109.jpg', 199.00, 1, NULL, '2025-11-22 12:11:16', '2025-11-22 12:11:16');
+INSERT INTO `order_product` VALUES (122, 282, 117, NULL, NULL, NULL, '惠氏S-26铂臻3段幼儿配方奶粉', 'goods117.jpg', 378.00, 1, NULL, '2025-11-22 12:11:55', '2025-11-22 12:11:55');
+INSERT INTO `order_product` VALUES (123, 283, 119, NULL, NULL, NULL, '帮宝适拉拉裤L号', 'goods119.jpg', 199.00, 1, NULL, '2025-11-22 16:16:34', '2025-11-22 16:16:34');
+INSERT INTO `order_product` VALUES (124, 283, 120, NULL, NULL, NULL, '花王纸尿裤NB号', 'goods120.jpg', 189.00, 1, NULL, '2025-11-22 16:16:34', '2025-11-22 16:16:34');
+INSERT INTO `order_product` VALUES (125, 284, 1, NULL, NULL, NULL, '惠氏启赋有机婴儿配方奶粉1段（0-6个月）', 'goods1.jpg', 298.00, 1, '{\"规格\": \"2段(6-12个月);重量\"}', '2025-11-24 11:01:27', '2025-11-24 11:01:27');
 
 -- ----------------------------
 -- Table structure for order_state_log
@@ -1537,7 +1590,7 @@ CREATE TABLE `order_state_log`  (
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
   INDEX `idx_order_no`(`order_no` ASC) USING BTREE,
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 31 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单状态变更日志表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 33 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单状态变更日志表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of order_state_log
@@ -1572,6 +1625,8 @@ INSERT INTO `order_state_log` VALUES (27, 249, 'OD1749633587969adf18d', 'pending
 INSERT INTO `order_state_log` VALUES (28, 250, 'OD1749634467342a29476', 'pending_payment', 'cancelled', 'TIMEOUT', 'system', '订单超过5分钟未支付，系统自动取消', '2025-06-11 17:40:00');
 INSERT INTO `order_state_log` VALUES (29, 251, 'OD1749634872421a79c8d', 'pending_payment', 'cancelled', 'TIMEOUT', 'system', '订单超过5分钟未支付，系统自动取消', '2025-06-11 17:47:00');
 INSERT INTO `order_state_log` VALUES (30, 258, 'OD17521295188585571b8', 'pending_payment', 'cancelled', 'TIMEOUT', 'system', '订单超过5分钟未支付，系统自动取消', '2025-07-10 14:44:00');
+INSERT INTO `order_state_log` VALUES (31, 277, 'OD17637821098265ca775', 'pending_payment', 'cancelled', 'TIMEOUT', 'system', '订单超过5分钟未支付，系统自动取消', '2025-11-22 11:34:00');
+INSERT INTO `order_state_log` VALUES (32, 279, 'OD176378326347211f8d7', 'pending_payment', 'cancelled', 'TIMEOUT', 'system', '订单超过5分钟未支付，系统自动取消', '2025-11-22 11:53:00');
 
 -- ----------------------------
 -- Table structure for payment
@@ -1603,7 +1658,7 @@ CREATE TABLE `payment`  (
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_status_method`(`status` ASC, `payment_method` ASC) USING BTREE,
   INDEX `idx_version`(`version` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 296 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '支付表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 313 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '支付表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of payment
@@ -1859,6 +1914,23 @@ INSERT INTO `payment` VALUES (292, 'PAY17526633706918cd8', 265, 'OD1752663366489
 INSERT INTO `payment` VALUES (293, 'PAY175818504760855e7', 266, 'OD1758185044441fc2a2a', 8, 189.90, 'alipay', 0, NULL, NULL, NULL, '2025-09-18 18:44:08', 'http://localhost:8080/api/payment/alipay/notify', 'http://localhost:8080/api/payment/alipay/return', NULL, '2025-09-18 16:44:08', '2025-09-18 16:44:08', 1);
 INSERT INTO `payment` VALUES (294, 'PAY17581850978919aef', 266, 'OD1758185044441fc2a2a', 8, 189.90, 'alipay', 2, '2025-09-18 16:45:31', 'AP2025091822001434870507763800', NULL, '2025-09-18 18:44:58', 'http://localhost:8080/api/payment/alipay/notify', 'http://localhost:8080/api/payment/alipay/return', NULL, '2025-09-18 16:44:58', '2025-09-18 16:45:31', 2);
 INSERT INTO `payment` VALUES (295, 'PAY17582551336424ecd', 267, 'OD17582551185296f4f05', 8, 1074.00, 'wechat', 2, '2025-09-19 12:12:17', 'WX47ea26cda1204db695bc123b706013db', NULL, '2025-09-19 14:12:14', NULL, NULL, NULL, '2025-09-19 12:12:14', '2025-09-19 12:12:17', 2);
+INSERT INTO `payment` VALUES (296, 'PAY17628263193876286', 268, 'OD176282630155219a248', 8, 39.80, 'alipay', 2, '2025-11-11 09:59:14', 'AP2025111122001434870508143154', NULL, '2025-11-11 11:58:39', 'http://localhost:8080/api/payment/alipay/notify', 'http://localhost:8080/api/payment/alipay/return', NULL, '2025-11-11 09:58:39', '2025-11-11 09:59:14', 2);
+INSERT INTO `payment` VALUES (297, 'PAY1762829392906bdc9', 269, 'OD176282938025946e012', 8, 109.00, 'wechat', 2, '2025-11-11 10:49:56', 'WXe27cda8dd8f94035b4dd035694ee097e', NULL, '2025-11-11 12:49:53', NULL, NULL, NULL, '2025-11-11 10:49:53', '2025-11-11 10:49:56', 2);
+INSERT INTO `payment` VALUES (298, 'PAY17629253320323985', 270, 'OD17629253243371244e1', 8, 179.90, 'wallet', 2, '2025-11-12 13:28:52', 'WALLET803610776728438298ee2e618b8e9075', NULL, NULL, NULL, NULL, NULL, '2025-11-12 13:28:52', '2025-11-12 13:28:52', 1);
+INSERT INTO `payment` VALUES (299, 'PAY1763291330885ab7f', 271, 'OD17632913246520bd2ce', 8, 1880.00, 'alipay', 0, NULL, NULL, NULL, '2025-11-16 21:08:51', 'http://localhost:8080/api/payment/alipay/notify', 'http://localhost:8080/api/payment/alipay/return', NULL, '2025-11-16 19:08:51', '2025-11-16 19:08:51', 1);
+INSERT INTO `payment` VALUES (300, 'PAY176329134998249e5', 271, 'OD17632913246520bd2ce', 8, 1880.00, 'wallet', 2, '2025-11-16 19:09:10', 'WALLET9bdfa85aa1a9449b8247d7d866ebcbd3', NULL, NULL, NULL, NULL, NULL, '2025-11-16 19:09:10', '2025-11-16 19:09:10', 1);
+INSERT INTO `payment` VALUES (301, 'PAY17632928190896bb5', 272, 'OD1763292813353fcb46f', 8, 2580.00, 'alipay', 2, '2025-11-16 19:34:20', 'AP2025111622001434870508203385', NULL, '2025-11-16 21:33:39', 'http://localhost:8080/api/payment/alipay/notify', 'http://localhost:8080/api/payment/alipay/return', NULL, '2025-11-16 19:33:39', '2025-11-16 19:34:20', 2);
+INSERT INTO `payment` VALUES (302, 'PAY1763349552352646d', 273, 'OD17633495350114a4d95', 9, 159.00, 'wechat', 2, '2025-11-17 11:19:15', 'WX4baf849932bf4b46b3164481e3159a3d', NULL, '2025-11-17 13:19:12', NULL, NULL, NULL, '2025-11-17 11:19:12', '2025-11-17 11:19:15', 2);
+INSERT INTO `payment` VALUES (303, 'PAY17634419697092dad', 274, 'OD176344196086432cefc', 9, 348.00, 'wallet', 2, '2025-11-18 12:59:30', 'WALLET6823a9fa24e440c6abd1b8d785e88717', NULL, NULL, NULL, NULL, NULL, '2025-11-18 12:59:30', '2025-11-18 12:59:30', 1);
+INSERT INTO `payment` VALUES (304, 'PAY17635307486985a8c', 275, 'OD17635307389709c410a', 8, 39.80, 'wechat', 2, '2025-11-19 13:39:12', 'WX93a604fedd8b4c12a8e845d4b7686d51', NULL, '2025-11-19 15:39:09', NULL, NULL, NULL, '2025-11-19 13:39:09', '2025-11-19 13:39:12', 2);
+INSERT INTO `payment` VALUES (305, 'PAY1763711741242a68b', 276, 'OD176371172919058ae51', 8, 149.00, 'wechat', 2, '2025-11-21 15:55:44', 'WXef5afcea06d4407a976dd7ccd2a90eff', NULL, '2025-11-21 17:55:41', NULL, NULL, NULL, '2025-11-21 15:55:41', '2025-11-21 15:55:44', 2);
+INSERT INTO `payment` VALUES (306, 'PAY1763783017585e9f4', 278, 'OD1763782912767e60729', 8, 398.00, 'wallet', 2, '2025-11-22 11:43:38', 'WALLETf9e8da6413074f38a9c40895087828a3', NULL, NULL, NULL, NULL, NULL, '2025-11-22 11:43:38', '2025-11-22 11:43:38', 1);
+INSERT INTO `payment` VALUES (307, 'PAY17637842409887ce2', 280, 'OD17637842325279ad152', 8, 189.00, 'alipay', 0, NULL, NULL, NULL, '2025-11-22 14:04:01', 'http://localhost:8080/api/payment/alipay/notify', 'http://localhost:8080/api/payment/alipay/return', NULL, '2025-11-22 12:04:01', '2025-11-22 12:04:01', 1);
+INSERT INTO `payment` VALUES (308, 'PAY1763784257716e699', 280, 'OD17637842325279ad152', 8, 189.00, 'alipay', 2, '2025-11-22 12:04:49', 'AP2025112222001434870508259817', NULL, '2025-11-22 14:04:18', 'http://localhost:8080/api/payment/alipay/notify', 'http://localhost:8080/api/payment/alipay/return', NULL, '2025-11-22 12:04:18', '2025-11-22 12:04:49', 2);
+INSERT INTO `payment` VALUES (309, 'PAY17637846902063707', 281, 'OD17637846760888a58fe', 8, 199.00, 'wechat', 2, '2025-11-22 12:11:33', 'WX3f97cd9e7045429fac0cfbc1fb829a3e', NULL, '2025-11-22 14:11:30', NULL, NULL, NULL, '2025-11-22 12:11:30', '2025-11-22 12:11:33', 2);
+INSERT INTO `payment` VALUES (310, 'PAY1763784725730af87', 282, 'OD1763784714697ef21bc', 8, 378.00, 'wallet', 2, '2025-11-22 12:12:06', 'WALLETcffd2a56250a4503a41169e92871655f', NULL, NULL, NULL, NULL, NULL, '2025-11-22 12:12:06', '2025-11-22 12:12:06', 1);
+INSERT INTO `payment` VALUES (311, 'PAY1763799409943b3a0', 283, 'OD1763799393847087e57', 8, 338.00, 'wechat', 2, '2025-11-22 16:16:53', 'WX5dff0adfcbdc4f408cd4b1b78f9d208e', NULL, '2025-11-22 18:16:50', NULL, NULL, NULL, '2025-11-22 16:16:50', '2025-11-22 16:16:53', 2);
+INSERT INTO `payment` VALUES (312, 'PAY176395329432332db', 284, 'OD1763953286856c29a14', 8, 298.00, 'alipay', 2, '2025-11-24 11:02:09', 'AP2025112422001434870508273934', NULL, '2025-11-24 13:01:34', 'http://localhost:8080/api/payment/alipay/notify', 'http://localhost:8080/api/payment/alipay/return', NULL, '2025-11-24 11:01:34', '2025-11-24 11:02:09', 2);
 
 -- ----------------------------
 -- Table structure for payment_log
@@ -2019,7 +2091,7 @@ CREATE TABLE `payment_state_log`  (
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
   INDEX `idx_order_no`(`order_no` ASC) USING BTREE,
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '支付状态变更日志表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '支付状态变更日志表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of payment_state_log
@@ -2038,7 +2110,7 @@ CREATE TABLE `points_exchange`  (
   `points` int NOT NULL COMMENT '消耗积分',
   `address_id` int UNSIGNED NULL DEFAULT NULL COMMENT '收货地址ID',
   `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '手机号码',
-  `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '状态(0:待发货,1:已发货,2:已完成,3:已取消)',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'pending' COMMENT '状态(pending:待发货,shipped:已发货,completed:已完成,cancelled:已取消)',
   `tracking_no` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '物流单号',
   `tracking_company` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '物流公司',
   `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
@@ -2048,27 +2120,48 @@ CREATE TABLE `points_exchange`  (
   UNIQUE INDEX `uk_order_no`(`order_no` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_product_id`(`product_id` ASC) USING BTREE,
-  INDEX `idx_status`(`status` ASC) USING BTREE,
   INDEX `fk_exchange_address`(`address_id` ASC) USING BTREE,
+  INDEX `idx_status`(`status` ASC) USING BTREE,
   CONSTRAINT `fk_exchange_address` FOREIGN KEY (`address_id`) REFERENCES `user_address` (`address_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_exchange_goods` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_exchange_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '积分兑换记录表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 34 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '积分兑换记录表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of points_exchange
 -- ----------------------------
-INSERT INTO `points_exchange` VALUES (1, 'PE20250320001', 3, 1, 1, 2000, 3, '13800000002', 2, 'SF1234567890', '顺丰速运', '工作日送货', '2025-03-20 14:30:00', '2025-03-20 16:20:00');
-INSERT INTO `points_exchange` VALUES (2, 'PE20250320002', 4, 2, 1, 500, NULL, '15222366958', 2, NULL, NULL, NULL, '2025-03-20 10:15:00', '2025-03-20 10:30:00');
-INSERT INTO `points_exchange` VALUES (3, 'PE20250320003', 8, 6, 1, 2500, 5, '13888144526', 1, 'YT9876543210', '圆通速递', '周末送货', '2025-03-20 09:45:00', '2025-03-20 14:20:00');
-INSERT INTO `points_exchange` VALUES (4, 'PE20250320004', 3, 3, 1, 1000, NULL, NULL, 2, NULL, NULL, NULL, '2025-03-20 16:30:00', '2025-03-20 16:35:00');
-INSERT INTO `points_exchange` VALUES (5, 'PE20250320005', 2, 4, 1, 3500, 1, '13800000001', 0, NULL, NULL, '请尽快发货', '2025-03-20 11:20:00', '2025-03-20 11:20:00');
-INSERT INTO `points_exchange` VALUES (6, 'PE20250320006', 8, 5, 2, 200, NULL, NULL, 2, NULL, NULL, NULL, '2025-03-20 15:10:00', '2025-03-20 15:20:00');
-INSERT INTO `points_exchange` VALUES (7, 'PE20250320007', 4, 8, 1, 1500, NULL, '15222366958', 3, NULL, NULL, '用户申请取消', '2025-03-20 13:45:00', '2025-03-20 14:30:00');
-INSERT INTO `points_exchange` VALUES (8, 'PE20250320008', 8, 7, 1, 300, NULL, '13888144526', 2, NULL, NULL, NULL, '2025-03-20 17:25:00', '2025-03-20 17:35:00');
-INSERT INTO `points_exchange` VALUES (9, 'PE20250320009', 2, 11, 1, 10000, NULL, NULL, 2, NULL, NULL, '系统自动处理', '2025-03-20 10:50:00', '2025-03-20 11:00:00');
-INSERT INTO `points_exchange` VALUES (10, 'PE20250320010', 9, 13, 3, 600, NULL, NULL, 0, NULL, NULL, '多优惠券兑换', '2025-03-20 14:15:00', '2025-03-20 14:15:00');
-INSERT INTO `points_exchange` VALUES (12, 'PE20250324507124', 8, 5, 1, 100, NULL, NULL, 0, NULL, NULL, '', '2025-03-24 13:06:45', '2025-03-24 13:06:45');
+INSERT INTO `points_exchange` VALUES (1, 'PE20250320001', 3, 1, 1, 2000, 3, '13800000002', 'completed', 'SF1234567890', '顺丰速运', '工作日送货', '2025-03-20 14:30:00', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (2, 'PE20250320002', 4, 2, 1, 500, NULL, '15222366958', 'completed', NULL, NULL, NULL, '2025-03-20 10:15:00', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (3, 'PE20250320003', 8, 6, 1, 2500, 5, '13888144526', 'shipped', 'YT9876543210', '圆通速递', '周末送货', '2025-03-20 09:45:00', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (4, 'PE20250320004', 3, 3, 1, 1000, NULL, NULL, 'completed', NULL, NULL, NULL, '2025-03-20 16:30:00', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (5, 'PE20250320005', 2, 4, 1, 3500, 1, '13800000001', 'pending', NULL, NULL, '请尽快发货', '2025-03-20 11:20:00', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (6, 'PE20250320006', 8, 5, 2, 200, NULL, NULL, 'completed', NULL, NULL, NULL, '2025-03-20 15:10:00', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (7, 'PE20250320007', 4, 8, 1, 1500, NULL, '15222366958', 'cancelled', NULL, NULL, '用户申请取消', '2025-03-20 13:45:00', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (8, 'PE20250320008', 8, 7, 1, 300, NULL, '13888144526', 'completed', NULL, NULL, NULL, '2025-03-20 17:25:00', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (9, 'PE20250320009', 2, 11, 1, 10000, NULL, NULL, 'completed', NULL, NULL, '系统自动处理', '2025-03-20 10:50:00', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (10, 'PE20250320010', 9, 13, 3, 600, NULL, NULL, 'pending', NULL, NULL, '多优惠券兑换', '2025-03-20 14:15:00', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (12, 'PE20250324507124', 8, 5, 1, 100, NULL, NULL, 'pending', NULL, NULL, '', '2025-03-24 13:06:45', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (13, 'PE1760692030257ecef04', 9, 8, 1, 1500, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-10-17 17:07:10', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (14, 'PE17628349514123351de', 8, 6, 1, 2500, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-11 12:22:31', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (15, 'PE1762836123949555d14', 8, 5, 1, 1000, NULL, NULL, 'cancelled', NULL, NULL, '用户取消兑换', '2025-11-11 12:42:04', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (16, 'PE17628366411495e4579', 8, 6, 1, 2500, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-11 12:50:41', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (17, 'PE176284034760306f9f6', 8, 4, 1, 3500, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-11 13:52:28', '2025-11-19 13:15:21');
+INSERT INTO `points_exchange` VALUES (18, 'PE17635294616571371b8', 8, 4, 1, 3500, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:17:42', '2025-11-19 13:17:42');
+INSERT INTO `points_exchange` VALUES (19, 'PE17635294656372a0ca3', 8, 3, 1, 1000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:17:46', '2025-11-19 13:17:46');
+INSERT INTO `points_exchange` VALUES (20, 'PE1763529469315501f4d', 8, 2, 1, 5000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:17:49', '2025-11-19 13:17:49');
+INSERT INTO `points_exchange` VALUES (21, 'PE176352947261988634b', 8, 1, 1, 2000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:17:53', '2025-11-19 13:17:53');
+INSERT INTO `points_exchange` VALUES (22, 'PE17635296650751e26fd', 8, 10, 1, 10000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:21:05', '2025-11-19 13:21:05');
+INSERT INTO `points_exchange` VALUES (23, 'PE1763529668650361d1f', 8, 6, 1, 2500, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:21:09', '2025-11-19 13:21:09');
+INSERT INTO `points_exchange` VALUES (24, 'PE1763529671972dd8b3c', 8, 1, 1, 2000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:21:12', '2025-11-19 13:21:12');
+INSERT INTO `points_exchange` VALUES (25, 'PE17635296752321427b3', 8, 2, 1, 5000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:21:15', '2025-11-19 13:21:15');
+INSERT INTO `points_exchange` VALUES (26, 'PE1763529678568884a53', 8, 7, 1, 3000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:21:19', '2025-11-19 13:21:19');
+INSERT INTO `points_exchange` VALUES (27, 'PE176352968193060fe59', 8, 3, 1, 1000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:21:22', '2025-11-19 13:21:22');
+INSERT INTO `points_exchange` VALUES (28, 'PE1763529685063023874', 8, 5, 1, 1000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:21:25', '2025-11-19 13:21:25');
+INSERT INTO `points_exchange` VALUES (29, 'PE176352968814835dca0', 8, 8, 1, 1500, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:21:28', '2025-11-19 13:21:28');
+INSERT INTO `points_exchange` VALUES (30, 'PE176352969283792a7e6', 8, 4, 1, 3500, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:21:33', '2025-11-19 13:21:33');
+INSERT INTO `points_exchange` VALUES (31, 'PE1763529786532c1e980', 8, 9, 1, 2000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:23:07', '2025-11-19 13:23:07');
+INSERT INTO `points_exchange` VALUES (32, 'PE17635299492685f8cb6', 8, 1, 1, 2000, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:25:49', '2025-11-19 13:25:49');
+INSERT INTO `points_exchange` VALUES (33, 'PE176352995928264c7b4', 8, 6, 1, 2500, NULL, NULL, 'pending', NULL, NULL, NULL, '2025-11-19 13:25:59', '2025-11-19 13:25:59');
 
 -- ----------------------------
 -- Table structure for points_history
@@ -2086,7 +2179,7 @@ CREATE TABLE `points_history`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 153 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '积分历史记录表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 202 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '积分历史记录表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of points_history
@@ -2240,6 +2333,55 @@ INSERT INTO `points_history` VALUES (149, 9, 20, 'earn', 'signin', '2025-07-11',
 INSERT INTO `points_history` VALUES (150, 8, 20, 'earn', 'signin', '2025-09-13', '每日签到', '2025-09-13 19:05:35');
 INSERT INTO `points_history` VALUES (151, 8, 20, 'earn', 'signin', '2025-09-18', '每日签到', '2025-09-18 16:43:12');
 INSERT INTO `points_history` VALUES (152, 8, 20, 'earn', 'signin', '2025-09-19', '每日签到', '2025-09-19 12:11:15');
+INSERT INTO `points_history` VALUES (153, 8, 20, 'earn', 'signin', '2025-10-11', '每日签到', '2025-10-11 17:01:13');
+INSERT INTO `points_history` VALUES (154, 8, 20, 'earn', 'signin', '2025-10-16', '每日签到', '2025-10-16 11:37:14');
+INSERT INTO `points_history` VALUES (155, 8, 20, 'earn', 'signin', '2025-10-17', '每日签到', '2025-10-17 13:47:00');
+INSERT INTO `points_history` VALUES (156, 9, 20, 'earn', 'signin', '2025-10-17', '每日签到', '2025-10-17 17:06:37');
+INSERT INTO `points_history` VALUES (157, 9, -1500, 'spend', 'exchange', 'PE1760692030257ecef04', '积分兑换商品', '2025-10-17 17:07:10');
+INSERT INTO `points_history` VALUES (158, 8, 20, 'earn', 'signin', '2025-11-11', '每日签到', '2025-11-11 10:32:45');
+INSERT INTO `points_history` VALUES (159, 8, -2500, 'spend', 'exchange', 'PE17628349514123351de', '积分兑换商品', '2025-11-11 12:22:31');
+INSERT INTO `points_history` VALUES (160, 8, -1000, 'spend', 'exchange', 'PE1762836123949555d14', '积分兑换商品', '2025-11-11 12:42:04');
+INSERT INTO `points_history` VALUES (161, 8, 1000, 'earn', 'exchange_cancel', 'PE1762836123949555d14', '兑换取消返还积分', '2025-11-11 12:50:05');
+INSERT INTO `points_history` VALUES (162, 8, -2500, 'spend', 'exchange', 'PE17628366411495e4579', '积分兑换商品', '2025-11-11 12:50:41');
+INSERT INTO `points_history` VALUES (163, 8, -3500, 'spend', 'exchange', 'PE176284034760306f9f6', '积分兑换商品', '2025-11-11 13:52:28');
+INSERT INTO `points_history` VALUES (164, 8, 20, 'earn', 'signin', '2025-11-12', '每日签到', '2025-11-12 10:14:03');
+INSERT INTO `points_history` VALUES (165, 8, 10, 'earn', 'order_completed', '269', '订单完成奖励', '2025-11-12 10:37:15');
+INSERT INTO `points_history` VALUES (166, 8, 23, 'earn', 'comment_reward', '215', '评价奖励', '2025-11-12 10:37:50');
+INSERT INTO `points_history` VALUES (167, 8, 10000, 'earn', 'admin', NULL, '管理员添加', '2025-11-12 11:09:23');
+INSERT INTO `points_history` VALUES (168, 8, 20, 'earn', 'signin', '2025-11-16', '每日签到', '2025-11-16 19:08:08');
+INSERT INTO `points_history` VALUES (169, 8, 188, 'earn', 'order_completed', '271', '订单完成奖励', '2025-11-16 19:09:49');
+INSERT INTO `points_history` VALUES (170, 8, 15, 'earn', 'comment_reward', '216', '评价奖励', '2025-11-16 19:10:02');
+INSERT INTO `points_history` VALUES (171, 8, 258, 'earn', 'order_completed', '272', '订单完成奖励', '2025-11-16 19:54:21');
+INSERT INTO `points_history` VALUES (172, 8, 20, 'earn', 'signin', '2025-11-17', '每日签到', '2025-11-17 11:01:40');
+INSERT INTO `points_history` VALUES (173, 9, 20, 'earn', 'signin', '2025-11-17', '每日签到', '2025-11-17 11:03:21');
+INSERT INTO `points_history` VALUES (174, 9, 15, 'earn', 'order_completed', '273', '订单完成奖励', '2025-11-17 11:21:09');
+INSERT INTO `points_history` VALUES (175, 9, 10000, 'earn', 'admin', NULL, '测试', '2025-11-17 16:03:02');
+INSERT INTO `points_history` VALUES (176, 9, 20, 'earn', 'signin', '2025-11-18', '每日签到', '2025-11-18 09:59:24');
+INSERT INTO `points_history` VALUES (177, 9, -5000, 'spend', 'order', 'OD176344196086432cefc', '订单抵扣', '2025-11-18 12:59:21');
+INSERT INTO `points_history` VALUES (178, 59, 5000, 'earn', 'admin', NULL, '管理员测试', '2025-11-18 19:34:52');
+INSERT INTO `points_history` VALUES (179, 8, 70000, 'earn', 'admin', NULL, '测试', '2025-11-18 20:55:25');
+INSERT INTO `points_history` VALUES (180, 8, -3500, 'spend', 'exchange', 'PE17635294616571371b8', '积分兑换商品', '2025-11-19 13:17:42');
+INSERT INTO `points_history` VALUES (181, 8, -1000, 'spend', 'exchange', 'PE17635294656372a0ca3', '积分兑换商品', '2025-11-19 13:17:46');
+INSERT INTO `points_history` VALUES (182, 8, -5000, 'spend', 'exchange', 'PE1763529469315501f4d', '积分兑换商品', '2025-11-19 13:17:49');
+INSERT INTO `points_history` VALUES (183, 8, -2000, 'spend', 'exchange', 'PE176352947261988634b', '积分兑换商品', '2025-11-19 13:17:53');
+INSERT INTO `points_history` VALUES (184, 8, 20, 'earn', 'signin', '2025-11-19', '每日签到', '2025-11-19 13:20:58');
+INSERT INTO `points_history` VALUES (185, 8, -10000, 'spend', 'exchange', 'PE17635296650751e26fd', '积分兑换商品', '2025-11-19 13:21:05');
+INSERT INTO `points_history` VALUES (186, 8, -2500, 'spend', 'exchange', 'PE1763529668650361d1f', '积分兑换商品', '2025-11-19 13:21:09');
+INSERT INTO `points_history` VALUES (187, 8, -2000, 'spend', 'exchange', 'PE1763529671972dd8b3c', '积分兑换商品', '2025-11-19 13:21:12');
+INSERT INTO `points_history` VALUES (188, 8, -5000, 'spend', 'exchange', 'PE17635296752321427b3', '积分兑换商品', '2025-11-19 13:21:15');
+INSERT INTO `points_history` VALUES (189, 8, -3000, 'spend', 'exchange', 'PE1763529678568884a53', '积分兑换商品', '2025-11-19 13:21:19');
+INSERT INTO `points_history` VALUES (190, 8, -1000, 'spend', 'exchange', 'PE176352968193060fe59', '积分兑换商品', '2025-11-19 13:21:22');
+INSERT INTO `points_history` VALUES (191, 8, -1000, 'spend', 'exchange', 'PE1763529685063023874', '积分兑换商品', '2025-11-19 13:21:25');
+INSERT INTO `points_history` VALUES (192, 8, -1500, 'spend', 'exchange', 'PE176352968814835dca0', '积分兑换商品', '2025-11-19 13:21:28');
+INSERT INTO `points_history` VALUES (193, 8, -3500, 'spend', 'exchange', 'PE176352969283792a7e6', '积分兑换商品', '2025-11-19 13:21:33');
+INSERT INTO `points_history` VALUES (194, 8, -2000, 'spend', 'exchange', 'PE1763529786532c1e980', '积分兑换商品', '2025-11-19 13:23:07');
+INSERT INTO `points_history` VALUES (195, 8, -2000, 'spend', 'exchange', 'PE17635299492685f8cb6', '积分兑换商品', '2025-11-19 13:25:49');
+INSERT INTO `points_history` VALUES (196, 8, -2500, 'spend', 'exchange', 'PE176352995928264c7b4', '积分兑换商品', '2025-11-19 13:25:59');
+INSERT INTO `points_history` VALUES (197, 8, 20, 'earn', 'signin', '2025-11-20', '每日签到', '2025-11-20 16:43:27');
+INSERT INTO `points_history` VALUES (198, 8, 200, 'earn', 'signin_continuous', '2025-11-21', '连续签到3天额外奖励', '2025-11-21 13:59:32');
+INSERT INTO `points_history` VALUES (199, 8, 20, 'earn', 'signin', '2025-11-21', '每日签到', '2025-11-21 13:59:32');
+INSERT INTO `points_history` VALUES (200, 8, 3, 'earn', 'order_completed', '275', '订单完成奖励', '2025-11-21 15:25:42');
+INSERT INTO `points_history` VALUES (201, 8, 25, 'earn', 'signin', '2025-11-22', '每日签到，连续签到4天', '2025-11-22 10:10:02');
 
 -- ----------------------------
 -- Table structure for points_product
@@ -2269,16 +2411,16 @@ CREATE TABLE `points_product`  (
 -- ----------------------------
 -- Records of points_product
 -- ----------------------------
-INSERT INTO `points_product` VALUES (1, '婴儿奶瓶消毒器', '智能蒸汽消毒，一键操作，可消毒6个奶瓶', 'points/sterilizer.jpg', 2000, 100, 'physical', 1, 1, 1, 1, 10, '2025-03-20 10:00:00', '2025-05-15 14:56:02');
-INSERT INTO `points_product` VALUES (2, '婴儿纸尿裤', '满200元减50元优惠券，适用于所有品牌纸尿裤', 'points/diaper.webp', 5000, 200, 'coupon', 0, 0, 1, 1, 20, '2025-03-20 10:00:00', '2025-05-15 14:56:08');
-INSERT INTO `points_product` VALUES (3, '母婴会员月卡', '享受母婴商品9折优惠，专属客服，免费育儿咨询', 'points/vip_month.jpg', 1000, 999, 'vip', 0, 0, 1, 1, 5, '2025-03-20 10:00:00', '2025-05-15 14:56:11');
-INSERT INTO `points_product` VALUES (4, '婴儿辅食机', '多功能辅食机，一键制作营养辅食', 'points/baby_maker.webp', 3500, 50, 'physical', 1, 1, 1, 1, 8, '2025-03-20 10:00:00', '2025-05-15 14:56:14');
-INSERT INTO `points_product` VALUES (5, '婴儿玩具优惠券', '满100元减20元优惠券，适用于所有玩具类商品', 'points/toy_coupon.jpg', 1000, 500, 'coupon', 0, 0, 0, 1, 30, '2025-03-20 10:00:00', '2025-05-15 14:56:16');
-INSERT INTO `points_product` VALUES (6, '婴儿体温计', '智能体温计，快速测温，带夜光显示', 'points/thermometer.webp', 2500, 80, 'physical', 1, 1, 1, 1, 15, '2025-03-20 10:00:00', '2025-05-15 14:56:18');
-INSERT INTO `points_product` VALUES (7, '育儿课程7天会员', '专业育儿课程7天体验，包含新生儿护理、辅食制作等课程', 'points/parenting_course.jpg', 3000, 1000, 'virtual', 0, 1, 0, 1, 25, '2025-03-20 10:00:00', '2025-05-15 14:56:20');
-INSERT INTO `points_product` VALUES (8, '婴儿推车', '轻便折叠推车，一键收车，适合0-3岁', 'points/stroller.webp', 1500, 100, 'physical', 1, 1, 0, 1, 18, '2025-03-20 10:00:00', '2025-05-15 14:56:22');
-INSERT INTO `points_product` VALUES (9, '婴儿奶粉优惠券', '满300元减50元优惠券，适用于所有品牌奶粉', 'points/milk_coupon.jpg', 2000, 300, 'coupon', 0, 0, 1, 1, 28, '2025-03-20 10:00:00', '2025-05-15 14:56:24');
-INSERT INTO `points_product` VALUES (10, '母婴年度会员', '享受母婴商品8.5折优惠，专属客服，免费育儿咨询，生日礼包', 'points/vip_year.jpg', 10000, 100, 'vip', 0, 0, 1, 1, 1, '2025-03-20 10:00:00', '2025-05-15 14:56:26');
+INSERT INTO `points_product` VALUES (1, '婴儿奶瓶消毒器', '智能蒸汽消毒，一键操作，可消毒6个奶瓶', 'points/sterilizer.jpg', 2000, 97, 'physical', 1, 1, 1, 1, 10, '2025-03-20 10:00:00', '2025-11-19 13:25:49');
+INSERT INTO `points_product` VALUES (2, '婴儿纸尿裤', '满200元减50元优惠券，适用于所有品牌纸尿裤', 'points/diaper.webp', 5000, 198, 'coupon', 0, 0, 1, 1, 20, '2025-03-20 10:00:00', '2025-11-19 13:21:15');
+INSERT INTO `points_product` VALUES (3, '母婴会员月卡', '享受母婴商品9折优惠，专属客服，免费育儿咨询', 'points/vip_month.jpg', 1000, 997, 'vip', 0, 0, 1, 1, 5, '2025-03-20 10:00:00', '2025-11-19 13:21:21');
+INSERT INTO `points_product` VALUES (4, '婴儿辅食机', '多功能辅食机，一键制作营养辅食', 'points/baby_maker.webp', 3500, 47, 'physical', 1, 1, 1, 1, 8, '2025-03-20 10:00:00', '2025-11-19 13:21:32');
+INSERT INTO `points_product` VALUES (5, '婴儿玩具优惠券', '满100元减20元优惠券，适用于所有玩具类商品', 'points/toy_coupon.jpg', 1000, 499, 'coupon', 0, 0, 0, 1, 30, '2025-03-20 10:00:00', '2025-11-19 13:21:25');
+INSERT INTO `points_product` VALUES (6, '婴儿体温计', '智能体温计，快速测温，带夜光显示', 'points/thermometer.webp', 2500, 76, 'physical', 1, 1, 1, 1, 15, '2025-03-20 10:00:00', '2025-11-19 13:25:59');
+INSERT INTO `points_product` VALUES (7, '育儿课程7天会员', '专业育儿课程7天体验，包含新生儿护理、辅食制作等课程', 'points/parenting_course.jpg', 3000, 999, 'virtual', 0, 1, 0, 1, 25, '2025-03-20 10:00:00', '2025-11-19 13:21:18');
+INSERT INTO `points_product` VALUES (8, '婴儿推车', '轻便折叠推车，一键收车，适合0-3岁', 'points/stroller.webp', 1500, 98, 'physical', 1, 1, 0, 1, 18, '2025-03-20 10:00:00', '2025-11-19 13:21:28');
+INSERT INTO `points_product` VALUES (9, '婴儿奶粉优惠券', '满300元减50元优惠券，适用于所有品牌奶粉', 'points/milk_coupon.jpg', 2000, 299, 'coupon', 0, 0, 1, 1, 28, '2025-03-20 10:00:00', '2025-11-19 13:23:06');
+INSERT INTO `points_product` VALUES (10, '母婴年度会员', '享受母婴商品8.5折优惠，专属客服，免费育儿咨询，生日礼包', 'points/vip_year.jpg', 10000, 99, 'vip', 0, 0, 1, 1, 1, '2025-03-20 10:00:00', '2025-11-19 13:21:05');
 
 -- ----------------------------
 -- Table structure for points_rule
@@ -2324,12 +2466,15 @@ CREATE TABLE `product`  (
   `product_detail` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '商品详情',
   `price_new` decimal(10, 2) NOT NULL COMMENT '现价',
   `price_old` decimal(10, 2) NULL DEFAULT NULL COMMENT '原价',
+  `min_price` decimal(10, 2) NULL DEFAULT NULL COMMENT '最低价格',
+  `max_price` decimal(10, 2) NULL DEFAULT NULL COMMENT '最高价格',
   `stock` int NOT NULL DEFAULT 0 COMMENT '库存',
   `sales` int NOT NULL DEFAULT 0 COMMENT '销量',
   `support` int NOT NULL DEFAULT 0 COMMENT '支持人数',
   `rating` decimal(2, 1) NULL DEFAULT 5.0 COMMENT '评分',
   `review_count` int NULL DEFAULT 0 COMMENT '评价数量',
   `product_status` enum('上架','下架') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '上架' COMMENT '商品状态',
+  `has_sku` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否有SKU：0-否，1-是',
   `is_hot` tinyint(1) NULL DEFAULT 0 COMMENT '是否热门：0-否，1-是',
   `is_new` tinyint(1) NULL DEFAULT 0 COMMENT '是否新品：0-否，1-是',
   `is_recommend` tinyint(1) NULL DEFAULT 0 COMMENT '是否推荐：0-否，1-是',
@@ -2347,126 +2492,126 @@ CREATE TABLE `product`  (
 -- ----------------------------
 -- Records of product
 -- ----------------------------
-INSERT INTO `product` VALUES (1, 5, 1, '惠氏启赋有机婴儿配方奶粉1段（0-6个月）', 'WY001', 'goods1.jpg', '惠氏启赋有机婴儿配方奶粉，源自有机奶源，为宝宝提供全面营养', 298.00, 358.00, 100, 1024, 980, 4.8, 256, '上架', 1, 1, 1, '2025-03-05 21:58:47', '2025-05-08 19:03:54', 1);
-INSERT INTO `product` VALUES (2, 5, 1, '婴儿奶粉）', 'WY002', 'goods2.jpg', '惠氏启赋有机婴儿配方奶粉，源自有机奶源，为宝宝提供全面营养', 328.00, 388.00, 100, 896, 850, 4.7, 220, '上架', 1, 0, 1, '2025-03-05 21:58:47', '2025-06-11 14:28:00', 1);
-INSERT INTO `product` VALUES (3, 4, 1, '有机婴儿配方奶粉3段（1-3岁）', 'WY003', 'goods3.jpg', '惠氏启赋有机婴儿配方奶粉，源自有机奶源，为宝宝提供全面营养', 358.00, 418.00, 1000, 768, 720, 4.6, 180, '上架', 0, 0, 1, '2025-03-05 21:58:47', '2025-06-11 16:33:00', 1);
-INSERT INTO `product` VALUES (4, 2, 1, '帮宝适超薄干爽纸尿裤M码（6-11kg）', 'PM001', 'goods4.jpg', '帮宝适超薄干爽纸尿裤，瞬吸干爽，让宝宝整夜安睡', 139.00, 169.00, 200, 2048, 1900, 4.9, 512, '上架', 1, 0, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:53', 1);
-INSERT INTO `product` VALUES (5, 2, 1, '花王妙而舒纸尿裤L码（9-14kg）', 'HW001', 'goods5.jpg', '花王妙而舒纸尿裤，透气干爽，减少红屁屁', 149.00, 179.00, 199, 1536, 1400, 4.8, 384, '上架', 1, 1, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:52', 1);
-INSERT INTO `product` VALUES (6, 3, 1, '美素佳儿有机米粉（6个月以上）', 'FR001', 'goods6.jpg', '美素佳儿有机米粉，100%有机原料，易消化吸收', 68.00, 88.00, 150, 896, 820, 4.7, 224, '上架', 0, 1, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:51', 1);
-INSERT INTO `product` VALUES (7, 4, 1, '费雪声光安抚海马', 'FS001', 'goods7.jpg', '费雪声光安抚海马，多种音乐和声效，帮助宝宝安抚入睡', 129.00, 159.00, 79, 768, 720, 4.8, 192, '上架', 0, 0, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:51', 1);
-INSERT INTO `product` VALUES (8, 5, 1, '强生婴儿洗发沐浴露二合一', 'JS001', 'goods8.jpg', '强生婴儿洗发沐浴露二合一，温和无泪配方，呵护宝宝娇嫩肌肤', 59.90, 79.90, 300, 1280, 1200, 4.6, 320, '上架', 0, 0, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:49', 1);
-INSERT INTO `product` VALUES (9, 5, 1, '舒儿适婴儿抚触油', 'SE001', 'goods9.jpg', '舒儿适婴儿抚触油，100%天然植物油，温和滋养，促进亲子关系', 89.90, 119.90, 199, 650, 600, 4.7, 156, '上架', 1, 0, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:49', 1);
-INSERT INTO `product` VALUES (10, 6, 1, '贝亲宽口径玻璃奶瓶', 'BQ001', 'goods10.jpg', '贝亲宽口径玻璃奶瓶，防胀气设计，耐高温消毒，适合0-18个月婴儿使用', 79.90, 99.90, 180, 850, 780, 4.8, 210, '上架', 1, 1, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:48', 1);
-INSERT INTO `product` VALUES (11, 2, 1, '婴儿连体衣', 'BY001', 'goods11.jpg', '纯棉材质，柔软舒适，适合0-12个月婴儿穿着，多种颜色可选。', 89.90, 129.90, 500, 320, 280, 4.8, 260, '上架', 1, 0, 1, '2025-03-05 10:00:00', '2025-05-08 19:04:04', 1);
-INSERT INTO `product` VALUES (12, 2, 1, '儿童套装', 'BY002', 'goods12.jpg', '优质面料，透气舒适，适合1-3岁儿童，多种款式可选。', 129.90, 169.90, 400, 280, 240, 4.7, 220, '上架', 1, 0, 1, '2025-03-08 10:05:00', '2025-06-11 16:43:00', 1);
-INSERT INTO `product` VALUES (13, 1, 1, '婴儿奶瓶', 'BY003', 'goods13.jpg', '医用级硅胶奶嘴，宽口径设计，防胀气，适合0-18个月婴儿。', 69.90, 99.90, 600, 450, 380, 4.9, 350, '上架', 1, 1, 1, '2025-03-12 10:10:00', '2025-05-08 19:04:47', 1);
-INSERT INTO `product` VALUES (14, 1, 1, '婴儿床', 'BY004', 'goods14.jpg', '实木材质，环保漆，可调节高度，适合0-3岁婴幼儿。', 899.90, 1299.90, 100, 65, 58, 4.6, 50, '上架', 0, 1, 1, '2025-03-15 10:15:00', '2025-05-08 19:04:45', 1);
-INSERT INTO `product` VALUES (15, 1, 1, '婴儿推车', 'BY005', 'goods15.jpg', '轻便折叠，双向推行，减震设计，适合0-3岁婴幼儿。', 699.90, 999.90, 150, 95, 85, 4.7, 80, '上架', 0, 1, 1, '2025-03-18 10:20:00', '2025-05-11 09:53:00', 1);
-INSERT INTO `product` VALUES (16, 1, 2, '儿童玩具', 'BY006', 'goods16.jpg', '益智拼图，锻炼手眼协调，适合2-4岁儿童。', 49.90, 79.90, 800, 650, 580, 4.8, 520, '上架', 1, 0, 1, '2025-03-22 10:25:00', '2025-05-11 09:53:00', 1);
-INSERT INTO `product` VALUES (17, 1, 2, '婴儿湿巾', 'BY007', 'goods17.jpg', '无酒精，无香料，温和不刺激，适合新生儿使用。', 19.90, 29.90, 1000, 850, 750, 4.9, 700, '上架', 1, 0, 1, '2025-03-25 10:30:00', '2025-05-08 19:05:01', 1);
-INSERT INTO `product` VALUES (18, 1, 2, '婴儿洗发水', 'BY008', 'goods18.jpg', '温和配方，无泪配方，适合0-3岁婴幼儿。', 39.90, 59.90, 700, 580, 520, 4.8, 480, '上架', 1, 0, 1, '2025-03-28 10:35:00', '2025-05-08 19:05:02', 1);
-INSERT INTO `product` VALUES (19, 2, 2, '孕妇护肤品', 'BY009', 'goods19.jpg', '天然成分，无添加，孕期安全使用，滋润保湿。', 159.90, 229.90, 300, 220, 190, 4.7, 170, '上架', 0, 1, 1, '2025-04-01 10:40:00', '2025-05-11 09:53:00', 1);
-INSERT INTO `product` VALUES (20, 2, 2, '孕妇洗发水', 'BY010', 'goods20.jpg', '温和配方，无硅油，孕期安全使用，滋养发丝。', 89.90, 129.90, 400, 320, 280, 4.8, 250, '上架', 0, 1, 1, '2025-04-05 10:45:00', '2025-05-08 19:05:03', 1);
-INSERT INTO `product` VALUES (21, 2, 2, '孕妇装', 'BY011', 'goods21.jpg', '舒适面料，宽松设计，适合孕中晚期穿着。', 199.90, 299.90, 249, 180, 160, 4.6, 140, '上架', 1, 0, 1, '2025-04-08 10:50:00', '2025-05-10 22:57:46', 1);
-INSERT INTO `product` VALUES (22, 2, 2, '孕妇枕', 'BY012', 'goods22.jpg', 'U型设计，支撑腰部和腹部，改善孕期睡眠质量。', 159.90, 229.90, 200, 150, 130, 4.7, 120, '上架', 1, 0, 1, '2025-04-12 10:55:00', '2025-04-12 10:55:00', 1);
-INSERT INTO `product` VALUES (23, 2, 2, '孕妇奶粉', 'BY013', 'goods23.jpg', '富含叶酸和钙，满足孕期营养需求，促进胎儿发育。', 229.90, 329.90, 299, 240, 210, 4.8, 190, '上架', 1, 0, 1, '2025-04-15 11:00:00', '2025-05-11 09:53:00', 1);
-INSERT INTO `product` VALUES (24, 2, 2, '孕妇内衣', 'BY014', 'goods24.jpg', '无钢圈，棉质面料，舒适透气，适合孕期穿着。', 129.90, 189.90, 349, 280, 250, 4.7, 230, '上架', 1, 0, 1, '2025-04-18 11:05:00', '2025-05-15 12:59:06', 1);
-INSERT INTO `product` VALUES (25, 5, 2, '孕妇袜', 'BY015', 'goods25.jpg', '防滑设计，舒适透气，减轻孕期腿部疲劳。', 39.90, 59.90, 500, 420, 380, 4.8, 350, '上架', 1, 0, 1, '2025-04-22 11:10:00', '2025-05-08 19:05:06', 1);
-INSERT INTO `product` VALUES (26, 2, 2, '孕妇裤', 'BY016', 'goods26.jpg', '高腰设计，弹力面料，舒适贴合，适合孕中晚期穿着。', 159.90, 229.90, 300, 240, 210, 4.7, 190, '上架', 1, 0, 1, '2025-04-25 11:15:00', '2025-05-08 19:05:07', 1);
-INSERT INTO `product` VALUES (27, 2, 2, '婴儿奶粉', 'BY017', 'goods27.jpg', '优质奶源，配方科学，易消化吸收，适合0-6个月婴儿。', 299.90, 399.90, 200, 160, 140, 4.9, 130, '上架', 1, 0, 1, '2025-04-28 11:20:00', '2025-05-08 19:05:09', 1);
-INSERT INTO `product` VALUES (28, 2, 2, '婴儿纸尿裤', 'BY018', 'goods28.jpg', '超薄透气，瞬吸干爽，防漏设计，适合0-12个月婴儿。', 99.90, 149.90, 400, 350, 320, 4.8, 300, '上架', 1, 0, 1, '2025-04-30 11:25:00', '2025-04-30 11:25:00', 1);
-INSERT INTO `product` VALUES (29, 2, 2, '婴儿辅食机', 'BY019', 'goods29.jpg', '一机多用，蒸煮搅拌一体，智能预约，适合制作6个月以上婴儿辅食。', 399.90, 499.90, 150, 125, 98, 4.7, 85, '上架', 1, 0, 1, '2025-05-03 11:30:00', '2025-05-08 19:05:10', 1);
-INSERT INTO `product` VALUES (30, 2, 2, '儿童保温杯', 'BY020', 'goods30.jpg', '316不锈钢内胆，12小时保温，防漏设计，适合3岁以上儿童。', 129.90, 169.90, 300, 245, 210, 4.8, 185, '上架', 1, 0, 1, '2025-05-05 11:35:00', '2025-05-08 19:05:12', 1);
-INSERT INTO `product` VALUES (31, 3, 3, '婴儿学步车', 'BY021', 'goods31.jpg', '多功能设计，音乐灯光，锻炼宝宝平衡能力，适合6-18个月婴儿。', 259.90, 359.90, 200, 160, 140, 4.7, 120, '上架', 1, 0, 1, '2025-05-08 11:40:00', '2025-05-08 19:05:14', 1);
-INSERT INTO `product` VALUES (32, 3, 3, '儿童餐椅', 'BY022', 'goods32.jpg', '可调节高度，安全带设计，易清洁，适合6个月-4岁儿童。', 299.90, 399.90, 150, 120, 100, 4.6, 90, '上架', 1, 0, 1, '2025-05-10 11:45:00', '2025-05-08 19:05:14', 1);
-INSERT INTO `product` VALUES (33, 3, 3, '婴儿洗澡盆', 'BY023', 'goods33.jpg', '大容量设计，防滑底座，温度感应，适合0-3岁婴幼儿。', 159.90, 219.90, 250, 200, 180, 4.8, 160, '上架', 1, 0, 1, '2025-05-12 11:50:00', '2025-05-08 19:05:15', 1);
-INSERT INTO `product` VALUES (34, 3, 3, '婴儿防晒霜', 'BY024', 'goods34.jpg', 'SPF50+，物理防晒，温和不刺激，适合6个月以上婴幼儿。', 89.90, 129.90, 300, 250, 220, 4.7, 200, '上架', 1, 0, 1, '2025-05-15 11:55:00', '2025-05-08 19:05:22', 1);
-INSERT INTO `product` VALUES (35, 3, 3, '婴儿理发器', 'BY025', 'goods35.jpg', '低噪音设计，多档位调节，安全防水，适合0-6岁儿童。', 159.90, 219.90, 200, 160, 140, 4.6, 120, '上架', 0, 1, 1, '2025-05-18 12:00:00', '2025-05-18 12:00:00', 1);
-INSERT INTO `product` VALUES (36, 3, 3, '儿童牙刷套装', 'BY026', 'goods36.jpg', '软毛设计，卡通造型，培养刷牙习惯，适合1-6岁儿童。', 49.90, 69.90, 400, 350, 320, 4.8, 300, '上架', 1, 0, 1, '2025-05-20 12:05:00', '2025-05-12 22:45:00', 1);
-INSERT INTO `product` VALUES (37, 3, 3, '婴儿背带', 'BY027', 'goods37.jpg', '人体工学设计，透气网面，多种背法，适合0-36个月婴儿。', 199.90, 259.90, 200, 160, 140, 4.7, 120, '上架', 1, 0, 1, '2025-05-22 12:10:00', '2025-05-08 19:05:23', 1);
-INSERT INTO `product` VALUES (38, 3, 3, '儿童安全座椅', 'BY028', 'goods38.jpg', '五点式安全带，侧面防撞，可调节角度，适合9个月-12岁儿童。', 899.90, 1199.90, 100, 80, 70, 4.9, 60, '上架', 0, 1, 1, '2025-05-24 12:15:00', '2025-05-08 19:05:23', 1);
-INSERT INTO `product` VALUES (39, 4, 3, '婴儿纸尿裤', 'BY029', 'goods39.jpg', '超薄透气，瞬吸干爽，防红臀，S/M/L/XL码可选。', 99.90, 129.90, 500, 450, 400, 4.8, 380, '上架', 1, 0, 1, '2025-05-26 12:20:00', '2025-05-08 19:05:24', 1);
-INSERT INTO `product` VALUES (40, 4, 3, '婴儿湿巾', 'BY030', 'goods40.jpg', '无香型，99%纯水配方，温和无刺激，80抽/包，10包/箱。', 59.90, 79.90, 600, 550, 500, 4.9, 480, '上架', 1, 0, 1, '2025-05-28 12:25:00', '2025-05-08 19:05:24', 1);
-INSERT INTO `product` VALUES (41, 4, 3, '儿童洗发沐浴露', 'BY031', 'goods41.jpg', '温和无泪配方，天然植物萃取，适合0-12岁儿童。', 69.90, 89.90, 400, 350, 320, 4.7, 300, '上架', 1, 0, 1, '2025-05-29 12:30:00', '2025-05-08 19:05:28', 1);
-INSERT INTO `product` VALUES (42, 4, 3, '婴儿润肤乳', 'BY032', 'goods42.jpg', '无香型，滋润保湿，舒缓敏感，适合0-3岁婴儿。', 79.90, 99.90, 349, 300, 270, 4.8, 250, '上架', 1, 0, 1, '2025-05-30 12:35:00', '2025-05-08 19:05:30', 1);
-INSERT INTO `product` VALUES (43, 4, 3, '儿童牙膏', 'BY033', 'goods43.jpg', '可吞咽配方，水果味，不含氟，适合1-6岁儿童。', 39.90, 49.90, 499, 450, 420, 4.8, 400, '上架', 1, 0, 1, '2025-05-30 12:40:00', '2025-05-11 13:55:00', 1);
-INSERT INTO `product` VALUES (44, 4, 3, '婴儿指甲剪', 'BY034', 'goods44.jpg', '圆头设计，安全防夹肉，带放大镜，适合0-3岁婴幼儿。', 29.90, 39.90, 600, 550, 520, 4.7, 500, '上架', 1, 0, 1, '2025-05-30 12:45:00', '2025-05-30 12:45:00', 1);
-INSERT INTO `product` VALUES (45, 4, 3, '儿童防蚊液', 'BY035', 'goods45.jpg', '天然植物配方，温和不刺激，长效驱蚊，适合1岁以上儿童。', 49.90, 69.90, 400, 350, 320, 4.6, 300, '上架', 1, 0, 1, '2025-05-31 12:50:00', '2025-05-08 19:05:32', 1);
-INSERT INTO `product` VALUES (46, 4, 4, '婴儿护臀膏', 'BY036', 'goods46.jpg', '天然成分，舒缓红臀，形成保护膜，适合0-3岁婴幼儿。', 59.90, 79.90, 349, 300, 280, 4.8, 260, '上架', 1, 0, 1, '2025-05-31 12:55:00', '2025-05-11 14:15:59', 1);
-INSERT INTO `product` VALUES (47, 5, 4, '儿童玩具车', 'BY037', 'goods47.jpg', '仿真设计，安全环保材质，耐摔耐用，适合3-8岁儿童。', 129.90, 169.90, 299, 250, 220, 4.7, 200, '上架', 0, 1, 1, '2025-05-31 13:00:00', '2025-05-12 22:33:03', 1);
-INSERT INTO `product` VALUES (48, 5, 4, '益智积木套装', 'BY038', 'goods48.jpg', '多彩积木，环保材质，锻炼创造力和动手能力，适合3-12岁儿童。', 199.90, 249.90, 250, 200, 180, 4.8, 160, '上架', 1, 0, 1, '2025-05-31 13:05:00', '2025-05-08 19:05:37', 1);
-INSERT INTO `product` VALUES (49, 5, 4, '儿童绘本套装', 'BY039', 'goods49.jpg', '经典故事，精美插图，培养阅读习惯，适合3-8岁儿童。', 159.90, 199.90, 198, 170, 150, 4.9, 130, '上架', 1, 0, 1, '2025-05-31 13:10:00', '2025-05-10 23:05:28', 1);
-INSERT INTO `product` VALUES (50, 5, 4, '儿童识字卡片', 'BY040', 'goods50.jpg', '双面设计，中英双语，图文结合，适合2-6岁儿童。', 59.99, 79.90, 399, 350, 320, 4.7, 300, '上架', 0, 1, 0, '2025-05-31 13:15:00', '2025-05-11 09:53:00', 1);
-INSERT INTO `product` VALUES (51, 5, 4, '儿童绘画套装', 'BY041', 'goods51.jpg', '安全无毒，易清洗，培养艺术兴趣，适合3-12岁儿童。', 89.90, 119.90, 300, 250, 230, 4.8, 220, '上架', 1, 0, 1, '2025-05-31 13:20:00', '2025-05-08 19:05:38', 1);
-INSERT INTO `product` VALUES (52, 5, 4, '儿童拼图游戏', 'BY042', 'goods52.jpg', '多种难度，锻炼观察力和逻辑思维能力，适合3-12岁儿童。', 79.90, 99.90, 198, 170, 150, 4.9, 140, '上架', 1, 0, 1, '2025-05-31 13:25:00', '2025-05-11 12:04:04', 1);
-INSERT INTO `product` VALUES (53, 5, 4, '儿童户外玩具', 'BY043', 'goods53.jpg', '安全环保，耐玩耐摔，锻炼身体，适合3-12岁儿童。', 199.90, 249.90, 97, 80, 70, 4.7, 60, '上架', 1, 0, 1, '2025-05-31 13:30:00', '2025-05-06 21:39:56', 1);
-INSERT INTO `product` VALUES (54, 5, 4, '儿童电子学习机', 'BY044', 'goods54.jpg', '智能语音，互动教学，培养学习兴趣，适合3-12岁儿童。', 399.90, 499.90, 147, 120, 110, 4.8, 100, '上架', 1, 0, 1, '2025-05-31 13:35:00', '2025-05-11 13:03:26', 1);
-INSERT INTO `product` VALUES (55, 6, 4, '婴儿摇铃玩具', 'BY045', 'goods55.jpg', '多彩设计，声音柔和，锻炼宝宝抓握能力，适合0-12个月婴儿。', 49.90, 69.90, 398, 350, 320, 4.8, 300, '上架', 1, 0, 1, '2025-05-31 13:40:00', '2025-05-11 14:10:00', 1);
-INSERT INTO `product` VALUES (56, 6, 4, '婴儿音乐床铃', 'BY046', 'goods56.jpg', '旋转设计，多种音乐，吸引宝宝注意力，适合0-24个月婴儿。', 129.90, 159.90, 195, 160, 140, 4.7, 120, '上架', 0, 1, 1, '2025-05-31 13:45:00', '2025-05-11 11:19:00', 1);
-INSERT INTO `product` VALUES (57, 6, 4, '儿童智能手表', 'BY047', 'goods57.jpg', 'GPS定位，防水设计，双向通话，适合3-12岁儿童。', 299.90, 399.90, 149, 121, 100, 4.9, 90, '上架', 1, 1, 1, '2025-05-31 13:50:00', '2025-05-30 09:06:00', 1);
-INSERT INTO `product` VALUES (58, 6, 4, '儿童防蓝光眼镜', 'BY048', 'goods48.jpg', '轻盈舒适，有效阻隔蓝光，保护视力，适合3-15岁儿童。', 99.90, 129.90, 294, 250, 220, 4.6, 200, '上架', 0, 1, 0, '2025-05-31 13:55:00', '2025-05-09 21:19:26', 1);
-INSERT INTO `product` VALUES (59, 6, 4, '孕妇维生素', 'BY049', 'goods59.jpg', '全面营养配方，补充叶酸和铁质，适合孕期全程使用。', 189.90, 239.90, 245, 201, 180, 4.8, 160, '上架', 1, 0, 1, '2025-05-31 14:00:00', '2025-09-18 16:44:04', 1);
-INSERT INTO `product` VALUES (60, 6, 4, '产后修复套装', 'BY050', 'goods60.jpg', '天然成分，促进产后恢复，包含收腹带和修复霜。', 399.90, 499.90, 95, 84, 70, 4.7, 60, '上架', 1, 1, 1, '2025-05-31 14:05:00', '2025-07-16 18:19:13', 1);
-INSERT INTO `product` VALUES (61, 1, 5, '爱他美卓萃有机婴儿配方奶粉1段', 'BY061', 'goods61.jpg', '德国原装进口，有机奶源，科学配方，适合0-6个月婴儿。', 358.00, 428.00, 198, 152, 130, 4.8, 120, '上架', 1, 1, 1, '2025-06-01 10:00:00', '2025-05-22 21:55:00', 1);
-INSERT INTO `product` VALUES (62, 1, 6, '费雪多功能婴儿摇椅', 'BY062', 'goods62.jpg', '多档位调节，震动安抚，音乐播放，适合0-36个月婴儿。', 499.90, 599.90, 150, 100, 90, 4.7, 80, '上架', 1, 1, 1, '2025-06-01 10:05:00', '2025-06-01 10:05:00', 1);
-INSERT INTO `product` VALUES (63, 2, 7, '飞利浦新安怡宽口径玻璃奶瓶', 'BY063', 'goods63.jpg', '天然原生玻璃材质，易清洗，防胀气设计，适合0-12个月婴儿。', 129.00, 159.00, 179, 130, 110, 4.9, 100, '上架', 0, 1, 0, '2025-06-01 10:10:00', '2025-05-24 19:19:12', 1);
-INSERT INTO `product` VALUES (64, 2, 8, '美德乐丝韵翼双边电动吸奶器', 'BY064', 'goods64.jpg', '双韵律吸乳模式，高效舒适，静音设计，附带便携包。', 2580.00, 3280.00, 80, 50, 45, 4.9, 40, '上架', 1, 0, 1, '2025-06-01 10:15:00', '2025-06-11 16:25:00', 1);
-INSERT INTO `product` VALUES (65, 3, 9, '贝亲婴儿柔湿巾80抽x6包', 'BY065', 'goods65.jpg', '纯水配方，无酒精无香料，温和清洁，适合婴儿娇嫩肌肤。', 69.90, 89.90, 299, 250, 220, 4.8, 200, '上架', 0, 1, 0, '2025-06-01 10:20:00', '2025-05-15 22:48:42', 1);
-INSERT INTO `product` VALUES (66, 3, 10, '嘉宝星星泡芙香蕉味', 'BY066', 'goods66.jpg', '非油炸，入口即化，富含铁锌，适合8个月以上宝宝。', 25.80, 32.00, 400, 351, 300, 4.7, 280, '上架', 1, 1, 1, '2025-06-01 10:25:00', '2025-06-11 16:50:00', 1);
-INSERT INTO `product` VALUES (67, 4, 1, '惠氏启赋未来3段幼儿配方奶粉', 'BY067', 'goods67.jpg', '爱尔兰原装进口，突破性结构脂OPO，助力宝宝吸收。', 388.00, 458.00, 220, 160, 140, 4.9, 130, '上架', 1, 0, 1, '2025-06-01 10:30:00', '2025-06-01 10:30:00', 1);
-INSERT INTO `product` VALUES (68, 4, 2, '美素佳儿皇家美素佳儿3段幼儿配方奶粉', 'BY068', 'goods68.jpg', '荷兰原装进口，全脂牛奶一次入料，锁留天然营养。', 368.00, 438.00, 210, 155, 135, 4.8, 125, '上架', 1, 0, 1, '2025-06-01 10:35:00', '2025-05-30 09:06:00', 1);
-INSERT INTO `product` VALUES (69, 5, 3, '帮宝适一级帮纸尿裤M号', 'BY069', 'goods69.jpg', '日本原装进口，羽柔材质，瞬吸干爽，给宝宝极致呵护。', 189.00, 229.00, 280, 231, 200, 4.9, 180, '上架', 1, 1, 1, '2025-06-01 10:40:00', '2025-06-11 17:04:00', 1);
-INSERT INTO `product` VALUES (70, 5, 4, '花王妙而舒纸尿裤L号', 'BY070', 'goods70.jpg', '日本原装进口，柔软透气，立体防漏，长时间保持干爽。', 179.00, 219.00, 269, 220, 190, 4.8, 170, '上架', 1, 1, 1, '2025-06-01 10:45:00', '2025-07-09 20:59:19', 1);
-INSERT INTO `product` VALUES (71, 6, 5, '爱他美白金版婴儿配方奶粉2段', 'BY071', 'goods71.jpg', '德国原装进口，特有Pronutra+配方，支持宝宝免疫系统。', 398.00, 468.00, 190, 140, 120, 4.9, 110, '上架', 1, 0, 1, '2025-06-01 10:50:00', '2025-06-01 10:50:00', 1);
-INSERT INTO `product` VALUES (72, 6, 6, '费雪海马声光安抚玩具', 'BY072', 'goods72.jpg', '柔和灯光和音乐，安抚宝宝情绪，帮助入睡。', 159.00, 199.00, 160, 110, 100, 4.7, 90, '上架', 0, 1, 0, '2025-06-01 10:55:00', '2025-06-01 10:55:00', 1);
-INSERT INTO `product` VALUES (73, 1, 7, '飞利浦新安怡自然原生系列奶瓶', 'BY073', 'goods73.jpg', '宽口径设计，易于冲调和清洗，仿生奶嘴，宝宝易接受。', 109.00, 139.00, 170, 120, 105, 4.8, 95, '上架', 0, 1, 0, '2025-06-01 11:00:00', '2025-06-01 11:00:00', 1);
-INSERT INTO `product` VALUES (74, 1, 8, '美德乐韵律吸乳器单边电动', 'BY074', 'goods74.jpg', '模拟宝宝自然吸吮节奏，高效舒适，轻巧便携。', 1880.00, 2380.00, 90, 60, 55, 4.9, 50, '上架', 1, 0, 1, '2025-06-01 11:05:00', '2025-06-01 11:05:00', 1);
-INSERT INTO `product` VALUES (75, 2, 9, '贝亲婴儿洗衣液', 'BY075', 'goods75.jpg', '植物配方，温和无刺激，有效去除污渍，易漂洗。', 59.90, 79.90, 250, 200, 180, 4.7, 160, '上架', 0, 1, 0, '2025-06-01 11:10:00', '2025-06-01 11:10:00', 1);
-INSERT INTO `product` VALUES (76, 2, 10, '嘉宝米粉原味', 'BY076', 'goods76.jpg', '高铁高钙，细腻易消化，不添加蔗糖和食用盐，适合6个月以上宝宝。', 35.80, 45.00, 350, 300, 280, 4.8, 260, '上架', 1, 1, 1, '2025-06-01 11:15:00', '2025-06-01 11:15:00', 1);
-INSERT INTO `product` VALUES (77, 3, 1, '惠氏S-26铂臻3段幼儿配方奶粉', 'BY077', 'goods77.jpg', '瑞士原装进口，含神经鞘磷脂，助力宝宝认知发展。', 378.00, 448.00, 196, 151, 130, 4.9, 120, '上架', 1, 0, 1, '2025-06-01 11:20:00', '2025-07-11 15:09:19', 1);
-INSERT INTO `product` VALUES (78, 3, 2, '美素佳儿金装3段幼儿配方奶粉', 'BY078', 'goods78.jpg', '荷兰原装进口，含益生元，支持宝宝肠道健康。', 348.00, 418.00, 190, 145, 125, 4.8, 115, '上架', 1, 0, 1, '2025-06-01 11:25:00', '2025-06-01 11:25:00', 1);
-INSERT INTO `product` VALUES (79, 4, 3, '帮宝适拉拉裤L号', 'BY079', 'goods79.jpg', '日本原装进口，一拉就穿，一撕即脱，方便好动宝宝。', 199.00, 239.00, 260, 210, 190, 4.9, 170, '上架', 1, 1, 1, '2025-06-01 11:30:00', '2025-06-01 11:30:00', 1);
-INSERT INTO `product` VALUES (80, 3, 4, '花王纸尿裤NB号', 'BY080', 'goods80.jpg', '日本原装进口，专为新生儿设计，柔软贴合，呵护脐部。', 169.00, 209.00, 299, 207, 185, 4.8, 165, '上架', 1, 1, 1, '2025-06-01 11:35:00', '2025-06-10 19:54:00', 1);
-INSERT INTO `product` VALUES (81, 5, 5, '爱他美卓萃婴儿配方奶粉3段', 'BY081', 'goods81.jpg', '德国原装进口，有机奶源，科学配方，适合1-3岁幼儿。', 368.00, 438.00, 180, 130, 110, 4.9, 100, '上架', 1, 0, 1, '2025-06-01 11:40:00', '2025-06-01 11:40:00', 1);
-INSERT INTO `product` VALUES (82, 5, 6, '费雪踢踢乐钢琴健身器', 'BY082', 'goods82.jpg', '多种玩法，锻炼宝宝运动能力和感官发育。', 299.00, 359.00, 140, 90, 80, 4.7, 70, '上架', 0, 1, 0, '2025-06-01 11:45:00', '2025-06-01 11:45:00', 1);
-INSERT INTO `product` VALUES (83, 6, 7, '飞利浦新安怡婴儿辅食机', 'BY083', 'goods83.jpg', '蒸煮搅拌一体，快速制作健康辅食，易清洗。', 899.00, 1099.00, 119, 80, 70, 4.8, 60, '上架', 1, 1, 1, '2025-06-01 11:50:00', '2025-07-09 15:13:07', 1);
-INSERT INTO `product` VALUES (84, 6, 8, '美德乐丝韵单边电动吸奶器', 'BY084', 'goods84.jpg', '模拟宝宝自然吸吮节奏，高效舒适，轻巧便携。', 1880.00, 2380.00, 89, 62, 55, 4.9, 50, '上架', 1, 0, 1, '2025-06-01 11:55:00', '2025-07-11 15:16:40', 1);
-INSERT INTO `product` VALUES (85, 1, 9, '贝亲宽口径PPSU奶瓶', 'BY085', 'goods85.jpg', 'PPSU材质，轻巧耐摔，耐高温，易清洗。', 119.00, 149.00, 169, 121, 105, 4.8, 95, '上架', 0, 1, 0, '2025-06-01 12:00:00', '2025-07-10 14:48:35', 1);
-INSERT INTO `product` VALUES (86, 1, 10, '嘉宝泡芙草莓苹果味', 'BY086', 'goods86.jpg', '非油炸，入口即化，富含铁锌，适合8个月以上宝宝。', 25.80, 32.00, 400, 350, 300, 4.7, 280, '上架', 1, 1, 1, '2025-06-01 12:05:00', '2025-06-01 12:05:00', 1);
-INSERT INTO `product` VALUES (87, 2, 1, '惠氏启赋蓝钻3段幼儿配方奶粉', 'BY087', 'goods87.jpg', '爱尔兰原装进口，含活性益生菌，支持宝宝肠道健康。', 398.00, 468.00, 220, 160, 140, 4.9, 130, '上架', 1, 0, 1, '2025-06-01 12:10:00', '2025-06-01 12:10:00', 1);
-INSERT INTO `product` VALUES (88, 2, 2, '美素佳儿金装较大婴儿配方奶粉2段', 'BY088', 'goods88.jpg', '荷兰原装进口，含益生元，支持宝宝肠道健康。', 358.00, 428.00, 210, 155, 135, 4.8, 125, '上架', 1, 0, 1, '2025-06-01 12:15:00', '2025-06-01 12:15:00', 1);
-INSERT INTO `product` VALUES (89, 3, 3, '帮宝适特级棉柔纸尿裤M号', 'BY089', 'goods89.jpg', '超柔软材质，瞬吸干爽，给宝宝极致呵护。', 179.00, 219.00, 279, 232, 200, 4.9, 180, '上架', 1, 1, 1, '2025-06-01 12:20:00', '2025-06-11 17:50:25', 1);
-INSERT INTO `product` VALUES (90, 3, 4, '花王妙而舒纸尿裤NB号', 'BY090', 'goods90.jpg', '日本原装进口，专为新生儿设计，柔软贴合，呵护脐部。', 169.00, 210.00, 250, 205, 185, 4.8, 165, '上架', 1, 1, 1, '2025-06-01 12:25:00', '2025-06-06 13:31:12', 1);
-INSERT INTO `product` VALUES (91, 4, 5, '爱他美卓萃婴儿配方奶粉2段', 'BY091', 'goods91.jpg', '德国原装进口，有机奶源，科学配方，适合6-12个月婴儿。', 388.00, 458.00, 189, 141, 120, 4.9, 110, '上架', 1, 0, 1, '2025-06-01 12:30:00', '2025-06-27 12:20:43', 1);
-INSERT INTO `product` VALUES (92, 4, 6, '费雪声光安抚海马', 'BY092', 'goods92.jpg', '柔和灯光和音乐，安抚宝宝情绪，帮助入睡。', 159.00, 199.00, 160, 110, 100, 4.7, 90, '上架', 0, 1, 0, '2025-06-01 12:35:00', '2025-06-01 12:35:00', 1);
-INSERT INTO `product` VALUES (93, 5, 7, '飞利浦新安怡自然原生系列玻璃奶瓶', 'BY093', 'goods93.jpg', '宽口径设计，易于冲调和清洗，仿生奶嘴，宝宝易接受。', 109.00, 139.00, 170, 121, 105, 4.8, 95, '上架', 0, 1, 0, '2025-06-01 12:40:00', '2025-06-11 17:13:00', 1);
-INSERT INTO `product` VALUES (94, 5, 8, '美德乐丝韵翼双边电动吸奶器', 'BY094', 'goods94.jpg', '双韵律吸乳模式，高效舒适，静音设计，附带便携包。', 2580.00, 3280.00, 79, 51, 45, 4.9, 40, '上架', 1, 0, 1, '2025-06-01 12:45:00', '2025-07-09 20:32:13', 1);
-INSERT INTO `product` VALUES (95, 6, 9, '贝亲婴儿洗发沐浴露二合一', 'BY095', 'goods95.jpg', '弱酸性配方，温和清洁，无泪配方，适合婴儿娇嫩肌肤。', 79.90, 89.90, 249, 200, 180, 4.7, 160, '上架', 0, 1, 0, '2025-06-01 12:50:00', '2025-07-11 13:15:05', 1);
-INSERT INTO `product` VALUES (96, 6, 10, '嘉宝磨牙饼干香蕉味', 'BY096', 'goods96.jpg', '帮助宝宝缓解出牙不适，富含铁锌，适合10个月以上宝宝。', 29.80, 36.00, 349, 302, 280, 4.8, 260, '上架', 1, 1, 1, '2025-06-01 12:55:00', '2025-06-11 17:47:00', 1);
-INSERT INTO `product` VALUES (97, 1, 1, '惠氏S-26铂臻2段较大婴儿配方奶粉', 'BY097', 'goods97.jpg', '瑞士原装进口，含神经鞘磷脂，助力宝宝认知发展。', 388.00, 458.00, 200, 151, 130, 4.9, 120, '上架', 1, 0, 1, '2025-06-01 13:00:00', '2025-06-11 17:25:00', 1);
-INSERT INTO `product` VALUES (98, 1, 2, '美素佳儿金装较大婴儿配方奶粉2段', 'BY098', 'goods98.jpg', '荷兰原装进口，含益生元，支持宝宝肠道健康。', 358.00, 428.00, 187, 147, 125, 4.8, 115, '上架', 1, 0, 1, '2025-06-01 13:05:00', '2025-09-19 12:11:58', 1);
-INSERT INTO `product` VALUES (99, 2, 3, '帮宝适拉拉裤M号', 'BY099', 'goods99.jpg', '日本原装进口，一拉就穿，一撕即脱，方便好动宝宝。', 189.00, 229.00, 260, 210, 190, 4.9, 170, '上架', 1, 1, 1, '2025-06-01 13:10:00', '2025-06-01 13:10:00', 1);
-INSERT INTO `product` VALUES (100, 2, 4, '花王纸尿裤S号', 'BY100', 'goods100.jpg', '日本原装进口，柔软透气，立体防漏，长时间保持干爽。', 179.00, 219.00, 268, 222, 190, 4.8, 170, '上架', 1, 1, 1, '2025-06-01 13:15:00', '2025-07-16 18:56:06', 1);
-INSERT INTO `product` VALUES (101, 3, 5, '爱他美卓萃婴儿配方奶粉1段', 'BY101', 'goods101.jpg', '德国原装进口，有机奶源，科学配方，适合0-6个月婴儿。', 358.00, 428.00, 200, 150, 130, 4.8, 120, '上架', 1, 1, 1, '2025-06-01 13:20:00', '2025-06-01 13:20:00', 1);
-INSERT INTO `product` VALUES (102, 3, 6, '费雪多功能婴儿摇椅', 'BY102', 'goods102.jpg', '多档位调节，震动安抚，音乐播放，适合0-36个月婴儿。', 499.90, 599.90, 150, 100, 90, 4.7, 80, '上架', 1, 1, 1, '2025-06-01 13:25:00', '2025-06-01 13:25:00', 1);
-INSERT INTO `product` VALUES (103, 4, 7, '飞利浦新安怡婴儿奶嘴', 'BY103', 'goods103.jpg', '硅胶材质，柔软舒适，防胀气设计，适合不同月龄宝宝。', 59.00, 79.00, 200, 150, 130, 4.8, 120, '上架', 0, 1, 0, '2025-06-01 13:30:00', '2025-06-01 13:30:00', 1);
-INSERT INTO `product` VALUES (104, 4, 8, '美德乐吸奶器配件', 'BY104', 'goods104.jpg', '原装配件，确保吸奶器正常使用和卫生。', 180.00, 220.00, 99, 71, 60, 4.9, 55, '上架', 0, 0, 0, '2025-06-01 13:35:00', '2025-07-11 15:13:55', 1);
-INSERT INTO `product` VALUES (105, 5, 9, '贝亲婴儿润肤露', 'BY105', 'goods105.jpg', '天然植物成分，温和滋润，呵护宝宝肌肤。', 79.90, 99.90, 220, 180, 160, 4.7, 150, '上架', 0, 1, 0, '2025-06-01 13:40:00', '2025-06-01 13:40:00', 1);
-INSERT INTO `product` VALUES (106, 5, 10, '嘉宝米粉混合水果味', 'BY106', 'goods106.jpg', '高铁高钙，添加多种水果，营养丰富，适合6个月以上宝宝。', 38.80, 48.00, 300, 250, 230, 4.8, 210, '上架', 1, 1, 1, '2025-06-01 13:45:00', '2025-06-01 13:45:00', 1);
-INSERT INTO `product` VALUES (107, 6, 1, '惠氏启赋未来2段较大婴儿配方奶粉', 'BY107', 'goods107.jpg', '爱尔兰原装进口，突破性结构脂OPO，助力宝宝吸收。', 398.00, 468.00, 200, 150, 130, 4.9, 120, '上架', 1, 0, 1, '2025-06-01 13:50:00', '2025-06-01 13:50:00', 1);
-INSERT INTO `product` VALUES (108, 6, 2, '美素佳儿皇家美素佳儿2段较大婴儿配方奶粉', 'BY108', 'goods108.jpg', '荷兰原装进口，全脂牛奶一次入料，锁留天然营养。', 378.00, 448.00, 190, 145, 125, 4.8, 115, '上架', 1, 0, 1, '2025-06-01 13:55:00', '2025-06-01 13:55:00', 1);
-INSERT INTO `product` VALUES (109, 1, 3, '帮宝适一级帮纸尿裤L号', 'BY109', 'goods109.jpg', '日本原装进口，羽柔材质，瞬吸干爽，给宝宝极致呵护。', 199.00, 239.00, 250, 200, 180, 4.9, 170, '上架', 1, 1, 1, '2025-06-01 14:00:00', '2025-06-01 14:00:00', 1);
-INSERT INTO `product` VALUES (110, 1, 4, '花王妙而舒纸尿裤XL号', 'BY110', 'goods110.jpg', '日本原装进口，柔软透气，立体防漏，长时间保持干爽。', 189.00, 229.00, 240, 190, 170, 4.8, 160, '上架', 1, 1, 1, '2025-06-01 14:05:00', '2025-06-01 14:05:00', 1);
-INSERT INTO `product` VALUES (111, 2, 5, '爱他美白金版婴儿配方奶粉3段', 'BY111', 'goods111.jpg', '德国原装进口，特有Pronutra+配方，支持宝宝免疫系统。', 408.00, 478.00, 180, 130, 110, 4.9, 100, '上架', 1, 0, 1, '2025-06-01 14:10:00', '2025-06-01 14:10:00', 1);
-INSERT INTO `product` VALUES (112, 2, 6, '费雪声光安抚小海马', 'BY112', 'goods112.jpg', '柔和灯光和音乐，安抚宝宝情绪，帮助入睡。', 159.00, 199.00, 150, 100, 90, 4.7, 80, '上架', 0, 1, 0, '2025-06-01 14:15:00', '2025-06-01 14:15:00', 1);
-INSERT INTO `product` VALUES (113, 3, 7, '飞利浦新安怡自然原生系列玻璃奶瓶', 'BY113', 'goods113.jpg', '宽口径设计，易于冲调和清洗，仿生奶嘴，宝宝易接受。', 109.00, 139.00, 160, 110, 100, 4.8, 90, '上架', 0, 1, 0, '2025-06-01 14:20:00', '2025-06-01 14:20:00', 1);
-INSERT INTO `product` VALUES (114, 3, 8, '美德乐韵律吸乳器单边电动', 'BY114', 'goods114.jpg', '模拟宝宝自然吸吮节奏，高效舒适，轻巧便携。', 1880.00, 2380.00, 80, 50, 45, 4.9, 40, '上架', 1, 0, 1, '2025-06-01 14:25:00', '2025-06-01 14:25:00', 1);
-INSERT INTO `product` VALUES (115, 4, 9, '贝亲婴儿洗衣液', 'BY115', 'goods115.jpg', '植物配方，温和无刺激，有效去除污渍，易漂洗。', 59.90, 79.90, 200, 150, 130, 4.7, 120, '上架', 0, 1, 0, '2025-06-01 14:30:00', '2025-06-01 14:30:00', 1);
-INSERT INTO `product` VALUES (116, 4, 10, '嘉宝米粉原味', 'BY116', 'goods116.jpg', '高铁高钙，细腻易消化，不添加蔗糖和食用盐，适合6个月以上宝宝。', 35.80, 45.00, 300, 250, 230, 4.8, 210, '上架', 1, 1, 1, '2025-06-01 14:35:00', '2025-06-01 14:35:00', 1);
-INSERT INTO `product` VALUES (117, 5, 1, '惠氏S-26铂臻3段幼儿配方奶粉', 'BY117', 'goods117.jpg', '瑞士原装进口，含神经鞘磷脂，助力宝宝认知发展。', 378.00, 448.00, 180, 130, 110, 4.9, 100, '上架', 1, 0, 1, '2025-06-01 14:40:00', '2025-06-01 14:40:00', 1);
-INSERT INTO `product` VALUES (118, 5, 2, '美素佳儿金装3段幼儿配方奶粉', 'BY118', 'goods118.jpg', '荷兰原装进口，含益生元，支持宝宝肠道健康。', 348.00, 418.00, 170, 125, 105, 4.8, 95, '上架', 1, 0, 1, '2025-06-01 14:45:00', '2025-06-01 14:45:00', 1);
-INSERT INTO `product` VALUES (119, 6, 3, '帮宝适拉拉裤L号', 'BY119', 'goods119.jpg', '日本原装进口，一拉就穿，一撕即脱，方便好动宝宝。', 199.00, 239.00, 220, 172, 150, 4.9, 140, '上架', 1, 1, 1, '2025-06-01 14:50:00', '2025-05-24 19:38:00', 1);
-INSERT INTO `product` VALUES (120, 6, 4, '花王纸尿裤NB号', 'BY120', 'goods120.jpg', '日本原装进口，专为新生儿设计，柔软贴合，呵护脐部。', 169.00, 209.00, 200, 155, 135, 4.8, 125, '上架', 1, 1, 1, '2025-06-01 14:55:00', '2025-06-01 14:55:00', 1);
+INSERT INTO `product` VALUES (1, 5, 1, '惠氏启赋有机婴儿配方奶粉1段（0-6个月）', 'WY001', 'goods1.jpg', '惠氏启赋有机婴儿配方奶粉，源自有机奶源，为宝宝提供全面营养', 298.00, 358.00, 348.00, 698.00, 99, 1025, 980, 4.8, 256, '上架', 1, 1, 1, 1, '2025-03-05 21:58:47', '2025-11-24 11:01:26', 1);
+INSERT INTO `product` VALUES (2, 5, 1, '婴儿奶粉）', 'WY002', 'goods2.jpg', '惠氏启赋有机婴儿配方奶粉，源自有机奶源，为宝宝提供全面营养', 328.00, 388.00, 288.00, 588.00, 100, 896, 850, 4.7, 220, '上架', 1, 1, 0, 1, '2025-03-05 21:58:47', '2025-11-24 10:50:12', 1);
+INSERT INTO `product` VALUES (3, 4, 1, '有机婴儿配方奶粉3段（1-3岁）', 'WY003', 'goods3.jpg', '惠氏启赋有机婴儿配方奶粉，源自有机奶源，为宝宝提供全面营养', 358.00, 418.00, NULL, NULL, 1000, 768, 720, 4.6, 180, '上架', 0, 0, 0, 1, '2025-03-05 21:58:47', '2025-06-11 16:33:00', 1);
+INSERT INTO `product` VALUES (4, 2, 1, '帮宝适超薄干爽纸尿裤M码（6-11kg）', 'PM001', 'goods4.jpg', '帮宝适超薄干爽纸尿裤，瞬吸干爽，让宝宝整夜安睡', 139.00, 169.00, NULL, NULL, 200, 2048, 1900, 4.9, 512, '上架', 0, 1, 0, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:53', 1);
+INSERT INTO `product` VALUES (5, 2, 1, '花王妙而舒纸尿裤L码（9-14kg）', 'HW001', 'goods5.jpg', '花王妙而舒纸尿裤，透气干爽，减少红屁屁', 149.00, 179.00, NULL, NULL, 199, 1536, 1400, 4.8, 384, '上架', 0, 1, 1, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:52', 1);
+INSERT INTO `product` VALUES (6, 3, 1, '美素佳儿有机米粉（6个月以上）', 'FR001', 'goods6.jpg', '美素佳儿有机米粉，100%有机原料，易消化吸收', 68.00, 88.00, NULL, NULL, 150, 896, 820, 4.7, 224, '上架', 0, 0, 1, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:51', 1);
+INSERT INTO `product` VALUES (7, 4, 1, '费雪声光安抚海马', 'FS001', 'goods7.jpg', '费雪声光安抚海马，多种音乐和声效，帮助宝宝安抚入睡', 129.00, 159.00, NULL, NULL, 79, 768, 720, 4.8, 192, '上架', 0, 0, 0, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:51', 1);
+INSERT INTO `product` VALUES (8, 5, 1, '强生婴儿洗发沐浴露二合一', 'JS001', 'goods8.jpg', '强生婴儿洗发沐浴露二合一，温和无泪配方，呵护宝宝娇嫩肌肤', 59.90, 79.90, NULL, NULL, 300, 1280, 1200, 4.6, 320, '上架', 0, 0, 0, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:49', 1);
+INSERT INTO `product` VALUES (9, 5, 1, '舒儿适婴儿抚触油', 'SE001', 'goods9.jpg', '舒儿适婴儿抚触油，100%天然植物油，温和滋养，促进亲子关系', 89.90, 119.90, NULL, NULL, 199, 650, 600, 4.7, 156, '上架', 0, 1, 0, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:49', 1);
+INSERT INTO `product` VALUES (10, 6, 1, '贝亲宽口径玻璃奶瓶', 'BQ001', 'goods10.jpg', '贝亲宽口径玻璃奶瓶，防胀气设计，耐高温消毒，适合0-18个月婴儿使用', 79.90, 99.90, NULL, NULL, 180, 850, 780, 4.8, 210, '上架', 0, 1, 1, 1, '2025-03-05 21:58:47', '2025-05-08 19:04:48', 1);
+INSERT INTO `product` VALUES (11, 2, 1, '婴儿连体衣', 'BY001', 'goods11.jpg', '纯棉材质，柔软舒适，适合0-12个月婴儿穿着，多种颜色可选。', 89.90, 129.90, NULL, NULL, 500, 320, 280, 4.8, 260, '上架', 0, 1, 0, 1, '2025-03-05 10:00:00', '2025-05-08 19:04:04', 1);
+INSERT INTO `product` VALUES (12, 2, 1, '儿童套装', 'BY002', 'goods12.jpg', '优质面料，透气舒适，适合1-3岁儿童，多种款式可选。', 129.90, 169.90, NULL, NULL, 400, 280, 240, 4.7, 220, '上架', 0, 1, 0, 1, '2025-03-08 10:05:00', '2025-06-11 16:43:00', 1);
+INSERT INTO `product` VALUES (13, 1, 1, '婴儿奶瓶', 'BY003', 'goods13.jpg', '医用级硅胶奶嘴，宽口径设计，防胀气，适合0-18个月婴儿。', 69.90, 99.90, NULL, NULL, 600, 450, 380, 4.9, 350, '上架', 0, 1, 1, 1, '2025-03-12 10:10:00', '2025-05-08 19:04:47', 1);
+INSERT INTO `product` VALUES (14, 1, 1, '婴儿床', 'BY004', 'goods14.jpg', '实木材质，环保漆，可调节高度，适合0-3岁婴幼儿。', 899.90, 1299.90, NULL, NULL, 100, 65, 58, 4.6, 50, '上架', 0, 0, 1, 1, '2025-03-15 10:15:00', '2025-05-08 19:04:45', 1);
+INSERT INTO `product` VALUES (15, 1, 1, '婴儿推车', 'BY005', 'goods15.jpg', '轻便折叠，双向推行，减震设计，适合0-3岁婴幼儿。', 699.90, 999.90, NULL, NULL, 150, 95, 85, 4.7, 80, '上架', 0, 0, 1, 1, '2025-03-18 10:20:00', '2025-05-11 09:53:00', 1);
+INSERT INTO `product` VALUES (16, 1, 2, '儿童玩具', 'BY006', 'goods16.jpg', '益智拼图，锻炼手眼协调，适合2-4岁儿童。', 49.90, 79.90, NULL, NULL, 800, 650, 580, 4.8, 520, '上架', 0, 1, 0, 1, '2025-03-22 10:25:00', '2025-05-11 09:53:00', 1);
+INSERT INTO `product` VALUES (17, 1, 2, '婴儿湿巾', 'BY007', 'goods17.jpg', '无酒精，无香料，温和不刺激，适合新生儿使用。', 19.90, 29.90, NULL, NULL, 1000, 850, 750, 4.9, 700, '上架', 0, 1, 0, 1, '2025-03-25 10:30:00', '2025-05-08 19:05:01', 1);
+INSERT INTO `product` VALUES (18, 1, 2, '婴儿洗发水', 'BY008', 'goods18.jpg', '温和配方，无泪配方，适合0-3岁婴幼儿。', 39.90, 59.90, NULL, NULL, 700, 580, 520, 4.8, 480, '上架', 0, 1, 0, 1, '2025-03-28 10:35:00', '2025-05-08 19:05:02', 1);
+INSERT INTO `product` VALUES (19, 2, 2, '孕妇护肤品', 'BY009', 'goods19.jpg', '天然成分，无添加，孕期安全使用，滋润保湿。', 159.90, 229.90, NULL, NULL, 300, 220, 190, 4.7, 170, '上架', 0, 0, 1, 1, '2025-04-01 10:40:00', '2025-05-11 09:53:00', 1);
+INSERT INTO `product` VALUES (20, 2, 2, '孕妇洗发水', 'BY010', 'goods20.jpg', '温和配方，无硅油，孕期安全使用，滋养发丝。', 89.90, 129.90, NULL, NULL, 400, 320, 280, 4.8, 250, '上架', 0, 0, 1, 1, '2025-04-05 10:45:00', '2025-05-08 19:05:03', 1);
+INSERT INTO `product` VALUES (21, 2, 2, '孕妇装', 'BY011', 'goods21.jpg', '舒适面料，宽松设计，适合孕中晚期穿着。', 199.90, 299.90, NULL, NULL, 249, 180, 160, 4.6, 140, '上架', 0, 1, 0, 1, '2025-04-08 10:50:00', '2025-05-10 22:57:46', 1);
+INSERT INTO `product` VALUES (22, 2, 2, '孕妇枕', 'BY012', 'goods22.jpg', 'U型设计，支撑腰部和腹部，改善孕期睡眠质量。', 159.90, 229.90, NULL, NULL, 200, 150, 130, 4.7, 120, '上架', 0, 1, 0, 1, '2025-04-12 10:55:00', '2025-04-12 10:55:00', 1);
+INSERT INTO `product` VALUES (23, 2, 2, '孕妇奶粉', 'BY013', 'goods23.jpg', '富含叶酸和钙，满足孕期营养需求，促进胎儿发育。', 229.90, 329.90, NULL, NULL, 298, 241, 210, 4.8, 190, '上架', 0, 1, 0, 1, '2025-04-15 11:00:00', '2025-11-12 13:28:44', 1);
+INSERT INTO `product` VALUES (24, 2, 2, '孕妇内衣', 'BY014', 'goods24.jpg', '无钢圈，棉质面料，舒适透气，适合孕期穿着。', 129.90, 189.90, NULL, NULL, 349, 280, 250, 4.7, 230, '上架', 0, 1, 0, 1, '2025-04-18 11:05:00', '2025-05-15 12:59:06', 1);
+INSERT INTO `product` VALUES (25, 5, 2, '孕妇袜', 'BY015', 'goods25.jpg', '防滑设计，舒适透气，减轻孕期腿部疲劳。', 39.90, 59.90, NULL, NULL, 500, 420, 380, 4.8, 350, '上架', 0, 1, 0, 1, '2025-04-22 11:10:00', '2025-05-08 19:05:06', 1);
+INSERT INTO `product` VALUES (26, 2, 2, '孕妇裤', 'BY016', 'goods26.jpg', '高腰设计，弹力面料，舒适贴合，适合孕中晚期穿着。', 159.90, 229.90, NULL, NULL, 300, 240, 210, 4.7, 190, '上架', 0, 1, 0, 1, '2025-04-25 11:15:00', '2025-05-08 19:05:07', 1);
+INSERT INTO `product` VALUES (27, 2, 2, '婴儿奶粉', 'BY017', 'goods27.jpg', '优质奶源，配方科学，易消化吸收，适合0-6个月婴儿。', 299.90, 399.90, NULL, NULL, 200, 160, 140, 4.9, 130, '上架', 0, 1, 0, 1, '2025-04-28 11:20:00', '2025-05-08 19:05:09', 1);
+INSERT INTO `product` VALUES (28, 2, 2, '婴儿纸尿裤', 'BY018', 'goods28.jpg', '超薄透气，瞬吸干爽，防漏设计，适合0-12个月婴儿。', 99.90, 149.90, NULL, NULL, 400, 350, 320, 4.8, 300, '上架', 0, 1, 0, 1, '2025-04-30 11:25:00', '2025-04-30 11:25:00', 1);
+INSERT INTO `product` VALUES (29, 2, 2, '婴儿辅食机', 'BY019', 'goods29.jpg', '一机多用，蒸煮搅拌一体，智能预约，适合制作6个月以上婴儿辅食。', 399.90, 499.90, NULL, NULL, 150, 125, 98, 4.7, 85, '上架', 0, 1, 0, 1, '2025-05-03 11:30:00', '2025-05-08 19:05:10', 1);
+INSERT INTO `product` VALUES (30, 2, 2, '儿童保温杯', 'BY020', 'goods30.jpg', '316不锈钢内胆，12小时保温，防漏设计，适合3岁以上儿童。', 129.90, 169.90, NULL, NULL, 300, 245, 210, 4.8, 185, '上架', 0, 1, 0, 1, '2025-05-05 11:35:00', '2025-05-08 19:05:12', 1);
+INSERT INTO `product` VALUES (31, 3, 3, '婴儿学步车', 'BY021', 'goods31.jpg', '多功能设计，音乐灯光，锻炼宝宝平衡能力，适合6-18个月婴儿。', 259.90, 359.90, NULL, NULL, 200, 160, 140, 4.7, 120, '上架', 0, 1, 0, 1, '2025-05-08 11:40:00', '2025-05-08 19:05:14', 1);
+INSERT INTO `product` VALUES (32, 3, 3, '儿童餐椅', 'BY022', 'goods32.jpg', '可调节高度，安全带设计，易清洁，适合6个月-4岁儿童。', 299.90, 399.90, NULL, NULL, 150, 120, 100, 4.6, 90, '上架', 0, 1, 0, 1, '2025-05-10 11:45:00', '2025-05-08 19:05:14', 1);
+INSERT INTO `product` VALUES (33, 3, 3, '婴儿洗澡盆', 'BY023', 'goods33.jpg', '大容量设计，防滑底座，温度感应，适合0-3岁婴幼儿。', 159.90, 219.90, NULL, NULL, 250, 200, 180, 4.8, 160, '上架', 0, 1, 0, 1, '2025-05-12 11:50:00', '2025-05-08 19:05:15', 1);
+INSERT INTO `product` VALUES (34, 3, 3, '婴儿防晒霜', 'BY024', 'goods34.jpg', 'SPF50+，物理防晒，温和不刺激，适合6个月以上婴幼儿。', 89.90, 129.90, NULL, NULL, 300, 250, 220, 4.7, 200, '上架', 0, 1, 0, 1, '2025-05-15 11:55:00', '2025-05-08 19:05:22', 1);
+INSERT INTO `product` VALUES (35, 3, 3, '婴儿理发器', 'BY025', 'goods35.jpg', '低噪音设计，多档位调节，安全防水，适合0-6岁儿童。', 159.90, 219.90, NULL, NULL, 200, 160, 140, 4.6, 120, '上架', 0, 0, 1, 1, '2025-05-18 12:00:00', '2025-05-18 12:00:00', 1);
+INSERT INTO `product` VALUES (36, 3, 3, '儿童牙刷套装', 'BY026', 'goods36.jpg', '软毛设计，卡通造型，培养刷牙习惯，适合1-6岁儿童。', 49.90, 69.90, NULL, NULL, 400, 350, 320, 4.8, 300, '上架', 0, 1, 0, 1, '2025-05-20 12:05:00', '2025-05-12 22:45:00', 1);
+INSERT INTO `product` VALUES (37, 3, 3, '婴儿背带', 'BY027', 'goods37.jpg', '人体工学设计，透气网面，多种背法，适合0-36个月婴儿。', 199.90, 259.90, NULL, NULL, 200, 160, 140, 4.7, 120, '上架', 0, 1, 0, 1, '2025-05-22 12:10:00', '2025-05-08 19:05:23', 1);
+INSERT INTO `product` VALUES (38, 3, 3, '儿童安全座椅', 'BY028', 'goods38.jpg', '五点式安全带，侧面防撞，可调节角度，适合9个月-12岁儿童。', 899.90, 1199.90, NULL, NULL, 100, 80, 70, 4.9, 60, '上架', 0, 0, 1, 1, '2025-05-24 12:15:00', '2025-05-08 19:05:23', 1);
+INSERT INTO `product` VALUES (39, 4, 3, '婴儿纸尿裤', 'BY029', 'goods39.jpg', '超薄透气，瞬吸干爽，防红臀，S/M/L/XL码可选。', 99.90, 129.90, NULL, NULL, 500, 450, 400, 4.8, 380, '上架', 0, 1, 0, 1, '2025-05-26 12:20:00', '2025-05-08 19:05:24', 1);
+INSERT INTO `product` VALUES (40, 4, 3, '婴儿湿巾', 'BY030', 'goods40.jpg', '无香型，99%纯水配方，温和无刺激，80抽/包，10包/箱。', 59.90, 79.90, NULL, NULL, 600, 550, 500, 4.9, 480, '上架', 0, 1, 0, 1, '2025-05-28 12:25:00', '2025-05-08 19:05:24', 1);
+INSERT INTO `product` VALUES (41, 4, 3, '儿童洗发沐浴露', 'BY031', 'goods41.jpg', '温和无泪配方，天然植物萃取，适合0-12岁儿童。', 69.90, 89.90, NULL, NULL, 400, 350, 320, 4.7, 300, '上架', 0, 1, 0, 1, '2025-05-29 12:30:00', '2025-05-08 19:05:28', 1);
+INSERT INTO `product` VALUES (42, 4, 3, '婴儿润肤乳', 'BY032', 'goods42.jpg', '无香型，滋润保湿，舒缓敏感，适合0-3岁婴儿。', 79.90, 99.90, NULL, NULL, 349, 300, 270, 4.8, 250, '上架', 0, 1, 0, 1, '2025-05-30 12:35:00', '2025-05-08 19:05:30', 1);
+INSERT INTO `product` VALUES (43, 4, 3, '儿童牙膏', 'BY033', 'goods43.jpg', '可吞咽配方，水果味，不含氟，适合1-6岁儿童。', 39.90, 49.90, NULL, NULL, 499, 450, 420, 4.8, 400, '上架', 0, 1, 0, 1, '2025-05-30 12:40:00', '2025-05-11 13:55:00', 1);
+INSERT INTO `product` VALUES (44, 4, 3, '婴儿指甲剪', 'BY034', 'goods44.jpg', '圆头设计，安全防夹肉，带放大镜，适合0-3岁婴幼儿。', 29.90, 39.90, NULL, NULL, 600, 550, 520, 4.7, 500, '上架', 0, 1, 0, 1, '2025-05-30 12:45:00', '2025-05-30 12:45:00', 1);
+INSERT INTO `product` VALUES (45, 4, 3, '儿童防蚊液', 'BY035', 'goods45.jpg', '天然植物配方，温和不刺激，长效驱蚊，适合1岁以上儿童。', 49.90, 69.90, NULL, NULL, 400, 350, 320, 4.6, 300, '上架', 0, 1, 0, 1, '2025-05-31 12:50:00', '2025-05-08 19:05:32', 1);
+INSERT INTO `product` VALUES (46, 4, 4, '婴儿护臀膏', 'BY036', 'goods46.jpg', '天然成分，舒缓红臀，形成保护膜，适合0-3岁婴幼儿。', 59.90, 79.90, NULL, NULL, 349, 300, 280, 4.8, 260, '上架', 0, 1, 0, 1, '2025-05-31 12:55:00', '2025-05-11 14:15:59', 1);
+INSERT INTO `product` VALUES (47, 5, 4, '儿童玩具车', 'BY037', 'goods47.jpg', '仿真设计，安全环保材质，耐摔耐用，适合3-8岁儿童。', 129.90, 169.90, NULL, NULL, 299, 250, 220, 4.7, 200, '上架', 0, 0, 1, 1, '2025-05-31 13:00:00', '2025-05-12 22:33:03', 1);
+INSERT INTO `product` VALUES (48, 5, 4, '益智积木套装', 'BY038', 'goods48.jpg', '多彩积木，环保材质，锻炼创造力和动手能力，适合3-12岁儿童。', 199.90, 249.90, NULL, NULL, 250, 200, 180, 4.8, 160, '上架', 0, 1, 0, 1, '2025-05-31 13:05:00', '2025-05-08 19:05:37', 1);
+INSERT INTO `product` VALUES (49, 5, 4, '儿童绘本套装', 'BY039', 'goods49.jpg', '经典故事，精美插图，培养阅读习惯，适合3-8岁儿童。', 159.90, 199.90, NULL, NULL, 198, 170, 150, 4.9, 130, '上架', 0, 1, 0, 1, '2025-05-31 13:10:00', '2025-05-10 23:05:28', 1);
+INSERT INTO `product` VALUES (50, 5, 4, '儿童识字卡片', 'BY040', 'goods50.jpg', '双面设计，中英双语，图文结合，适合2-6岁儿童。', 59.99, 79.90, NULL, NULL, 399, 350, 320, 4.7, 300, '上架', 0, 0, 1, 0, '2025-05-31 13:15:00', '2025-05-11 09:53:00', 1);
+INSERT INTO `product` VALUES (51, 5, 4, '儿童绘画套装', 'BY041', 'goods51.jpg', '安全无毒，易清洗，培养艺术兴趣，适合3-12岁儿童。', 89.90, 119.90, NULL, NULL, 300, 250, 230, 4.8, 220, '上架', 0, 1, 0, 1, '2025-05-31 13:20:00', '2025-05-08 19:05:38', 1);
+INSERT INTO `product` VALUES (52, 5, 4, '儿童拼图游戏', 'BY042', 'goods52.jpg', '多种难度，锻炼观察力和逻辑思维能力，适合3-12岁儿童。', 79.90, 99.90, NULL, NULL, 198, 170, 150, 4.9, 140, '上架', 0, 1, 0, 1, '2025-05-31 13:25:00', '2025-05-11 12:04:04', 1);
+INSERT INTO `product` VALUES (53, 5, 4, '儿童户外玩具', 'BY043', 'goods53.jpg', '安全环保，耐玩耐摔，锻炼身体，适合3-12岁儿童。', 199.90, 249.90, NULL, NULL, 97, 80, 70, 4.7, 60, '上架', 0, 1, 0, 1, '2025-05-31 13:30:00', '2025-05-06 21:39:56', 1);
+INSERT INTO `product` VALUES (54, 5, 4, '儿童电子学习机', 'BY044', 'goods54.jpg', '智能语音，互动教学，培养学习兴趣，适合3-12岁儿童。', 399.90, 499.90, NULL, NULL, 147, 120, 110, 4.8, 100, '上架', 0, 1, 0, 1, '2025-05-31 13:35:00', '2025-05-11 13:03:26', 1);
+INSERT INTO `product` VALUES (55, 6, 4, '婴儿摇铃玩具', 'BY045', 'goods55.jpg', '多彩设计，声音柔和，锻炼宝宝抓握能力，适合0-12个月婴儿。', 49.90, 69.90, NULL, NULL, 398, 350, 320, 4.8, 300, '上架', 0, 1, 0, 1, '2025-05-31 13:40:00', '2025-05-11 14:10:00', 1);
+INSERT INTO `product` VALUES (56, 6, 4, '婴儿音乐床铃', 'BY046', 'goods56.jpg', '旋转设计，多种音乐，吸引宝宝注意力，适合0-24个月婴儿。', 129.90, 159.90, NULL, NULL, 195, 160, 140, 4.7, 120, '上架', 0, 0, 1, 1, '2025-05-31 13:45:00', '2025-05-11 11:19:00', 1);
+INSERT INTO `product` VALUES (57, 6, 4, '儿童智能手表', 'BY047', 'goods57.jpg', 'GPS定位，防水设计，双向通话，适合3-12岁儿童。', 299.90, 399.90, NULL, NULL, 149, 121, 100, 4.9, 90, '上架', 0, 1, 1, 1, '2025-05-31 13:50:00', '2025-05-30 09:06:00', 1);
+INSERT INTO `product` VALUES (58, 6, 4, '儿童防蓝光眼镜', 'BY048', 'goods48.jpg', '轻盈舒适，有效阻隔蓝光，保护视力，适合3-15岁儿童。', 99.90, 129.90, NULL, NULL, 294, 250, 220, 4.6, 200, '上架', 0, 0, 1, 0, '2025-05-31 13:55:00', '2025-05-09 21:19:26', 1);
+INSERT INTO `product` VALUES (59, 6, 4, '孕妇维生素', 'BY049', 'goods59.jpg', '全面营养配方，补充叶酸和铁质，适合孕期全程使用。', 189.90, 239.90, NULL, NULL, 245, 201, 180, 4.8, 160, '上架', 0, 1, 0, 1, '2025-05-31 14:00:00', '2025-09-18 16:44:04', 1);
+INSERT INTO `product` VALUES (60, 6, 4, '产后修复套装', 'BY050', 'goods60.jpg', '天然成分，促进产后恢复，包含收腹带和修复霜。', 399.90, 499.90, NULL, NULL, 95, 84, 70, 4.7, 60, '上架', 0, 1, 1, 1, '2025-05-31 14:05:00', '2025-07-16 18:19:13', 1);
+INSERT INTO `product` VALUES (61, 1, 5, '爱他美卓萃有机婴儿配方奶粉1段', 'BY061', 'goods61.jpg', '德国原装进口，有机奶源，科学配方，适合0-6个月婴儿。', 358.00, 428.00, NULL, NULL, 198, 152, 130, 4.8, 120, '上架', 0, 1, 1, 1, '2025-06-01 10:00:00', '2025-05-22 21:55:00', 1);
+INSERT INTO `product` VALUES (62, 1, 6, '费雪多功能婴儿摇椅', 'BY062', 'goods62.jpg', '多档位调节，震动安抚，音乐播放，适合0-36个月婴儿。', 499.90, 599.90, NULL, NULL, 150, 100, 90, 4.7, 80, '上架', 0, 1, 1, 1, '2025-06-01 10:05:00', '2025-06-01 10:05:00', 1);
+INSERT INTO `product` VALUES (63, 2, 7, '飞利浦新安怡宽口径玻璃奶瓶', 'BY063', 'goods63.jpg', '天然原生玻璃材质，易清洗，防胀气设计，适合0-12个月婴儿。', 129.00, 159.00, NULL, NULL, 179, 130, 110, 4.9, 100, '上架', 0, 0, 1, 0, '2025-06-01 10:10:00', '2025-05-24 19:19:12', 1);
+INSERT INTO `product` VALUES (64, 2, 8, '美德乐丝韵翼双边电动吸奶器', 'BY064', 'goods64.jpg', '双韵律吸乳模式，高效舒适，静音设计，附带便携包。', 2580.00, 3280.00, NULL, NULL, 80, 50, 45, 4.9, 40, '上架', 0, 1, 0, 1, '2025-06-01 10:15:00', '2025-06-11 16:25:00', 1);
+INSERT INTO `product` VALUES (65, 3, 9, '贝亲婴儿柔湿巾80抽x6包', 'BY065', 'goods65.jpg', '纯水配方，无酒精无香料，温和清洁，适合婴儿娇嫩肌肤。', 69.90, 89.90, NULL, NULL, 299, 250, 220, 4.8, 200, '上架', 0, 0, 1, 0, '2025-06-01 10:20:00', '2025-05-15 22:48:42', 1);
+INSERT INTO `product` VALUES (66, 3, 10, '嘉宝星星泡芙香蕉味', 'BY066', 'goods66.jpg', '非油炸，入口即化，富含铁锌，适合8个月以上宝宝。', 25.80, 32.00, NULL, NULL, 400, 351, 300, 4.7, 280, '上架', 0, 1, 1, 1, '2025-06-01 10:25:00', '2025-06-11 16:50:00', 1);
+INSERT INTO `product` VALUES (67, 4, 1, '惠氏启赋未来3段幼儿配方奶粉', 'BY067', 'goods67.jpg', '爱尔兰原装进口，突破性结构脂OPO，助力宝宝吸收。', 388.00, 458.00, NULL, NULL, 220, 160, 140, 4.9, 130, '上架', 0, 1, 0, 1, '2025-06-01 10:30:00', '2025-06-01 10:30:00', 1);
+INSERT INTO `product` VALUES (68, 4, 2, '美素佳儿皇家美素佳儿3段幼儿配方奶粉', 'BY068', 'goods68.jpg', '荷兰原装进口，全脂牛奶一次入料，锁留天然营养。', 368.00, 438.00, NULL, NULL, 210, 155, 135, 4.8, 125, '上架', 0, 1, 0, 1, '2025-06-01 10:35:00', '2025-05-30 09:06:00', 1);
+INSERT INTO `product` VALUES (69, 5, 3, '帮宝适一级帮纸尿裤M号', 'BY069', 'goods69.jpg', '日本原装进口，羽柔材质，瞬吸干爽，给宝宝极致呵护。', 189.00, 229.00, NULL, NULL, 280, 231, 200, 4.9, 180, '上架', 0, 1, 1, 1, '2025-06-01 10:40:00', '2025-06-11 17:04:00', 1);
+INSERT INTO `product` VALUES (70, 5, 4, '花王妙而舒纸尿裤L号', 'BY070', 'goods70.jpg', '日本原装进口，柔软透气，立体防漏，长时间保持干爽。', 179.00, 219.00, NULL, NULL, 269, 220, 190, 4.8, 170, '上架', 0, 1, 1, 1, '2025-06-01 10:45:00', '2025-07-09 20:59:19', 1);
+INSERT INTO `product` VALUES (71, 6, 5, '爱他美白金版婴儿配方奶粉2段', 'BY071', 'goods71.jpg', '德国原装进口，特有Pronutra+配方，支持宝宝免疫系统。', 398.00, 468.00, NULL, NULL, 190, 140, 120, 4.9, 110, '上架', 0, 1, 0, 1, '2025-06-01 10:50:00', '2025-06-01 10:50:00', 1);
+INSERT INTO `product` VALUES (72, 6, 6, '费雪海马声光安抚玩具', 'BY072', 'goods72.jpg', '柔和灯光和音乐，安抚宝宝情绪，帮助入睡。', 159.00, 199.00, NULL, NULL, 159, 111, 100, 4.7, 90, '上架', 0, 0, 1, 0, '2025-06-01 10:55:00', '2025-11-17 11:18:55', 1);
+INSERT INTO `product` VALUES (73, 1, 7, '飞利浦新安怡自然原生系列奶瓶', 'BY073', 'goods73.jpg', '宽口径设计，易于冲调和清洗，仿生奶嘴，宝宝易接受。', 109.00, 139.00, NULL, NULL, 170, 120, 105, 4.8, 95, '上架', 0, 0, 1, 0, '2025-06-01 11:00:00', '2025-06-01 11:00:00', 1);
+INSERT INTO `product` VALUES (74, 1, 8, '美德乐韵律吸乳器单边电动', 'BY074', 'goods74.jpg', '模拟宝宝自然吸吮节奏，高效舒适，轻巧便携。', 1880.00, 2380.00, NULL, NULL, 90, 60, 55, 4.9, 50, '上架', 0, 1, 0, 1, '2025-06-01 11:05:00', '2025-06-01 11:05:00', 1);
+INSERT INTO `product` VALUES (75, 2, 9, '贝亲婴儿洗衣液', 'BY075', 'goods75.jpg', '植物配方，温和无刺激，有效去除污渍，易漂洗。', 59.90, 79.90, NULL, NULL, 250, 200, 180, 4.7, 160, '上架', 0, 0, 1, 0, '2025-06-01 11:10:00', '2025-06-01 11:10:00', 1);
+INSERT INTO `product` VALUES (76, 2, 10, '嘉宝米粉原味', 'BY076', 'goods76.jpg', '高铁高钙，细腻易消化，不添加蔗糖和食用盐，适合6个月以上宝宝。', 35.80, 45.00, NULL, NULL, 350, 300, 280, 4.8, 260, '上架', 0, 1, 1, 1, '2025-06-01 11:15:00', '2025-06-01 11:15:00', 1);
+INSERT INTO `product` VALUES (77, 3, 1, '惠氏S-26铂臻3段幼儿配方奶粉', 'BY077', 'goods77.jpg', '瑞士原装进口，含神经鞘磷脂，助力宝宝认知发展。', 378.00, 448.00, NULL, NULL, 196, 151, 130, 4.9, 120, '上架', 0, 1, 0, 1, '2025-06-01 11:20:00', '2025-07-11 15:09:19', 1);
+INSERT INTO `product` VALUES (78, 3, 2, '美素佳儿金装3段幼儿配方奶粉', 'BY078', 'goods78.jpg', '荷兰原装进口，含益生元，支持宝宝肠道健康。', 348.00, 418.00, NULL, NULL, 190, 145, 125, 4.8, 115, '上架', 0, 1, 0, 1, '2025-06-01 11:25:00', '2025-06-01 11:25:00', 1);
+INSERT INTO `product` VALUES (79, 4, 3, '帮宝适拉拉裤L号', 'BY079', 'goods79.jpg', '日本原装进口，一拉就穿，一撕即脱，方便好动宝宝。', 199.00, 239.00, NULL, NULL, 260, 210, 190, 4.9, 170, '上架', 0, 1, 1, 1, '2025-06-01 11:30:00', '2025-06-01 11:30:00', 1);
+INSERT INTO `product` VALUES (80, 3, 4, '花王纸尿裤NB号', 'BY080', 'goods80.jpg', '日本原装进口，专为新生儿设计，柔软贴合，呵护脐部。', 169.00, 209.00, NULL, NULL, 299, 207, 185, 4.8, 165, '上架', 0, 1, 1, 1, '2025-06-01 11:35:00', '2025-06-10 19:54:00', 1);
+INSERT INTO `product` VALUES (81, 5, 5, '爱他美卓萃婴儿配方奶粉3段', 'BY081', 'goods81.jpg', '德国原装进口，有机奶源，科学配方，适合1-3岁幼儿。', 368.00, 438.00, NULL, NULL, 180, 130, 110, 4.9, 100, '上架', 0, 1, 0, 1, '2025-06-01 11:40:00', '2025-06-01 11:40:00', 1);
+INSERT INTO `product` VALUES (82, 5, 6, '费雪踢踢乐钢琴健身器', 'BY082', 'goods82.jpg', '多种玩法，锻炼宝宝运动能力和感官发育。', 299.00, 359.00, NULL, NULL, 140, 90, 80, 4.7, 70, '上架', 0, 0, 1, 0, '2025-06-01 11:45:00', '2025-06-01 11:45:00', 1);
+INSERT INTO `product` VALUES (83, 6, 7, '飞利浦新安怡婴儿辅食机', 'BY083', 'goods83.jpg', '蒸煮搅拌一体，快速制作健康辅食，易清洗。', 899.00, 1099.00, NULL, NULL, 119, 80, 70, 4.8, 60, '上架', 0, 1, 1, 1, '2025-06-01 11:50:00', '2025-07-09 15:13:07', 1);
+INSERT INTO `product` VALUES (84, 6, 8, '美德乐丝韵单边电动吸奶器', 'BY084', 'goods84.jpg', '模拟宝宝自然吸吮节奏，高效舒适，轻巧便携。', 1880.00, 2380.00, NULL, NULL, 88, 63, 55, 4.9, 50, '上架', 0, 1, 0, 1, '2025-06-01 11:55:00', '2025-11-16 19:08:44', 1);
+INSERT INTO `product` VALUES (85, 1, 9, '贝亲宽口径PPSU奶瓶', 'BY085', 'goods85.jpg', 'PPSU材质，轻巧耐摔，耐高温，易清洗。', 119.00, 149.00, NULL, NULL, 169, 121, 105, 4.8, 95, '上架', 0, 0, 1, 0, '2025-06-01 12:00:00', '2025-07-10 14:48:35', 1);
+INSERT INTO `product` VALUES (86, 1, 10, '嘉宝泡芙草莓苹果味', 'BY086', 'goods86.jpg', '非油炸，入口即化，富含铁锌，适合8个月以上宝宝。', 25.80, 32.00, NULL, NULL, 400, 350, 300, 4.7, 280, '上架', 0, 1, 1, 1, '2025-06-01 12:05:00', '2025-06-01 12:05:00', 1);
+INSERT INTO `product` VALUES (87, 2, 1, '惠氏启赋蓝钻3段幼儿配方奶粉', 'BY087', 'goods87.jpg', '爱尔兰原装进口，含活性益生菌，支持宝宝肠道健康。', 398.00, 468.00, NULL, NULL, 219, 160, 140, 4.9, 130, '上架', 0, 1, 0, 1, '2025-06-01 12:10:00', '2025-11-18 12:59:20', 1);
+INSERT INTO `product` VALUES (88, 2, 2, '美素佳儿金装较大婴儿配方奶粉2段', 'BY088', 'goods88.jpg', '荷兰原装进口，含益生元，支持宝宝肠道健康。', 358.00, 428.00, NULL, NULL, 210, 155, 135, 4.8, 125, '上架', 0, 1, 0, 1, '2025-06-01 12:15:00', '2025-06-01 12:15:00', 1);
+INSERT INTO `product` VALUES (89, 3, 3, '帮宝适特级棉柔纸尿裤M号', 'BY089', 'goods89.jpg', '超柔软材质，瞬吸干爽，给宝宝极致呵护。', 179.00, 219.00, NULL, NULL, 279, 232, 200, 4.9, 180, '上架', 0, 1, 1, 1, '2025-06-01 12:20:00', '2025-06-11 17:50:25', 1);
+INSERT INTO `product` VALUES (90, 3, 4, '花王妙而舒纸尿裤NB号', 'BY090', 'goods90.jpg', '日本原装进口，专为新生儿设计，柔软贴合，呵护脐部。', 169.00, 210.00, NULL, NULL, 250, 205, 185, 4.8, 165, '上架', 0, 1, 1, 1, '2025-06-01 12:25:00', '2025-06-06 13:31:12', 1);
+INSERT INTO `product` VALUES (91, 4, 5, '爱他美卓萃婴儿配方奶粉2段', 'BY091', 'goods91.jpg', '德国原装进口，有机奶源，科学配方，适合6-12个月婴儿。', 388.00, 458.00, NULL, NULL, 189, 141, 120, 4.9, 110, '上架', 0, 1, 0, 1, '2025-06-01 12:30:00', '2025-06-27 12:20:43', 1);
+INSERT INTO `product` VALUES (92, 4, 6, '费雪声光安抚海马', 'BY092', 'goods92.jpg', '柔和灯光和音乐，安抚宝宝情绪，帮助入睡。', 159.00, 199.00, NULL, NULL, 160, 110, 100, 4.7, 90, '上架', 0, 0, 1, 0, '2025-06-01 12:35:00', '2025-06-01 12:35:00', 1);
+INSERT INTO `product` VALUES (93, 5, 7, '飞利浦新安怡自然原生系列玻璃奶瓶', 'BY093', 'goods93.jpg', '宽口径设计，易于冲调和清洗，仿生奶嘴，宝宝易接受。', 109.00, 139.00, NULL, NULL, 169, 122, 105, 4.8, 95, '上架', 0, 0, 1, 0, '2025-06-01 12:40:00', '2025-11-11 10:49:40', 1);
+INSERT INTO `product` VALUES (94, 5, 8, '美德乐丝韵翼双边电动吸奶器', 'BY094', 'goods94.jpg', '双韵律吸乳模式，高效舒适，静音设计，附带便携包。', 2580.00, 3280.00, NULL, NULL, 78, 52, 45, 4.9, 40, '上架', 0, 1, 0, 1, '2025-06-01 12:45:00', '2025-11-16 19:33:33', 1);
+INSERT INTO `product` VALUES (95, 6, 9, '贝亲婴儿洗发沐浴露二合一', 'BY095', 'goods95.jpg', '弱酸性配方，温和清洁，无泪配方，适合婴儿娇嫩肌肤。', 79.90, 99.90, NULL, NULL, 249, 200, 180, 4.7, 160, '上架', 0, 0, 1, 0, '2025-06-01 12:50:00', '2025-11-16 21:19:15', 1);
+INSERT INTO `product` VALUES (96, 6, 10, '嘉宝磨牙饼干香蕉味', 'BY096', 'goods96.jpg', '帮助宝宝缓解出牙不适，富含铁锌，适合10个月以上宝宝。', 29.80, 36.00, NULL, NULL, 347, 303, 280, 4.8, 260, '上架', 0, 1, 1, 1, '2025-06-01 12:55:00', '2025-11-19 13:38:58', 1);
+INSERT INTO `product` VALUES (97, 1, 1, '惠氏S-26铂臻2段较大婴儿配方奶粉', 'BY097', 'goods97.jpg', '瑞士原装进口，含神经鞘磷脂，助力宝宝认知发展。', 388.00, 458.00, NULL, NULL, 200, 151, 130, 4.9, 120, '上架', 0, 1, 0, 1, '2025-06-01 13:00:00', '2025-06-11 17:25:00', 1);
+INSERT INTO `product` VALUES (98, 1, 2, '美素佳儿金装较大婴儿配方奶粉2段', 'BY098', 'goods98.jpg', '荷兰原装进口，含益生元，支持宝宝肠道健康。', 358.00, 428.00, NULL, NULL, 187, 147, 125, 4.8, 115, '上架', 0, 1, 0, 1, '2025-06-01 13:05:00', '2025-09-19 12:11:58', 1);
+INSERT INTO `product` VALUES (99, 2, 3, '帮宝适拉拉裤M号', 'BY099', 'goods99.jpg', '日本原装进口，一拉就穿，一撕即脱，方便好动宝宝。', 189.00, 229.00, NULL, NULL, 260, 210, 190, 4.9, 170, '上架', 0, 1, 1, 1, '2025-06-01 13:10:00', '2025-06-01 13:10:00', 1);
+INSERT INTO `product` VALUES (100, 2, 4, '花王纸尿裤S号', 'BY100', 'goods100.jpg', '日本原装进口，柔软透气，立体防漏，长时间保持干爽。', 179.00, 219.00, NULL, NULL, 268, 222, 190, 4.8, 170, '上架', 0, 1, 1, 1, '2025-06-01 13:15:00', '2025-07-16 18:56:06', 1);
+INSERT INTO `product` VALUES (101, 3, 5, '爱他美卓萃婴儿配方奶粉1段', 'BY101', 'goods101.jpg', '德国原装进口，有机奶源，科学配方，适合0-6个月婴儿。', 358.00, 428.00, NULL, NULL, 200, 150, 130, 4.8, 120, '上架', 0, 1, 1, 1, '2025-06-01 13:20:00', '2025-06-01 13:20:00', 1);
+INSERT INTO `product` VALUES (102, 3, 6, '费雪多功能婴儿摇椅', 'BY102', 'goods102.jpg', '多档位调节，震动安抚，音乐播放，适合0-36个月婴儿。', 499.90, 599.90, NULL, NULL, 150, 100, 90, 4.7, 80, '上架', 0, 1, 1, 1, '2025-06-01 13:25:00', '2025-06-01 13:25:00', 1);
+INSERT INTO `product` VALUES (103, 4, 7, '飞利浦新安怡婴儿奶嘴', 'BY103', 'goods103.jpg', '硅胶材质，柔软舒适，防胀气设计，适合不同月龄宝宝。', 59.00, 79.00, NULL, NULL, 200, 150, 130, 4.8, 120, '上架', 0, 0, 1, 0, '2025-06-01 13:30:00', '2025-06-01 13:30:00', 1);
+INSERT INTO `product` VALUES (104, 4, 8, '美德乐吸奶器配件', 'BY104', 'goods104.jpg', '原装配件，确保吸奶器正常使用和卫生。', 180.00, 220.00, NULL, NULL, 99, 71, 60, 4.9, 55, '上架', 0, 0, 0, 1, '2025-06-01 13:35:00', '2025-11-19 19:46:41', 1);
+INSERT INTO `product` VALUES (105, 5, 9, '贝亲婴儿润肤露', 'BY105', 'goods105.jpg', '天然植物成分，温和滋润，呵护宝宝肌肤。', 79.90, 99.90, NULL, NULL, 220, 180, 160, 4.7, 150, '上架', 0, 0, 1, 1, '2025-06-01 13:40:00', '2025-11-20 20:34:28', 1);
+INSERT INTO `product` VALUES (106, 5, 10, '嘉宝米粉混合水果味', 'BY106', 'goods106.jpg', '高铁高钙，添加多种水果，营养丰富，适合6个月以上宝宝。', 38.80, 48.00, NULL, NULL, 300, 250, 230, 4.8, 210, '上架', 0, 1, 1, 1, '2025-06-01 13:45:00', '2025-06-01 13:45:00', 1);
+INSERT INTO `product` VALUES (107, 6, 1, '惠氏启赋未来2段较大婴儿配方奶粉', 'BY107', 'goods107.jpg', '爱尔兰原装进口，突破性结构脂OPO，助力宝宝吸收。', 398.00, 468.00, NULL, NULL, 199, 150, 130, 4.9, 120, '上架', 0, 1, 0, 1, '2025-06-01 13:50:00', '2025-11-22 11:41:52', 1);
+INSERT INTO `product` VALUES (108, 6, 2, '美素佳儿皇家美素佳儿2段较大婴儿配方奶粉', 'BY108', 'goods108.jpg', '荷兰原装进口，全脂牛奶一次入料，锁留天然营养。', 378.00, 448.00, NULL, NULL, 190, 145, 125, 4.8, 115, '上架', 0, 1, 0, 1, '2025-06-01 13:55:00', '2025-11-22 11:34:00', 1);
+INSERT INTO `product` VALUES (109, 1, 3, '帮宝适一级帮纸尿裤L号', 'BY109', 'goods109.jpg', '日本原装进口，羽柔材质，瞬吸干爽，给宝宝极致呵护。', 199.00, 239.00, NULL, NULL, 249, 200, 180, 4.9, 170, '上架', 0, 1, 1, 1, '2025-06-01 14:00:00', '2025-11-22 12:11:16', 1);
+INSERT INTO `product` VALUES (110, 1, 4, '花王妙而舒纸尿裤XL号', 'BY110', 'goods110.jpg', '日本原装进口，柔软透气，立体防漏，长时间保持干爽。', 189.00, 229.00, NULL, NULL, 240, 190, 170, 4.8, 160, '上架', 0, 1, 0, 1, '2025-06-01 14:05:00', '2025-11-19 13:49:31', 1);
+INSERT INTO `product` VALUES (111, 2, 5, '爱他美白金版婴儿配方奶粉3段', 'BY111', 'goods111.jpg', '德国原装进口，特有Pronutra+配方，支持宝宝免疫系统。', 408.00, 478.00, NULL, NULL, 180, 130, 110, 4.9, 100, '上架', 0, 1, 0, 1, '2025-06-01 14:10:00', '2025-06-01 14:10:00', 1);
+INSERT INTO `product` VALUES (112, 2, 6, '费雪声光安抚小海马', 'BY112', 'goods112.jpg', '柔和灯光和音乐，安抚宝宝情绪，帮助入睡。', 258.00, 399.00, NULL, NULL, 150, 100, 90, 4.7, 80, '上架', 0, 0, 1, 0, '2025-06-01 14:15:00', '2025-11-20 18:08:37', 1);
+INSERT INTO `product` VALUES (113, 3, 7, '飞利浦新安怡自然原生系列玻璃奶瓶', 'BY113', 'goods113.jpg', '宽口径设计，易于冲调和清洗，仿生奶嘴，宝宝易接受。', 109.00, 139.00, NULL, NULL, 160, 110, 100, 4.8, 90, '上架', 0, 0, 1, 0, '2025-06-01 14:20:00', '2025-06-01 14:20:00', 1);
+INSERT INTO `product` VALUES (114, 3, 8, '美德乐韵律吸乳器单边电动', 'BY114', 'goods114.jpg', '模拟宝宝自然吸吮节奏，高效舒适，轻巧便携。', 1880.00, 2380.00, NULL, NULL, 80, 50, 45, 4.9, 40, '上架', 0, 1, 0, 1, '2025-06-01 14:25:00', '2025-06-01 14:25:00', 1);
+INSERT INTO `product` VALUES (115, 4, 9, '贝亲婴儿洗衣液', 'BY115', 'goods115.jpg', '植物配方，温和无刺激，有效去除污渍，易漂洗。', 59.90, 79.90, NULL, NULL, 200, 150, 130, 4.7, 120, '上架', 0, 0, 1, 0, '2025-06-01 14:30:00', '2025-06-01 14:30:00', 1);
+INSERT INTO `product` VALUES (116, 4, 10, '嘉宝米粉原味', 'BY116', 'goods116.jpg', '高铁高钙，细腻易消化，不添加蔗糖和食用盐，适合6个月以上宝宝。', 35.80, 45.00, NULL, NULL, 300, 250, 230, 4.8, 210, '上架', 0, 1, 1, 1, '2025-06-01 14:35:00', '2025-06-01 14:35:00', 1);
+INSERT INTO `product` VALUES (117, 5, 1, '惠氏S-26铂臻3段幼儿配方奶粉', 'BY117', 'goods117.jpg', '瑞士原装进口，含神经鞘磷脂，助力宝宝认知发展。', 378.00, 448.00, NULL, NULL, 179, 130, 110, 4.9, 100, '上架', 0, 1, 0, 1, '2025-06-01 14:40:00', '2025-11-22 12:11:54', 1);
+INSERT INTO `product` VALUES (118, 5, 2, '美素佳儿金装3段幼儿配方奶粉', 'BY118', 'goods118.jpg', '荷兰原装进口，含益生元，支持宝宝肠道健康。', 348.00, 418.00, NULL, NULL, 170, 125, 105, 4.8, 95, '上架', 0, 1, 0, 1, '2025-06-01 14:45:00', '2025-11-20 16:55:51', 1);
+INSERT INTO `product` VALUES (119, 3, 7, '帮宝适拉拉裤L号', 'BY119', 'goods119.jpg', '日本原装进口，一拉就穿，一撕即脱，方便好动宝宝。', 199.00, 239.00, NULL, NULL, 218, 173, 150, 4.9, 140, '上架', 0, 1, 1, 1, '2025-06-01 14:50:00', '2025-11-22 16:16:33', 1);
+INSERT INTO `product` VALUES (120, 6, 4, '花王纸尿裤NB号', 'BY120', 'goods120.jpg', '日本原装进口，专为新生儿设计，柔软贴合，呵护脐部。', 189.00, 219.00, NULL, NULL, 198, 157, 135, 4.8, 125, '上架', 0, 1, 1, 1, '2025-06-01 14:55:00', '2025-11-22 16:16:33', 1);
 
 -- ----------------------------
 -- Table structure for product_image
@@ -3141,6 +3286,74 @@ INSERT INTO `product_param` VALUES (279, 40, '功能', '带放大镜，防夹肉
 INSERT INTO `product_param` VALUES (280, 40, '产品特点', '安全圆头设计，不伤宝宝', NULL, 7, '2025-03-05 21:58:47', '2025-03-05 21:58:47');
 
 -- ----------------------------
+-- Table structure for product_sku
+-- ----------------------------
+DROP TABLE IF EXISTS `product_sku`;
+CREATE TABLE `product_sku`  (
+  `sku_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'SKU ID',
+  `product_id` int UNSIGNED NOT NULL COMMENT '商品ID',
+  `sku_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'SKU编码',
+  `sku_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'SKU名称（如：1段/900g）',
+  `spec_values` json NOT NULL COMMENT '规格值组合 JSON',
+  `price` decimal(10, 2) NOT NULL COMMENT 'SKU价格',
+  `stock` int NOT NULL DEFAULT 0 COMMENT 'SKU库存',
+  `sku_image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'SKU图片',
+  `weight` decimal(10, 2) NULL DEFAULT NULL COMMENT '重量(kg)',
+  `volume` decimal(10, 2) NULL DEFAULT NULL COMMENT '体积(m³)',
+  `status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+  `sort_order` int NULL DEFAULT 0 COMMENT '排序',
+  `version` int NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`sku_id`) USING BTREE,
+  UNIQUE INDEX `uk_sku_code`(`sku_code` ASC) USING BTREE,
+  INDEX `idx_product_id`(`product_id` ASC) USING BTREE,
+  INDEX `idx_status`(`status` ASC) USING BTREE,
+  CONSTRAINT `fk_sku_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品SKU表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of product_sku
+-- ----------------------------
+INSERT INTO `product_sku` VALUES (1, 1, 'WYS-1D-900G', '惠氏启赋有机奶粉 1段/900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"1段(0-6个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"900g\"}]', 358.00, 100, 'goods1.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
+INSERT INTO `product_sku` VALUES (2, 1, 'WYS-1D-1800G', '惠氏启赋有机奶粉 1段/1.8kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"1段(0-6个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.8kg\"}]', 688.00, 50, 'goods1.jpg', 1.80, NULL, 1, 2, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
+INSERT INTO `product_sku` VALUES (3, 1, 'WYS-2D-900G', '惠氏启赋有机奶粉 2段/900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"2段(6-12个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"900g\"}]', 368.00, 80, 'goods1.jpg', 0.90, NULL, 1, 3, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
+INSERT INTO `product_sku` VALUES (4, 1, 'WYS-2D-1800G', '惠氏启赋有机奶粉 2段/1.8kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"2段(6-12个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.8kg\"}]', 698.00, 40, 'goods1.jpg', 1.80, NULL, 1, 4, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
+INSERT INTO `product_sku` VALUES (5, 1, 'WYS-3D-900G', '惠氏启赋有机奶粉 3段/900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"3段(1-3岁)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"900g\"}]', 348.00, 120, 'goods1.jpg', 0.90, NULL, 1, 5, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
+INSERT INTO `product_sku` VALUES (6, 1, 'WYS-3D-1800G', '惠氏启赋有机奶粉 3段/1.8kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"3段(1-3岁)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.8kg\"}]', 668.00, 60, 'goods1.jpg', 1.80, NULL, 1, 6, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
+INSERT INTO `product_sku` VALUES (7, 2, 'ATM-1D-800G', '爱他美白金版奶粉 1段/800g', '[{\"spec_name\": \"规格\", \"spec_value\": \"1段(0-6个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"800g\"}]', 298.00, 90, 'goods2.jpg', 0.80, NULL, 1, 1, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
+INSERT INTO `product_sku` VALUES (8, 2, 'ATM-1D-1600G', '爱他美白金版奶粉 1段/1.6kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"1段(0-6个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.6kg\"}]', 568.00, 45, 'goods2.jpg', 1.60, NULL, 1, 2, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
+INSERT INTO `product_sku` VALUES (9, 2, 'ATM-2D-800G', '爱他美白金版奶粉 2段/800g', '[{\"spec_name\": \"规格\", \"spec_value\": \"2段(6-12个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"800g\"}]', 308.00, 75, 'goods2.jpg', 0.80, NULL, 1, 3, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
+INSERT INTO `product_sku` VALUES (10, 2, 'ATM-2D-1600G', '爱他美白金版奶粉 2段/1.6kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"2段(6-12个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.6kg\"}]', 588.00, 38, 'goods2.jpg', 1.60, NULL, 1, 4, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
+INSERT INTO `product_sku` VALUES (11, 2, 'ATM-3D-800G', '爱他美白金版奶粉 3段/800g', '[{\"spec_name\": \"规格\", \"spec_value\": \"3段(1-3岁)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"800g\"}]', 288.00, 110, 'goods2.jpg', 0.80, NULL, 1, 5, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
+INSERT INTO `product_sku` VALUES (12, 2, 'ATM-3D-1600G', '爱他美白金版奶粉 3段/1.6kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"3段(1-3岁)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.6kg\"}]', 548.00, 55, 'goods2.jpg', 1.60, NULL, 1, 6, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
+
+-- ----------------------------
+-- Table structure for product_sku_stock_log
+-- ----------------------------
+DROP TABLE IF EXISTS `product_sku_stock_log`;
+CREATE TABLE `product_sku_stock_log`  (
+  `log_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '日志ID',
+  `sku_id` bigint UNSIGNED NOT NULL COMMENT 'SKU ID',
+  `order_id` int UNSIGNED NULL DEFAULT NULL COMMENT '订单ID',
+  `change_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '变更类型：DEDUCT-扣减，RESTORE-恢复，ADJUST-调整',
+  `change_quantity` int NOT NULL COMMENT '变更数量（正数为增加，负数为减少）',
+  `before_stock` int NOT NULL COMMENT '变更前库存',
+  `after_stock` int NOT NULL COMMENT '变更后库存',
+  `operator` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '操作人',
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`log_id`) USING BTREE,
+  INDEX `idx_sku_id`(`sku_id` ASC) USING BTREE,
+  INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
+  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = 'SKU库存变更日志表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of product_sku_stock_log
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for product_specs
 -- ----------------------------
 DROP TABLE IF EXISTS `product_specs`;
@@ -3274,12 +3487,12 @@ CREATE TABLE `refund`  (
   CONSTRAINT `fk_refund_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_refund_payment` FOREIGN KEY (`payment_id`) REFERENCES `payment` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_refund_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '退款申请表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '退款申请表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of refund
 -- ----------------------------
-INSERT INTO `refund` VALUES (2, 'R1747964709693D075A0', 228, 'OD1747922100745f8639c', 8, 264, 716.00, '不想要了', '', '[]', 'PROCESSING', NULL, NULL, NULL, 'WECHAT', NULL, 1, 'admin', 0, 3, '2025-05-23 09:45:10', '2025-05-23 09:45:10');
+INSERT INTO `refund` VALUES (2, 'R1747964709693D075A0', 228, 'OD1747922100745f8639c', 8, 264, 716.00, '不想要了', '', '[]', 'COMPLETED', NULL, '2025-11-17 11:00:55', NULL, 'WECHAT', 'OD1747922100745f8639c', 1, 'admin', 0, 5, '2025-05-23 09:45:10', '2025-05-23 09:45:10');
 INSERT INTO `refund` VALUES (3, 'R1747965703901991F4D', 225, 'OD17478392282642a46ae', 8, 261, 399.90, '发货太慢', '', '[]', 'COMPLETED', NULL, '2025-05-23 11:16:25', NULL, 'ALIPAY', 'ALIPAY', 1, 'admin', 0, 5, '2025-05-23 10:01:44', '2025-05-23 10:01:44');
 INSERT INTO `refund` VALUES (4, 'R17501675810529B76EB', 253, 'OD1749726408755f094d7', 8, 278, 378.00, 'unwanted', '', '[]', 'COMPLETED', NULL, '2025-06-27 11:52:23', NULL, 'ALIPAY', 'OD1749726408755f094d7', 1, 'admin', 0, 5, '2025-06-17 21:39:41', '2025-06-17 21:39:41');
 INSERT INTO `refund` VALUES (5, 'R1750999409482F6DA75', 254, 'OD175099804314016fc06', 8, 279, 398.00, '收到商品破损', '', '[]', 'COMPLETED', NULL, '2025-06-27 12:49:47', NULL, 'WALLET', 'OD175099804314016fc06', 1, 'admin', 0, 5, '2025-06-27 12:43:29', '2025-06-27 12:43:29');
@@ -3287,7 +3500,8 @@ INSERT INTO `refund` VALUES (6, 'R175204525835868B750', 255, 'OD175204518724432e
 INSERT INTO `refund` VALUES (7, 'R175221112681766C869', 260, 'OD1752210905878845ae7', 8, 286, 89.90, '不想要了', '', '[]', 'COMPLETED', NULL, '2025-07-11 13:19:52', NULL, 'ALIPAY', 'OD1752210905878845ae7', 1, 'admin', 0, 5, '2025-07-11 13:18:47', '2025-07-11 13:18:47');
 INSERT INTO `refund` VALUES (8, 'R175221830584853CA2C', 263, 'OD175221820097485ae4b', 9, 290, 1830.00, '商品质量问题', '', '[]', 'COMPLETED', NULL, '2025-07-11 15:19:19', NULL, 'ALIPAY', 'OD175221820097485ae4b', 1, 'admin', 0, 5, '2025-07-11 15:18:26', '2025-07-11 15:18:26');
 INSERT INTO `refund` VALUES (9, 'R1752661171343E90907', 264, 'OD1752661153782d5f325', 8, 291, 399.90, '商品与描述不符', '', '[]', 'COMPLETED', NULL, '2025-07-16 18:51:14', NULL, 'WECHAT', 'OD1752661153782d5f325', 1, 'admin', 0, 5, '2025-07-16 18:19:31', '2025-07-16 18:19:31');
-INSERT INTO `refund` VALUES (10, 'R1752663378457377ED9', 265, 'OD1752663366489bad395', 8, 292, 179.00, '不想要了', '', '[]', 'PROCESSING', NULL, NULL, NULL, 'WECHAT', NULL, 1, 'admin', 0, 3, '2025-07-16 18:56:18', '2025-07-16 18:56:18');
+INSERT INTO `refund` VALUES (10, 'R1752663378457377ED9', 265, 'OD1752663366489bad395', 8, 292, 179.00, '不想要了', '', '[]', 'COMPLETED', NULL, '2025-11-17 10:52:22', NULL, 'WECHAT', 'OD1752663366489bad395', 1, 'admin', 0, 5, '2025-07-16 18:56:18', '2025-07-16 18:56:18');
+INSERT INTO `refund` VALUES (11, 'R17633496884292DE937', 273, 'OD17633495350114a4d95', 9, 302, 159.00, '收到商品破损', '', '[]', 'COMPLETED', NULL, '2025-11-17 11:46:58', NULL, 'ALIPAY', 'OD17633495350114a4d95', 1, 'admin', 0, 5, '2025-11-17 11:21:28', '2025-11-17 11:21:28');
 
 -- ----------------------------
 -- Table structure for refund_log
@@ -3309,7 +3523,7 @@ CREATE TABLE `refund_log`  (
   INDEX `idx_refund_no`(`refund_no` ASC) USING BTREE,
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
   CONSTRAINT `fk_log_refund` FOREIGN KEY (`refund_id`) REFERENCES `refund` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 42 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '退款处理日志表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 50 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '退款处理日志表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of refund_log
@@ -3355,6 +3569,14 @@ INSERT INTO `refund_log` VALUES (38, 9, 'R1752661171343E90907', 'PROCESSING', 'C
 INSERT INTO `refund_log` VALUES (39, 10, 'R1752663378457377ED9', 'PENDING', 'PENDING', 'USER', 8, '用户8', '用户申请退款：不想要了', '2025-07-16 18:56:18');
 INSERT INTO `refund_log` VALUES (40, 10, 'R1752663378457377ED9', 'PENDING', 'APPROVED', 'ADMIN', 1, 'admin', '管理员批准退款', '2025-07-16 18:56:32');
 INSERT INTO `refund_log` VALUES (41, 10, 'R1752663378457377ED9', 'APPROVED', 'PROCESSING', 'ADMIN', 1, 'admin', '管理员开始处理退款，渠道：WECHAT', '2025-07-16 19:23:29');
+INSERT INTO `refund_log` VALUES (42, 10, 'R1752663378457377ED9', 'PROCESSING', 'COMPLETED', 'ADMIN', 1, 'admin', '管理员完成退款，交易号：OD1752663366489bad395', '2025-11-17 10:52:22');
+INSERT INTO `refund_log` VALUES (43, 2, 'R1747964709693D075A0', 'PROCESSING', 'COMPLETED', 'ADMIN', 0, NULL, '管理员完成退款，交易号：OD1747922100745f8639c', '2025-11-17 11:00:55');
+INSERT INTO `refund_log` VALUES (44, 11, 'R17633496884292DE937', 'PENDING', 'PENDING', 'USER', 9, '用户9', '用户申请退款：收到商品破损', '2025-11-17 11:21:28');
+INSERT INTO `refund_log` VALUES (45, 11, 'R17633496884292DE937', 'PENDING', 'APPROVED', 'ADMIN', 0, NULL, '管理员批准退款', '2025-11-17 11:21:48');
+INSERT INTO `refund_log` VALUES (46, 11, 'R17633496884292DE937', 'APPROVED', 'APPROVED', 'SYSTEM', NULL, '系统', '调用退款接口失败: 支付未完成，无法退款', '2025-11-17 11:42:31');
+INSERT INTO `refund_log` VALUES (47, 11, 'R17633496884292DE937', 'APPROVED', 'PROCESSING', 'ADMIN', 1, 'admin', '管理员开始处理退款，渠道：ALIPAY', '2025-11-17 11:42:31');
+INSERT INTO `refund_log` VALUES (48, 11, 'R17633496884292DE937', 'PROCESSING', 'PROCESSING', 'SYSTEM', NULL, '系统', '查询支付宝退款状态失败: 支付宝退款查询失败：交易不存在', '2025-11-17 11:46:58');
+INSERT INTO `refund_log` VALUES (49, 11, 'R17633496884292DE937', 'PROCESSING', 'COMPLETED', 'ADMIN', 0, NULL, '管理员完成退款，交易号：OD17633495350114a4d95', '2025-11-17 11:46:58');
 
 -- ----------------------------
 -- Table structure for search_statistics
@@ -3470,11 +3692,11 @@ CREATE TABLE `user`  (
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (1, 'admin', '$2a$10$99ZE4lyxIxU0elrvrkWzZuGkNAHmewaZX2GMTr//rRb8A/M6sPo7q', 'Administrator', 'admin@example.com', '13777788866', 'http://localhost:5173/avatars/1/cce1bec0becb473980db13633e734130.gif', 'unknown', '1990-01-01', 1, 'admin', '2025-03-05 21:58:47', '2025-06-06 13:33:58', 1);
+INSERT INTO `user` VALUES (1, 'admin', '$2a$10$99ZE4lyxIxU0elrvrkWzZuGkNAHmewaZX2GMTr//rRb8A/M6sPo7q', 'Administrator', 'admin@example.com', '13777788866', 'http://localhost:5173/avatars/1/1ccfaa1a644c43589d559ad5831d9832.jpg', 'unknown', '1990-01-01', 1, 'admin', '2025-03-05 21:58:47', '2025-11-14 16:48:19', 1);
 INSERT INTO `user` VALUES (2, '123', '$2a$10$n9nJqYeP1UJ1YB8wJIP.1.q9RowPIWJ/c6v1z5NjsHYQkHJDCfKSi', '张三', 'user1@example.com', '13800000001', 'avatars/user1.jpg', 'female', '1992-05-20', 0, 'user', '2025-03-05 21:58:47', '2025-03-10 22:31:26', 1);
 INSERT INTO `user` VALUES (3, 'user', '/wbJNy.uYxIgMwR.q2rUW6Y4Xi3YXDWqueMgGRW', '李四', 'user2@qq.com', '13800000002', 'avatars/user2.jpg', 'male', '1988-11-15', 0, 'user', '2025-03-05 21:58:47', '2025-03-10 22:23:02', 1);
 INSERT INTO `user` VALUES (4, '157', '123456', '小明', '125645@qq.com', '15222366958', NULL, 'unknown', NULL, 0, 'user', '2025-03-05 22:43:49', '2025-03-11 21:46:01', 1);
-INSERT INTO `user` VALUES (8, 'test2', '$2a$10$UbDKxWBFG5B2wA.wIi/fJuO4PizzMZZ/p9atEIBzuJhNnIi2YPhSe', '张三', 'test2@qq.com', '13888144527', 'http://localhost:5173/avatars/8/f9d97f2d8ea8470eb20cbf93bcef6158.png', 'male', '2025-03-27', 1, 'user', '2025-03-06 18:11:00', '2025-07-14 11:31:53', 1);
+INSERT INTO `user` VALUES (8, 'test2', '$2a$10$UbDKxWBFG5B2wA.wIi/fJuO4PizzMZZ/p9atEIBzuJhNnIi2YPhSe', '张三', 'test2@qq.com', '13888144529', 'http://localhost:5173/avatars/8/f9d97f2d8ea8470eb20cbf93bcef6158.png', 'male', '2025-03-27', 1, 'user', '2025-03-06 18:11:00', '2025-11-19 11:54:27', 1);
 INSERT INTO `user` VALUES (9, 'pwz', '$2a$10$q11Omyzc1zBghScC.GZP7O.kmWH2TpfSrIF3rh5XWaP62HhBPgX2q', '彭伟株', '2898191344@qq.com', '13444755888', 'http://localhost:5173/avatars/9/b15f49fa72b6496f8c769b5df4b442ad.png', 'male', '2025-03-16', 1, 'user', '2025-03-10 22:26:02', '2025-05-23 13:13:23', 1);
 INSERT INTO `user` VALUES (10, 'test', '$2a$10$AdJGyc3uxy1fwxCWcH/QjO1DitbSxzipkMXUTS8X9gSYOa2SXQE1q', '测试用户', 'test@157.com', '18555622565', NULL, 'male', '2025-03-15', 0, 'user', '2025-03-13 18:18:48', '2025-03-18 20:20:39', 1);
 INSERT INTO `user` VALUES (11, '133', '123456', '特殊测试用户', '133@qq.com', '15774858562', NULL, NULL, NULL, 1, 'user', '2025-03-14 23:11:49', '2025-03-15 22:45:54', 1);
@@ -3515,8 +3737,8 @@ INSERT INTO `user_account` VALUES (1, 1, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, 
 INSERT INTO `user_account` VALUES (2, 2, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
 INSERT INTO `user_account` VALUES (3, 3, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
 INSERT INTO `user_account` VALUES (4, 4, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
-INSERT INTO `user_account` VALUES (5, 8, 18944.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-09-18 16:43:29');
-INSERT INTO `user_account` VALUES (6, 9, 4241.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-07-11 15:20:38');
+INSERT INTO `user_account` VALUES (5, 8, 20087.10, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-11-22 12:12:06');
+INSERT INTO `user_account` VALUES (6, 9, 3893.00, 0.00, 0, 0, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-11-18 12:59:30');
 INSERT INTO `user_account` VALUES (7, 10, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
 INSERT INTO `user_account` VALUES (8, 11, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
 INSERT INTO `user_account` VALUES (9, 48, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
@@ -3587,7 +3809,7 @@ CREATE TABLE `user_coupon`  (
   INDEX `idx_coupon_id`(`coupon_id` ASC) USING BTREE,
   INDEX `idx_status`(`status` ASC) USING BTREE,
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 29 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户优惠券表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 32 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户优惠券表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of user_coupon
@@ -3619,7 +3841,10 @@ INSERT INTO `user_coupon` VALUES (24, 8, 3, 2, 'EXPIRED', NULL, NULL, '2025-05-1
 INSERT INTO `user_coupon` VALUES (25, 8, 10, 5, 'EXPIRED', NULL, NULL, '2025-05-14 21:54:13', '2025-05-23 19:54:13', '2025-05-14 21:54:13', '2025-05-26 13:37:51');
 INSERT INTO `user_coupon` VALUES (26, 8, 4, 2, 'EXPIRED', NULL, NULL, '2025-05-14 21:54:15', '2025-05-23 19:54:13', '2025-05-14 21:54:15', '2025-05-26 13:37:51');
 INSERT INTO `user_coupon` VALUES (27, 8, 1, 1, 'USED', '2025-06-06 13:35:54', 237, '2025-05-26 17:45:23', '2025-09-23 00:00:00', '2025-05-26 17:45:23', '2025-05-26 17:45:23');
-INSERT INTO `user_coupon` VALUES (28, 8, 1, 1, 'UNUSED', NULL, NULL, '2025-06-11 22:53:28', '2025-09-23 00:00:00', '2025-06-11 22:53:28', '2025-06-11 22:53:28');
+INSERT INTO `user_coupon` VALUES (28, 8, 1, 1, 'EXPIRED', NULL, NULL, '2025-06-11 22:53:28', '2025-09-23 00:00:00', '2025-06-11 22:53:28', '2025-09-28 11:02:18');
+INSERT INTO `user_coupon` VALUES (29, 8, 1, 1, 'USED', '2025-11-12 13:28:44', 270, '2025-10-16 11:02:17', '2027-09-18 00:00:00', '2025-10-16 11:02:17', '2025-10-16 11:02:17');
+INSERT INTO `user_coupon` VALUES (30, 8, 1, 1, 'USED', '2025-11-21 15:55:30', 276, '2025-10-16 11:16:39', '2027-09-18 00:00:00', '2025-10-16 11:16:39', '2025-10-16 11:16:39');
+INSERT INTO `user_coupon` VALUES (31, 8, 1, 1, 'USED', '2025-11-22 16:16:34', 283, '2025-11-21 21:59:38', '2027-09-18 00:00:00', '2025-11-21 21:59:38', '2025-11-21 21:59:38');
 
 -- ----------------------------
 -- Table structure for user_message
@@ -3649,6 +3874,8 @@ CREATE TABLE `user_message`  (
 -- Records of user_message
 -- ----------------------------
 INSERT INTO `user_message` VALUES ('076764cb-c20c-432a-a4d9-6b3eecb58695', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17443783487882645 ', 0, '2025-04-12 20:56:35', NULL, 1, '{\"orderNo\": \"ORDER17443783487882645\"}', 1);
+INSERT INTO `user_message` VALUES ('083b6be4d1174019998b376e7424d75d', 8, 'REMIND', '您的催发货申请已收到', '您对订单 OD176282630155219a248 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-11-12 13:14:54', NULL, 1, '{\"orderId\": 268}', 0);
+INSERT INTO `user_message` VALUES ('0876619258e04a08a45d76deee07ea47', 8, 'ORDER', '订单状态已更新 - 709c410a', '您的订单 OD17635307389709c410a 状态已从 [shipped] 更新为 [completed]。', 0, '2025-11-21 15:25:39', NULL, 1, '{\"orderId\": 275, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('0893579c-1adf-48a2-9869-1fab3bec5888', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17443350818553567 ', 0, '2025-04-11 09:31:39', NULL, 1, '{\"orderNo\": \"ORDER17443350818553567\"}', 1);
 INSERT INTO `user_message` VALUES ('0b86ca38-d555-4c7e-b205-c396fb4d08e9', 9, '2', '提醒发货已收到', '您对订单 ORDER17443350818553567 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-04-11 09:31:39', '2025-04-13 22:13:38', 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('0df21ec90d5840a692abebe8e0ae2b95', 8, 'REMIND', '您的催发货申请已收到', '您对订单 OD17491728740800729c7 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-06-06 09:39:40', NULL, 1, '{\"orderId\": 236}', 0);
@@ -3658,24 +3885,34 @@ INSERT INTO `user_message` VALUES ('180e98adb7594777a2bf93650f5b0cb7', 9, 'ORDER
 INSERT INTO `user_message` VALUES ('18c9b5dbc33d40d4928272c79905f64a', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-06-10 09:36:45', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('1bac59aaf7b44391a558399b696fa031', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-07-11 13:17:36', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('2009380a-3af6-4e3e-b3b6-c4573e8844bd', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17446351380987716 ', 0, '2025-04-14 21:33:56', NULL, 1, '{\"orderNo\": \"ORDER17446351380987716\"}', 1);
+INSERT INTO `user_message` VALUES ('2443ace64a40463287eb6a5b6ca1ae5c', 9, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-11-18 09:59:24', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('244f8b205cc84c1596d7ee119c964f9a', 8, 'SHIPPING_REMINDER', '用户催发货提醒 - 55f094d7', '用户对订单 OD1749726408755f094d7 进行了催发货。\n下单时间：2025-06-12 19:06:49\n用户留言：对订单 ORDEROD1749726408755f094d7 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-06-17 21:36:15', NULL, 1, '{\"orderId\": 253}', 0);
 INSERT INTO `user_message` VALUES ('24c0c5e089a543b4a08e3138f22b2edb', 8, 'REMIND', '您的催发货申请已收到', '您对订单 OD1749172272479c582e6 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-06-06 09:14:04', NULL, 1, '{\"orderId\": 235}', 0);
+INSERT INTO `user_message` VALUES ('266c7299133748848ec0b78944565fe2', 8, 'ORDER', '订单状态已更新 - 709c410a', '您的订单 OD17635307389709c410a 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-11-19 15:08:11', NULL, 1, '{\"orderId\": 275, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('285ca4f9d14447fcb3679160c2b990c1', 59, 'SHIPPING_REMINDER', '用户催发货提醒 - 2428c5fe', '用户对订单 OD175213011582428c5fe 进行了催发货。\n下单时间：2025-07-10 14:48:36\n用户留言：对订单 ORDEROD175213011582428c5fe 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-07-10 14:49:23', NULL, 1, '{\"orderId\": 259}', 0);
 INSERT INTO `user_message` VALUES ('28f76ca7-b311-487f-9c07-3e783d731c0a', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17433427340697529 ', 0, '2025-03-30 22:05:38', NULL, 1, '{\"orderNo\": \"ORDER17433427340697529\"}', 1);
 INSERT INTO `user_message` VALUES ('2a56b9f9-ab90-40e0-86f7-2f189f2bd0a6', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17450703688316173 ', 0, '2025-04-19 22:01:01', NULL, 1, '{\"orderNo\": \"ORDER17450703688316173\"}', 1);
 INSERT INTO `user_message` VALUES ('2bac9a2ec46c4cbb9e9d6626c945cb9e', 9, 'REMIND', '您的催发货申请已收到', '您对订单 OD175221820097485ae4b 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-07-11 15:17:56', NULL, 1, '{\"orderId\": 263}', 0);
 INSERT INTO `user_message` VALUES ('2cc2da69-e929-4252-832f-7335beae7b4b', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17448106746512253 ', 0, '2025-04-17 15:40:12', NULL, 1, '{\"orderNo\": \"ORDER17448106746512253\"}', 1);
+INSERT INTO `user_message` VALUES ('2ef5cd084aee48769c398b5e66a654c0', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-10-17 13:47:00', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('2f2ade01f8c64a0ba1b8b32a9fe51270', 8, 'COMMENT_REWARD', '评价奖励 +23积分', '感谢您对\"产后修复套装\"的评价！\n\n系统已为您发放以下奖励：\n\n· 基础评价奖励: +5积分\n· 好评奖励: +8积分\n· 基础评价奖励: +10积分\n\n总计: +23积分', 1, '2025-06-06 09:47:15', '2025-06-06 09:56:26', 1, '{\"rewards\": [{\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 5, \"rewardDescription\": \"完成订单评价获得基础积分\"}, {\"rewardName\": \"好评奖励\", \"rewardType\": \"points\", \"rewardValue\": 8, \"rewardDescription\": \"给出4-5星好评\"}, {\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 10, \"rewardDescription\": \"完成商品评价获得奖励\"}], \"commentId\": 212, \"productId\": 60, \"totalReward\": 23}', 0);
 INSERT INTO `user_message` VALUES ('301940d2-f063-4d1a-b9ec-a9b55aa86b27', 9, '4', '签到成功', '恭喜您完成今日签到，获得 21 积分。您已连续签到 2 天，继续保持！', 0, '2025-04-22 22:46:38', NULL, 1, '{\"days\": 2, \"points\": 21, \"source\": \"signin\"}', 0);
+INSERT INTO `user_message` VALUES ('3437661204f14bc7b38e2b95f6a369bd', 8, 'ORDER', '订单状态已更新 - 371244e1', '您的订单 OD17629253243371244e1 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-11-12 13:29:29', NULL, 1, '{\"orderId\": 270, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('347757ab-b9d0-4feb-b4b7-aca42f2aeba9', 9, '2', '提醒发货已收到', '您对订单 ORDER17443783487882645 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-04-12 20:56:35', '2025-04-13 22:13:38', 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('3536928817a34594b514633c2b933597', 8, 'SHIPPING_REMINDER', '用户催发货提醒 - 8658bee0', '用户对订单 OD174728514628658bee0 进行了催发货。\n下单时间：2025-05-15 12:59:06\n用户留言：对订单 ORDEROD174728514628658bee0 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-05-15 13:29:57', NULL, 1, '{\"orderId\": 221}', 0);
+INSERT INTO `user_message` VALUES ('36e7874cfcaa4029a0ad21cc07cfc028', 8, 'SHIPPING_REMINDER', '用户催发货提醒 - 5219a248', '用户对订单 OD176282630155219a248 进行了催发货。\n下单时间：2025-11-11 09:58:22\n用户留言：对订单 ORDEROD176282630155219a248 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-11-12 13:14:54', '2025-11-16 18:29:48', 1, '{\"orderId\": 268}', 0);
 INSERT INTO `user_message` VALUES ('36fe9c41-399d-4428-b0f4-1be46b3a1c88', 9, '2', '提醒发货已收到', '您对订单 ORDER17433100841148442 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-03-30 12:55:56', '2025-04-13 22:13:38', 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('37a7f509-4119-4d87-8a9f-291e2ffdd3ff', 9, '2', '提醒发货已收到', '您对订单 ORDER17433100841148442 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-03-30 12:56:40', '2025-04-13 22:13:38', 1, NULL, 0);
+INSERT INTO `user_message` VALUES ('38c0644f1c924fa5950902b73b89d666', 9, 'ORDER', '订单状态已更新 - 114a4d95', '您的订单 OD17633495350114a4d95 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-11-17 11:19:40', NULL, 1, '{\"orderId\": 273, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('38d40bf0-db01-444d-a4bc-5b6f243b5726', 9, '2', '提醒发货已收到', '您对订单 ORDER17450453576811598 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-04-19 21:34:31', NULL, 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('3e741fa093524a43b371f4b15c6fbc4f', 8, 'ORDER', '订单状态已更新 - 78845ae7', '您的订单 OD1752210905878845ae7 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-07-11 13:16:11', NULL, 1, '{\"orderId\": 260, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
+INSERT INTO `user_message` VALUES ('400f6a04480f49c38196ccc282ba9228', 8, 'CHECKIN', '恭喜您，已连续签到4天', '您今日签到获得了25积分。您已连续签到4天，继续保持可获得更多奖励！', 0, '2025-11-22 10:10:02', NULL, 1, '{\"earnedPoints\": 25, \"continuousDays\": 4}', 0);
+INSERT INTO `user_message` VALUES ('402d812120584b37aef0b750dd2faaed', 9, 'ORDER', '订单状态已更新 - 114a4d95', '您的订单 OD17633495350114a4d95 状态已从 [shipped] 更新为 [completed]。', 0, '2025-11-17 11:21:06', NULL, 1, '{\"orderId\": 273, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('40f5dc82-1e5d-471e-8cee-518bf6295032', 9, '2', '提醒发货已收到', '您对订单 ORDER17433435585039867 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-03-31 19:42:41', '2025-04-13 22:13:38', 1, NULL, 0);
+INSERT INTO `user_message` VALUES ('457f485fa2084e8b9a033e343e50796f', 8, 'ORDER', '订单状态已更新 - 53fcb46f', '您的订单 OD1763292813353fcb46f 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-11-16 19:34:49', NULL, 1, '{\"orderId\": 272, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('46e0f407dc084b47a0280647e59a4fc4', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-05-27 19:19:05', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('47884c884720464ea435c4ef430a8f54', 59, 'REMIND', '您的催发货申请已收到', '您对订单 OD175213011582428c5fe 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-07-10 14:49:23', NULL, 1, '{\"orderId\": 259}', 0);
+INSERT INTO `user_message` VALUES ('4b213e4c274c4f958fdcdd52c188e82e', 8, 'ORDER', '订单状态已更新 - 53fcb46f', '您的订单 OD1763292813353fcb46f 状态已从 [shipped] 更新为 [completed]。', 0, '2025-11-16 19:54:18', NULL, 1, '{\"orderId\": 272, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('4c277e0ef68645f982b2e041c60cc895', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-06-18 15:17:15', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('4cf9d5c822f74aaf9ac6e8fc34994703', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-06-06 09:05:47', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('4e5657c915d143ec851aa8b5597dea6a', 8, 'REMIND', '您的催发货申请已收到', '您对订单 OD1749726408755f094d7 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-06-17 21:36:15', NULL, 1, '{\"orderId\": 253}', 0);
@@ -3686,16 +3923,19 @@ INSERT INTO `user_message` VALUES ('513e5805229348d9bcbfc010959a1d47', 8, 'ORDER
 INSERT INTO `user_message` VALUES ('51f423a9-896e-4d85-904f-8609e21430fa', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17446351380987716 ', 0, '2025-04-14 20:57:00', NULL, 1, '{\"orderNo\": \"ORDER17446351380987716\"}', 1);
 INSERT INTO `user_message` VALUES ('5275d42903bd44afa2eb909a9b76bab3', 8, 'REMIND', '您的催发货申请已收到', '您对订单 OD1749726408755f094d7 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-06-17 21:36:59', NULL, 1, '{\"orderId\": 253}', 0);
 INSERT INTO `user_message` VALUES ('539e5914-cfe0-4d76-b06a-8764dd3a8243', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17456516991175745 ', 0, '2025-04-26 15:15:17', NULL, 1, '{\"orderNo\": \"ORDER17456516991175745\"}', 0);
+INSERT INTO `user_message` VALUES ('552c323e38de4fafa7e6ac67287cc9c8', 8, 'ORDER', '订单状态已更新 - 520bd2ce', '您的订单 OD17632913246520bd2ce 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-11-16 19:09:36', NULL, 1, '{\"orderId\": 271, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('581b853686354322a927d1b19698d2b9', 8, 'ORDER', '订单状态已更新 - 79daa9d8', '您的订单 OD1747320522379daa9d8 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-05-20 22:54:01', NULL, 1, '{\"orderId\": 222, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('5a5f3f85c91047c79932808ca5f0d9ba', 8, 'ORDER', '订单状态已更新 - 21a79c8d', '您的订单 OD1749634872421a79c8d 状态已从 [cancelled] 更新为 [deleted]。', 0, '2025-06-13 22:57:31', NULL, 1, '{\"orderId\": 251, \"newStatus\": \"deleted\", \"oldStatus\": \"cancelled\"}', 0);
 INSERT INTO `user_message` VALUES ('5b3e4482e29b45adbd0e408053fbe084', 8, 'ORDER', '订单状态已更新 - 52415971', '您的订单 OD1749188154352415971 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-06-06 13:36:58', NULL, 1, '{\"orderId\": 237, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('5bcb1aa492ed45979a775a62baf222c0', 9, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-05-15 12:47:36', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('5c1cb2f5d7284f11803772cce418ef59', 8, 'CHECKIN', '恭喜您，已连续签到8天', '您今日签到获得了50积分。您已连续签到8天，继续保持可获得更多奖励！', 0, '2025-05-17 18:40:12', NULL, 1, '{\"earnedPoints\": 50, \"continuousDays\": 8}', 0);
+INSERT INTO `user_message` VALUES ('5d4357747cb64717aa65d5e47627d775', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-11-16 19:08:08', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('5d4643f46e24422c9e717f1b67f91f45', 8, 'ORDER', '订单状态已更新 - 78845ae7', '您的订单 OD1752210905878845ae7 状态已从 [shipped] 更新为 [completed]。', 0, '2025-07-11 13:16:38', NULL, 1, '{\"orderId\": 260, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('5ea4aaa03fa1498dab78950718604001', 59, 'ORDER', '订单状态已更新 - 2428c5fe', '您的订单 OD175213011582428c5fe 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-07-10 14:49:41', NULL, 1, '{\"orderId\": 259, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('62ac6d55be49402facb30090b6c6bfd3', 8, 'REMIND', '您的催发货申请已收到', '您对订单 OD1752210905878845ae7 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-07-11 13:15:49', NULL, 1, '{\"orderId\": 260}', 0);
 INSERT INTO `user_message` VALUES ('634e308ab65b4070ae5b5a6b2ca26f54', 8, 'CHECKIN', '恭喜您，已连续签到4天', '您今日签到获得了25积分。您已连续签到4天，继续保持可获得更多奖励！', 0, '2025-06-13 09:39:11', NULL, 1, '{\"earnedPoints\": 25, \"continuousDays\": 4}', 0);
 INSERT INTO `user_message` VALUES ('6800803a411b435f89dfa0dbfbba590b', 8, 'ORDER', '订单状态已更新 - 52415971', '您的订单 OD1749188154352415971 状态已从 [shipped] 更新为 [completed]。', 0, '2025-06-06 13:37:09', NULL, 1, '{\"orderId\": 237, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
+INSERT INTO `user_message` VALUES ('6835db6161fe4b218f6fde7c9d579406', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-11-12 10:14:03', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('6a9a930a-80e1-416f-b9fc-b7da73bdee68', 9, '2', '提醒发货已收到', '您对订单 ORDER17450703688316173 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-04-19 22:01:01', NULL, 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('6dc63b2ef303480685df69e834f7dc65', 8, 'CHECKIN', '恭喜您，已连续签到3天', '您今日签到获得了20积分。您已连续签到3天，继续保持可获得更多奖励！', 0, '2025-05-28 19:11:18', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 3}', 0);
 INSERT INTO `user_message` VALUES ('71cbe1fd-542f-41d1-8007-e0973feb96e5', 9, '4', '签到成功', '恭喜您完成今日签到，获得 21 积分。您已连续签到 2 天，继续保持！', 0, '2025-04-20 09:31:58', NULL, 1, '{\"days\": 2, \"points\": 21, \"source\": \"signin\"}', 0);
@@ -3705,6 +3945,7 @@ INSERT INTO `user_message` VALUES ('784652968a954470b1e9567340d02f2f', 8, 'ORDER
 INSERT INTO `user_message` VALUES ('78698d3a-b924-435a-89b6-3f8011120369', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17433100841148442 ', 0, '2025-03-30 12:55:56', NULL, 1, '{\"orderNo\": \"ORDER17433100841148442\"}', 1);
 INSERT INTO `user_message` VALUES ('7a6933bb-8b0a-4d30-8d62-27b5de1df6ac', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17433435585039867 ', 0, '2025-03-31 19:42:41', NULL, 1, '{\"orderNo\": \"ORDER17433435585039867\"}', 1);
 INSERT INTO `user_message` VALUES ('7aa9ba99-c56a-4416-9436-05639d904ef1', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17443551411937606 ', 0, '2025-04-11 15:23:45', NULL, 1, '{\"orderNo\": \"ORDER17443551411937606\"}', 1);
+INSERT INTO `user_message` VALUES ('7c3f407468844704a3917c20c61ed7ce', 8, 'COMMENT_REWARD', '评价奖励 +15积分', '感谢您对\"美德乐丝韵单边电动吸奶器\"的评价！\n\n系统已为您发放以下奖励：\n\n· 基础评价奖励: +5积分\n· 基础评价奖励: +10积分\n\n总计: +15积分', 0, '2025-11-16 19:10:02', NULL, 1, '{\"rewards\": [{\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 5, \"rewardDescription\": \"完成订单评价获得基础积分\"}, {\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 10, \"rewardDescription\": \"完成商品评价获得奖励\"}], \"commentId\": 216, \"productId\": 84, \"totalReward\": 15}', 0);
 INSERT INTO `user_message` VALUES ('7dafabf9-609c-4156-992e-1a15caf39d0e', 9, '4', '恭喜获得积分奖励', '您的订单 ORDER17453886695259124 已完成，获得 9 积分奖励（订单金额的10%）。', 0, '2025-04-23 20:29:42', NULL, 1, '{\"points\": 9, \"source\": \"order\", \"orderNo\": \"ORDER17453886695259124\", \"actualAmount\": \"99.90\"}', 0);
 INSERT INTO `user_message` VALUES ('7f920d3dabcf4fddb3095a7d81543358', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-06-27 11:51:07', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('7fc97faa-e853-4136-ad9d-eef3abb47594', 9, '4', '签到成功', '恭喜您完成今日签到，获得 21 积分。您已连续签到 2 天，继续保持！', 0, '2025-04-21 13:38:39', NULL, 1, '{\"days\": 2, \"points\": 21, \"source\": \"signin\"}', 0);
@@ -3715,6 +3956,7 @@ INSERT INTO `user_message` VALUES ('8bcd415f1c964a76bf00658ae0b9c8a7', 8, 'CHECK
 INSERT INTO `user_message` VALUES ('8d2dd994-8ce5-4bac-a4d7-d6d9b921d93b', 9, '2', '提醒发货已收到', '您对订单 ORDER17446395616614757 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-04-14 22:06:06', '2025-04-19 17:27:57', 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('8e1d1562-ed9d-4648-829f-d4481d8ff6e8', 9, '2', '提醒发货已收到', '您对订单 ORDER17446351380987716 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-04-14 21:33:56', '2025-04-19 17:27:57', 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('8e8edbac88ae44f9bae9e9197139bfcd', 8, 'REMIND', '您的催发货申请已收到', '您对订单 OD1746944159254ef56e4 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-05-13 21:28:49', NULL, 1, '{\"orderId\": 217}', 0);
+INSERT INTO `user_message` VALUES ('8e9ec5a4c2de4a3eba8a56ef9e4535f5', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-10-16 11:37:14', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('8f5e7b9969814624a1736b59e3143166', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-09-18 16:43:12', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('8f735558ca5844f3a956bba44a87f68b', 59, 'ORDER', '订单状态已更新 - 2428c5fe', '您的订单 OD175213011582428c5fe 状态已从 [shipped] 更新为 [completed]。', 0, '2025-07-10 16:57:54', NULL, 1, '{\"orderId\": 259, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('8ff12890-057f-4d54-9bef-2a01ac70650c', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17450453576811598 ', 0, '2025-04-19 21:34:31', NULL, 1, '{\"orderNo\": \"ORDER17450453576811598\"}', 1);
@@ -3724,6 +3966,9 @@ INSERT INTO `user_message` VALUES ('92e96dc37234406b89a5583b08bdf67d', 8, 'CHECK
 INSERT INTO `user_message` VALUES ('9322a87a32e347cfb5b88915f76d4a6c', 8, 'ORDER', '订单状态已更新 - 5788d6c7', '您的订单 OD174844173195788d6c7 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-05-28 22:16:57', NULL, 1, '{\"orderId\": 231, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('93cdc8fa99914fc5aae106ff6952571b', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-07-09 12:07:53', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('93e91b6f-65ca-4a1f-8f57-1992757ea9c8', 9, '4', '恭喜获得积分奖励', '您的订单 ORDER17454725349573471 已完成，获得 114 积分奖励（订单金额的10%）。', 0, '2025-04-24 16:43:44', NULL, 1, '{\"points\": 114, \"source\": \"order\", \"orderNo\": \"ORDER17454725349573471\", \"actualAmount\": \"1149.60\"}', 0);
+INSERT INTO `user_message` VALUES ('94200f74a3a74f37b0b7586128b33e7d', 9, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-11-17 11:03:21', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
+INSERT INTO `user_message` VALUES ('948443952de6435981b4d06910c412fe', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-11-11 10:32:45', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
+INSERT INTO `user_message` VALUES ('9630e8f0721a4ce3af5c599e1d323499', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-10-11 17:01:13', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('99564d99bf944177ba28c7dd80feaa89', 9, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-07-09 15:38:25', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('9a8c869fbd774427ae34f5733a513c4d', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-09-19 12:11:15', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('9b7b1fad-7c5f-4e51-a32f-542d5979f68d', 9, '2', '提醒发货已收到', '您对订单 ORDER17433100841148442 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-03-30 12:56:42', '2025-04-13 22:13:38', 1, NULL, 0);
@@ -3735,6 +3980,8 @@ INSERT INTO `user_message` VALUES ('a6273d141596485198551f6495060df6', 8, 'ORDER
 INSERT INTO `user_message` VALUES ('a7cf8d7867554e5bbb2cc0c8c07aae11', 9, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-07-10 10:25:23', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('aad59a9e3ff34af1abd0b44fae4d66b4', 8, 'ORDER', '订单状态已更新 - 960ab1fc', '您的订单 OD17479041992960ab1fc 状态已从 [pending_shipment] 更新为 [cancelled]。', 0, '2025-05-22 18:09:35', NULL, 1, '{\"orderId\": 227, \"newStatus\": \"cancelled\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('ae58cf0285184354a2dc98c5e711c7dd', 8, 'CHECKIN', '恭喜您，已连续签到6天', '您今日签到获得了25积分。您已连续签到6天，继续保持可获得更多奖励！', 0, '2025-05-15 12:47:59', NULL, 1, '{\"earnedPoints\": 25, \"continuousDays\": 6}', 0);
+INSERT INTO `user_message` VALUES ('afc35dd46cfd44c5a6dd47c09665ca94', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-11-20 16:43:27', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
+INSERT INTO `user_message` VALUES ('affa311f3ab8420581c11a68efafe44d', 9, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-10-17 17:06:37', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('b076c6528cee45748418e426d995067e', 8, 'CHECKIN', '恭喜您，已连续签到3天', '您今日签到获得了20积分。您已连续签到3天，继续保持可获得更多奖励！', 0, '2025-05-22 14:40:08', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 3}', 0);
 INSERT INTO `user_message` VALUES ('b1862330-65a3-4545-ba26-d245c019161b', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17443783487882645 ', 0, '2025-04-11 21:37:24', NULL, 1, '{\"orderNo\": \"ORDER17443783487882645\"}', 1);
 INSERT INTO `user_message` VALUES ('b1a0d9e6945645a091d6fe55d6643e47', 9, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-05-23 15:35:45', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
@@ -3743,10 +3990,12 @@ INSERT INTO `user_message` VALUES ('b32c996dd161468699c02ab9b04a2d04', 8, 'ORDER
 INSERT INTO `user_message` VALUES ('b349d79446d6403fb1f3e3ff7ec894b9', 8, 'SHIPPING_REMINDER', '用户催发货提醒 - 79c582e6', '用户对订单 OD1749172272479c582e6 进行了催发货。\n下单时间：2025-06-06 09:11:12\n用户留言：对订单 ORDEROD1749172272479c582e6 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-06-06 09:14:05', NULL, 1, '{\"orderId\": 235}', 0);
 INSERT INTO `user_message` VALUES ('b608465b-bf78-4ebe-81d0-1df246812fdc', 9, '2', '提醒发货已收到', '您对订单 ORDER17446103742268284 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-04-14 14:37:05', '2025-04-19 17:27:57', 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('b6f81aa9-5161-420f-a7be-9b6f42c1fd4d', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17449398848975895 ', 0, '2025-04-18 10:13:54', NULL, 1, '{\"orderNo\": \"ORDER17449398848975895\"}', 1);
+INSERT INTO `user_message` VALUES ('b8d1e3efe2bc4576a6698dc6b77d9ec3', 8, 'ORDER', '订单状态已更新 - 5219a248', '您的订单 OD176282630155219a248 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-11-13 18:40:15', NULL, 1, '{\"orderId\": 268, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('b8d5115cd1a84d5cb7cd2fbc25377080', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-06-17 18:33:25', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('b928eeda371145ab97e4a8f03d8ef650', 8, 'REMIND', '您的催发货申请已收到', '您对订单 OD1747922100745f8639c 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-05-22 22:01:25', NULL, 1, '{\"orderId\": 228}', 0);
 INSERT INTO `user_message` VALUES ('bd8cd7babf75415a9e1284e54d292379', 8, 'ORDER', '订单状态已更新 - 38f9acc0', '您的订单 OD1748085552938f9acc0 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-05-29 23:05:02', NULL, 1, '{\"orderId\": 229, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('be56133a-6ed6-4595-871e-ce54067cf7d7', 9, '2', '提醒发货已收到', '您对订单 ORDER17446351380987716 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-04-14 20:57:00', '2025-04-19 17:27:57', 1, NULL, 0);
+INSERT INTO `user_message` VALUES ('c35a7007f5374d9a87da1e67b4a54303', 8, 'CHECKIN', '恭喜您，已连续签到3天', '您今日签到获得了20积分。您已连续签到3天，继续保持可获得更多奖励！', 0, '2025-11-21 13:59:32', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 3}', 0);
 INSERT INTO `user_message` VALUES ('c35df59a7ecd4076a715945ded1720cd', 8, 'ORDER', '订单状态已更新 - 800729c7', '您的订单 OD17491728740800729c7 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-06-06 09:39:56', NULL, 1, '{\"orderId\": 236, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('c9795922-c02f-4ce2-a557-5a4723ed87fd', 9, '2', '提醒发货已收到', '您对订单 ORDER17448106746512253 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-04-17 15:37:51', '2025-04-19 17:27:57', 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('cae56201-6e0f-49cc-958a-7176aa309049', 9, '2', '提醒发货已收到', '您对订单 ORDER17433427340697529 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-03-30 22:05:37', '2025-04-13 22:13:38', 1, NULL, 0);
@@ -3754,18 +4003,22 @@ INSERT INTO `user_message` VALUES ('cb84d3ae-cec1-47e5-bf5b-f180538800b2', 9, '4
 INSERT INTO `user_message` VALUES ('ccba01e91e0e42a38ece77420bf00d79', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-07-08 10:00:20', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('cd60e84c-e070-494e-89cd-b1fd52c2df06', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17448106746512253 ', 0, '2025-04-17 15:37:51', NULL, 1, '{\"orderNo\": \"ORDER17448106746512253\"}', 1);
 INSERT INTO `user_message` VALUES ('cda1d8e3fb72432196ca6d234d8d3265', 8, 'COMMENT_REWARD', '评价奖励 +23积分', '感谢您对\"婴儿音乐床铃\"的评价！\n\n系统已为您发放以下奖励：\n\n· 基础评价奖励: +5积分\n· 好评奖励: +8积分\n· 基础评价奖励: +10积分\n\n总计: +23积分', 0, '2025-05-30 09:34:51', NULL, 1, '{\"rewards\": [{\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 5, \"rewardDescription\": \"完成订单评价获得基础积分\"}, {\"rewardName\": \"好评奖励\", \"rewardType\": \"points\", \"rewardValue\": 8, \"rewardDescription\": \"给出4-5星好评\"}, {\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 10, \"rewardDescription\": \"完成商品评价获得奖励\"}], \"commentId\": 211, \"productId\": 56, \"totalReward\": 23}', 0);
+INSERT INTO `user_message` VALUES ('cea513f3322640f18561442746d9b9e0', 8, 'ORDER', '订单状态已更新 - 520bd2ce', '您的订单 OD17632913246520bd2ce 状态已从 [shipped] 更新为 [completed]。', 0, '2025-11-16 19:09:46', NULL, 1, '{\"orderId\": 271, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('d048ce39-9989-4816-aa50-0395222e5b4d', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17446103742268284 ', 0, '2025-04-14 14:37:05', NULL, 1, '{\"orderNo\": \"ORDER17446103742268284\"}', 1);
 INSERT INTO `user_message` VALUES ('d0740494-e065-4800-b23b-b3eebaa53443', 9, '4', '恭喜获得积分奖励', '您的订单 ORDER17450548263311761 已完成，获得 8996 积分奖励（订单金额的10%）。', 0, '2025-04-19 17:30:15', NULL, 1, '{\"points\": 8996, \"source\": \"order\", \"orderNo\": \"ORDER17450548263311761\", \"actualAmount\": \"89960.00\"}', 0);
+INSERT INTO `user_message` VALUES ('d1775aa265594c6a82e587fbced8211c', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-11-17 11:01:41', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('d3c86b1042da4c17b327d586e298457e', 8, 'COMMENT_REWARD', '评价奖励 +23积分', '感谢您对\"产后修复套装\"的评价！\n\n系统已为您发放以下奖励：\n\n· 基础评价奖励: +5积分\n· 好评奖励: +8积分\n· 基础评价奖励: +10积分\n\n总计: +23积分', 1, '2025-06-06 13:37:46', '2025-06-06 13:38:20', 1, '{\"rewards\": [{\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 5, \"rewardDescription\": \"完成订单评价获得基础积分\"}, {\"rewardName\": \"好评奖励\", \"rewardType\": \"points\", \"rewardValue\": 8, \"rewardDescription\": \"给出4-5星好评\"}, {\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 10, \"rewardDescription\": \"完成商品评价获得奖励\"}], \"commentId\": 213, \"productId\": 60, \"totalReward\": 23}', 0);
 INSERT INTO `user_message` VALUES ('d441ff87-1165-4447-b85c-73c447c0a956', 9, '2', '提醒发货已收到', '您对订单 ORDER17456516991175745 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-04-26 15:15:17', NULL, 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('d8041bfdf191458bbb57f0e24b05399c', 8, 'SHIPPING_REMINDER', '用户催发货提醒 - 54ef56e4', '用户对订单 OD1746944159254ef56e4 进行了催发货。\n下单时间：2025-05-11 14:15:59\n用户留言：对订单 ORDEROD1746944159254ef56e4 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-05-13 21:28:49', NULL, 1, '{\"orderId\": 217}', 0);
 INSERT INTO `user_message` VALUES ('d8a9f9680d3e44a8889721c8fcc1b6b0', 8, 'CHECKIN', '恭喜您，已连续签到3天', '您今日签到获得了20积分。您已连续签到3天，继续保持可获得更多奖励！', 0, '2025-06-12 19:02:22', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 3}', 0);
+INSERT INTO `user_message` VALUES ('d8acfbe36ded4ff5a8e2a3073de949c7', 8, 'ORDER', '订单状态已更新 - 5946e012', '您的订单 OD176282938025946e012 状态已从 [shipped] 更新为 [completed]。', 0, '2025-11-12 10:37:12', NULL, 1, '{\"orderId\": 269, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('d9781ba79f584a1aa7759fd905e486c7', 9, 'ORDER', '订单状态已更新 - 35be2d08', '您的订单 OD1752064333335be2d08 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-07-09 20:32:49', NULL, 1, '{\"orderId\": 256, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('db2f6017f08a4dce9c66715eb69a7b00', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-05-20 15:49:13', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('dd2923e88004448ca775dd9df19718d8', 8, 'SHIPPING_REMINDER', '用户催发货提醒 - 45f8639c', '用户对订单 OD1747922100745f8639c 进行了催发货。\n下单时间：2025-05-22 21:55:01\n用户留言：对订单 ORDEROD1747922100745f8639c 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-05-22 22:01:25', NULL, 1, '{\"orderId\": 228}', 0);
 INSERT INTO `user_message` VALUES ('ddeed8a9-5396-4e13-a8ab-8972af7092d5', 8, '2', '提醒发货已收到', '您对订单 ORDER17443551411937606 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-04-11 15:23:45', NULL, 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('de70430be43f43aa922fd3ca8c59e17a', 8, 'REMIND', '您的催发货申请已收到', '您对订单 OD174728514628658bee0 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-05-15 13:29:57', NULL, 1, '{\"orderId\": 221}', 0);
-INSERT INTO `user_message` VALUES ('defeb8611a27433c93ff52352aef3669', 9, 'SHIPPING_REMINDER', '用户催发货提醒 - 7485ae4b', '用户对订单 OD175221820097485ae4b 进行了催发货。\n下单时间：2025-07-11 15:16:41\n用户留言：对订单 ORDEROD175221820097485ae4b 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-07-11 15:17:56', NULL, 1, '{\"orderId\": 263}', 0);
+INSERT INTO `user_message` VALUES ('defeb8611a27433c93ff52352aef3669', 9, 'SHIPPING_REMINDER', '用户催发货提醒 - 7485ae4b', '用户对订单 OD175221820097485ae4b 进行了催发货。\n下单时间：2025-07-11 15:16:41\n用户留言：对订单 ORDEROD175221820097485ae4b 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-07-11 15:17:56', '2025-11-19 15:25:12', 1, '{\"orderId\": 263}', 0);
+INSERT INTO `user_message` VALUES ('df24b70df47a48be9228143a202d2de1', 8, 'COMMENT_REWARD', '评价奖励 +23积分', '感谢您对\"飞利浦新安怡自然原生系列...\"的评价！\n\n系统已为您发放以下奖励：\n\n· 基础评价奖励: +5积分\n· 好评奖励: +8积分\n· 基础评价奖励: +10积分\n\n总计: +23积分', 0, '2025-11-12 10:37:50', NULL, 1, '{\"rewards\": [{\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 5, \"rewardDescription\": \"完成订单评价获得基础积分\"}, {\"rewardName\": \"好评奖励\", \"rewardType\": \"points\", \"rewardValue\": 8, \"rewardDescription\": \"给出4-5星好评\"}, {\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 10, \"rewardDescription\": \"完成商品评价获得奖励\"}], \"commentId\": 215, \"productId\": 93, \"totalReward\": 23}', 0);
 INSERT INTO `user_message` VALUES ('e00a55601b52483792d71e4f85adcf7f', 8, 'ORDER', '订单状态已更新 - 800729c7', '您的订单 OD17491728740800729c7 状态已从 [shipped] 更新为 [completed]。', 0, '2025-06-06 09:46:48', NULL, 1, '{\"orderId\": 236, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('e274e6ef-41f5-4f7c-ac4e-ebaa237f45c0', 9, '2', '提醒发货已收到', '您对订单 ORDER17449398848975895 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-04-18 10:13:54', '2025-04-19 17:27:57', 1, NULL, 0);
 INSERT INTO `user_message` VALUES ('e36c19e9cf2549b3ba4babcd9d3b0f6d', 8, 'CHECKIN', '恭喜您，已连续签到5天', '您今日签到获得了30积分。您已连续签到5天，继续保持可获得更多奖励！', 0, '2025-05-24 18:47:35', NULL, 1, '{\"earnedPoints\": 30, \"continuousDays\": 5}', 0);
@@ -3778,11 +4031,14 @@ INSERT INTO `user_message` VALUES ('eac4a2d9-df97-4aa5-ab5c-2e67281fa4b8', 9, '4
 INSERT INTO `user_message` VALUES ('eb4bebe059ea4c5e9a04a3583641a116', 8, 'SHIPPING_REMINDER', '用户催发货提醒 - 78845ae7', '用户对订单 OD1752210905878845ae7 进行了催发货。\n下单时间：2025-07-11 13:15:06\n用户留言：对订单 ORDEROD1752210905878845ae7 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-07-11 13:15:49', NULL, 1, '{\"orderId\": 260}', 0);
 INSERT INTO `user_message` VALUES ('eccc0f12-025a-4278-93ef-859eb09402d0', 9, '4', '恭喜获得积分奖励', '您的订单 ORDER17451462811964198 已完成，获得 16 积分奖励（订单金额的10%）。', 0, '2025-04-20 18:52:26', NULL, 1, '{\"points\": 16, \"source\": \"order\", \"orderNo\": \"ORDER17451462811964198\", \"actualAmount\": \"169.90\"}', 0);
 INSERT INTO `user_message` VALUES ('ef6d7437-e49a-4cad-9921-519a93644cf9', 9, '2', '提醒发货已收到', '您对订单 ORDER17443783487882645 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-04-11 21:37:24', '2025-04-13 22:13:38', 1, NULL, 0);
+INSERT INTO `user_message` VALUES ('f14109c9f52b4b6e880e7d97a8c9a786', 8, 'ORDER', '订单状态已更新 - 296f4f05', '您的订单 OD17582551185296f4f05 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-11-16 17:47:31', NULL, 1, '{\"orderId\": 267, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('f25f27a172cd48c388aa7f5c214b5492', 8, 'CHECKIN', '恭喜您，已连续签到3天', '您今日签到获得了20积分。您已连续签到3天，继续保持可获得更多奖励！', 1, '2025-06-07 14:55:38', '2025-06-07 14:55:49', 1, '{\"earnedPoints\": 20, \"continuousDays\": 3}', 0);
+INSERT INTO `user_message` VALUES ('f37749e9efef485981f1ce3b006c47b9', 8, 'ORDER', '订单状态已更新 - 5946e012', '您的订单 OD176282938025946e012 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-11-12 10:32:00', NULL, 1, '{\"orderId\": 269, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('f39ef12db14f47f589b3fbf5798e9ef7', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-05-30 09:34:19', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('f3e99cdb2f724fa5b651b3345787f4a8', 8, 'CHECKIN', '恭喜您，已连续签到6天', '您今日签到获得了25积分。您已连续签到6天，继续保持可获得更多奖励！', 0, '2025-05-15 12:48:21', NULL, 1, '{\"earnedPoints\": 25, \"continuousDays\": 6}', 0);
 INSERT INTO `user_message` VALUES ('f545e702b0324038aace0a546e6cb998', 8, 'SHIPPING_REMINDER', '用户催发货提醒 - 800729c7', '用户对订单 OD17491728740800729c7 进行了催发货。\n下单时间：2025-06-06 09:21:14\n用户留言：对订单 ORDEROD17491728740800729c7 的提醒发货请求已收到，商家将尽快处理。', 0, '2025-06-06 09:39:40', NULL, 1, '{\"orderId\": 236}', 0);
 INSERT INTO `user_message` VALUES ('f5d0429243cc429eaaae6f57ddf967b4', 8, 'COMMENT_REWARD', '评价奖励 +23积分', '感谢您对\"贝亲婴儿洗发沐浴露二合一\"的评价！\n\n系统已为您发放以下奖励：\n\n· 基础评价奖励: +5积分\n· 好评奖励: +8积分\n· 基础评价奖励: +10积分\n\n总计: +23积分', 0, '2025-07-11 13:17:04', NULL, 1, '{\"rewards\": [{\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 5, \"rewardDescription\": \"完成订单评价获得基础积分\"}, {\"rewardName\": \"好评奖励\", \"rewardType\": \"points\", \"rewardValue\": 8, \"rewardDescription\": \"给出4-5星好评\"}, {\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 10, \"rewardDescription\": \"完成商品评价获得奖励\"}], \"commentId\": 214, \"productId\": 95, \"totalReward\": 23}', 0);
+INSERT INTO `user_message` VALUES ('f76245a280744d79bfb0d776b3150bcf', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-11-19 13:20:58', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('fb199376ab35472c8bac36c95397b0aa', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-05-21 13:32:22', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('fc4b3a5b-7ec1-4995-ab0a-49441ba41fd2', 9, '4', '签到成功', '恭喜您完成今日签到，获得 21 积分。您已连续签到 2 天，继续保持！', 0, '2025-04-24 12:43:28', NULL, 1, '{\"days\": 2, \"points\": 21, \"source\": \"signin\"}', 0);
 INSERT INTO `user_message` VALUES ('fd1ce4eb-d020-479a-95e0-3a9c0b99afb4', 9, '2', '提醒发货已收到', '您对订单 ORDER17448106746512253 的提醒发货请求已收到，商家将尽快处理。', 1, '2025-04-17 15:40:12', '2025-04-19 17:27:57', 1, NULL, 0);
@@ -3812,15 +4068,15 @@ INSERT INTO `user_points` VALUES (1, 3, 2500, '普通会员', '2025-01-15 10:30:
 INSERT INTO `user_points` VALUES (2, 4, 7800, '银牌会员', '2025-01-10 09:15:22', '2025-03-12 16:45:18');
 INSERT INTO `user_points` VALUES (3, 5, 12600, '金牌会员', '2024-12-28 14:30:45', '2025-03-15 11:28:37');
 INSERT INTO `user_points` VALUES (4, 6, 5400, '银牌会员', '2025-01-05 16:45:30', '2025-03-18 09:36:52');
-INSERT INTO `user_points` VALUES (5, 8, 33401, '钻石会员', '2025-02-28 11:20:15', '2025-09-19 12:11:15');
+INSERT INTO `user_points` VALUES (5, 8, 58323, '钻石会员', '2025-02-28 11:20:15', '2025-11-22 10:10:02');
 INSERT INTO `user_points` VALUES (6, 1, 0, '普通会员', '2025-03-27 19:41:28', '2025-03-27 19:41:28');
 INSERT INTO `user_points` VALUES (7, 2, 0, '普通会员', '2025-03-27 19:41:28', '2025-03-27 19:41:28');
-INSERT INTO `user_points` VALUES (8, 9, 10842, '普通会员', '2025-03-27 19:41:28', '2025-07-11 15:19:54');
+INSERT INTO `user_points` VALUES (8, 9, 14417, '金牌会员', '2025-03-27 19:41:28', '2025-11-18 12:59:21');
 INSERT INTO `user_points` VALUES (9, 10, 0, '普通会员', '2025-03-27 19:41:28', '2025-03-27 19:41:28');
 INSERT INTO `user_points` VALUES (10, 11, 0, '普通会员', '2025-03-27 19:41:28', '2025-03-27 19:41:28');
 INSERT INTO `user_points` VALUES (11, 48, 0, '普通会员', '2025-03-27 19:41:28', '2025-03-27 19:41:28');
 INSERT INTO `user_points` VALUES (12, 58, 20, '普通会员', '2025-06-09 22:23:12', '2025-06-09 22:23:21');
-INSERT INTO `user_points` VALUES (14, 59, 11, '普通会员', '2025-07-10 14:31:45', '2025-07-10 16:57:55');
+INSERT INTO `user_points` VALUES (14, 59, 5011, '银牌会员', '2025-07-10 14:31:45', '2025-11-18 19:34:52');
 
 -- ----------------------------
 -- View structure for v_hot_search_keywords
@@ -3833,6 +4089,12 @@ CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `v_hot_search_keywords` A
 -- ----------------------------
 DROP VIEW IF EXISTS `v_search_overview`;
 CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `v_search_overview` AS select cast(`search_statistics`.`search_time` as date) AS `search_date`,count(distinct `search_statistics`.`keyword`) AS `unique_keywords`,sum(`search_statistics`.`search_count`) AS `total_searches`,avg(`search_statistics`.`result_count`) AS `avg_results`,avg(`search_statistics`.`response_time`) AS `avg_response_time`,sum((case when (`search_statistics`.`has_click` = 1) then 1 else 0 end)) AS `click_count`,sum((case when (`search_statistics`.`result_count` = 0) then 1 else 0 end)) AS `no_result_count` from `search_statistics` where (`search_statistics`.`search_time` >= (now() - interval 30 day)) group by cast(`search_statistics`.`search_time` as date) order by `search_date` desc;
+
+-- ----------------------------
+-- View structure for v_sku_stock_summary
+-- ----------------------------
+DROP VIEW IF EXISTS `v_sku_stock_summary`;
+CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `v_sku_stock_summary` AS select `ps`.`sku_id` AS `sku_id`,`ps`.`product_id` AS `product_id`,`ps`.`sku_code` AS `sku_code`,`ps`.`sku_name` AS `sku_name`,`ps`.`price` AS `price`,`ps`.`stock` AS `stock`,`ps`.`status` AS `status`,`p`.`product_name` AS `product_name`,`p`.`category_id` AS `category_id`,`p`.`brand_id` AS `brand_id`,coalesce(sum((case when (`psl`.`change_type` = 'DEDUCT') then abs(`psl`.`change_quantity`) else 0 end)),0) AS `total_sold`,coalesce(sum((case when (`psl`.`change_type` = 'RESTORE') then `psl`.`change_quantity` else 0 end)),0) AS `total_restored` from ((`product_sku` `ps` left join `product` `p` on((`ps`.`product_id` = `p`.`product_id`))) left join `product_sku_stock_log` `psl` on((`ps`.`sku_id` = `psl`.`sku_id`))) group by `ps`.`sku_id`,`ps`.`product_id`,`ps`.`sku_code`,`ps`.`sku_name`,`ps`.`price`,`ps`.`stock`,`ps`.`status`,`p`.`product_name`,`p`.`category_id`,`p`.`brand_id`;
 
 -- ----------------------------
 -- Procedure structure for CleanExpiredSearchStatistics
@@ -3879,6 +4141,90 @@ BEGIN
         `update_time`
     FROM `user`
     WHERE `user_id` = p_user_id;
+END
+;;
+delimiter ;
+
+-- ----------------------------
+-- Procedure structure for proc_batch_deduct_sku_stock
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `proc_batch_deduct_sku_stock`;
+delimiter ;;
+CREATE PROCEDURE `proc_batch_deduct_sku_stock`(IN p_order_id INT,
+    IN p_sku_list JSON)
+BEGIN
+    DECLARE v_index INT DEFAULT 0;
+    DECLARE v_count INT;
+    DECLARE v_sku_id BIGINT;
+    DECLARE v_quantity INT;
+    DECLARE v_current_stock INT;
+    DECLARE v_error_msg VARCHAR(255);
+    
+    -- 声明异常处理
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    -- 开启事务
+    START TRANSACTION;
+    
+    -- 获取SKU列表长度
+    SET v_count = JSON_LENGTH(p_sku_list);
+    
+    -- 循环处理每个SKU
+    WHILE v_index < v_count DO
+        -- 获取SKU ID和数量
+        SET v_sku_id = JSON_EXTRACT(p_sku_list, CONCAT('$[', v_index, '].skuId'));
+        SET v_quantity = JSON_EXTRACT(p_sku_list, CONCAT('$[', v_index, '].quantity'));
+        
+        -- 检查库存
+        SELECT stock INTO v_current_stock 
+        FROM product_sku 
+        WHERE sku_id = v_sku_id 
+        FOR UPDATE;
+        
+        IF v_current_stock IS NULL THEN
+            SET v_error_msg = CONCAT('SKU不存在: ', v_sku_id);
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
+        END IF;
+        
+        IF v_current_stock < v_quantity THEN
+            SET v_error_msg = CONCAT('SKU库存不足: ', v_sku_id, ', 当前库存: ', v_current_stock, ', 需要: ', v_quantity);
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
+        END IF;
+        
+        -- 扣减库存
+        UPDATE product_sku 
+        SET stock = stock - v_quantity,
+            version = version + 1
+        WHERE sku_id = v_sku_id;
+        
+        -- 记录日志
+        INSERT INTO product_sku_stock_log (
+            sku_id, 
+            order_id, 
+            change_type, 
+            change_quantity, 
+            before_stock, 
+            after_stock,
+            remark
+        ) VALUES (
+            v_sku_id,
+            p_order_id,
+            'DEDUCT',
+            -v_quantity,
+            v_current_stock,
+            v_current_stock - v_quantity,
+            CONCAT('订单扣减库存: ', p_order_id)
+        );
+        
+        SET v_index = v_index + 1;
+    END WHILE;
+    
+    -- 提交事务
+    COMMIT;
 END
 ;;
 delimiter ;
@@ -4132,6 +4478,33 @@ CREATE TRIGGER `trg_payment_update_sync_order` AFTER UPDATE ON `payment` FOR EAC
         SET payment_method = NEW.payment_method,
             update_time = NOW()
         WHERE order_id = NEW.order_id;
+    END IF;
+END
+;;
+delimiter ;
+
+-- ----------------------------
+-- Triggers structure for table product_sku
+-- ----------------------------
+DROP TRIGGER IF EXISTS `trg_sku_stock_change`;
+delimiter ;;
+CREATE TRIGGER `trg_sku_stock_change` AFTER UPDATE ON `product_sku` FOR EACH ROW BEGIN
+    IF OLD.stock != NEW.stock THEN
+        INSERT INTO `product_sku_stock_log` (
+            `sku_id`, 
+            `change_type`, 
+            `change_quantity`, 
+            `before_stock`, 
+            `after_stock`,
+            `remark`
+        ) VALUES (
+            NEW.sku_id,
+            IF(NEW.stock > OLD.stock, 'RESTORE', 'DEDUCT'),
+            NEW.stock - OLD.stock,
+            OLD.stock,
+            NEW.stock,
+            '系统自动记录'
+        );
     END IF;
 END
 ;;

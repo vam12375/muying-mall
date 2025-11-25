@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 /**
  * SKU库存变更日志实体类
  * 
- * @author AI Assistant
+ * @author 青柠檬
  * @date 2024-11-24
  */
 @Data

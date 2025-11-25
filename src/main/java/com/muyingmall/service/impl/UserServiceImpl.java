@@ -10,6 +10,11 @@ import com.muyingmall.dto.LoginDTO;
 import com.muyingmall.dto.UserDTO;
 import com.muyingmall.entity.User;
 import com.muyingmall.entity.UserAccount;
+import com.muyingmall.entity.Order;
+import com.muyingmall.entity.Favorite;
+import com.muyingmall.entity.Comment;
+import com.muyingmall.entity.UserPoints;
+import com.muyingmall.entity.UserCoupon;
 import com.muyingmall.mapper.UserMapper;
 import com.muyingmall.service.UserAccountService;
 import com.muyingmall.service.UserService;
@@ -36,6 +41,8 @@ import java.nio.file.Paths;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 用户服务实现类
@@ -51,6 +58,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final RedisUtil redisUtil;
     private final RedisTemplate<String, Object> redisTemplate;
     private final UserAccountService userAccountService;
+    private final com.muyingmall.mapper.OrderMapper orderMapper;
+    private final com.muyingmall.mapper.FavoriteMapper favoriteMapper;
+    private final com.muyingmall.mapper.CommentMapper commentMapper;
+    private final com.muyingmall.mapper.UserPointsMapper userPointsMapper;
+    private final com.muyingmall.mapper.UserCouponMapper userCouponMapper;
 
     @Value("${upload.path:E:/11/muying-web/public}")
     private String uploadPath;
@@ -703,5 +715,84 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         } catch (Exception e) {
             log.error("清除用户缓存失败: userId={}, error={}", user.getUserId(), e.getMessage());
         }
+    }
+
+    @Override
+    public Map<String, Object> getUserStats(Integer userId) {
+        Map<String, Object> stats = new HashMap<>();
+        
+        log.info("开始获取用户统计数据: userId={}", userId);
+        
+        try {
+            // 获取用户账户余额
+            UserAccount userAccount = userAccountService.getUserAccountByUserId(userId);
+            if (userAccount != null) {
+                stats.put("balance", userAccount.getBalance() != null ? userAccount.getBalance() : BigDecimal.ZERO);
+                log.info("用户账户余额: userId={}, balance={}", userId, userAccount.getBalance());
+            } else {
+                stats.put("balance", BigDecimal.ZERO);
+                log.warn("用户账户不存在，余额使用默认值: userId={}", userId);
+            }
+            
+            // 从 user_points 表获取积分
+            UserPoints userPoints = userPointsMapper.selectOne(
+                new LambdaQueryWrapper<UserPoints>()
+                    .eq(UserPoints::getUserId, userId)
+            );
+            if (userPoints != null) {
+                stats.put("points", userPoints.getPoints() != null ? userPoints.getPoints() : 0);
+                log.info("用户积分: userId={}, points={}", userId, userPoints.getPoints());
+            } else {
+                stats.put("points", 0);
+                log.warn("用户积分记录不存在，使用默认值: userId={}", userId);
+            }
+            
+            // 从 user_coupon 表统计未使用的优惠券数量
+            Long couponCount = userCouponMapper.selectCount(
+                new LambdaQueryWrapper<UserCoupon>()
+                    .eq(UserCoupon::getUserId, userId)
+                    .eq(UserCoupon::getStatus, "UNUSED")
+            );
+            stats.put("couponCount", couponCount != null ? couponCount.intValue() : 0);
+            log.info("用户优惠券数量: userId={}, couponCount={}", userId, couponCount);
+            
+            // 获取订单数量
+            Long orderCount = orderMapper.selectCount(
+                new LambdaQueryWrapper<Order>()
+                    .eq(Order::getUserId, userId)
+            );
+            log.info("订单数量查询结果: userId={}, orderCount={}", userId, orderCount);
+            stats.put("orderCount", orderCount != null ? orderCount.intValue() : 0);
+            
+            // 获取收藏数量
+            Long favoriteCount = favoriteMapper.selectCount(
+                new LambdaQueryWrapper<Favorite>()
+                    .eq(Favorite::getUserId, userId)
+            );
+            log.info("收藏数量查询结果: userId={}, favoriteCount={}", userId, favoriteCount);
+            stats.put("favoriteCount", favoriteCount != null ? favoriteCount.intValue() : 0);
+            
+            // 获取评价数量
+            Long commentCount = commentMapper.selectCount(
+                new LambdaQueryWrapper<Comment>()
+                    .eq(Comment::getUserId, userId)
+            );
+            log.info("评价数量查询结果: userId={}, commentCount={}", userId, commentCount);
+            stats.put("commentCount", commentCount != null ? commentCount.intValue() : 0);
+            
+            log.info("用户统计数据获取成功: userId={}, stats={}", userId, stats);
+            
+        } catch (Exception e) {
+            log.error("获取用户统计数据失败: userId={}, error={}", userId, e.getMessage(), e);
+            // 返回默认值
+            stats.put("balance", BigDecimal.ZERO);
+            stats.put("points", 0);
+            stats.put("couponCount", 0);
+            stats.put("orderCount", 0);
+            stats.put("favoriteCount", 0);
+            stats.put("commentCount", 0);
+        }
+        
+        return stats;
     }
 }

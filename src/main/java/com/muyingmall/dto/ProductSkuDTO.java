@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * 商品SKU DTO
  * 
- * @author AI Assistant
+ * @author 青柠檬
  * @date 2024-11-24
  */
 @Data

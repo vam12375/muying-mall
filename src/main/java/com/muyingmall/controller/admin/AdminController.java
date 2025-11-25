@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
@@ -60,12 +61,17 @@ public class AdminController {
      * 管理员登录
      */
     @PostMapping("/login")
-    public CommonResult login(@RequestBody AdminLoginDTO loginParam) {
+    public CommonResult login(@RequestBody AdminLoginDTO loginParam, HttpServletRequest request) {
         // 根据用户名查询用户
         User user = userService.getUserByUsername(loginParam.getAdmin_name());
 
         // 用户不存在或密码错误
         if (user == null || !userService.verifyPassword(user, loginParam.getAdmin_pass())) {
+            // 记录登录失败
+            if (user != null && "admin".equals(user.getRole())) {
+                loginRecordService.recordLogin(user.getUserId(), user.getUsername(), request, 
+                    AdminLoginRecord.LoginStatus.FAILED.getCode(), "密码错误");
+            }
             return CommonResult.failed("用户名或密码错误");
         }
 
@@ -76,6 +82,10 @@ public class AdminController {
 
         // 用户存在且验证通过，生成token
         String token = userService.generateToken(user);
+
+        // 记录登录成功
+        loginRecordService.recordLogin(user.getUserId(), user.getUsername(), request, 
+            AdminLoginRecord.LoginStatus.SUCCESS.getCode(), null);
 
         // 封装返回结果
         Map<String, Object> result = new HashMap<>();

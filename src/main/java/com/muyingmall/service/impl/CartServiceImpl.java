@@ -58,26 +58,42 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             throw new BusinessException("库存不足");
         }
 
-        // 转换规格信息为JSON字符串
+        // 处理SKU或规格信息
         String specsJson = null;
         String specsHash = "";
-        Map<String, String> specs = cartAddDTO.getSpecs();
-        if (specs != null && !specs.isEmpty()) {
-            try {
-                specsJson = objectMapper.writeValueAsString(specs);
-                // 生成规格哈希值，用于唯一索引
-                specsHash = org.springframework.util.DigestUtils.md5DigestAsHex(specsJson.getBytes());
-            } catch (JsonProcessingException e) {
-                log.error("规格信息转换失败", e);
-                throw new BusinessException("规格信息格式错误");
+        Long skuId = cartAddDTO.getSkuId();
+        String skuName = cartAddDTO.getSkuName();
+        
+        // 优先使用SKU，如果没有SKU则使用旧的specs
+        if (skuId != null) {
+            // 使用SKU ID作为唯一标识
+            specsHash = "sku_" + skuId;
+        } else {
+            // 兼容旧的规格系统
+            Map<String, String> specs = cartAddDTO.getSpecs();
+            if (specs != null && !specs.isEmpty()) {
+                try {
+                    specsJson = objectMapper.writeValueAsString(specs);
+                    specsHash = org.springframework.util.DigestUtils.md5DigestAsHex(specsJson.getBytes());
+                } catch (JsonProcessingException e) {
+                    log.error("规格信息转换失败", e);
+                    throw new BusinessException("规格信息格式错误");
+                }
             }
         }
 
         // 查询购物车是否已存在相同商品规格
         LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Cart::getUserId, userId)
-                .eq(Cart::getProductId, cartAddDTO.getProductId())
-                .eq(Cart::getSpecsHash, specsHash);
+                .eq(Cart::getProductId, cartAddDTO.getProductId());
+        
+        // 根据SKU或规格哈希查询
+        if (skuId != null) {
+            queryWrapper.eq(Cart::getSkuId, skuId);
+        } else {
+            queryWrapper.eq(Cart::getSpecsHash, specsHash);
+        }
+        
         Cart existCart = getOne(queryWrapper);
 
         if (existCart != null) {
@@ -99,6 +115,8 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             cart.setSelected(cartAddDTO.getSelected());
             cart.setSpecs(specsJson);
             cart.setSpecsHash(specsHash);
+            cart.setSkuId(skuId);
+            cart.setSkuName(skuName);
             cart.setPriceSnapshot(product.getPriceNew()); // 记录当前价格
             cart.setStatus(1); // 有效
             save(cart);

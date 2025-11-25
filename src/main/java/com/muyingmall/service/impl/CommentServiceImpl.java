@@ -103,8 +103,19 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         if (comment.getIsAnonymous() == null) {
             comment.setIsAnonymous(0); // 默认不匿名
         }
+        
+        // 根据评分自动设置审核状态
+        // 低于3星的评论需要审核（status=0），高于等于3星的评论自动通过（status=1）
         if (comment.getStatus() == null) {
-            comment.setStatus(1); // 默认显示
+            if (comment.getRating() < 3) {
+                comment.setStatus(0); // 待审核
+                log.info("评价评分低于3星，自动进入待审核状态: rating={}, userId={}, productId={}", 
+                    comment.getRating(), comment.getUserId(), comment.getProductId());
+            } else {
+                comment.setStatus(1); // 自动通过
+                log.info("评价评分达到3星及以上，自动通过审核: rating={}, userId={}, productId={}", 
+                    comment.getRating(), comment.getUserId(), comment.getProductId());
+            }
         }
 
         // 保存评价
@@ -321,7 +332,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
         // 获取平均评分
         Double avgRating = baseMapper.getProductAverageRating(productId);
-        result.put("averageRating", avgRating);
+        result.put("averageRating", avgRating != null ? avgRating : 5.0);
 
         // 获取评分分布
         List<Map<String, Object>> distribution = baseMapper.getRatingDistribution(productId);
@@ -343,12 +354,38 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
         result.put("ratingDistribution", ratingDistribution);
 
-        // 获取总评价数
+        // 获取总评价数 - 使用 totalComments 字段名以匹配前端
         LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Comment::getProductId, productId)
                 .eq(Comment::getStatus, 1);
         long totalCount = this.count(queryWrapper);
-        result.put("totalCount", totalCount);
+        result.put("totalComments", totalCount);
+        result.put("totalCount", totalCount); // 保留兼容性
+
+        // 从关联表获取评价标签统计
+        List<String> tags = new ArrayList<>();
+        Map<String, Integer> tagCounts = new HashMap<>();
+        
+        try {
+            // 使用原生SQL查询标签统计
+            List<Map<String, Object>> tagStats = baseMapper.getProductCommentTags(productId);
+            
+            if (tagStats != null && !tagStats.isEmpty()) {
+                for (Map<String, Object> tagStat : tagStats) {
+                    String tagName = (String) tagStat.get("tag_name");
+                    Integer count = ((Number) tagStat.get("count")).intValue();
+                    tags.add(tagName);
+                    tagCounts.put(tagName, count);
+                }
+            }
+        } catch (Exception e) {
+            // 如果查询失败，使用空列表
+            System.err.println("获取评价标签统计失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        result.put("tags", tags);
+        result.put("tagCounts", tagCounts);
 
         return result;
     }

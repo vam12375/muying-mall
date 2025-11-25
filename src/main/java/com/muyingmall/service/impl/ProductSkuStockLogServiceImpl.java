@@ -7,26 +7,25 @@ import com.muyingmall.dto.SkuStockLogDTO;
 import com.muyingmall.entity.ProductSkuStockLog;
 import com.muyingmall.mapper.ProductSkuStockLogMapper;
 import com.muyingmall.service.ProductSkuStockLogService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * SKU库存日志 Service实现类
  * 
- * @author AI Assistant
+ * @author 青柠檬
  * @date 2024-11-24
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ProductSkuStockLogServiceImpl extends ServiceImpl<ProductSkuStockLogMapper, ProductSkuStockLog> 
     implements ProductSkuStockLogService {
 
-    @Resource
-    private ProductSkuStockLogMapper stockLogMapper;
+    private final ProductSkuStockLogMapper stockLogMapper;
 
     @Override
     public IPage<SkuStockLogDTO> getLogPage(Integer page, Integer size, 

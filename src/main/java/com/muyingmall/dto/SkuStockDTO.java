@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * SKU库存操作DTO
  * 
- * @author AI Assistant
+ * @author 青柠檬
  * @date 2024-11-24
  */
 @Data
