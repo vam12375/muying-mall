@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/brands")
+@RequestMapping("/brands")
 @RequiredArgsConstructor
 @Tag(name = "品牌管理", description = "品牌查询相关接口")
 public class BrandController {

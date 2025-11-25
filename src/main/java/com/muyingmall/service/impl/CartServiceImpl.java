@@ -60,7 +60,7 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
 
         // 处理SKU或规格信息
         String specsJson = null;
-        String specsHash = "";
+        String specsHash = null; // 改为null，避免空字符串导致唯一索引冲突
         Long skuId = cartAddDTO.getSkuId();
         String skuName = cartAddDTO.getSkuName();
         
@@ -80,6 +80,7 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
                     throw new BusinessException("规格信息格式错误");
                 }
             }
+            // 如果没有规格信息，specsHash保持为null
         }
 
         // 查询购物车是否已存在相同商品规格
@@ -87,11 +88,14 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         queryWrapper.eq(Cart::getUserId, userId)
                 .eq(Cart::getProductId, cartAddDTO.getProductId());
         
-        // 根据SKU或规格哈希查询
+        // 根据SKU或规格哈希查询（处理null值情况）
         if (skuId != null) {
             queryWrapper.eq(Cart::getSkuId, skuId);
-        } else {
+        } else if (specsHash != null) {
             queryWrapper.eq(Cart::getSpecsHash, specsHash);
+        } else {
+            // 没有SKU也没有规格，查询specsHash为null的记录
+            queryWrapper.isNull(Cart::getSpecsHash);
         }
         
         Cart existCart = getOne(queryWrapper);
