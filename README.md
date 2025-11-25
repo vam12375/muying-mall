@@ -24,14 +24,26 @@
 
 ### 📹 系统功能演示视频
 
-<video width="800" controls>
-  <source src="docs/demo.mp4" type="video/mp4">
-  您的浏览器不支持视频播放，请<a href="docs/demo.mp4">点击下载</a>观看
-</video>
+> **提示**: GitHub README 不支持直接播放视频，请通过以下方式观看：
+
+**方式一：在线观看**
+1. 点击下方链接进入视频文件页面
+2. 点击页面中的播放按钮观看
+
+[🎥 点击观看演示视频](docs/demo.mp4)
+
+**方式二：下载观看**
+
+[📥 下载演示视频到本地](https://github.com/vam12375/muying-mall/raw/master/docs/demo.mp4)
+
+**方式三：克隆仓库后观看**
+```bash
+git clone https://github.com/vam12375/muying-mall.git
+cd muying-mall/docs
+# 使用本地播放器打开 demo.mp4
+```
 
 *完整展示系统核心功能和用户界面*
-
-[📥 下载演示视频](docs/demo.mp4)
 
 </div>
 
