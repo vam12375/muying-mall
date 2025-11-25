@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.muyingmall.mapper.ProductSkuStockLogMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.muyingmall.entity.ProductSkuStockLog">
+        <id column="log_id" property="logId"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="order_id" property="orderId"/>
+        <result column="change_type" property="changeType"/>
+        <result column="change_quantity" property="changeQuantity"/>
+        <result column="before_stock" property="beforeStock"/>
+        <result column="after_stock" property="afterStock"/>
+        <result column="operator" property="operator"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- DTO结果映射 -->
+    <resultMap id="DTOResultMap" type="com.muyingmall.dto.SkuStockLogDTO">
+        <id column="log_id" property="logId"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="sku_code" property="skuCode"/>
+        <result column="sku_name" property="skuName"/>
+        <result column="order_id" property="orderId"/>
+        <result column="change_type" property="changeType"/>
+        <result column="change_quantity" property="changeQuantity"/>
+        <result column="before_stock" property="beforeStock"/>
+        <result column="after_stock" property="afterStock"/>
+        <result column="operator" property="operator"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 分页查询库存日志 -->
+    <select id="selectLogPage" resultMap="DTOResultMap">
+        SELECT 
+            psl.*,
+            ps.sku_code,
+            ps.sku_name
+        FROM product_sku_stock_log psl
+        LEFT JOIN product_sku ps ON psl.sku_id = ps.sku_id
+        <where>
+            <if test="skuId != null">
+                AND psl.sku_id = #{skuId}
+            </if>
+            <if test="orderId != null">
+                AND psl.order_id = #{orderId}
+            </if>
+            <if test="changeType != null and changeType != ''">
+                AND psl.change_type = #{changeType}
+            </if>
+            <if test="startTime != null">
+                AND psl.create_time <![CDATA[ >= ]]> #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND psl.create_time <![CDATA[ <= ]]> #{endTime}
+            </if>
+        </where>
+        ORDER BY psl.create_time DESC
+    </select>
+
+    <!-- 根据SKU ID查询日志 -->
+    <select id="selectBySkuId" resultMap="DTOResultMap">
+        SELECT 
+            psl.*,
+            ps.sku_code,
+            ps.sku_name
+        FROM product_sku_stock_log psl
+        LEFT JOIN product_sku ps ON psl.sku_id = ps.sku_id
+        WHERE psl.sku_id = #{skuId}
+        ORDER BY psl.create_time DESC
+    </select>
+
+    <!-- 根据订单ID查询日志 -->
+    <select id="selectByOrderId" resultMap="DTOResultMap">
+        SELECT 
+            psl.*,
+            ps.sku_code,
+            ps.sku_name
+        FROM product_sku_stock_log psl
+        LEFT JOIN product_sku ps ON psl.sku_id = ps.sku_id
+        WHERE psl.order_id = #{orderId}
+        ORDER BY psl.create_time DESC
+    </select>
+
+</mapper>
