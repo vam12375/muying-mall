@@ -28,7 +28,7 @@
 
 > **完整展示后台管理系统的核心功能和操作流程**
 
-https://github.com/user-attachments/assets/54a2959d-dfc9-4380-87a7-78a5024f59a6
+https://github.com/user-attachments/assets/f37a9f50-1511-4000-a56b-74d1357d25c9
 
 **演示内容**：
 - 📊 数据统计与可视化大屏
@@ -46,7 +46,7 @@ https://github.com/user-attachments/assets/54a2959d-dfc9-4380-87a7-78a5024f59a6
 
 > **商品购买 → 支付 → 发货 → 退款全流程演示**
 
-https://github.com/user-attachments/assets/95f84d4a-20fa-4b88-acae-c92f6a0ea1db
+https://github.com/user-attachments/assets/3aa40165-337a-4e13-8262-ca470a6a9a47
 
 **演示内容**：
 - 🛒 商品浏览与加入购物车
@@ -55,6 +55,22 @@ https://github.com/user-attachments/assets/95f84d4a-20fa-4b88-acae-c92f6a0ea1db
 - 🔄 申请退款与退款处理
 - 💰 退款到账与订单完结
 - 📊 后台订单状态管理
+
+---
+
+#### �  商品评价与回复流程演示
+
+> **商品评价 → 评价回复 → 互动交流完整流程**
+
+https://github.com/user-attachments/assets/bb7d9c68-591b-4fe4-b3d1-6558a964e4b4
+
+**演示内容**：
+- ⭐ 商品评价发布（文字+图片+评分）
+- �  评价回复与互动
+- 🏷️ 评价标签管理
+- � 评价与点赞功能
+- 📊 评价统计展示
+- 🔍 评价筛选与排序
 
 ---
 
