@@ -102,8 +102,9 @@ public class SearchIndexServiceImpl implements SearchIndexService {
             GetIndexRequest request = GetIndexRequest.of(g -> g.index(indexName));
             GetIndexResponse response = elasticsearchClient.indices().get(request);
 
-            if (response.result().containsKey(indexName)) {
-                IndexState indexState = response.result().get(indexName);
+            // ES 9.x: 使用 get 方法获取索引状态
+            IndexState indexState = response.get(indexName);
+            if (indexState != null) {
                 info.put("settings", indexState.settings());
                 info.put("mappings", indexState.mappings());
                 info.put("aliases", indexState.aliases());

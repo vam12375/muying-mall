@@ -20,7 +20,7 @@
 		<alipay.version>4.38.0.ALL</alipay.version>
 		<wechat.version>0.0.3</wechat.version>
 		<springdoc.version>2.2.0</springdoc.version>
-		<elasticsearch.version>8.11.0</elasticsearch.version>
+		<elasticsearch.version>9.2.1</elasticsearch.version>
 		<pagehelper.version>6.1.0</pagehelper.version>
 	</properties>
 	
@@ -106,7 +106,7 @@
 			<version>${springdoc.version}</version>
 		</dependency>
 		
-		<!-- ElasticSearch相关 -->
+		<!-- ElasticSearch 9.x 相关 -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-elasticsearch</artifactId>
@@ -114,6 +114,12 @@
 		<dependency>
 			<groupId>co.elastic.clients</groupId>
 			<artifactId>elasticsearch-java</artifactId>
+			<version>${elasticsearch.version}</version>
+		</dependency>
+		<!-- ES 9.x 需要的 Rest5Client -->
+		<dependency>
+			<groupId>co.elastic.clients</groupId>
+			<artifactId>elasticsearch-rest5-client</artifactId>
 			<version>${elasticsearch.version}</version>
 		</dependency>
 		<dependency>

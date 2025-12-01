@@ -1,6 +1,5 @@
 package com.muyingmall.document;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +9,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -160,18 +158,16 @@ public class ProductDocument {
     private Object specs;
 
     /**
-     * 创建时间
+     * 创建时间（时间戳，毫秒）
      */
-    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createTime;
+    @Field(type = FieldType.Long)
+    private Long createTime;
 
     /**
-     * 更新时间
+     * 更新时间（时间戳，毫秒）
      */
-    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime updateTime;
+    @Field(type = FieldType.Long)
+    private Long updateTime;
 
     /**
      * 搜索权重 - 用于排序
