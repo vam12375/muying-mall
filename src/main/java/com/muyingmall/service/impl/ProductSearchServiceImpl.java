@@ -84,14 +84,19 @@ public class ProductSearchServiceImpl implements ProductSearchService {
 
             // 价格范围筛选
             if (minPrice != null || maxPrice != null) {
-                RangeQuery.Builder rangeBuilder = new RangeQuery.Builder().field("productPrice");
-                if (minPrice != null) {
-                    rangeBuilder.gte(JsonData.of(minPrice));
-                }
-                if (maxPrice != null) {
-                    rangeBuilder.lte(JsonData.of(maxPrice));
-                }
-                boolQueryBuilder.filter(Query.of(q -> q.range(rangeBuilder.build())));
+                final BigDecimal finalMinPrice = minPrice;
+                final BigDecimal finalMaxPrice = maxPrice;
+                boolQueryBuilder.filter(Query.of(q -> q.range(r -> r
+                        .number(n -> {
+                            n.field("productPrice");
+                            if (finalMinPrice != null) {
+                                n.gte(finalMinPrice.doubleValue());
+                            }
+                            if (finalMaxPrice != null) {
+                                n.lte(finalMaxPrice.doubleValue());
+                            }
+                            return n;
+                        }))));
             }
 
             // 只搜索上架商品
@@ -108,8 +113,10 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                     .from(page * size)
                     .size(size)
                     .highlight(h -> h
-                            .fields("productName", hf -> hf.preTags("<em>").postTags("</em>"))
-                            .fields("productDetail", hf -> hf.preTags("<em>").postTags("</em>"))));
+                            .fields(
+                                co.elastic.clients.util.NamedValue.of("productName", co.elastic.clients.elasticsearch.core.search.HighlightField.of(hf -> hf.preTags("<em>").postTags("</em>"))),
+                                co.elastic.clients.util.NamedValue.of("productDetail", co.elastic.clients.elasticsearch.core.search.HighlightField.of(hf -> hf.preTags("<em>").postTags("</em>")))
+                            )));
 
             // 执行搜索
             SearchResponse<ProductDocument> response = elasticsearchClient.search(searchRequest, ProductDocument.class);
@@ -128,6 +135,19 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             } catch (Exception e) {
                 log.debug("获取搜索结果总数失败: {}", e.getMessage());
             }
+            
+            // 如果ES返回空结果且有关键词，尝试降级到数据库搜索
+            if (products.isEmpty() && StringUtils.hasText(keyword)) {
+                log.info("ES搜索无结果，尝试降级到数据库搜索，关键词: {}", keyword);
+                Page<ProductDocument> dbResult = fallbackToDbSearch(keyword, categoryId, brandId, minPrice, maxPrice, sortBy, sortOrder, page, size);
+                if (dbResult.getTotalElements() > 0) {
+                    log.info("数据库搜索找到 {} 条结果", dbResult.getTotalElements());
+                    // 记录搜索统计
+                    recordSearchStatistics(keyword, dbResult.getTotalElements(), null);
+                    return dbResult;
+                }
+            }
+            
             if (StringUtils.hasText(keyword)) {
                 recordSearchStatistics(keyword, totalCount, null);
             }
@@ -251,11 +271,11 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             aggregations.put("priceRanges", Aggregation.of(a -> a
                     .range(r -> r
                             .field("productPrice")
-                            .ranges(rr -> rr.to("50"))
-                            .ranges(rr -> rr.from("50").to("100"))
-                            .ranges(rr -> rr.from("100").to("200"))
-                            .ranges(rr -> rr.from("200").to("500"))
-                            .ranges(rr -> rr.from("500")))));
+                            .ranges(rr -> rr.to(50.0))
+                            .ranges(rr -> rr.from(50.0).to(100.0))
+                            .ranges(rr -> rr.from(100.0).to(200.0))
+                            .ranges(rr -> rr.from(200.0).to(500.0))
+                            .ranges(rr -> rr.from(500.0)))));
 
             SearchRequest searchRequest = SearchRequest.of(s -> s
                     .index("products")
@@ -479,15 +499,20 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             elasticsearchOperations.indexOps(ProductDocument.class).create();
             elasticsearchOperations.indexOps(ProductDocument.class).putMapping();
 
-            // 获取所有商品并同步到索引
+            // 获取所有商品并同步到索引（包括所有状态的商品，便于后续管理）
             // 这里需要分批处理，避免内存溢出
             int page = 1; // MyBatis-Plus分页从1开始
             int size = 100;
             boolean hasNext = true;
 
             while (hasNext) {
+                // 使用6参数版本，status传null表示查询所有状态的商品
                 com.baomidou.mybatisplus.extension.plugins.pagination.Page<Product> mybatisPlusPage = productService
-                        .getProductPage(page, size, null, null, null, null, null, null);
+                        .getProductPage(page, size, null, null, null, null);
+                
+                log.info("查询第 {} 页商品，返回 {} 条记录，总记录数: {}", 
+                        page, mybatisPlusPage.getRecords().size(), mybatisPlusPage.getTotal());
+                
                 List<ProductDocument> documents = mybatisPlusPage.getRecords().stream()
                         .map(this::convertToDocument)
                         .collect(Collectors.toList());
@@ -733,8 +758,10 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                 .salesCount(product.getSales() != null ? product.getSales() : 0)
                 .rating(product.getRating() != null ? product.getRating().doubleValue() : 0.0)
                 .commentCount(product.getReviewCount() != null ? product.getReviewCount() : 0)
-                .createTime(product.getCreateTime())
-                .updateTime(product.getUpdateTime())
+                .createTime(product.getCreateTime() != null ? 
+                        product.getCreateTime().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() : null)
+                .updateTime(product.getUpdateTime() != null ? 
+                        product.getUpdateTime().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() : null)
                 .searchWeight(calculateSearchWeight(product))
                 .keywords(generateKeywords(product))
                 .build();

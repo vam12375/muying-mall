@@ -47,6 +47,8 @@ public class SearchStatisticsServiceImpl extends ServiceImpl<SearchStatisticsMap
                 queryWrapper.eq(SearchStatistics::getUserId, userId);
             }
 
+            // 使用last限制只取一条，避免多条记录导致异常
+            queryWrapper.last("LIMIT 1");
             SearchStatistics existing = getOne(queryWrapper);
 
             if (existing != null) {
