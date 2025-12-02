@@ -55,9 +55,19 @@ public class OrderProduct implements Serializable {
     private Integer quantity;
 
     /**
-     * 规格信息
+     * 规格信息（JSON格式）
      */
     private String specs;
+
+    /**
+     * SKU ID
+     */
+    private Long skuId;
+
+    /**
+     * SKU编码
+     */
+    private String skuCode;
 
     /**
      * 创建时间

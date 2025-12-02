@@ -30,6 +30,11 @@ public class ProductSkuStockLog implements Serializable {
     private Long skuId;
 
     /**
+     * SKU编码
+     */
+    private String skuCode;
+
+    /**
      * 订单ID
      */
     private Integer orderId;

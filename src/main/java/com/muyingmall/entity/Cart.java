@@ -47,13 +47,16 @@ public class Cart implements Serializable {
      * @deprecated 使用 skuId 替代
      */
     @Deprecated
+    @TableField(value = "specs", insertStrategy = FieldStrategy.ALWAYS, updateStrategy = FieldStrategy.ALWAYS)
     private String specs;
 
     /**
      * 商品规格哈希值，用于唯一索引
-     * @deprecated 使用 skuId 替代
+     * 当有SKU时，格式为 "sku_" + skuId
+     * 当无SKU但有规格时，为规格JSON的MD5
+     * 当无SKU也无规格时，为null
      */
-    @Deprecated
+    @TableField(value = "specs_hash", insertStrategy = FieldStrategy.ALWAYS, updateStrategy = FieldStrategy.ALWAYS)
     private String specsHash;
 
     /**

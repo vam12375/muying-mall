@@ -43,9 +43,14 @@ public class DirectPurchaseDTO implements Serializable {
     private Integer quantity;
 
     /**
-     * 商品规格
+     * 商品规格（JSON格式，兼容旧版本）
      */
     private String specs;
+
+    /**
+     * SKU ID（新版本使用）
+     */
+    private Long skuId;
 
     /**
      * 备注
