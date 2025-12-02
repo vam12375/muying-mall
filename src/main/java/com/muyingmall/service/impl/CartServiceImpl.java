@@ -60,28 +60,38 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
 
         // 处理SKU或规格信息
         String specsJson = null;
-        String specsHash = null; // 改为null，避免空字符串导致唯一索引冲突
+        String specsHash = null; // 默认为null，避免空字符串导致唯一索引冲突
         Long skuId = cartAddDTO.getSkuId();
         String skuName = cartAddDTO.getSkuName();
         
-        // 优先使用SKU，如果没有SKU则使用旧的specs
-        if (skuId != null) {
-            // 使用SKU ID作为唯一标识
+        log.info("【购物车添加】开始处理，productId={}, skuId={}, skuName={}", 
+                cartAddDTO.getProductId(), skuId, skuName);
+        
+        // 优先使用SKU ID作为唯一标识
+        if (skuId != null && skuId > 0) {
+            // 使用SKU ID作为唯一标识，确保不同SKU有不同的specsHash
             specsHash = "sku_" + skuId;
+            log.info("【购物车添加】使用SKU ID作为唯一标识: skuId={}, specsHash={}", skuId, specsHash);
         } else {
-            // 兼容旧的规格系统
+            // 兼容旧的规格系统（没有SKU的情况）
             Map<String, String> specs = cartAddDTO.getSpecs();
             if (specs != null && !specs.isEmpty()) {
                 try {
                     specsJson = objectMapper.writeValueAsString(specs);
                     specsHash = org.springframework.util.DigestUtils.md5DigestAsHex(specsJson.getBytes());
+                    log.info("【购物车添加】使用规格信息作为唯一标识: specs={}, specsHash={}", specsJson, specsHash);
                 } catch (JsonProcessingException e) {
                     log.error("规格信息转换失败", e);
                     throw new BusinessException("规格信息格式错误");
                 }
+            } else {
+                // 没有SKU也没有规格，specsHash保持为null
+                log.info("【购物车添加】无SKU和规格信息，specsHash设为null");
             }
-            // 如果没有规格信息，specsHash保持为null
         }
+        
+        // 最终确认specsHash的值
+        log.info("【购物车添加】最终specsHash值: {}", specsHash);
 
         // 查询购物车是否已存在相同商品规格
         LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
@@ -123,7 +133,16 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             cart.setSkuName(skuName);
             cart.setPriceSnapshot(product.getPriceNew()); // 记录当前价格
             cart.setStatus(1); // 有效
-            save(cart);
+            
+            // 插入前打印完整的 cart 对象，确认所有字段值
+            log.info("【购物车添加】准备插入，userId={}, productId={}, skuId={}, specsHash={}, skuName={}", 
+                    cart.getUserId(), cart.getProductId(), cart.getSkuId(), cart.getSpecsHash(), cart.getSkuName());
+            
+            // 使用 baseMapper 直接插入，确保字段值正确传递
+            int rows = baseMapper.insert(cart);
+            
+            log.info("【购物车添加】插入完成，影响行数={}, cartId={}, 实际specsHash={}", 
+                    rows, cart.getCartId(), cart.getSpecsHash());
             
             // 清除购物车缓存
             clearCartCache(userId);
