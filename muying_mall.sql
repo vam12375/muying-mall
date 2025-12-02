@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 01/12/2025 15:14:47
+ Date: 02/12/2025 13:13:17
 */
 
 SET NAMES utf8mb4;
@@ -45,7 +45,7 @@ CREATE TABLE `account_transaction`  (
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
   CONSTRAINT `fk_transaction_account` FOREIGN KEY (`account_id`) REFERENCES `user_account` (`account_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_transaction_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 50 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '账户交易记录表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 51 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '账户交易记录表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of account_transaction
@@ -94,6 +94,7 @@ INSERT INTO `account_transaction` VALUES (46, 'TR1763784725729ccd2a020', 5, 8, 3
 INSERT INTO `account_transaction` VALUES (47, 'RCH17640544589881710', 5, 8, 200.00, 20287.10, 1, 'wechat', 1, NULL, '账户充值', '手动完成充值: 1764054463469', '2025-11-25 15:07:39', '2025-11-25 15:07:43');
 INSERT INTO `account_transaction` VALUES (48, 'TR1764056147768dbc9c8cb', 5, 8, 1000.00, 21287.10, 1, 'admin_recharge', 1, NULL, NULL, NULL, '2025-11-25 15:35:48', '2025-11-25 15:35:48');
 INSERT INTO `account_transaction` VALUES (49, 'TR17640577213209e6c319b', 5, 8, 378.00, 20909.10, 2, 'wallet', 1, '289', '账户消费扣款', NULL, '2025-11-25 16:02:01', '2025-11-25 16:02:01');
+INSERT INTO `account_transaction` VALUES (50, 'TR17646496663686fe5f8c9', 5, 8, 298.00, 20611.10, 2, 'wallet', 1, '291', '账户消费扣款', NULL, '2025-12-02 12:27:46', '2025-12-02 12:27:46');
 
 -- ----------------------------
 -- Table structure for admin_login_records
@@ -123,7 +124,7 @@ CREATE TABLE `admin_login_records`  (
   INDEX `idx_ip_address`(`ip_address` ASC) USING BTREE,
   INDEX `idx_session_id`(`session_id` ASC) USING BTREE,
   CONSTRAINT `fk_admin_login_user` FOREIGN KEY (`admin_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 20 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '管理员登录记录表（admin_id关联user表）' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 21 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '管理员登录记录表（admin_id关联user表）' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of admin_login_records
@@ -147,6 +148,7 @@ INSERT INTO `admin_login_records` VALUES (16, 1, 'admin', '2025-11-25 14:55:30',
 INSERT INTO `admin_login_records` VALUES (17, 1, 'admin', '2025-11-25 15:34:23', NULL, '0:0:0:0:0:0:0:1', '本地网络', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', 'Desktop', 'Chrome 141.0.0.0', 'Windows 10', 'success', NULL, '2d3ca2ce-c516-47dd-8e9b-7246767eb0bd', NULL, '2025-11-25 15:34:23', '2025-11-25 15:34:23');
 INSERT INTO `admin_login_records` VALUES (18, 1, 'admin', '2025-11-26 15:57:19', NULL, '0:0:0:0:0:0:0:1', '本地网络', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', 'Desktop', 'Chrome 141.0.0.0', 'Windows 10', 'success', NULL, 'f77ec2db-c8ea-4616-8ec8-89dd8de582b9', NULL, '2025-11-26 15:57:19', '2025-11-26 15:57:19');
 INSERT INTO `admin_login_records` VALUES (19, 1, 'admin', '2025-11-26 15:58:25', NULL, '0:0:0:0:0:0:0:1', '本地网络', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', 'Desktop', 'Chrome 141.0.0.0', 'Windows 10', 'success', NULL, '2540f06b-5491-48f4-bb24-1ea89c2fd50c', NULL, '2025-11-26 15:58:25', '2025-11-26 15:58:25');
+INSERT INTO `admin_login_records` VALUES (20, 1, 'admin', '2025-12-02 12:15:53', NULL, '0:0:0:0:0:0:0:1', '本地网络', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', 'Desktop', 'Chrome 142.0.0.0', 'Windows 10', 'success', NULL, 'c9d94288-1d7b-44c3-bf41-1e89f15e978e', NULL, '2025-12-02 12:15:53', '2025-12-02 12:15:53');
 
 -- ----------------------------
 -- Table structure for admin_online_status
@@ -1873,7 +1875,7 @@ CREATE TABLE `comment`  (
   INDEX `idx_product_id`(`product_id` ASC) USING BTREE,
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
   INDEX `idx_product_rating_time`(`product_id` ASC, `rating` ASC, `create_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 221 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 222 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of comment
@@ -2094,6 +2096,7 @@ INSERT INTO `comment` VALUES (217, 8, 11, 285, '物流太慢了，商品质量�
 INSERT INTO `comment` VALUES (218, 8, 119, 287, '商品质量很好，与描述一致，非常满意，下次还会购买！', 5, NULL, 0, 1, '2025-11-25 15:33:02', '2025-11-25 15:33:23', 1);
 INSERT INTO `comment` VALUES (219, 8, 117, 289, '质量非常好，物流很快，包装也很完整，非常满意的一次购物体验！', 5, NULL, 0, 1, '2025-11-25 16:02:36', '2025-11-25 16:02:49', 1);
 INSERT INTO `comment` VALUES (220, 8, 118, 290, '物流太慢了，商品质量也一般，不是很满意。', 2, NULL, 0, 1, '2025-11-25 16:03:51', '2025-11-25 16:04:03', 1);
+INSERT INTO `comment` VALUES (221, 8, 1, 291, '收到货了，包装很好，物流很快，商品质量也不错，价格也实惠，很满意！', 5, NULL, 0, 1, '2025-12-02 13:11:13', '2025-12-02 13:11:13', 0);
 
 -- ----------------------------
 -- Table structure for comment_reply
@@ -2193,11 +2196,11 @@ INSERT INTO `comment_tag` VALUES (2, '质量好', 1, NULL, 2, 1, '2025-05-17 20:
 INSERT INTO `comment_tag` VALUES (3, '性价比高', 1, NULL, 6, 1, '2025-05-17 20:19:20', '2025-11-25 16:02:36');
 INSERT INTO `comment_tag` VALUES (4, '描述相符', 1, NULL, 0, 1, '2025-05-17 20:19:20', '2025-05-17 20:19:20');
 INSERT INTO `comment_tag` VALUES (5, '服务好', 1, NULL, 0, 1, '2025-05-17 20:19:20', '2025-05-17 20:19:20');
-INSERT INTO `comment_tag` VALUES (6, '包装精美', 1, NULL, 0, 1, '2025-05-17 20:19:20', '2025-07-11 13:18:24');
-INSERT INTO `comment_tag` VALUES (7, '送货快', 1, NULL, 2, 1, '2025-05-17 20:19:20', '2025-11-25 16:02:36');
+INSERT INTO `comment_tag` VALUES (6, '包装精美', 1, NULL, 1, 1, '2025-05-17 20:19:20', '2025-12-02 13:11:13');
+INSERT INTO `comment_tag` VALUES (7, '送货快', 1, NULL, 3, 1, '2025-05-17 20:19:20', '2025-12-02 13:11:13');
 INSERT INTO `comment_tag` VALUES (8, '正品保障', 1, NULL, 3, 1, '2025-05-17 20:19:20', '2025-11-25 16:02:36');
 INSERT INTO `comment_tag` VALUES (9, '材质优良', 1, NULL, 2, 1, '2025-05-17 20:19:20', '2025-05-28 22:17:44');
-INSERT INTO `comment_tag` VALUES (10, '做工精细', 1, NULL, 1, 1, '2025-05-17 20:19:20', '2025-05-18 09:31:01');
+INSERT INTO `comment_tag` VALUES (10, '做工精细', 1, NULL, 2, 1, '2025-05-17 20:19:20', '2025-12-02 13:11:13');
 
 -- ----------------------------
 -- Table structure for comment_tag_relation
@@ -2211,7 +2214,7 @@ CREATE TABLE `comment_tag_relation`  (
   PRIMARY KEY (`relation_id`) USING BTREE,
   UNIQUE INDEX `uk_comment_tag`(`comment_id` ASC, `tag_id` ASC) USING BTREE,
   INDEX `idx_tag_id`(`tag_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 42 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价标签关系表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 45 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价标签关系表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of comment_tag_relation
@@ -2237,6 +2240,9 @@ INSERT INTO `comment_tag_relation` VALUES (38, 218, 8, '2025-11-25 15:33:02');
 INSERT INTO `comment_tag_relation` VALUES (39, 219, 3, '2025-11-25 16:02:36');
 INSERT INTO `comment_tag_relation` VALUES (40, 219, 8, '2025-11-25 16:02:36');
 INSERT INTO `comment_tag_relation` VALUES (41, 219, 7, '2025-11-25 16:02:36');
+INSERT INTO `comment_tag_relation` VALUES (42, 221, 6, '2025-12-02 13:11:13');
+INSERT INTO `comment_tag_relation` VALUES (43, 221, 7, '2025-12-02 13:11:13');
+INSERT INTO `comment_tag_relation` VALUES (44, 221, 10, '2025-12-02 13:11:13');
 
 -- ----------------------------
 -- Table structure for comment_template
@@ -2452,7 +2458,7 @@ CREATE TABLE `logistics`  (
   INDEX `idx_status`(`status` ASC) USING BTREE,
   CONSTRAINT `fk_logistics_company` FOREIGN KEY (`company_id`) REFERENCES `logistics_company` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_logistics_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 40 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '物流表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 41 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '物流表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of logistics
@@ -2492,6 +2498,7 @@ INSERT INTO `logistics` VALUES (36, 282, 4, 'YD2511251550026085', 'CREATED', NUL
 INSERT INTO `logistics` VALUES (37, 288, 1, 'SF2511251553377051', 'CREATED', NULL, NULL, NULL, '青柠檬', '13444588765', '广东省深圳市罗湖区三墩157号', '2025-11-25 15:53:38', NULL, NULL, '2025-11-25 15:53:38', '2025-11-25 15:53:38');
 INSERT INTO `logistics` VALUES (38, 289, 7, 'BEST2511251602165847', 'CREATED', NULL, NULL, NULL, '青柠檬', '13444588765', '广东省深圳市罗湖区三墩157号', '2025-11-25 16:02:17', NULL, NULL, '2025-11-25 16:02:17', '2025-11-25 16:02:17');
 INSERT INTO `logistics` VALUES (39, 290, 12, 'HTKY2511251603332100', 'CREATED', NULL, NULL, NULL, '王大锤', '13666522545', '广东省深圳市福田区紫阳大道1555号', '2025-11-25 16:03:34', NULL, NULL, '2025-11-25 16:03:34', '2025-11-25 16:03:34');
+INSERT INTO `logistics` VALUES (40, 291, 4, 'YD2512021310503654', 'CREATED', NULL, NULL, NULL, '李狗蛋', '15777455288', '北京市北京市朝阳区胜利街道1887号', '2025-12-02 13:10:51', NULL, NULL, '2025-12-02 13:10:51', '2025-12-02 13:10:51');
 
 -- ----------------------------
 -- Table structure for logistics_company
@@ -2600,7 +2607,7 @@ CREATE TABLE `logistics_track`  (
   INDEX `idx_logistics_id`(`logistics_id` ASC) USING BTREE,
   INDEX `idx_tracking_time`(`tracking_time` ASC) USING BTREE,
   CONSTRAINT `fk_track_logistics` FOREIGN KEY (`logistics_id`) REFERENCES `logistics` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 124 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '物流轨迹表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 125 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '物流轨迹表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of logistics_track
@@ -2728,6 +2735,7 @@ INSERT INTO `logistics_track` VALUES (120, 37, '2025-11-25 09:24:03', '配送站
 INSERT INTO `logistics_track` VALUES (121, 37, '2025-11-25 09:54:03', '收货地址', '已签收', '快件已被签收，感谢您使用我们的服务', 'System', '2025-11-25 15:54:04', '{\"batchIndex\": 4, \"batchGenerated\": true, \"batchTimestamp\": \"2025-11-25T15:54:04.008011\"}');
 INSERT INTO `logistics_track` VALUES (122, 38, '2025-11-25 16:02:17', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-11-25 16:02:17', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 7, \"trackingNo\": \"BEST2511251602165847\"}, \"systemGenerated\": true}');
 INSERT INTO `logistics_track` VALUES (123, 39, '2025-11-25 16:03:34', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-11-25 16:03:34', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 12, \"trackingNo\": \"HTKY2511251603332100\"}, \"systemGenerated\": true}');
+INSERT INTO `logistics_track` VALUES (124, 40, '2025-12-02 13:10:51', NULL, 'CREATED', '物流信息已创建，等待揽收', '系统', '2025-12-02 13:10:51', '{\"type\": \"initial\", \"logisticsInfo\": {\"companyId\": 4, \"trackingNo\": \"YD2512021310503654\"}, \"systemGenerated\": true}');
 
 -- ----------------------------
 -- Table structure for member_level
@@ -2806,7 +2814,7 @@ CREATE TABLE `order`  (
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
   INDEX `idx_user_status_create_time`(`user_id` ASC, `status` ASC, `create_time` ASC) USING BTREE,
   INDEX `idx_version`(`version` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 291 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 292 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of order
@@ -3049,6 +3057,7 @@ INSERT INTO `order` VALUES (287, 'OD17640543323297532b6', 8, 398.00, 348.00, 'co
 INSERT INTO `order` VALUES (288, 'OD1764057157635e2e238', 8, 567.00, 467.00, 'refunded', 316, '2025-11-25 15:53:16', 'alipay', NULL, 0.00, 4, '青柠檬', '13444588765', '广东省', '深圳市', '罗湖区', '三墩157号', '310000', '', 0.00, 33, 50.00, 0.00, 5000, 50.00, NULL, '2025-11-25 15:53:38', 'SF2511251553377051', '顺丰速运', '2025-11-25 15:54:14', NULL, NULL, 0, 0, '2025-11-25 15:52:38', '2025-11-25 15:54:14', 6);
 INSERT INTO `order` VALUES (289, 'OD176405771301987f2fe', 8, 378.00, 378.00, 'completed', 317, '2025-11-25 16:02:01', 'wallet', NULL, 0.00, 4, '青柠檬', '13444588765', '广东省', '深圳市', '罗湖区', '三墩157号', '310000', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-11-25 16:02:17', 'BEST2511251602165847', '百世快递', '2025-11-25 16:02:25', NULL, NULL, 1, 0, '2025-11-25 16:01:53', '2025-11-25 16:02:36', 4);
 INSERT INTO `order` VALUES (290, 'OD1764057786683d12dd0', 8, 1740.00, 1740.00, 'completed', 318, '2025-11-25 16:03:19', 'wechat', NULL, 0.00, 8, '王大锤', '13666522545', '广东省', '深圳市', '福田区', '紫阳大道1555号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-11-25 16:03:34', 'HTKY2511251603332100', '百世快运', '2025-11-25 16:03:41', NULL, NULL, 1, 0, '2025-11-25 16:03:07', '2025-11-25 16:03:51', 4);
+INSERT INTO `order` VALUES (291, 'OD17646496587039b9c06', 8, 298.00, 298.00, 'completed', 319, '2025-12-02 12:27:46', 'wallet', NULL, 0.00, 5, '李狗蛋', '15777455288', '北京市', '北京市', '朝阳区', '胜利街道1887号', '', '', 0.00, NULL, 0.00, 0.00, 0, 0.00, NULL, '2025-12-02 13:10:51', 'YD2512021310503654', '韵达速递', '2025-12-02 13:11:01', NULL, NULL, 1, 0, '2025-12-02 12:27:39', '2025-12-02 13:11:13', 4);
 
 -- ----------------------------
 -- Table structure for order_product
@@ -3072,7 +3081,7 @@ CREATE TABLE `order_product`  (
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
   INDEX `idx_product_id`(`product_id` ASC) USING BTREE,
   INDEX `idx_sku_id`(`sku_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 132 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单商品表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 133 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单商品表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of order_product
@@ -3208,6 +3217,7 @@ INSERT INTO `order_product` VALUES (128, 287, 119, NULL, NULL, NULL, '帮宝适�
 INSERT INTO `order_product` VALUES (129, 288, 120, NULL, NULL, NULL, '花王纸尿裤NB号', 'goods120.jpg', 189.00, 3, '{\"尺码\": \"S(4-8kg);数量\"}', '2025-11-25 15:52:38', '2025-11-25 15:52:38');
 INSERT INTO `order_product` VALUES (130, 289, 117, NULL, NULL, NULL, '惠氏S-26铂臻3段幼儿配方奶粉', 'goods117.jpg', 378.00, 1, NULL, '2025-11-25 16:01:53', '2025-11-25 16:01:53');
 INSERT INTO `order_product` VALUES (131, 290, 118, NULL, NULL, NULL, '美素佳儿金装3段幼儿配方奶粉', 'goods118.jpg', 348.00, 5, '{\"规格\": \"默认\"}', '2025-11-25 16:03:07', '2025-11-25 16:03:07');
+INSERT INTO `order_product` VALUES (132, 291, 1, NULL, NULL, NULL, '惠氏启赋有机婴儿配方奶粉1段（0-6个月）', 'goods1.jpg', 298.00, 1, '{\"规格\": \"400g;段数\"}', '2025-12-02 12:27:39', '2025-12-02 12:27:39');
 
 -- ----------------------------
 -- Table structure for order_state_log
@@ -3296,7 +3306,7 @@ CREATE TABLE `payment`  (
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_status_method`(`status` ASC, `payment_method` ASC) USING BTREE,
   INDEX `idx_version`(`version` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 319 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '支付表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 320 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '支付表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of payment
@@ -3575,6 +3585,7 @@ INSERT INTO `payment` VALUES (315, 'PAY17640543413805598', 287, 'OD1764054332329
 INSERT INTO `payment` VALUES (316, 'PAY176405716479180fb', 288, 'OD1764057157635e2e238', 8, 467.00, 'alipay', 2, '2025-11-25 15:53:16', 'AP2025112522001434870508282808', NULL, '2025-11-25 17:52:45', 'http://localhost:8080/api/payment/alipay/notify', 'http://localhost:8080/api/payment/alipay/return', NULL, '2025-11-25 15:52:45', '2025-11-25 15:53:16', 2);
 INSERT INTO `payment` VALUES (317, 'PAY17640577213215bcb', 289, 'OD176405771301987f2fe', 8, 378.00, 'wallet', 2, '2025-11-25 16:02:01', 'WALLET68e31304da6f45a88d46aa063427d71c', NULL, NULL, NULL, NULL, NULL, '2025-11-25 16:02:01', '2025-11-25 16:02:01', 1);
 INSERT INTO `payment` VALUES (318, 'PAY1764057796436d16c', 290, 'OD1764057786683d12dd0', 8, 1740.00, 'wechat', 2, '2025-11-25 16:03:19', 'WX5c3b8c013e064330ae1161f7a425568c', NULL, '2025-11-25 18:03:16', NULL, NULL, NULL, '2025-11-25 16:03:16', '2025-11-25 16:03:19', 2);
+INSERT INTO `payment` VALUES (319, 'PAY17646496663707cea', 291, 'OD17646496587039b9c06', 8, 298.00, 'wallet', 2, '2025-12-02 12:27:46', 'WALLET2cc5c434915b41ccaa91da884119dac3', NULL, NULL, NULL, NULL, NULL, '2025-12-02 12:27:46', '2025-12-02 12:27:46', 1);
 
 -- ----------------------------
 -- Table structure for payment_log
@@ -3824,7 +3835,7 @@ CREATE TABLE `points_history`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 220 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '积分历史记录表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 222 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '积分历史记录表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of points_history
@@ -4045,6 +4056,8 @@ INSERT INTO `points_history` VALUES (216, 8, 15, 'earn', 'comment_reward', '220'
 INSERT INTO `points_history` VALUES (217, 10, 20, 'earn', 'signin', '2025-11-26', '每日签到', '2025-11-26 15:58:33');
 INSERT INTO `points_history` VALUES (218, 8, 200, 'earn', 'signin_continuous', '2025-11-26', '连续签到3天额外奖励', '2025-11-26 16:01:07');
 INSERT INTO `points_history` VALUES (219, 8, 20, 'earn', 'signin', '2025-11-26', '每日签到', '2025-11-26 16:01:07');
+INSERT INTO `points_history` VALUES (220, 8, 29, 'earn', 'order_completed', '291', '订单完成奖励', '2025-12-02 13:11:04');
+INSERT INTO `points_history` VALUES (221, 8, 23, 'earn', 'comment_reward', '221', '评价奖励', '2025-12-02 13:11:13');
 
 -- ----------------------------
 -- Table structure for points_product
@@ -4155,7 +4168,7 @@ CREATE TABLE `product`  (
 -- ----------------------------
 -- Records of product
 -- ----------------------------
-INSERT INTO `product` VALUES (1, 5, 1, '惠氏启赋有机婴儿配方奶粉1段（0-6个月）', 'WY001', 'goods1.jpg', '惠氏启赋有机婴儿配方奶粉，源自有机奶源，为宝宝提供全面营养', 298.00, 358.00, 348.00, 698.00, 99, 1025, 980, 4.8, 256, '上架', 1, 1, 1, 1, '2025-03-05 21:58:47', '2025-11-24 11:01:26', 1);
+INSERT INTO `product` VALUES (1, 5, 1, '惠氏启赋有机婴儿配方奶粉1段（0-6个月）', 'WY001', 'goods1.jpg', '惠氏启赋有机婴儿配方奶粉，源自有机奶源，为宝宝提供全面营养', 298.00, 358.00, 288.00, 518.00, 98, 1026, 980, 4.8, 256, '上架', 1, 1, 1, 1, '2025-03-05 21:58:47', '2025-12-02 12:27:38', 1);
 INSERT INTO `product` VALUES (2, 5, 1, '婴儿奶粉）', 'WY002', 'goods2.jpg', '惠氏启赋有机婴儿配方奶粉，源自有机奶源，为宝宝提供全面营养', 328.00, 388.00, 288.00, 588.00, 100, 896, 850, 4.7, 220, '上架', 1, 1, 0, 1, '2025-03-05 21:58:47', '2025-11-24 10:50:12', 1);
 INSERT INTO `product` VALUES (3, 4, 1, '有机婴儿配方奶粉3段（1-3岁）', 'WY003', 'goods3.jpg', '惠氏启赋有机婴儿配方奶粉，源自有机奶源，为宝宝提供全面营养', 358.00, 418.00, 358.00, 358.00, 1000, 768, 720, 4.6, 180, '上架', 1, 0, 0, 1, '2025-03-05 21:58:47', '2025-11-24 12:15:22', 1);
 INSERT INTO `product` VALUES (4, 2, 1, '帮宝适超薄干爽纸尿裤M码（6-11kg）', 'PM001', 'goods4.jpg', '帮宝适超薄干爽纸尿裤，瞬吸干爽，让宝宝整夜安睡', 139.00, 169.00, 139.00, 139.00, 200, 2048, 1900, 4.9, 512, '上架', 1, 1, 0, 1, '2025-03-05 21:58:47', '2025-11-24 12:15:22', 1);
@@ -5516,16 +5529,16 @@ CREATE TABLE `product_sku`  (
   `sku_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'SKU ID',
   `product_id` int UNSIGNED NOT NULL COMMENT '商品ID',
   `sku_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'SKU编码',
-  `sku_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'SKU名称（如：1段/900g）',
-  `spec_values` json NOT NULL COMMENT '规格值组合 JSON',
+  `sku_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'SKU名称',
+  `spec_values` json NOT NULL COMMENT '规格值组合（JSON格式）',
   `price` decimal(10, 2) NOT NULL COMMENT 'SKU价格',
   `stock` int NOT NULL DEFAULT 0 COMMENT 'SKU库存',
   `sku_image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'SKU图片',
-  `weight` decimal(10, 2) NULL DEFAULT NULL COMMENT '重量(kg)',
-  `volume` decimal(10, 2) NULL DEFAULT NULL COMMENT '体积(m³)',
-  `status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
-  `sort_order` int NULL DEFAULT 0 COMMENT '排序',
-  `version` int NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  `weight` decimal(10, 3) NULL DEFAULT NULL COMMENT '重量(kg)',
+  `volume` decimal(10, 6) NULL DEFAULT NULL COMMENT '体积(m³)',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+  `sort_order` int NOT NULL DEFAULT 0 COMMENT '排序',
+  `version` int NOT NULL DEFAULT 1 COMMENT '乐观锁版本号',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`sku_id`) USING BTREE,
@@ -5533,141 +5546,17 @@ CREATE TABLE `product_sku`  (
   INDEX `idx_product_id`(`product_id` ASC) USING BTREE,
   INDEX `idx_status`(`status` ASC) USING BTREE,
   CONSTRAINT `fk_sku_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 133 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品SKU表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品SKU表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of product_sku
 -- ----------------------------
-INSERT INTO `product_sku` VALUES (1, 1, 'WYS-1D-900G', '惠氏启赋有机奶粉 1段/900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"1段(0-6个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"900g\"}]', 358.00, 100, 'goods1.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
-INSERT INTO `product_sku` VALUES (2, 1, 'WYS-1D-1800G', '惠氏启赋有机奶粉 1段/1.8kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"1段(0-6个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.8kg\"}]', 688.00, 50, 'goods1.jpg', 1.80, NULL, 1, 2, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
-INSERT INTO `product_sku` VALUES (3, 1, 'WYS-2D-900G', '惠氏启赋有机奶粉 2段/900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"2段(6-12个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"900g\"}]', 368.00, 80, 'goods1.jpg', 0.90, NULL, 1, 3, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
-INSERT INTO `product_sku` VALUES (4, 1, 'WYS-2D-1800G', '惠氏启赋有机奶粉 2段/1.8kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"2段(6-12个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.8kg\"}]', 698.00, 40, 'goods1.jpg', 1.80, NULL, 1, 4, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
-INSERT INTO `product_sku` VALUES (5, 1, 'WYS-3D-900G', '惠氏启赋有机奶粉 3段/900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"3段(1-3岁)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"900g\"}]', 348.00, 120, 'goods1.jpg', 0.90, NULL, 1, 5, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
-INSERT INTO `product_sku` VALUES (6, 1, 'WYS-3D-1800G', '惠氏启赋有机奶粉 3段/1.8kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"3段(1-3岁)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.8kg\"}]', 668.00, 60, 'goods1.jpg', 1.80, NULL, 1, 6, 0, '2025-11-24 10:50:02', '2025-11-24 10:50:02');
-INSERT INTO `product_sku` VALUES (7, 2, 'ATM-1D-800G', '爱他美白金版奶粉 1段/800g', '[{\"spec_name\": \"规格\", \"spec_value\": \"1段(0-6个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"800g\"}]', 298.00, 90, 'goods2.jpg', 0.80, NULL, 1, 1, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
-INSERT INTO `product_sku` VALUES (8, 2, 'ATM-1D-1600G', '爱他美白金版奶粉 1段/1.6kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"1段(0-6个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.6kg\"}]', 568.00, 45, 'goods2.jpg', 1.60, NULL, 1, 2, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
-INSERT INTO `product_sku` VALUES (9, 2, 'ATM-2D-800G', '爱他美白金版奶粉 2段/800g', '[{\"spec_name\": \"规格\", \"spec_value\": \"2段(6-12个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"800g\"}]', 308.00, 75, 'goods2.jpg', 0.80, NULL, 1, 3, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
-INSERT INTO `product_sku` VALUES (10, 2, 'ATM-2D-1600G', '爱他美白金版奶粉 2段/1.6kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"2段(6-12个月)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.6kg\"}]', 588.00, 38, 'goods2.jpg', 1.60, NULL, 1, 4, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
-INSERT INTO `product_sku` VALUES (11, 2, 'ATM-3D-800G', '爱他美白金版奶粉 3段/800g', '[{\"spec_name\": \"规格\", \"spec_value\": \"3段(1-3岁)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"800g\"}]', 288.00, 110, 'goods2.jpg', 0.80, NULL, 1, 5, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
-INSERT INTO `product_sku` VALUES (12, 2, 'ATM-3D-1600G', '爱他美白金版奶粉 3段/1.6kg', '[{\"spec_name\": \"规格\", \"spec_value\": \"3段(1-3岁)\"}, {\"spec_name\": \"重量\", \"spec_value\": \"1.6kg\"}]', 548.00, 55, 'goods2.jpg', 1.60, NULL, 1, 6, 0, '2025-11-24 10:50:07', '2025-11-24 10:50:07');
-INSERT INTO `product_sku` VALUES (13, 3, 'WY003-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 358.00, 1000, 'goods3.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:21', '2025-11-24 11:37:49');
-INSERT INTO `product_sku` VALUES (14, 4, 'PM001-DEFAULT', 'M码', '[{\"spec_name\": \"规格\", \"spec_value\": \"M码\"}]', 139.00, 200, 'goods4.jpg', 2.50, NULL, 1, 1, 0, '2025-11-24 11:21:21', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (15, 5, 'HW001-DEFAULT', 'L码', '[{\"spec_name\": \"规格\", \"spec_value\": \"L码\"}]', 149.00, 199, 'goods5.jpg', 2.80, NULL, 1, 1, 0, '2025-11-24 11:21:21', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (16, 6, 'FR001-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 68.00, 150, 'goods6.jpg', 0.25, NULL, 1, 1, 0, '2025-11-24 11:21:21', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (17, 7, 'FS001-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 129.00, 79, 'goods7.jpg', 0.30, NULL, 1, 1, 0, '2025-11-24 11:21:21', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (18, 8, 'JS001-DEFAULT', '500ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"500ml\"}]', 59.90, 300, 'goods8.jpg', 0.50, NULL, 1, 1, 0, '2025-11-24 11:21:21', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (19, 9, 'SE001-DEFAULT', '200ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"200ml\"}]', 89.90, 199, 'goods9.jpg', 0.20, NULL, 1, 1, 0, '2025-11-24 11:21:21', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (20, 10, 'BQ001-DEFAULT', '240ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"240ml\"}]', 79.90, 180, 'goods10.jpg', 0.35, NULL, 1, 1, 0, '2025-11-24 11:21:21', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (21, 11, 'BY001-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 89.90, 500, 'goods11.jpg', 0.15, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (22, 12, 'BY002-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 129.90, 400, 'goods12.jpg', 0.20, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (23, 13, 'BY003-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 69.90, 600, 'goods13.jpg', 0.25, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (24, 14, 'BY004-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 899.90, 100, 'goods14.jpg', 15.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (25, 15, 'BY005-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 699.90, 150, 'goods15.jpg', 8.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (26, 16, 'BY006-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 49.90, 800, 'goods16.jpg', 0.30, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (27, 17, 'BY007-DEFAULT', '80抽', '[{\"spec_name\": \"规格\", \"spec_value\": \"80抽\"}]', 19.90, 1000, 'goods17.jpg', 0.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (28, 18, 'BY008-DEFAULT', '300ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"300ml\"}]', 39.90, 700, 'goods18.jpg', 0.30, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (29, 19, 'BY009-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 159.90, 300, 'goods19.jpg', 0.20, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (30, 20, 'BY010-DEFAULT', '500ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 89.90, 400, 'goods20.jpg', 0.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (31, 21, 'BY011-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 199.90, 249, 'goods21.jpg', 0.40, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (32, 22, 'BY012-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 159.90, 200, 'goods22.jpg', 1.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (33, 23, 'BY013-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 229.90, 298, 'goods23.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (34, 24, 'BY014-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 129.90, 349, 'goods24.jpg', 0.10, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (35, 25, 'BY015-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 39.90, 500, 'goods25.jpg', 0.08, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (36, 26, 'BY016-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 159.90, 300, 'goods26.jpg', 0.30, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (37, 27, 'BY017-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 299.90, 200, 'goods27.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (38, 28, 'BY018-DEFAULT', 'M码', '[{\"spec_name\": \"规格\", \"spec_value\": \"M码\"}]', 99.90, 400, 'goods28.jpg', 2.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (39, 29, 'BY019-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 399.90, 150, 'goods29.jpg', 3.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (40, 30, 'BY020-DEFAULT', '500ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 129.90, 300, 'goods30.jpg', 0.35, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (41, 31, 'BY021-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 259.90, 200, 'goods31.jpg', 4.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (42, 32, 'BY022-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 299.90, 150, 'goods32.jpg', 6.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (43, 33, 'BY023-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 159.90, 250, 'goods33.jpg', 2.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (44, 34, 'BY024-DEFAULT', '50ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"50ml\"}]', 89.90, 300, 'goods34.jpg', 0.05, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (45, 35, 'BY025-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 159.90, 200, 'goods35.jpg', 0.40, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (46, 36, 'BY026-DEFAULT', '3支装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 49.90, 400, 'goods36.jpg', 0.10, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (47, 37, 'BY027-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 199.90, 200, 'goods37.jpg', 0.80, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (48, 38, 'BY028-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 899.90, 100, 'goods38.jpg', 12.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (49, 39, 'BY029-DEFAULT', 'M码', '[{\"spec_name\": \"规格\", \"spec_value\": \"M码\"}]', 99.90, 500, 'goods39.jpg', 2.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (50, 40, 'BY030-DEFAULT', '80抽x10包', '[{\"spec_name\": \"规格\", \"spec_value\": \"80抽x10包\"}]', 59.90, 600, 'goods40.jpg', 5.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (51, 41, 'BY031-DEFAULT', '500ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"500ml\"}]', 69.90, 400, 'goods41.jpg', 0.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (52, 42, 'BY032-DEFAULT', '200ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"200ml\"}]', 79.90, 349, 'goods42.jpg', 0.20, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (53, 43, 'BY033-DEFAULT', '50g', '[{\"spec_name\": \"规格\", \"spec_value\": \"50g\"}]', 39.90, 499, 'goods43.jpg', 0.05, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (54, 44, 'BY034-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 29.90, 600, 'goods44.jpg', 0.05, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (55, 45, 'BY035-DEFAULT', '100ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"100ml\"}]', 49.90, 400, 'goods45.jpg', 0.10, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (56, 46, 'BY036-DEFAULT', '50g', '[{\"spec_name\": \"规格\", \"spec_value\": \"50g\"}]', 59.90, 349, 'goods46.jpg', 0.05, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (57, 47, 'BY037-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 129.90, 299, 'goods47.jpg', 0.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (58, 48, 'BY038-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 199.90, 250, 'goods48.jpg', 1.20, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (59, 49, 'BY039-DEFAULT', '10册', '[{\"spec_name\": \"规格\", \"spec_value\": \"10册\"}]', 159.90, 198, 'goods49.jpg', 1.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (60, 50, 'BY040-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 59.99, 399, 'goods50.jpg', 0.30, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (61, 51, 'BY041-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 89.90, 300, 'goods51.jpg', 0.80, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (62, 52, 'BY042-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 79.90, 198, 'goods52.jpg', 0.40, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (63, 53, 'BY043-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 199.90, 97, 'goods53.jpg', 1.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (64, 54, 'BY044-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 399.90, 147, 'goods54.jpg', 0.60, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (65, 55, 'BY045-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 49.90, 398, 'goods55.jpg', 0.15, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (66, 56, 'BY046-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 129.90, 195, 'goods56.jpg', 0.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (67, 57, 'BY047-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 299.90, 149, 'goods57.jpg', 0.08, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (68, 58, 'BY048-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 99.90, 294, 'goods58.jpg', 0.05, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (69, 59, 'BY049-DEFAULT', '60粒', '[{\"spec_name\": \"规格\", \"spec_value\": \"60粒\"}]', 189.90, 245, 'goods59.jpg', 0.10, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (70, 60, 'BY050-DEFAULT', '套装', '[{\"spec_name\": \"规格\", \"spec_value\": \"套装\"}]', 399.90, 95, 'goods60.jpg', 1.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (71, 61, 'BY061-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 358.00, 198, 'goods61.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (72, 62, 'BY062-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 499.90, 150, 'goods62.jpg', 5.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (73, 63, 'BY063-DEFAULT', '240ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"240ml\"}]', 129.00, 179, 'goods63.jpg', 0.35, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (74, 64, 'BY064-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 2580.00, 80, 'goods64.jpg', 2.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (75, 65, 'BY065-DEFAULT', '80抽x6包', '[{\"spec_name\": \"规格\", \"spec_value\": \"80抽x6包\"}]', 69.90, 299, 'goods65.jpg', 3.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (76, 66, 'BY066-DEFAULT', '42g', '[{\"spec_name\": \"规格\", \"spec_value\": \"42g\"}]', 25.80, 400, 'goods66.jpg', 0.04, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (77, 67, 'BY067-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 388.00, 220, 'goods67.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (78, 68, 'BY068-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 368.00, 210, 'goods68.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (79, 69, 'BY069-DEFAULT', 'M码', '[{\"spec_name\": \"规格\", \"spec_value\": \"M码\"}]', 189.00, 280, 'goods69.jpg', 2.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (80, 70, 'BY070-DEFAULT', 'L码', '[{\"spec_name\": \"规格\", \"spec_value\": \"L码\"}]', 179.00, 269, 'goods70.jpg', 2.80, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (81, 71, 'BY071-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 398.00, 190, 'goods71.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (82, 72, 'BY072-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 159.00, 159, 'goods72.jpg', 0.30, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (83, 73, 'BY073-DEFAULT', '260ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"240ml\"}]', 109.00, 170, 'goods73.jpg', 0.40, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (84, 74, 'BY074-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 1880.00, 90, 'goods74.jpg', 1.80, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (85, 75, 'BY075-DEFAULT', '1L', '[{\"spec_name\": \"规格\", \"spec_value\": \"1L\"}]', 59.90, 250, 'goods75.jpg', 1.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (86, 76, 'BY076-DEFAULT', '225g', '[{\"spec_name\": \"规格\", \"spec_value\": \"225g\"}]', 35.80, 350, 'goods76.jpg', 0.23, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (87, 77, 'BY077-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 378.00, 196, 'goods77.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (88, 78, 'BY078-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 348.00, 190, 'goods78.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (89, 79, 'BY079-DEFAULT', 'L码', '[{\"spec_name\": \"规格\", \"spec_value\": \"L码\"}]', 199.00, 260, 'goods79.jpg', 2.80, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (90, 80, 'BY080-DEFAULT', 'NB码', '[{\"spec_name\": \"规格\", \"spec_value\": \"NB码\"}]', 169.00, 299, 'goods80.jpg', 2.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (91, 81, 'BY081-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 368.00, 180, 'goods81.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (92, 82, 'BY082-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 299.00, 140, 'goods82.jpg', 3.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (93, 83, 'BY083-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 899.00, 119, 'goods83.jpg', 4.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (94, 84, 'BY084-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 1880.00, 88, 'goods84.jpg', 1.80, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (95, 85, 'BY085-DEFAULT', '240ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"240ml\"}]', 119.00, 169, 'goods85.jpg', 0.20, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (96, 86, 'BY086-DEFAULT', '42g', '[{\"spec_name\": \"规格\", \"spec_value\": \"42g\"}]', 25.80, 400, 'goods86.jpg', 0.04, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (97, 87, 'BY087-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 398.00, 219, 'goods87.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (98, 88, 'BY088-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 358.00, 210, 'goods88.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (99, 89, 'BY089-DEFAULT', 'M码', '[{\"spec_name\": \"规格\", \"spec_value\": \"M码\"}]', 179.00, 279, 'goods89.jpg', 2.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (100, 90, 'BY090-DEFAULT', 'NB码', '[{\"spec_name\": \"规格\", \"spec_value\": \"NB码\"}]', 169.00, 250, 'goods90.jpg', 2.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (101, 91, 'BY091-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 388.00, 189, 'goods91.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (102, 92, 'BY092-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 159.00, 160, 'goods92.jpg', 0.30, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (103, 93, 'BY093-DEFAULT', '240ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"240ml\"}]', 109.00, 169, 'goods93.jpg', 0.35, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (104, 94, 'BY094-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 2580.00, 78, 'goods94.jpg', 2.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (105, 95, 'BY095-DEFAULT', '500ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"500ml\"}]', 79.90, 249, 'goods95.jpg', 0.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (106, 96, 'BY096-DEFAULT', '150g', '[{\"spec_name\": \"规格\", \"spec_value\": \"150g\"}]', 29.80, 347, 'goods96.jpg', 0.15, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (107, 97, 'BY097-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 388.00, 200, 'goods97.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (108, 98, 'BY098-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 358.00, 187, 'goods98.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (109, 99, 'BY099-DEFAULT', 'M码', '[{\"spec_name\": \"规格\", \"spec_value\": \"M码\"}]', 189.00, 260, 'goods99.jpg', 2.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (110, 100, 'BY100-DEFAULT', 'S码', '[{\"spec_name\": \"规格\", \"spec_value\": \"S码\"}]', 179.00, 268, 'goods100.jpg', 2.30, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (111, 101, 'BY101-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 358.00, 200, 'goods101.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (112, 102, 'BY102-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 499.90, 150, 'goods102.jpg', 5.50, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (113, 103, 'BY103-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 59.00, 200, 'goods103.jpg', 0.02, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (114, 104, 'BY104-DEFAULT', '配件套装', '[{\"spec_name\": \"规格\", \"spec_value\": \"配件套装\"}]', 180.00, 99, 'goods104.jpg', 0.30, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (115, 105, 'BY105-DEFAULT', '200ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"200ml\"}]', 79.90, 220, 'goods105.jpg', 0.20, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (116, 106, 'BY106-DEFAULT', '225g', '[{\"spec_name\": \"规格\", \"spec_value\": \"225g\"}]', 38.80, 300, 'goods106.jpg', 0.23, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (117, 107, 'BY107-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 398.00, 199, 'goods107.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (118, 108, 'BY108-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 378.00, 190, 'goods108.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (119, 109, 'BY109-DEFAULT', 'L码', '[{\"spec_name\": \"规格\", \"spec_value\": \"L码\"}]', 199.00, 249, 'goods109.jpg', 2.80, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (120, 110, 'BY110-DEFAULT', 'XL码', '[{\"spec_name\": \"规格\", \"spec_value\": \"XL码\"}]', 189.00, 240, 'goods110.jpg', 3.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (121, 111, 'BY111-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 408.00, 180, 'goods111.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (122, 112, 'BY112-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 258.00, 150, 'goods112.jpg', 0.30, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (123, 113, 'BY113-DEFAULT', '240ml', '[{\"spec_name\": \"规格\", \"spec_value\": \"240ml\"}]', 109.00, 160, 'goods113.jpg', 0.35, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (124, 114, 'BY114-DEFAULT', '标准装', '[{\"spec_name\": \"规格\", \"spec_value\": \"标准装\"}]', 1880.00, 80, 'goods114.jpg', 1.80, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (125, 115, 'BY115-DEFAULT', '1L', '[{\"spec_name\": \"规格\", \"spec_value\": \"1L\"}]', 59.90, 200, 'goods115.jpg', 1.00, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (126, 116, 'BY116-DEFAULT', '225g', '[{\"spec_name\": \"规格\", \"spec_value\": \"225g\"}]', 35.80, 300, 'goods116.jpg', 0.23, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (127, 117, 'BY117-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 378.00, 179, 'goods117.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (128, 118, 'BY118-DEFAULT', '900g', '[{\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 348.00, 170, 'goods118.jpg', 0.90, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (129, 119, 'BY119-DEFAULT', 'L码', '[{\"spec_name\": \"规格\", \"spec_value\": \"L码\"}]', 199.00, 218, 'goods119.jpg', 2.80, NULL, 1, 1, 0, '2025-11-24 11:21:28', '2025-11-24 11:37:50');
-INSERT INTO `product_sku` VALUES (132, 120, 'BY120-DEFAULT', '???', '{}', 189.00, 198, 'goods120.jpg', 2.00, NULL, 1, 0, 0, '2025-11-24 13:30:18', '2025-11-24 13:30:18');
+INSERT INTO `product_sku` VALUES (1, 1, 'WY001-1-400', '惠氏启赋1段 400g', '[{\"spec_name\": \"段数\", \"spec_value\": \"1段(0-6个月)\"}, {\"spec_name\": \"规格\", \"spec_value\": \"400g\"}]', 298.00, 50, NULL, NULL, NULL, 1, 0, 1, '2025-12-02 13:09:43', '2025-12-02 13:09:43');
+INSERT INTO `product_sku` VALUES (2, 1, 'WY001-1-900', '惠氏启赋1段 900g', '[{\"spec_name\": \"段数\", \"spec_value\": \"1段(0-6个月)\"}, {\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 498.00, 30, NULL, NULL, NULL, 1, 0, 1, '2025-12-02 13:09:43', '2025-12-02 13:09:43');
+INSERT INTO `product_sku` VALUES (3, 1, 'WY001-2-400', '惠氏启赋2段 400g', '[{\"spec_name\": \"段数\", \"spec_value\": \"2段(6-12个月)\"}, {\"spec_name\": \"规格\", \"spec_value\": \"400g\"}]', 308.00, 40, NULL, NULL, NULL, 1, 0, 1, '2025-12-02 13:09:43', '2025-12-02 13:09:43');
+INSERT INTO `product_sku` VALUES (4, 1, 'WY001-2-900', '惠氏启赋2段 900g', '[{\"spec_name\": \"段数\", \"spec_value\": \"2段(6-12个月)\"}, {\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 518.00, 25, NULL, NULL, NULL, 1, 0, 1, '2025-12-02 13:09:43', '2025-12-02 13:09:43');
+INSERT INTO `product_sku` VALUES (5, 1, 'WY001-3-400', '惠氏启赋3段 400g', '[{\"spec_name\": \"段数\", \"spec_value\": \"3段(1-3岁)\"}, {\"spec_name\": \"规格\", \"spec_value\": \"400g\"}]', 288.00, 60, NULL, NULL, NULL, 1, 0, 1, '2025-12-02 13:09:43', '2025-12-02 13:09:43');
+INSERT INTO `product_sku` VALUES (6, 1, 'WY001-3-900', '惠氏启赋3段 900g', '[{\"spec_name\": \"段数\", \"spec_value\": \"3段(1-3岁)\"}, {\"spec_name\": \"规格\", \"spec_value\": \"900g\"}]', 488.00, 35, NULL, NULL, NULL, 1, 0, 1, '2025-12-02 13:09:43', '2025-12-02 13:09:43');
 
 -- ----------------------------
 -- Table structure for product_sku_stock_log
@@ -5676,9 +5565,11 @@ DROP TABLE IF EXISTS `product_sku_stock_log`;
 CREATE TABLE `product_sku_stock_log`  (
   `log_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '日志ID',
   `sku_id` bigint UNSIGNED NOT NULL COMMENT 'SKU ID',
+  `sku_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'SKU编码',
+  `sku_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'SKU名称',
   `order_id` int UNSIGNED NULL DEFAULT NULL COMMENT '订单ID',
   `change_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '变更类型：DEDUCT-扣减，RESTORE-恢复，ADJUST-调整',
-  `change_quantity` int NOT NULL COMMENT '变更数量（正数为增加，负数为减少）',
+  `change_quantity` int NOT NULL COMMENT '变更数量',
   `before_stock` int NOT NULL COMMENT '变更前库存',
   `after_stock` int NOT NULL COMMENT '变更后库存',
   `operator` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '操作人',
@@ -5687,7 +5578,8 @@ CREATE TABLE `product_sku_stock_log`  (
   PRIMARY KEY (`log_id`) USING BTREE,
   INDEX `idx_sku_id`(`sku_id` ASC) USING BTREE,
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
-  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
+  INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
+  INDEX `idx_change_type`(`change_type` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = 'SKU库存变更日志表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -5699,140 +5591,23 @@ CREATE TABLE `product_sku_stock_log`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `product_specs`;
 CREATE TABLE `product_specs`  (
-  `spec_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
-  `product_id` int UNSIGNED NOT NULL,
-  `spec_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '规格名称，如颜色、尺寸',
-  `spec_values` json NOT NULL COMMENT '规格值列表',
-  `sort_order` int NULL DEFAULT 0,
-  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `spec_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '规格ID',
+  `product_id` int UNSIGNED NOT NULL COMMENT '商品ID',
+  `spec_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '规格名称（如：颜色、尺寸、段数）',
+  `spec_values` json NOT NULL COMMENT '规格值列表（JSON数组）',
+  `sort_order` int NOT NULL DEFAULT 0 COMMENT '排序',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`spec_id`) USING BTREE,
   INDEX `idx_product_id`(`product_id` ASC) USING BTREE,
-  CONSTRAINT `fk_product_specs_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 120 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品规格表' ROW_FORMAT = Dynamic;
+  CONSTRAINT `fk_specs_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品规格表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of product_specs
 -- ----------------------------
-INSERT INTO `product_specs` VALUES (1, 1, '规格', '[{\"id\": 1, \"name\": \"1段(0-6个月)\"}, {\"id\": 2, \"name\": \"2段(6-12个月)\"}, {\"id\": 3, \"name\": \"3段(1-3岁)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (2, 1, '重量', '[{\"id\": 1, \"name\": \"900g\"}, {\"id\": 2, \"name\": \"1.8kg\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (3, 2, '规格', '[{\"id\": 1, \"name\": \"1段(0-6个月)\"}, {\"id\": 2, \"name\": \"2段(6-12个月)\"}, {\"id\": 3, \"name\": \"3段(1-3岁)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (4, 2, '重量', '[{\"id\": 1, \"name\": \"800g\"}, {\"id\": 2, \"name\": \"1.6kg\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (5, 3, '规格', '[{\"id\": 1, \"name\": \"1段(0-6个月)\"}, {\"id\": 2, \"name\": \"2段(6-12个月)\"}, {\"id\": 3, \"name\": \"3段(1-3岁)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (6, 4, '规格', '[{\"id\": 1, \"name\": \"2段(6-12个月)\"}, {\"id\": 2, \"name\": \"3段(1-3岁)\"}, {\"id\": 3, \"name\": \"4段(3-6岁)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (7, 4, '重量', '[{\"id\": 1, \"name\": \"400g\"}, {\"id\": 2, \"name\": \"800g\"}, {\"id\": 3, \"name\": \"1.6kg\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (8, 5, '规格', '[{\"id\": 1, \"name\": \"1段(0-6个月)\"}, {\"id\": 2, \"name\": \"2段(6-12个月)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (9, 6, '规格', '[{\"id\": 1, \"name\": \"婴儿配方奶粉\"}, {\"id\": 2, \"name\": \"较大婴儿配方奶粉\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (10, 6, '重量', '[{\"id\": 1, \"name\": \"700g\"}, {\"id\": 2, \"name\": \"1.5kg\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (11, 7, '规格', '[{\"id\": 1, \"name\": \"1段(0-6个月)\"}, {\"id\": 2, \"name\": \"2段(6-12个月)\"}, {\"id\": 3, \"name\": \"3段(1-3岁)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (12, 8, '重量', '[{\"id\": 1, \"name\": \"800g\"}, {\"id\": 2, \"name\": \"1.6kg\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (13, 9, '规格', '[{\"id\": 1, \"name\": \"有机奶粉\"}, {\"id\": 2, \"name\": \"普通奶粉\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (14, 10, '适用年龄', '[{\"id\": 1, \"name\": \"1-3岁\"}, {\"id\": 2, \"name\": \"3-7岁\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (15, 11, '尺寸', '[{\"id\": 1, \"name\": \"S(4-8kg)\"}, {\"id\": 2, \"name\": \"M(6-11kg)\"}, {\"id\": 3, \"name\": \"L(9-14kg)\"}, {\"id\": 4, \"name\": \"XL(12kg以上)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (16, 11, '数量', '[{\"id\": 1, \"name\": \"36片\"}, {\"id\": 2, \"name\": \"72片\"}, {\"id\": 3, \"name\": \"108片\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (17, 12, '尺寸', '[{\"id\": 1, \"name\": \"S(4-8kg)\"}, {\"id\": 2, \"name\": \"M(6-11kg)\"}, {\"id\": 3, \"name\": \"L(9-14kg)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (18, 12, '数量', '[{\"id\": 1, \"name\": \"40片\"}, {\"id\": 2, \"name\": \"80片\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (19, 13, '尺寸', '[{\"id\": 1, \"name\": \"NB(0-5kg)\"}, {\"id\": 2, \"name\": \"S(4-8kg)\"}, {\"id\": 3, \"name\": \"M(6-11kg)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (20, 14, '尺寸', '[{\"id\": 1, \"name\": \"M(6-11kg)\"}, {\"id\": 2, \"name\": \"L(9-14kg)\"}, {\"id\": 3, \"name\": \"XL(12kg以上)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (21, 15, '类型', '[{\"id\": 1, \"name\": \"纸尿裤\"}, {\"id\": 2, \"name\": \"拉拉裤\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (22, 15, '数量', '[{\"id\": 1, \"name\": \"50片\"}, {\"id\": 2, \"name\": \"100片\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (23, 16, '尺寸', '[{\"id\": 1, \"name\": \"S(4-8kg)\"}, {\"id\": 2, \"name\": \"M(6-11kg)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (24, 17, '类型', '[{\"id\": 1, \"name\": \"日用\"}, {\"id\": 2, \"name\": \"夜用加量版\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (25, 18, '尺寸', '[{\"id\": 1, \"name\": \"L(9-14kg)\"}, {\"id\": 2, \"name\": \"XL(12kg以上)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (26, 19, '尺寸', '[{\"id\": 1, \"name\": \"59cm(0-3个月)\"}, {\"id\": 2, \"name\": \"66cm(3-6个月)\"}, {\"id\": 3, \"name\": \"73cm(6-12个月)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (27, 19, '颜色', '[{\"id\": 1, \"name\": \"粉色\"}, {\"id\": 2, \"name\": \"蓝色\"}, {\"id\": 3, \"name\": \"黄色\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (28, 20, '尺寸', '[{\"id\": 1, \"name\": \"66cm(3-6个月)\"}, {\"id\": 2, \"name\": \"73cm(6-12个月)\"}, {\"id\": 3, \"name\": \"80cm(1-2岁)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (29, 20, '颜色', '[{\"id\": 1, \"name\": \"蓝白条\"}, {\"id\": 2, \"name\": \"灰色\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (30, 21, '尺寸', '[{\"id\": 1, \"name\": \"73cm(6-12个月)\"}, {\"id\": 2, \"name\": \"80cm(1-2岁)\"}, {\"id\": 3, \"name\": \"90cm(2-3岁)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (31, 22, '尺寸', '[{\"id\": 1, \"name\": \"80cm(1-2岁)\"}, {\"id\": 2, \"name\": \"90cm(2-3岁)\"}, {\"id\": 3, \"name\": \"100cm(3-4岁)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (32, 22, '颜色', '[{\"id\": 1, \"name\": \"白色\"}, {\"id\": 2, \"name\": \"粉色\"}, {\"id\": 3, \"name\": \"蓝色\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (33, 23, '尺寸', '[{\"id\": 1, \"name\": \"小号(0-6个月)\"}, {\"id\": 2, \"name\": \"中号(6-12个月)\"}, {\"id\": 3, \"name\": \"大号(1-3岁)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (34, 24, '尺寸', '[{\"id\": 1, \"name\": \"90cm(2-3岁)\"}, {\"id\": 2, \"name\": \"100cm(3-4岁)\"}, {\"id\": 3, \"name\": \"110cm(4-5岁)\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (35, 25, '尺寸', '[{\"id\": 1, \"name\": \"6-12个月\"}, {\"id\": 2, \"name\": \"1-3岁\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (36, 26, '颜色', '[{\"id\": 1, \"name\": \"红色\"}, {\"id\": 2, \"name\": \"蓝色\"}, {\"id\": 3, \"name\": \"粉色\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (37, 27, '尺寸', '[{\"id\": 1, \"name\": \"0-6个月\"}, {\"id\": 2, \"name\": \"6-12个月\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (38, 28, '款式', '[{\"id\": 1, \"name\": \"春秋款\"}, {\"id\": 2, \"name\": \"冬季款\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (39, 29, '适用年龄', '[{\"id\": 1, \"name\": \"0-1岁\"}, {\"id\": 2, \"name\": \"1-3岁\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (40, 30, '类型', '[{\"id\": 1, \"name\": \"积木套装\"}, {\"id\": 2, \"name\": \"单个积木\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (41, 30, '数量', '[{\"id\": 1, \"name\": \"40块\"}, {\"id\": 2, \"name\": \"80块\"}, {\"id\": 3, \"name\": \"120块\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (42, 31, '尺寸', '[{\"id\": 1, \"name\": \"小号\"}, {\"id\": 2, \"name\": \"大号\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (43, 32, '类型', '[{\"id\": 1, \"name\": \"动物系列\"}, {\"id\": 2, \"name\": \"交通工具系列\"}, {\"id\": 3, \"name\": \"食物系列\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (44, 33, '适用年龄', '[{\"id\": 1, \"name\": \"3-6岁\"}, {\"id\": 2, \"name\": \"6岁以上\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (45, 34, '颜色', '[{\"id\": 1, \"name\": \"红色\"}, {\"id\": 2, \"name\": \"蓝色\"}, {\"id\": 3, \"name\": \"黄色\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (46, 35, '材质', '[{\"id\": 1, \"name\": \"塑料\"}, {\"id\": 2, \"name\": \"木质\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (47, 36, '类型', '[{\"id\": 1, \"name\": \"拼图\"}, {\"id\": 2, \"name\": \"游戏套装\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (48, 37, '容量', '[{\"id\": 1, \"name\": \"200ml\"}, {\"id\": 2, \"name\": \"400ml\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (49, 38, '功效', '[{\"id\": 1, \"name\": \"滋润型\"}, {\"id\": 2, \"name\": \"修复型\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (50, 39, '容量', '[{\"id\": 1, \"name\": \"250ml\"}, {\"id\": 2, \"name\": \"500ml\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (51, 40, '类型', '[{\"id\": 1, \"name\": \"杀菌型\"}, {\"id\": 2, \"name\": \"护肤型\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (52, 40, '容量', '[{\"id\": 1, \"name\": \"250ml\"}, {\"id\": 2, \"name\": \"500ml\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (53, 41, '功效', '[{\"id\": 1, \"name\": \"温和型\"}, {\"id\": 2, \"name\": \"防敏感型\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (54, 42, '规格', '[{\"id\": 1, \"name\": \"小包装\"}, {\"id\": 2, \"name\": \"大包装\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (55, 43, '容量', '[{\"id\": 1, \"name\": \"100ml\"}, {\"id\": 2, \"name\": \"200ml\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (56, 44, '类型', '[{\"id\": 1, \"name\": \"婴儿专用\"}, {\"id\": 2, \"name\": \"儿童专用\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (57, 45, '容量', '[{\"id\": 1, \"name\": \"160ml\"}, {\"id\": 2, \"name\": \"240ml\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (58, 45, '材质', '[{\"id\": 1, \"name\": \"PP材质\"}, {\"id\": 2, \"name\": \"玻璃\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (59, 46, '类型', '[{\"id\": 1, \"name\": \"奶瓶\"}, {\"id\": 2, \"name\": \"奶瓶套装\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (60, 47, '适用年龄', '[{\"id\": 1, \"name\": \"0-6个月\"}, {\"id\": 2, \"name\": \"6个月以上\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (61, 48, '尺寸', '[{\"id\": 1, \"name\": \"小号\"}, {\"id\": 2, \"name\": \"中号\"}, {\"id\": 3, \"name\": \"大号\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (62, 49, '材质', '[{\"id\": 1, \"name\": \"硅胶\"}, {\"id\": 2, \"name\": \"塑料\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (63, 50, '类型', '[{\"id\": 1, \"name\": \"固体辅食碗\"}, {\"id\": 2, \"name\": \"液体辅食碗\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (64, 51, '颜色', '[{\"id\": 1, \"name\": \"粉色\"}, {\"id\": 2, \"name\": \"蓝色\"}, {\"id\": 3, \"name\": \"绿色\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (65, 52, '材质', '[{\"id\": 1, \"name\": \"不锈钢\"}, {\"id\": 2, \"name\": \"塑料\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (66, 53, '规格', '[{\"id\": 1, \"name\": \"基础款\"}, {\"id\": 2, \"name\": \"高级款\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (67, 54, '尺寸', '[{\"id\": 1, \"name\": \"M\"}, {\"id\": 2, \"name\": \"L\"}, {\"id\": 3, \"name\": \"XL\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (68, 54, '颜色', '[{\"id\": 1, \"name\": \"肤色\"}, {\"id\": 2, \"name\": \"黑色\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (69, 55, '规格', '[{\"id\": 1, \"name\": \"单瓶装\"}, {\"id\": 2, \"name\": \"3瓶装\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (70, 56, '功效', '[{\"id\": 1, \"name\": \"预防\"}, {\"id\": 2, \"name\": \"修复\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (71, 57, '尺寸', '[{\"id\": 1, \"name\": \"均码\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (72, 57, '颜色', '[{\"id\": 1, \"name\": \"白色\"}, {\"id\": 2, \"name\": \"粉色\"}, {\"id\": 3, \"name\": \"蓝色\"}]', 2, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (73, 58, '类型', '[{\"id\": 1, \"name\": \"DHA\"}, {\"id\": 2, \"name\": \"钙铁锌\"}, {\"id\": 3, \"name\": \"叶酸\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (74, 59, '规格', '[{\"id\": 1, \"name\": \"标准型\"}, {\"id\": 2, \"name\": \"加大型\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (75, 60, '类型', '[{\"id\": 1, \"name\": \"孕前\"}, {\"id\": 2, \"name\": \"孕中\"}, {\"id\": 3, \"name\": \"孕后\"}]', 1, '2025-04-28 10:00:00', '2025-04-28 10:00:00');
-INSERT INTO `product_specs` VALUES (76, 61, '段位', '[{\"id\": 1, \"name\": \"1段(0-6个月)\"}, {\"id\": 2, \"name\": \"2段(6-12个月)\"}, {\"id\": 3, \"name\": \"3段(1-3岁)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (77, 61, '重量', '[{\"id\": 1, \"name\": \"800g\"}, {\"id\": 2, \"name\": \"1.6kg\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (78, 62, '颜色', '[{\"id\": 1, \"name\": \"粉色\"}, {\"id\": 2, \"name\": \"蓝色\"}, {\"id\": 3, \"name\": \"灰色\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (79, 62, '款式', '[{\"id\": 1, \"name\": \"标准款\"}, {\"id\": 2, \"name\": \"豪华款\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (80, 66, '口味', '[{\"id\": 1, \"name\": \"香蕉味\"}, {\"id\": 2, \"name\": \"草莓味\"}, {\"id\": 3, \"name\": \"原味\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (81, 66, '规格', '[{\"id\": 1, \"name\": \"42g\"}, {\"id\": 2, \"name\": \"84g\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (82, 69, '尺码', '[{\"id\": 1, \"name\": \"NB(0-5kg)\"}, {\"id\": 2, \"name\": \"S(4-8kg)\"}, {\"id\": 3, \"name\": \"M(6-11kg)\"}, {\"id\": 4, \"name\": \"L(9-14kg)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (83, 69, '数量', '[{\"id\": 1, \"name\": \"64片\"}, {\"id\": 2, \"name\": \"128片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (84, 70, '尺码', '[{\"id\": 1, \"name\": \"S(4-8kg)\"}, {\"id\": 2, \"name\": \"M(6-11kg)\"}, {\"id\": 3, \"name\": \"L(9-14kg)\"}, {\"id\": 4, \"name\": \"XL(12kg以上)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (85, 70, '数量', '[{\"id\": 1, \"name\": \"54片\"}, {\"id\": 2, \"name\": \"108片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (86, 76, '口味', '[{\"id\": 1, \"name\": \"原味\"}, {\"id\": 2, \"name\": \"混合水果味\"}, {\"id\": 3, \"name\": \"蔬菜味\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (87, 76, '规格', '[{\"id\": 1, \"name\": \"225g\"}, {\"id\": 2, \"name\": \"450g\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (88, 79, '尺码', '[{\"id\": 1, \"name\": \"M(6-11kg)\"}, {\"id\": 2, \"name\": \"L(9-14kg)\"}, {\"id\": 3, \"name\": \"XL(12-17kg)\"}, {\"id\": 4, \"name\": \"XXL(15kg以上)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (89, 79, '数量', '[{\"id\": 1, \"name\": \"44片\"}, {\"id\": 2, \"name\": \"88片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (90, 80, '尺码', '[{\"id\": 1, \"name\": \"NB(0-5kg)\"}, {\"id\": 2, \"name\": \"S(4-8kg)\"}, {\"id\": 3, \"name\": \"M(6-11kg)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (91, 80, '数量', '[{\"id\": 1, \"name\": \"76片\"}, {\"id\": 2, \"name\": \"152片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (92, 83, '容量', '[{\"id\": 1, \"name\": \"标准版\"}, {\"id\": 2, \"name\": \"大容量版\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (93, 83, '颜色', '[{\"id\": 1, \"name\": \"白色\"}, {\"id\": 2, \"name\": \"粉色\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (94, 86, '口味', '[{\"id\": 1, \"name\": \"草莓苹果味\"}, {\"id\": 2, \"name\": \"香蕉味\"}, {\"id\": 3, \"name\": \"蓝莓味\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (95, 86, '规格', '[{\"id\": 1, \"name\": \"42g\"}, {\"id\": 2, \"name\": \"84g\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (96, 89, '尺码', '[{\"id\": 1, \"name\": \"NB(0-5kg)\"}, {\"id\": 2, \"name\": \"S(4-8kg)\"}, {\"id\": 3, \"name\": \"M(6-11kg)\"}, {\"id\": 4, \"name\": \"L(9-14kg)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (97, 89, '数量', '[{\"id\": 1, \"name\": \"68片\"}, {\"id\": 2, \"name\": \"136片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (98, 90, '尺码', '[{\"id\": 1, \"name\": \"NB(0-5kg)\"}, {\"id\": 2, \"name\": \"S(4-8kg)\"}, {\"id\": 3, \"name\": \"M(6-11kg)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (99, 90, '数量', '[{\"id\": 1, \"name\": \"90片\"}, {\"id\": 2, \"name\": \"180片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (100, 96, '口味', '[{\"id\": 1, \"name\": \"香蕉味\"}, {\"id\": 2, \"name\": \"苹果味\"}, {\"id\": 3, \"name\": \"原味\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (101, 96, '规格', '[{\"id\": 1, \"name\": \"150g\"}, {\"id\": 2, \"name\": \"300g\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (102, 99, '尺码', '[{\"id\": 1, \"name\": \"M(6-11kg)\"}, {\"id\": 2, \"name\": \"L(9-14kg)\"}, {\"id\": 3, \"name\": \"XL(12-17kg)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (103, 99, '数量', '[{\"id\": 1, \"name\": \"48片\"}, {\"id\": 2, \"name\": \"96片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (104, 100, '尺码', '[{\"id\": 1, \"name\": \"S(4-8kg)\"}, {\"id\": 2, \"name\": \"M(6-11kg)\"}, {\"id\": 3, \"name\": \"L(9-14kg)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (105, 100, '数量', '[{\"id\": 1, \"name\": \"82片\"}, {\"id\": 2, \"name\": \"164片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (106, 101, '段位', '[{\"id\": 1, \"name\": \"1段(0-6个月)\"}, {\"id\": 2, \"name\": \"2段(6-12个月)\"}, {\"id\": 3, \"name\": \"3段(1-3岁)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (107, 101, '重量', '[{\"id\": 1, \"name\": \"800g\"}, {\"id\": 2, \"name\": \"1.6kg\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (108, 102, '颜色', '[{\"id\": 1, \"name\": \"粉色\"}, {\"id\": 2, \"name\": \"蓝色\"}, {\"id\": 3, \"name\": \"绿色\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (109, 102, '款式', '[{\"id\": 1, \"name\": \"基础款\"}, {\"id\": 2, \"name\": \"升级款\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (110, 106, '口味', '[{\"id\": 1, \"name\": \"混合水果味\"}, {\"id\": 2, \"name\": \"原味\"}, {\"id\": 3, \"name\": \"蔬菜味\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (111, 106, '规格', '[{\"id\": 1, \"name\": \"225g\"}, {\"id\": 2, \"name\": \"450g\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (112, 109, '尺码', '[{\"id\": 1, \"name\": \"M(6-11kg)\"}, {\"id\": 2, \"name\": \"L(9-14kg)\"}, {\"id\": 3, \"name\": \"XL(12-17kg)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (113, 109, '数量', '[{\"id\": 1, \"name\": \"54片\"}, {\"id\": 2, \"name\": \"108片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (114, 116, '口味', '[{\"id\": 1, \"name\": \"原味\"}, {\"id\": 2, \"name\": \"混合水果味\"}, {\"id\": 3, \"name\": \"燕麦味\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (115, 116, '规格', '[{\"id\": 1, \"name\": \"225g\"}, {\"id\": 2, \"name\": \"450g\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (116, 119, '尺码', '[{\"id\": 1, \"name\": \"L(9-14kg)\"}, {\"id\": 2, \"name\": \"XL(12-17kg)\"}, {\"id\": 3, \"name\": \"XXL(15kg以上)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (117, 119, '数量', '[{\"id\": 1, \"name\": \"40片\"}, {\"id\": 2, \"name\": \"80片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (118, 120, '尺码', '[{\"id\": 1, \"name\": \"NB(0-5kg)\"}, {\"id\": 2, \"name\": \"S(4-8kg)\"}, {\"id\": 3, \"name\": \"M(6-11kg)\"}]', 1, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
-INSERT INTO `product_specs` VALUES (119, 120, '数量', '[{\"id\": 1, \"name\": \"90片\"}, {\"id\": 2, \"name\": \"180片\"}]', 2, '2025-11-24 13:52:01', '2025-11-24 13:52:01');
+INSERT INTO `product_specs` VALUES (1, 1, '段数', '[\"1段(0-6个月)\", \"2段(6-12个月)\", \"3段(1-3岁)\"]', 1, '2025-12-02 12:33:55', '2025-12-02 12:33:55');
+INSERT INTO `product_specs` VALUES (2, 1, '规格', '[\"400g\", \"900g\"]', 2, '2025-12-02 12:33:55', '2025-12-02 12:33:55');
 
 -- ----------------------------
 -- Table structure for refund
@@ -5976,18 +5751,18 @@ INSERT INTO `refund_log` VALUES (55, 12, 'R176405727256213AE25', 'PROCESSING', '
 DROP TABLE IF EXISTS `search_statistics`;
 CREATE TABLE `search_statistics`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '统计ID',
-  `keyword` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '搜索关键词',
+  `keyword` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '搜索关键词',
   `search_count` int NOT NULL DEFAULT 1 COMMENT '搜索次数',
-  `result_count` bigint NOT NULL DEFAULT 0 COMMENT '搜索结果数量',
-  `user_id` int NULL DEFAULT NULL COMMENT '用户ID',
-  `source` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'web' COMMENT '搜索来源：web, mobile, api等',
-  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '搜索IP地址',
-  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '用户代理',
+  `result_count` bigint NULL DEFAULT 0 COMMENT '搜索结果数量',
+  `user_id` int UNSIGNED NULL DEFAULT NULL COMMENT '用户ID',
+  `source` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT 'web' COMMENT '搜索来源：web, mobile, api',
+  `ip_address` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'IP地址',
+  `user_agent` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '用户代理',
   `search_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '搜索时间',
   `response_time` bigint NULL DEFAULT NULL COMMENT '响应时间（毫秒）',
-  `has_click` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否有点击结果',
+  `has_click` tinyint(1) NULL DEFAULT 0 COMMENT '是否有点击结果',
   `clicked_product_id` int NULL DEFAULT NULL COMMENT '点击的商品ID',
-  `session_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '搜索会话ID',
+  `session_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '搜索会话ID',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
@@ -5995,23 +5770,35 @@ CREATE TABLE `search_statistics`  (
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_search_time`(`search_time` ASC) USING BTREE,
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
-  INDEX `idx_keyword_user_time`(`keyword` ASC, `user_id` ASC, `create_time` ASC) USING BTREE,
-  INDEX `idx_result_count`(`result_count` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '搜索统计表' ROW_FORMAT = Dynamic;
+  INDEX `idx_result_count`(`result_count` ASC) USING BTREE,
+  CONSTRAINT `fk_search_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 23 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '搜索统计表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of search_statistics
 -- ----------------------------
-INSERT INTO `search_statistics` VALUES (1, '奶粉', 156, 45, NULL, 'web', NULL, NULL, '2024-01-15 10:30:00', NULL, 0, NULL, NULL, '2025-07-14 11:34:36', '2025-07-14 11:34:36');
-INSERT INTO `search_statistics` VALUES (2, '纸尿裤', 134, 38, NULL, 'web', NULL, NULL, '2024-01-15 11:15:00', NULL, 0, NULL, NULL, '2025-07-14 11:34:36', '2025-07-14 11:34:36');
-INSERT INTO `search_statistics` VALUES (3, '婴儿车', 98, 22, NULL, 'web', NULL, NULL, '2024-01-15 14:20:00', NULL, 0, NULL, NULL, '2025-07-14 11:34:36', '2025-07-14 11:34:36');
-INSERT INTO `search_statistics` VALUES (4, '奶瓶', 87, 31, NULL, 'web', NULL, NULL, '2024-01-15 16:45:00', NULL, 0, NULL, NULL, '2025-07-14 11:34:36', '2025-07-14 11:34:36');
-INSERT INTO `search_statistics` VALUES (5, '玩具', 76, 89, NULL, 'web', NULL, NULL, '2024-01-15 18:30:00', NULL, 0, NULL, NULL, '2025-07-14 11:34:36', '2025-07-14 11:34:36');
-INSERT INTO `search_statistics` VALUES (6, '辅食', 65, 27, NULL, 'web', NULL, NULL, '2024-01-16 09:15:00', NULL, 0, NULL, NULL, '2025-07-14 11:34:36', '2025-07-14 11:34:36');
-INSERT INTO `search_statistics` VALUES (7, '童装', 54, 156, NULL, 'web', NULL, NULL, '2024-01-16 13:20:00', NULL, 0, NULL, NULL, '2025-07-14 11:34:36', '2025-07-14 11:34:36');
-INSERT INTO `search_statistics` VALUES (8, '安全座椅', 43, 12, NULL, 'web', NULL, NULL, '2024-01-16 15:45:00', NULL, 0, NULL, NULL, '2025-07-14 11:34:36', '2025-07-14 11:34:36');
-INSERT INTO `search_statistics` VALUES (9, '洗护用品', 38, 67, NULL, 'web', NULL, NULL, '2024-01-16 17:30:00', NULL, 0, NULL, NULL, '2025-07-14 11:34:36', '2025-07-14 11:34:36');
-INSERT INTO `search_statistics` VALUES (10, '益智玩具', 32, 45, NULL, 'web', NULL, NULL, '2024-01-16 19:15:00', NULL, 0, NULL, NULL, '2025-07-14 11:34:36', '2025-07-14 11:34:36');
+INSERT INTO `search_statistics` VALUES (1, '奶粉', 105, 23, NULL, 'web', NULL, NULL, '2025-12-01 16:15:38', NULL, 0, NULL, NULL, '2025-12-01 15:22:52', '2025-12-01 15:22:52');
+INSERT INTO `search_statistics` VALUES (2, '纸尿裤', 95, 45, NULL, 'web', NULL, NULL, '2025-12-01 15:22:52', NULL, 0, NULL, NULL, '2025-12-01 15:22:52', '2025-12-01 15:22:52');
+INSERT INTO `search_statistics` VALUES (3, '婴儿车', 80, 30, NULL, 'web', NULL, NULL, '2025-12-01 15:22:52', NULL, 0, NULL, NULL, '2025-12-01 15:22:52', '2025-12-01 15:22:52');
+INSERT INTO `search_statistics` VALUES (4, '奶瓶', 75, 40, NULL, 'web', NULL, NULL, '2025-12-01 15:22:52', NULL, 0, NULL, NULL, '2025-12-01 15:22:52', '2025-12-01 15:22:52');
+INSERT INTO `search_statistics` VALUES (5, '婴儿服装', 70, 60, NULL, 'web', NULL, NULL, '2025-12-01 15:22:52', NULL, 0, NULL, NULL, '2025-12-01 15:22:52', '2025-12-01 15:22:52');
+INSERT INTO `search_statistics` VALUES (6, '玩具', 66, 24, NULL, 'web', NULL, NULL, '2025-12-01 16:34:54', NULL, 0, NULL, NULL, '2025-12-01 15:22:52', '2025-12-01 15:22:52');
+INSERT INTO `search_statistics` VALUES (7, '辅食', 60, 35, NULL, 'web', NULL, NULL, '2025-12-01 15:22:52', NULL, 0, NULL, NULL, '2025-12-01 15:22:52', '2025-12-01 15:22:52');
+INSERT INTO `search_statistics` VALUES (8, '湿巾', 55, 25, NULL, 'web', NULL, NULL, '2025-12-01 15:22:52', NULL, 0, NULL, NULL, '2025-12-01 15:22:52', '2025-12-01 15:22:52');
+INSERT INTO `search_statistics` VALUES (9, '安全座椅', 50, 20, NULL, 'web', NULL, NULL, '2025-12-01 15:22:52', NULL, 0, NULL, NULL, '2025-12-01 15:22:52', '2025-12-01 15:22:52');
+INSERT INTO `search_statistics` VALUES (10, '婴儿床', 45, 15, NULL, 'web', NULL, NULL, '2025-12-01 15:22:52', NULL, 0, NULL, NULL, '2025-12-01 15:22:52', '2025-12-01 15:22:52');
+INSERT INTO `search_statistics` VALUES (11, '奶粉', 10, 23, 8, 'web', '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', '2025-12-01 16:15:38', 8, 0, NULL, NULL, '2025-12-01 15:24:34', '2025-12-01 15:24:34');
+INSERT INTO `search_statistics` VALUES (12, '用品', 1, 0, NULL, 'web', NULL, NULL, '2025-12-01 15:43:13', NULL, 0, NULL, NULL, '2025-12-01 15:43:13', '2025-12-01 15:43:13');
+INSERT INTO `search_statistics` VALUES (13, '用品', 1, 0, 8, 'web', '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', '2025-12-01 15:43:14', 306, 0, NULL, NULL, '2025-12-01 15:43:14', '2025-12-01 15:43:14');
+INSERT INTO `search_statistics` VALUES (14, '花王', 8, 22, NULL, 'web', NULL, NULL, '2025-12-01 16:34:36', NULL, 0, NULL, NULL, '2025-12-01 15:43:51', '2025-12-01 15:43:51');
+INSERT INTO `search_statistics` VALUES (15, '花王', 9, 22, 8, 'web', '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', '2025-12-01 16:34:36', 75, 0, NULL, NULL, '2025-12-01 15:43:52', '2025-12-01 15:43:52');
+INSERT INTO `search_statistics` VALUES (16, '贝亲', 3, 7, NULL, 'web', NULL, NULL, '2025-12-01 16:24:52', NULL, 0, NULL, NULL, '2025-12-01 15:47:26', '2025-12-01 15:47:26');
+INSERT INTO `search_statistics` VALUES (17, '贝亲', 3, 7, 8, 'web', '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', '2025-12-01 16:24:53', 122, 0, NULL, NULL, '2025-12-01 15:47:26', '2025-12-01 15:47:26');
+INSERT INTO `search_statistics` VALUES (18, '玩具', 1, 24, 8, 'web', '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', '2025-12-01 16:34:54', 11, 0, NULL, NULL, '2025-12-01 16:34:54', '2025-12-01 16:34:54');
+INSERT INTO `search_statistics` VALUES (19, '母婴', 1, 0, NULL, 'web', NULL, NULL, '2025-12-01 16:35:29', NULL, 0, NULL, NULL, '2025-12-01 16:35:29', '2025-12-01 16:35:29');
+INSERT INTO `search_statistics` VALUES (20, '母婴', 1, 0, 8, 'web', '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', '2025-12-01 16:35:29', 13, 0, NULL, NULL, '2025-12-01 16:35:29', '2025-12-01 16:35:29');
+INSERT INTO `search_statistics` VALUES (21, '婴儿', 3, 48, NULL, 'web', NULL, NULL, '2025-12-01 16:35:47', NULL, 0, NULL, NULL, '2025-12-01 16:35:37', '2025-12-01 16:35:37');
+INSERT INTO `search_statistics` VALUES (22, '婴儿', 3, 48, 8, 'web', '0:0:0:0:0:0:0:1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', '2025-12-01 16:35:47', 17, 1, 13, NULL, '2025-12-01 16:35:37', '2025-12-01 16:35:37');
 
 -- ----------------------------
 -- Table structure for spec_value
@@ -6129,7 +5916,7 @@ INSERT INTO `user_account` VALUES (1, 1, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, 
 INSERT INTO `user_account` VALUES (2, 2, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
 INSERT INTO `user_account` VALUES (3, 3, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
 INSERT INTO `user_account` VALUES (4, 4, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
-INSERT INTO `user_account` VALUES (5, 8, 20909.10, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-11-25 16:02:01');
+INSERT INTO `user_account` VALUES (5, 8, 20611.10, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-12-02 12:27:46');
 INSERT INTO `user_account` VALUES (6, 9, 3893.00, 0.00, 0, 0, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-11-18 12:59:30');
 INSERT INTO `user_account` VALUES (7, 10, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
 INSERT INTO `user_account` VALUES (8, 11, 0.00, 0.00, 0, 1, NULL, 1, NULL, NULL, '2025-06-06 17:48:02', '2025-06-06 17:48:02');
@@ -6337,6 +6124,7 @@ INSERT INTO `user_message` VALUES ('5d4357747cb64717aa65d5e47627d775', 8, 'CHECK
 INSERT INTO `user_message` VALUES ('5d4643f46e24422c9e717f1b67f91f45', 8, 'ORDER', '订单状态已更新 - 78845ae7', '您的订单 OD1752210905878845ae7 状态已从 [shipped] 更新为 [completed]。', 0, '2025-07-11 13:16:38', NULL, 1, '{\"orderId\": 260, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('5ea4aaa03fa1498dab78950718604001', 59, 'ORDER', '订单状态已更新 - 2428c5fe', '您的订单 OD175213011582428c5fe 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-07-10 14:49:41', NULL, 1, '{\"orderId\": 259, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('60c897c685e840f59ce3b23dec0cb421', 8, 'ORDER', '订单状态已更新 - 297532b6', '您的订单 OD17640543323297532b6 状态已从 [shipped] 更新为 [completed]。', 0, '2025-11-25 15:32:48', NULL, 1, '{\"orderId\": 287, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
+INSERT INTO `user_message` VALUES ('62083945d4484dfba739d83f6e2469a6', 8, 'ORDER', '订单状态已更新 - 039b9c06', '您的订单 OD17646496587039b9c06 状态已从 [shipped] 更新为 [completed]。', 0, '2025-12-02 13:11:01', NULL, 1, '{\"orderId\": 291, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('62ac6d55be49402facb30090b6c6bfd3', 8, 'REMIND', '您的催发货申请已收到', '您对订单 OD1752210905878845ae7 的催发货申请已收到，我们将尽快为您发货。', 0, '2025-07-11 13:15:49', NULL, 1, '{\"orderId\": 260}', 0);
 INSERT INTO `user_message` VALUES ('634e308ab65b4070ae5b5a6b2ca26f54', 8, 'CHECKIN', '恭喜您，已连续签到4天', '您今日签到获得了25积分。您已连续签到4天，继续保持可获得更多奖励！', 0, '2025-06-13 09:39:11', NULL, 1, '{\"earnedPoints\": 25, \"continuousDays\": 4}', 0);
 INSERT INTO `user_message` VALUES ('6800803a411b435f89dfa0dbfbba590b', 8, 'ORDER', '订单状态已更新 - 52415971', '您的订单 OD1749188154352415971 状态已从 [shipped] 更新为 [completed]。', 0, '2025-06-06 13:37:09', NULL, 1, '{\"orderId\": 237, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
@@ -6370,7 +6158,9 @@ INSERT INTO `user_message` VALUES ('8e9ec5a4c2de4a3eba8a56ef9e4535f5', 8, 'CHECK
 INSERT INTO `user_message` VALUES ('8f5e7b9969814624a1736b59e3143166', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-09-18 16:43:12', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('8f735558ca5844f3a956bba44a87f68b', 59, 'ORDER', '订单状态已更新 - 2428c5fe', '您的订单 OD175213011582428c5fe 状态已从 [shipped] 更新为 [completed]。', 0, '2025-07-10 16:57:54', NULL, 1, '{\"orderId\": 259, \"newStatus\": \"completed\", \"oldStatus\": \"shipped\"}', 0);
 INSERT INTO `user_message` VALUES ('8ff12890-057f-4d54-9bef-2a01ac70650c', 1, '2', '订单发货提醒', '用户提醒发货: 订单号 ORDER17450453576811598 ', 0, '2025-04-19 21:34:31', NULL, 1, '{\"orderNo\": \"ORDER17450453576811598\"}', 1);
+INSERT INTO `user_message` VALUES ('9057475439dc462d84d2a0d353e49209', 8, 'COMMENT_REWARD', '评价奖励 +23积分', '感谢您对\"惠氏启赋有机婴儿配方奶粉...\"的评价！\n\n系统已为您发放以下奖励：\n\n· 基础评价奖励: +5积分\n· 好评奖励: +8积分\n· 基础评价奖励: +10积分\n\n总计: +23积分', 0, '2025-12-02 13:11:13', NULL, 1, '{\"rewards\": [{\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 5, \"rewardDescription\": \"完成订单评价获得基础积分\"}, {\"rewardName\": \"好评奖励\", \"rewardType\": \"points\", \"rewardValue\": 8, \"rewardDescription\": \"给出4-5星好评\"}, {\"rewardName\": \"基础评价奖励\", \"rewardType\": \"points\", \"rewardValue\": 10, \"rewardDescription\": \"完成商品评价获得奖励\"}], \"commentId\": 221, \"productId\": 1, \"totalReward\": 23}', 0);
 INSERT INTO `user_message` VALUES ('9175cbcf-ba23-420a-bd38-3819ffb05961', 9, '4', '恭喜获得积分奖励', '您的订单 ORDER17453297779016486 已完成，获得 156 积分奖励（订单金额的10%）。', 0, '2025-04-23 14:11:51', NULL, 1, '{\"points\": 156, \"source\": \"order\", \"orderNo\": \"ORDER17453297779016486\", \"actualAmount\": \"1569.60\"}', 0);
+INSERT INTO `user_message` VALUES ('91763f4d48f3463691174f735758189e', 8, 'ORDER', '订单状态已更新 - 039b9c06', '您的订单 OD17646496587039b9c06 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-12-02 13:10:51', NULL, 1, '{\"orderId\": 291, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
 INSERT INTO `user_message` VALUES ('91992e4df4d14d4e9d836cb3393a721e', 8, 'CHECKIN', '签到成功，请继续保持', '您今日签到获得了20积分。开始您的签到之旅，连续签到可以获得更多奖励哦！', 0, '2025-05-26 15:40:27', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 1}', 0);
 INSERT INTO `user_message` VALUES ('92e96dc37234406b89a5583b08bdf67d', 8, 'CHECKIN', '恭喜您，已连续签到2天', '您今日签到获得了20积分。您已连续签到2天，继续保持可获得更多奖励！', 0, '2025-06-11 12:46:12', NULL, 1, '{\"earnedPoints\": 20, \"continuousDays\": 2}', 0);
 INSERT INTO `user_message` VALUES ('9322a87a32e347cfb5b88915f76d4a6c', 8, 'ORDER', '订单状态已更新 - 5788d6c7', '您的订单 OD174844173195788d6c7 状态已从 [pending_shipment] 更新为 [shipped]。', 0, '2025-05-28 22:16:57', NULL, 1, '{\"orderId\": 231, \"newStatus\": \"shipped\", \"oldStatus\": \"pending_shipment\"}', 0);
@@ -6489,7 +6279,7 @@ INSERT INTO `user_points` VALUES (1, 3, 2500, '普通会员', '2025-01-15 10:30:
 INSERT INTO `user_points` VALUES (2, 4, 7800, '银牌会员', '2025-01-10 09:15:22', '2025-03-12 16:45:18');
 INSERT INTO `user_points` VALUES (3, 5, 12600, '金牌会员', '2024-12-28 14:30:45', '2025-03-15 11:28:37');
 INSERT INTO `user_points` VALUES (4, 6, 5400, '银牌会员', '2025-01-05 16:45:30', '2025-03-18 09:36:52');
-INSERT INTO `user_points` VALUES (5, 8, 47379, '钻石会员', '2025-02-28 11:20:15', '2025-11-26 16:01:07');
+INSERT INTO `user_points` VALUES (5, 8, 47431, '钻石会员', '2025-02-28 11:20:15', '2025-12-02 13:11:13');
 INSERT INTO `user_points` VALUES (6, 1, 0, '普通会员', '2025-03-27 19:41:28', '2025-03-27 19:41:28');
 INSERT INTO `user_points` VALUES (7, 2, 0, '普通会员', '2025-03-27 19:41:28', '2025-03-27 19:41:28');
 INSERT INTO `user_points` VALUES (8, 9, 14417, '金牌会员', '2025-03-27 19:41:28', '2025-11-18 12:59:21');
@@ -6498,6 +6288,36 @@ INSERT INTO `user_points` VALUES (10, 11, 0, '普通会员', '2025-03-27 19:41:2
 INSERT INTO `user_points` VALUES (11, 48, 0, '普通会员', '2025-03-27 19:41:28', '2025-03-27 19:41:28');
 INSERT INTO `user_points` VALUES (12, 58, 20, '普通会员', '2025-06-09 22:23:12', '2025-06-09 22:23:21');
 INSERT INTO `user_points` VALUES (14, 59, 5011, '银牌会员', '2025-07-10 14:31:45', '2025-11-18 19:34:52');
+
+-- ----------------------------
+-- Table structure for user_search_history
+-- ----------------------------
+DROP TABLE IF EXISTS `user_search_history`;
+CREATE TABLE `user_search_history`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '历史ID',
+  `user_id` int UNSIGNED NOT NULL COMMENT '用户ID',
+  `keyword` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '搜索关键词',
+  `search_count` int NOT NULL DEFAULT 1 COMMENT '搜索次数',
+  `last_search_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后搜索时间',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_user_keyword`(`user_id` ASC, `keyword` ASC) USING BTREE,
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_last_search_time`(`last_search_time` ASC) USING BTREE,
+  CONSTRAINT `fk_search_history_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户搜索历史表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_search_history
+-- ----------------------------
+INSERT INTO `user_search_history` VALUES (1, 8, '奶粉', 10, '2025-12-01 16:15:38', '2025-12-01 15:24:34', '2025-12-01 15:24:34');
+INSERT INTO `user_search_history` VALUES (2, 8, '用品', 1, '2025-12-01 15:43:13', '2025-12-01 15:43:13', '2025-12-01 15:43:13');
+INSERT INTO `user_search_history` VALUES (3, 8, '花王', 9, '2025-12-01 16:34:36', '2025-12-01 15:43:51', '2025-12-01 15:43:51');
+INSERT INTO `user_search_history` VALUES (4, 8, '贝亲', 3, '2025-12-01 16:24:52', '2025-12-01 15:47:26', '2025-12-01 15:47:26');
+INSERT INTO `user_search_history` VALUES (5, 8, '玩具', 1, '2025-12-01 16:34:54', '2025-12-01 16:34:54', '2025-12-01 16:34:54');
+INSERT INTO `user_search_history` VALUES (6, 8, '母婴', 1, '2025-12-01 16:35:29', '2025-12-01 16:35:29', '2025-12-01 16:35:29');
+INSERT INTO `user_search_history` VALUES (7, 8, '婴儿', 3, '2025-12-01 16:35:47', '2025-12-01 16:35:37', '2025-12-01 16:35:37');
 
 -- ----------------------------
 -- View structure for v_hot_search_keywords
@@ -6899,33 +6719,6 @@ CREATE TRIGGER `trg_payment_update_sync_order` AFTER UPDATE ON `payment` FOR EAC
         SET payment_method = NEW.payment_method,
             update_time = NOW()
         WHERE order_id = NEW.order_id;
-    END IF;
-END
-;;
-delimiter ;
-
--- ----------------------------
--- Triggers structure for table product_sku
--- ----------------------------
-DROP TRIGGER IF EXISTS `trg_sku_stock_change`;
-delimiter ;;
-CREATE TRIGGER `trg_sku_stock_change` AFTER UPDATE ON `product_sku` FOR EACH ROW BEGIN
-    IF OLD.stock != NEW.stock THEN
-        INSERT INTO `product_sku_stock_log` (
-            `sku_id`, 
-            `change_type`, 
-            `change_quantity`, 
-            `before_stock`, 
-            `after_stock`,
-            `remark`
-        ) VALUES (
-            NEW.sku_id,
-            IF(NEW.stock > OLD.stock, 'RESTORE', 'DEDUCT'),
-            NEW.stock - OLD.stock,
-            OLD.stock,
-            NEW.stock,
-            '系统自动记录'
-        );
     END IF;
 END
 ;;

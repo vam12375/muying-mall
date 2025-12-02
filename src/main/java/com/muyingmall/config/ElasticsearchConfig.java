@@ -5,6 +5,9 @@ import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.core5.http.HttpHost;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,8 +46,13 @@ public class ElasticsearchConfig {
             // 创建 Rest5Client - ES 9.x 新的低级客户端
             Rest5Client restClient = Rest5Client.builder(new HttpHost("http", host, port)).build();
 
-            // 创建传输层 - ES 9.x 使用 Rest5ClientTransport
-            ElasticsearchTransport transport = new Rest5ClientTransport(restClient, new JacksonJsonpMapper());
+            // 创建支持Java 8日期时间的ObjectMapper
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+            // 创建传输层 - ES 9.x 使用 Rest5ClientTransport，配置支持LocalDateTime的ObjectMapper
+            ElasticsearchTransport transport = new Rest5ClientTransport(restClient, new JacksonJsonpMapper(objectMapper));
 
             // 创建API客户端
             ElasticsearchClient client = new ElasticsearchClient(transport);
