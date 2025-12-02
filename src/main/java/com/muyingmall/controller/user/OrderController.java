@@ -453,6 +453,7 @@ public class OrderController {
                     ", productId=" + purchaseDTO.getProductId() +
                     ", quantity=" + purchaseDTO.getQuantity() +
                     ", specs=" + purchaseDTO.getSpecs() +
+                    ", skuId=" + purchaseDTO.getSkuId() +
                     ", paymentMethod=" + purchaseDTO.getPaymentMethod() +
                     ", couponId=" + purchaseDTO.getCouponId() +
                     ", shippingFee=" + purchaseDTO.getShippingFee() +
@@ -465,6 +466,7 @@ public class OrderController {
                     purchaseDTO.getProductId(),
                     purchaseDTO.getQuantity(),
                     purchaseDTO.getSpecs(),
+                    purchaseDTO.getSkuId(),
                     purchaseDTO.getRemark(),
                     purchaseDTO.getPaymentMethod(),
                     purchaseDTO.getCouponId(),

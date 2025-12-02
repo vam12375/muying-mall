@@ -32,7 +32,10 @@ import com.muyingmall.service.PointsService;
 import com.muyingmall.service.CouponService;
 import com.muyingmall.service.UserCouponService;
 import com.muyingmall.service.MessageProducerService;
+import com.muyingmall.service.ProductSkuService;
+import com.muyingmall.entity.ProductSku;
 import com.muyingmall.dto.OrderMessage;
+import com.muyingmall.dto.SkuStockDTO;
 import com.muyingmall.util.EnumUtil;
 import com.muyingmall.util.RedisUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -85,6 +88,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private final CouponService couponService;
     private final UserCouponService userCouponService;
     private final MessageProducerService messageProducerService;
+    private final ProductSkuService productSkuService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -155,6 +159,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderProduct> orderProducts = new ArrayList<>();
 
+        // 用于记录需要扣减库存的SKU列表
+        List<SkuStockDTO> skuStockList = new ArrayList<>();
+
         for (Cart cart : cartList) {
             Product product = productService.getById(cart.getProductId());
             if (product == null) {
@@ -165,23 +172,57 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 throw new BusinessException("商品已下架：" + product.getProductName());
             }
 
-            if (product.getStock() < cart.getQuantity()) {
-                throw new BusinessException("商品库存不足：" + product.getProductName());
-            }
-
             // 创建订单商品项
             OrderProduct orderProduct = new OrderProduct();
             orderProduct.setProductId(product.getProductId());
             orderProduct.setProductName(product.getProductName());
             orderProduct.setProductImg(product.getProductImg());
-            orderProduct.setPrice(product.getPriceNew());
             orderProduct.setQuantity(cart.getQuantity());
             orderProduct.setCreateTime(LocalDateTime.now());
             orderProduct.setUpdateTime(LocalDateTime.now());
+
+            // 判断是否有SKU
+            BigDecimal itemPrice;
+            if (cart.getSkuId() != null) {
+                // 有SKU，使用SKU的价格和库存
+                ProductSku sku = productSkuService.getById(cart.getSkuId());
+                if (sku == null) {
+                    throw new BusinessException("商品规格不存在：" + product.getProductName());
+                }
+                if (sku.getStock() < cart.getQuantity()) {
+                    throw new BusinessException("商品规格库存不足：" + product.getProductName() + " - " + sku.getSkuName());
+                }
+                
+                itemPrice = sku.getPrice();
+                orderProduct.setPrice(itemPrice);
+                orderProduct.setSkuId(sku.getSkuId());
+                orderProduct.setSkuCode(sku.getSkuCode());
+                orderProduct.setSpecs(sku.getSpecValues());
+                // 使用SKU图片（如果有）
+                if (sku.getSkuImage() != null && !sku.getSkuImage().isEmpty()) {
+                    orderProduct.setProductImg(sku.getSkuImage());
+                }
+                
+                // 记录需要扣减的SKU库存
+                SkuStockDTO stockDTO = new SkuStockDTO();
+                stockDTO.setSkuId(sku.getSkuId());
+                stockDTO.setQuantity(cart.getQuantity());
+                skuStockList.add(stockDTO);
+            } else {
+                // 无SKU，使用商品主表的价格和库存
+                if (product.getStock() < cart.getQuantity()) {
+                    throw new BusinessException("商品库存不足：" + product.getProductName());
+                }
+                itemPrice = product.getPriceNew();
+                orderProduct.setPrice(itemPrice);
+                // 使用购物车中的规格信息（兼容旧数据）
+                orderProduct.setSpecs(cart.getSpecs());
+            }
+            
             orderProducts.add(orderProduct);
 
             // 累加金额
-            BigDecimal itemTotal = product.getPriceNew().multiply(new BigDecimal(cart.getQuantity()));
+            BigDecimal itemTotal = itemPrice.multiply(new BigDecimal(cart.getQuantity()));
             totalAmount = totalAmount.add(itemTotal);
         }
 
@@ -315,12 +356,24 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             orderProductMapper.insert(orderProduct);
         }
 
-        // 减少商品库存
+        // 扣减SKU库存（如果有）
+        if (!skuStockList.isEmpty()) {
+            for (SkuStockDTO stockDTO : skuStockList) {
+                stockDTO.setOrderId(order.getOrderId());
+                stockDTO.setRemark("订单创建扣减库存");
+            }
+            productSkuService.batchDeductStock(skuStockList);
+            log.info("订单 {} SKU库存扣减完成，共 {} 个SKU", order.getOrderNo(), skuStockList.size());
+        }
+
+        // 减少商品主表库存（仅对无SKU的商品）
         for (Cart cart : cartList) {
-            productService.update(
-                    new LambdaUpdateWrapper<Product>()
-                            .eq(Product::getProductId, cart.getProductId())
-                            .setSql("stock = stock - " + cart.getQuantity()));
+            if (cart.getSkuId() == null) {
+                productService.update(
+                        new LambdaUpdateWrapper<Product>()
+                                .eq(Product::getProductId, cart.getProductId())
+                                .setSql("stock = stock - " + cart.getQuantity()));
+            }
         }
 
         // 清空购物车中已购买的商品
@@ -541,11 +594,31 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             queryWrapper.eq(OrderProduct::getOrderId, orderId);
             List<OrderProduct> orderProducts = orderProductMapper.selectList(queryWrapper);
 
+            // 收集需要恢复的SKU库存
+            List<SkuStockDTO> skuStockList = new ArrayList<>();
+            
             for (OrderProduct orderProduct : orderProducts) {
-                productService.update(
-                        new LambdaUpdateWrapper<Product>()
-                                .eq(Product::getProductId, orderProduct.getProductId())
-                                .setSql("stock = stock + " + orderProduct.getQuantity()));
+                if (orderProduct.getSkuId() != null) {
+                    // 有SKU，恢复SKU库存
+                    SkuStockDTO stockDTO = new SkuStockDTO();
+                    stockDTO.setSkuId(orderProduct.getSkuId());
+                    stockDTO.setQuantity(orderProduct.getQuantity());
+                    stockDTO.setOrderId(orderId);
+                    stockDTO.setRemark("订单取消恢复库存");
+                    skuStockList.add(stockDTO);
+                } else {
+                    // 无SKU，恢复商品主表库存
+                    productService.update(
+                            new LambdaUpdateWrapper<Product>()
+                                    .eq(Product::getProductId, orderProduct.getProductId())
+                                    .setSql("stock = stock + " + orderProduct.getQuantity()));
+                }
+            }
+            
+            // 批量恢复SKU库存
+            if (!skuStockList.isEmpty()) {
+                productSkuService.batchRestoreStock(skuStockList);
+                log.info("订单 {} 取消，SKU库存恢复完成，共 {} 个SKU", orderId, skuStockList.size());
             }
 
             // 清除订单缓存
@@ -1175,10 +1248,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> directPurchase(Integer userId, Integer addressId, Integer productId,
-            Integer quantity, String specs, String remark,
+            Integer quantity, String specs, Long skuId, String remark,
             String paymentMethod, Long couponId,
             BigDecimal shippingFee, Integer pointsUsed) {
-        log.info("开始处理直接购买请求: 用户ID={}, 商品ID={}, 数量={}", userId, productId, quantity);
+        log.info("开始处理直接购买请求: 用户ID={}, 商品ID={}, skuId={}, 数量={}", userId, productId, skuId, quantity);
 
         // 获取用户地址信息
         LambdaQueryWrapper<UserAddress> addressQueryWrapper = new LambdaQueryWrapper<>();
@@ -1196,21 +1269,44 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new BusinessException(400, "商品不存在");
         }
 
-        // 检查库存
-        if (product.getStock() < quantity) {
-            throw new BusinessException(400, "商品库存不足");
-        }
+        // SKU相关变量
+        ProductSku sku = null;
+        BigDecimal itemPrice;
+        String processedSpecs;
 
-        // 处理规格数据，确保是有效的JSON格式
-        String processedSpecs = processSpecsToJson(specs);
-        log.debug("处理后的规格数据: {}", processedSpecs);
+        // 判断是否使用SKU
+        if (skuId != null) {
+            // 有SKU，使用SKU的价格和库存
+            sku = productSkuService.getById(skuId);
+            if (sku == null) {
+                throw new BusinessException(400, "商品规格不存在");
+            }
+            if (!sku.getProductId().equals(productId)) {
+                throw new BusinessException(400, "商品规格不匹配");
+            }
+            if (sku.getStock() < quantity) {
+                throw new BusinessException(400, "商品规格库存不足");
+            }
+            itemPrice = sku.getPrice();
+            processedSpecs = sku.getSpecValues();
+            log.debug("使用SKU价格: skuId={}, price={}, specs={}", skuId, itemPrice, processedSpecs);
+        } else {
+            // 无SKU，使用商品主表的价格和库存
+            if (product.getStock() < quantity) {
+                throw new BusinessException(400, "商品库存不足");
+            }
+            itemPrice = product.getPriceNew();
+            // 处理规格数据，确保是有效的JSON格式
+            processedSpecs = processSpecsToJson(specs);
+            log.debug("使用商品主表价格: price={}, specs={}", itemPrice, processedSpecs);
+        }
 
         try {
             // 创建订单
             Order order = new Order();
             order.setUserId(userId);
             order.setOrderNo(generateOrderNo());
-            order.setTotalAmount(product.getPriceNew().multiply(new BigDecimal(quantity)));
+            order.setTotalAmount(itemPrice.multiply(new BigDecimal(quantity)));
             order.setStatus(EnumUtil.getOrderStatusByCode(ORDER_STATUS_PENDING_PAYMENT));
             // 设置订单其他属性
             order.setAddressId(addressId);
@@ -1344,22 +1440,39 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             orderProduct.setOrderId(order.getOrderId());
             orderProduct.setProductId(product.getProductId());
             orderProduct.setProductName(product.getProductName());
-            orderProduct.setProductImg(product.getProductImg());
-            orderProduct.setPrice(product.getPriceNew());
+            orderProduct.setPrice(itemPrice);
             orderProduct.setQuantity(quantity);
-            orderProduct.setSpecs(processedSpecs); // 使用处理后的规格数据
+            orderProduct.setSpecs(processedSpecs);
             orderProduct.setCreateTime(LocalDateTime.now());
             orderProduct.setUpdateTime(LocalDateTime.now());
+
+            // 设置SKU相关信息
+            if (sku != null) {
+                orderProduct.setSkuId(sku.getSkuId());
+                orderProduct.setSkuCode(sku.getSkuCode());
+                // 使用SKU图片（如果有）
+                orderProduct.setProductImg(sku.getSkuImage() != null && !sku.getSkuImage().isEmpty() 
+                        ? sku.getSkuImage() : product.getProductImg());
+            } else {
+                orderProduct.setProductImg(product.getProductImg());
+            }
 
             // 保存订单商品
             orderProductMapper.insert(orderProduct);
 
-            // 更新商品库存
-            productService.update(
-                    new LambdaUpdateWrapper<Product>()
-                            .eq(Product::getProductId, productId)
-                            .setSql("stock = stock - " + quantity)
-                            .setSql("sales = sales + " + quantity));
+            // 扣减库存
+            if (sku != null) {
+                // 扣减SKU库存（传递订单ID用于日志记录）
+                productSkuService.deductStock(sku.getSkuId(), quantity, order.getOrderId(), "直接购买扣减库存");
+                log.info("订单 {} SKU库存扣减完成: skuId={}, quantity={}", order.getOrderNo(), sku.getSkuId(), quantity);
+            } else {
+                // 扣减商品主表库存
+                productService.update(
+                        new LambdaUpdateWrapper<Product>()
+                                .eq(Product::getProductId, productId)
+                                .setSql("stock = stock - " + quantity)
+                                .setSql("sales = sales + " + quantity));
+            }
 
             // 创建支付记录 - 如果有支付服务
             if (paymentService != null) {
@@ -1453,13 +1566,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             try {
                 Map<String, String> specsMap = new HashMap<>();
 
-                // 处理如"类型:孕中"或"颜色:红色,尺寸:L"这样的格式
+                // 处理如"类型:孕中"或"颜色:红色,尺寸:L"或"尺码:NB;和装:裙装"这样的格式
+                // 支持分号和逗号两种分隔符
                 if (specs.contains(":")) {
-                    String[] pairs = specs.split(",");
+                    // 优先使用分号分隔，如果没有分号则使用逗号
+                    String separator = specs.contains(";") ? ";" : ",";
+                    String[] pairs = specs.split(separator);
                     for (String pair : pairs) {
                         if (pair.contains(":")) {
                             String[] kv = pair.split(":", 2);
-                            if (kv.length == 2) {
+                            if (kv.length == 2 && !kv[0].trim().isEmpty() && !kv[1].trim().isEmpty()) {
                                 specsMap.put(kv[0].trim(), kv[1].trim());
                             }
                         }
