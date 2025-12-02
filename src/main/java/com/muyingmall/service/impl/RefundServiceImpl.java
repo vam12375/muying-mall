@@ -14,9 +14,14 @@ import com.muyingmall.enums.PaymentStatus;
 import com.muyingmall.enums.RefundStatus;
 import com.muyingmall.exception.BusinessException;
 import com.muyingmall.mapper.RefundMapper;
+import com.muyingmall.entity.OrderProduct;
+import com.muyingmall.entity.Product;
+import com.muyingmall.mapper.OrderProductMapper;
 import com.muyingmall.service.AlipayRefundService;
 import com.muyingmall.service.OrderService;
 import com.muyingmall.service.PaymentService;
+import com.muyingmall.service.ProductService;
+import com.muyingmall.service.ProductSkuService;
 import com.muyingmall.service.RefundLogService;
 import com.muyingmall.service.RefundService;
 import com.muyingmall.service.RefundStateService;
@@ -55,6 +60,9 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
     private final RefundStateService refundStateService;
     private final RefundLogService refundLogService;
     private final AlipayRefundService alipayRefundService;
+    private final OrderProductMapper orderProductMapper;
+    private final ProductSkuService productSkuService;
+    private final ProductService productService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -284,11 +292,59 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
         refund.setRefundTime(LocalDateTime.now());
         updateById(refund);
 
+        // 恢复库存
+        try {
+            restoreStockForRefund(refund.getOrderId());
+            log.info("退款完成，库存已恢复: 订单ID={}", refund.getOrderId());
+        } catch (Exception e) {
+            log.error("恢复库存失败: 订单ID={}, 错误={}", refund.getOrderId(), e.getMessage(), e);
+            // 库存恢复失败不影响退款状态流转，但需要记录日志
+            refundLogService.logStatusChange(refundId, refund.getRefundNo(), refund.getStatus(), refund.getStatus(),
+                    "SYSTEM", null, "系统", "库存恢复失败: " + e.getMessage());
+        }
+
         // 更新退款状态为已完成
         refundStateService.sendEvent(refundId, RefundEvent.COMPLETE, "ADMIN", adminName, adminId,
                 "管理员完成退款，交易号：" + transactionId);
 
         return true;
+    }
+
+    /**
+     * 退款时恢复库存
+     * @param orderId 订单ID
+     */
+    private void restoreStockForRefund(Integer orderId) {
+        // 查询订单商品
+        LambdaQueryWrapper<OrderProduct> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(OrderProduct::getOrderId, orderId);
+        List<OrderProduct> orderProducts = orderProductMapper.selectList(queryWrapper);
+
+        if (orderProducts == null || orderProducts.isEmpty()) {
+            log.warn("订单商品为空，无法恢复库存: orderId={}", orderId);
+            return;
+        }
+
+        for (OrderProduct orderProduct : orderProducts) {
+            Integer quantity = orderProduct.getQuantity();
+            Long skuId = orderProduct.getSkuId();
+            Integer productId = orderProduct.getProductId();
+
+            if (skuId != null) {
+                // 有SKU，恢复SKU库存
+                productSkuService.restoreStock(skuId, quantity);
+                log.info("SKU库存已恢复: skuId={}, quantity={}, orderId={}", skuId, quantity, orderId);
+            } else {
+                // 无SKU，恢复商品主表库存
+                Product product = productService.getById(productId);
+                if (product != null) {
+                    product.setStock(product.getStock() + quantity);
+                    product.setSales(Math.max(0, product.getSales() - quantity)); // 销量减少，但不能为负
+                    productService.updateById(product);
+                    log.info("商品库存已恢复: productId={}, quantity={}, orderId={}", productId, quantity, orderId);
+                }
+            }
+        }
     }
 
     @Override

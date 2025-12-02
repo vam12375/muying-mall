@@ -260,6 +260,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                         product.setProductStatus(productMap.get("productStatus").toString());
                     if (productMap.get("rating") != null)
                         product.setRating(new BigDecimal(productMap.get("rating").toString()));
+                    
+                    // 处理SKU相关字段
+                    if (productMap.get("hasSku") != null)
+                        product.setHasSku(Integer.valueOf(productMap.get("hasSku").toString()));
+                    if (productMap.get("minPrice") != null)
+                        product.setMinPrice(new BigDecimal(productMap.get("minPrice").toString()));
+                    if (productMap.get("maxPrice") != null)
+                        product.setMaxPrice(new BigDecimal(productMap.get("maxPrice").toString()));
 
                     // 处理日期字段
                     if (productMap.get("createTime") != null) {
@@ -361,6 +369,11 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             productMap.put("isRecommend", product.getIsRecommend());
             productMap.put("productStatus", product.getProductStatus());
             productMap.put("rating", product.getRating());
+            
+            // 添加SKU相关字段到缓存
+            productMap.put("hasSku", product.getHasSku());
+            productMap.put("minPrice", product.getMinPrice());
+            productMap.put("maxPrice", product.getMaxPrice());
 
             // 日期时间
             if (product.getCreateTime() != null) {
