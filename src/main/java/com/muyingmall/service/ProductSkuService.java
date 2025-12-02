@@ -41,6 +41,11 @@ public interface ProductSkuService extends IService<ProductSku> {
     boolean deductStock(Long skuId, Integer quantity);
 
     /**
+     * 扣减库存（带订单ID）
+     */
+    boolean deductStock(Long skuId, Integer quantity, Integer orderId, String remark);
+
+    /**
      * 批量扣减库存
      */
     boolean batchDeductStock(List<SkuStockDTO> stockList);

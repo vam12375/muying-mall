@@ -95,6 +95,12 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deductStock(Long skuId, Integer quantity) {
+        return deductStock(skuId, quantity, null, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deductStock(Long skuId, Integer quantity, Integer orderId, String remark) {
         // 查询SKU信息
         ProductSku sku = productSkuMapper.selectById(skuId);
         if (sku == null) {
@@ -112,8 +118,9 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
             throw new BusinessException("库存扣减失败，请重试");
         }
 
-        // 记录日志
-        recordStockLog(skuId, null, "DEDUCT", -quantity, sku.getStock(), sku.getStock() - quantity, null, "扣减库存");
+        // 记录日志（包含订单ID）
+        String logRemark = remark != null ? remark : "扣减库存";
+        recordStockLog(skuId, orderId, "DEDUCT", -quantity, sku.getStock(), sku.getStock() - quantity, null, logRemark);
 
         return true;
     }
@@ -275,8 +282,12 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
     private void recordStockLog(Long skuId, Integer orderId, String changeType, 
                                 Integer changeQuantity, Integer beforeStock, Integer afterStock,
                                 String operator, String remark) {
+        // 查询SKU信息获取sku_code
+        ProductSku sku = productSkuMapper.selectById(skuId);
+        
         ProductSkuStockLog log = new ProductSkuStockLog();
         log.setSkuId(skuId);
+        log.setSkuCode(sku != null ? sku.getSkuCode() : "UNKNOWN"); // 设置sku_code
         log.setOrderId(orderId);
         log.setChangeType(changeType);
         log.setChangeQuantity(changeQuantity);
@@ -289,18 +300,33 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
 
     /**
      * 实体转DTO
+     * 支持两种格式：
+     * 1. 数组格式: [{"spec_name":"颜色","spec_value":"红色"}]
+     * 2. 对象格式: {"颜色":"红色","尺寸":"M"}
      */
     private ProductSkuDTO convertToDTO(ProductSku entity) {
         ProductSkuDTO dto = new ProductSkuDTO();
         BeanUtils.copyProperties(entity, dto);
         
         // 解析JSON格式的规格值
-        if (entity.getSpecValues() != null) {
+        if (entity.getSpecValues() != null && !entity.getSpecValues().isEmpty()) {
             try {
-                List<Map<String, String>> specValues = JSON.parseObject(
-                    entity.getSpecValues(), 
-                    new TypeReference<List<Map<String, String>>>() {}
-                );
+                String specJson = entity.getSpecValues().trim();
+                List<Map<String, String>> specValues = new ArrayList<>();
+                
+                if (specJson.startsWith("[")) {
+                    // 数组格式: [{"spec_name":"颜色","spec_value":"红色"}]
+                    specValues = JSON.parseObject(specJson, new TypeReference<List<Map<String, String>>>() {});
+                } else if (specJson.startsWith("{")) {
+                    // 对象格式: {"颜色":"红色","尺寸":"M"} -> 转换为数组格式
+                    Map<String, String> specMap = JSON.parseObject(specJson, new TypeReference<Map<String, String>>() {});
+                    for (Map.Entry<String, String> entry : specMap.entrySet()) {
+                        Map<String, String> item = new java.util.HashMap<>();
+                        item.put("spec_name", entry.getKey());
+                        item.put("spec_value", entry.getValue());
+                        specValues.add(item);
+                    }
+                }
                 dto.setSpecValues(specValues);
             } catch (Exception e) {
                 log.error("解析规格值失败: {}", entity.getSpecValues(), e);
