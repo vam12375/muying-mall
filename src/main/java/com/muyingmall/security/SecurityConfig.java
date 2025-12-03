@@ -35,8 +35,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
                 // 允许预检请求
                 .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
-                // 允许访问 Swagger UI 和 API 文档
-                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // 允许访问 Knife4j 和 API 文档
+                .requestMatchers("/doc.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**", "/swagger-resources/**").permitAll()
                 // 允许访问用户注册和登录接口
                 .requestMatchers("/user/register", "/user/login").permitAll()
                 // 允许访问管理员登录接口
