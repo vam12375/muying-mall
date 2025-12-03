@@ -30,11 +30,23 @@ import java.util.stream.Collectors;
 
 /**
  * 订单控制器
+ * 提供订单的完整生命周期管理
  */
 @RestController
 @RequestMapping("/order")
 @RequiredArgsConstructor
-@Tag(name = "订单管理", description = "订单创建、查询、取消等接口")
+@Tag(name = "订单管理", description = """
+        订单管理接口，包括创建订单、直接购买、订单列表、订单详情、取消订单、确认收货、支付订单等功能。
+        
+        **订单状态流转：**
+        - pending_payment（待支付）→ pending_shipment（待发货）→ shipped（已发货）→ completed（已完成）
+        - 待支付/待发货/已发货状态可取消订单
+        - 已发货状态可申请退款
+        
+        **支付方式：**
+        - alipay: 支付宝支付
+        - wallet: 钱包余额支付
+        """)
 public class OrderController {
 
     private final OrderService orderService;
@@ -45,7 +57,26 @@ public class OrderController {
      * 创建订单
      */
     @PostMapping("/create")
-    @Operation(summary = "创建订单")
+    @Operation(summary = "从购物车创建订单", description = """
+            从购物车选中的商品创建订单。
+            
+            **必填参数：**
+            - addressId: 收货地址ID
+            - cartIds: 购物车项ID列表
+            
+            **可选参数：**
+            - paymentMethod: 支付方式（alipay/wallet）
+            - couponId: 优惠券ID
+            - shippingFee: 运费
+            - pointsUsed: 使用的积分数量
+            - remark: 订单备注
+            
+            **返回数据：**
+            - orderId: 订单ID
+            - orderNo: 订单编号
+            - totalAmount: 订单总金额
+            - actualAmount: 实付金额
+            """)
     public Result<Map<String, Object>> createOrder(@RequestBody @Valid OrderCreateDTO orderCreateDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
@@ -432,7 +463,23 @@ public class OrderController {
      * 直接购买商品（不添加到购物车）
      */
     @PostMapping("/direct-purchase")
-    @Operation(summary = "直接购买商品")
+    @Operation(summary = "直接购买商品", description = """
+            不经过购物车，直接购买商品创建订单。适用于商品详情页的"立即购买"功能。
+            
+            **必填参数：**
+            - addressId: 收货地址ID
+            - productId: 商品ID
+            - quantity: 购买数量
+            - skuId: SKU ID（如果商品有多个SKU）
+            
+            **可选参数：**
+            - specs: 规格信息JSON字符串
+            - paymentMethod: 支付方式
+            - couponId: 优惠券ID
+            - shippingFee: 运费
+            - pointsUsed: 使用的积分
+            - remark: 订单备注
+            """)
     public Result<Map<String, Object>> directPurchase(@RequestBody @Valid DirectPurchaseDTO purchaseDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()

@@ -21,11 +21,12 @@ import java.util.Map;
 
 /**
  * 购物车控制器
+ * 提供购物车的完整管理功能
  */
 @RestController
 @RequestMapping("/cart")
 @RequiredArgsConstructor
-@Tag(name = "购物车", description = "购物车添加、更新、删除等接口")
+@Tag(name = "购物车", description = "购物车管理接口，包括添加商品、修改数量、删除商品、清空购物车、全选/取消全选等功能。所有接口需要用户登录认证。添加相同SKU的商品会自动合并数量。")
 public class CartController {
 
     private final CartService cartService;
@@ -48,7 +49,7 @@ public class CartController {
      * 获取购物车中所有商品的总数量
      */
     @GetMapping("/total")
-    @Operation(summary = "获取购物车中所有商品的总数量")
+    @Operation(summary = "获取购物车商品总数", description = "获取当前用户购物车中所有商品的数量总和（包括未选中的商品），用于显示购物车角标")
     public Result<Integer> getCartTotalItems() {
         User user = getCurrentAuthenticatedUser();
         if (user == null) {
@@ -71,7 +72,7 @@ public class CartController {
      * 添加购物车
      */
     @PostMapping("/add")
-    @Operation(summary = "添加购物车")
+    @Operation(summary = "添加商品到购物车", description = "将商品添加到购物车。如果购物车中已存在相同SKU的商品，会自动合并数量。需要指定商品ID、SKU ID和数量。")
     public Result<Cart> add(@RequestBody @Valid CartAddDTO cartAddDTO) {
         User user = getCurrentAuthenticatedUser();
         if (user == null) {
@@ -86,7 +87,7 @@ public class CartController {
      * 获取购物车列表
      */
     @GetMapping("/list")
-    @Operation(summary = "获取购物车列表")
+    @Operation(summary = "获取购物车列表", description = "获取当前用户的购物车商品列表，包含商品信息、SKU信息、数量、选中状态等。会自动关联查询商品和SKU的最新信息。")
     public Result<List<Cart>> list() {
         User user = getCurrentAuthenticatedUser();
         if (user == null) {

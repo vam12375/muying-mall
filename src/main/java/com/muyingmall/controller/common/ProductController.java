@@ -31,7 +31,19 @@ import java.util.Random;
 @RequestMapping("/products")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "商品管理", description = "商品查询、分类、推荐等功能")
+@Tag(name = "商品管理", description = """
+        商品查询接口，提供商品列表、详情、推荐等功能。
+        
+        **无需登录即可访问**
+        
+        **支持的筛选条件：**
+        - 分类筛选（categoryId）
+        - 品牌筛选（brandId）
+        - 热门商品（isHot）
+        - 新品（isNew）
+        - 推荐商品（isRecommend）
+        - 关键词搜索（keyword）
+        """)
 public class ProductController {
 
     private final ProductService productService;

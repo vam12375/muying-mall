@@ -37,10 +37,25 @@ import java.util.Map;
 
 /**
  * 用户钱包控制器
+ * 提供钱包余额查询、充值、交易记录等功能
  */
 @RestController
 @RequestMapping("/user/wallet")
-@Tag(name = "用户钱包接口")
+@Tag(name = "用户钱包", description = """
+        用户钱包管理接口，提供余额查询、充值、交易记录查询等功能。
+        
+        **需要用户登录认证**
+        
+        **交易类型：**
+        - 1: 充值
+        - 2: 消费（订单支付）
+        - 3: 退款
+        - 4: 管理员调整
+        
+        **支持的充值方式：**
+        - alipay: 支付宝支付
+        - wechat: 微信支付（暂未开放）
+        """)
 @Slf4j
 public class UserWalletController {
 
@@ -50,7 +65,7 @@ public class UserWalletController {
     @Autowired
     private AccountTransactionMapper accountTransactionMapper;
 
-    @Operation(summary = "获取钱包信息")
+    @Operation(summary = "获取钱包信息", description = "获取当前用户的钱包完整信息，包括余额、冻结金额、累计充值、累计消费等")
     @GetMapping("/info")
     public CommonResult<WalletInfoDTO> getWalletInfo() {
         // 添加详细日志
@@ -109,7 +124,7 @@ public class UserWalletController {
         }
     }
 
-    @Operation(summary = "获取钱包余额")
+    @Operation(summary = "获取钱包余额", description = "快速获取当前用户的钱包余额和冻结金额，用于页面显示")
     @GetMapping("/balance")
     public CommonResult<Map<String, Object>> getWalletBalance() {
         // 添加详细日志
@@ -148,7 +163,7 @@ public class UserWalletController {
         }
     }
 
-    @Operation(summary = "获取交易记录")
+    @Operation(summary = "获取交易记录", description = "分页查询当前用户的钱包交易记录，支持按交易类型和时间范围筛选")
     @GetMapping("/transactions")
     public CommonResult<Map<String, Object>> getTransactions(
             @Parameter(description = "页码", example = "1") @RequestParam(value = "page", defaultValue = "1") Integer page,
@@ -195,7 +210,7 @@ public class UserWalletController {
         }
     }
 
-    @Operation(summary = "创建充值订单")
+    @Operation(summary = "创建充值订单", description = "创建钱包充值订单，返回支付所需的订单号和支付表单。充值金额必须大于0。")
     @PostMapping("/recharge")
     public CommonResult<Map<String, Object>> createRechargeOrder(
             @RequestBody RechargeRequestDTO rechargeRequest) {

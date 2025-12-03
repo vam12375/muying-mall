@@ -35,7 +35,19 @@ import java.util.stream.Collectors;
 @RequestMapping("/admin/dashboard")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "后台-仪表盘", description = "提供后台管理系统首页所需的统计数据")
+@Tag(name = "后台-仪表盘", description = """
+        后台管理系统仪表盘接口，提供各类统计数据和图表数据。
+        
+        **需要管理员权限（ROLE_ADMIN）**
+        
+        **提供的数据：**
+        - 核心统计：用户数、商品数、订单数、总收入
+        - 订单趋势：近7天/30天订单数量变化
+        - 商品分类：各分类商品数量分布
+        - 月度销售：近6个月销售额趋势
+        - 用户增长：近6个月新增用户数
+        - 待处理事项：待审核商品、待发货订单、待处理退款、库存预警
+        """)
 public class DashboardController {
 
     private final UserService userService;

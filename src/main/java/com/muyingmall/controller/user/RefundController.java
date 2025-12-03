@@ -15,12 +15,25 @@ import java.util.Map;
 
 /**
  * 退款控制器
+ * 提供退款申请和查询功能
  */
 @RestController
 @RequestMapping("/refund")
 @RequiredArgsConstructor
 @Slf4j
-@io.swagger.v3.oas.annotations.tags.Tag(name = "退款管理", description = "申请退款、查询退款列表、退款详情等功能")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "退款管理", description = """
+        退款管理接口，支持用户申请退款、查询退款状态、取消退款等功能。
+        
+        **退款状态流转（状态机驱动）：**
+        - pending（待处理）→ approved（已批准）→ processing（处理中）→ completed（已完成）
+        - pending → rejected（已拒绝）
+        - processing → failed（退款失败）
+        - pending → cancelled（用户取消）
+        
+        **退款条件：**
+        - 订单状态为待发货或已发货
+        - 退款金额不超过订单实付金额
+        """)
 public class RefundController {
 
     private final RefundService refundService;
@@ -30,6 +43,19 @@ public class RefundController {
      * 申请退款
      */
     @PostMapping("/apply")
+    @io.swagger.v3.oas.annotations.Operation(summary = "申请退款", description = """
+            提交退款申请，需要提供订单ID、退款金额、退款原因等信息。
+            
+            **请求参数：**
+            - orderId: 订单ID（必填）
+            - userId: 用户ID（必填）
+            - amount: 退款金额（必填，不能超过订单实付金额）
+            - reason: 退款原因（必填）
+            - reasonDetail: 退款原因详情（选填）
+            - evidenceImages: 凭证图片URL，多个用逗号分隔（选填）
+            
+            **返回：** 退款申请ID
+            """)
     public Result<Long> applyRefund(@RequestBody Map<String, Object> requestData) {
         log.info("收到退款申请请求: {}", requestData);
 
