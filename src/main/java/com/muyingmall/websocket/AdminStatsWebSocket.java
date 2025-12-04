@@ -1,19 +1,28 @@
 package com.muyingmall.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.muyingmall.util.JwtUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * 管理员统计数据WebSocket服务端点
+ * 
+ * 功能：
+ * - 实时推送统计数据
+ * - 实时推送登录记录
+ * - 实时推送操作日志
+ * - JWT认证保护
+ * - 自动心跳保活
  */
 @Slf4j
 @Component
@@ -21,9 +30,23 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class AdminStatsWebSocket {
 
     /**
-     * 存放每个客户端对应的WebSocket对象
+     * 用于存放每个管理员ID对应的WebSocket连接
+     * 优化：移除冗余的CopyOnWriteArraySet，只使用Map管理连接
      */
-    private static final CopyOnWriteArraySet<AdminStatsWebSocket> webSocketSet = new CopyOnWriteArraySet<>();
+    private static final ConcurrentHashMap<String, AdminStatsWebSocket> webSocketMap = new ConcurrentHashMap<>();
+
+    /**
+     * JWT工具类（静态注入）
+     */
+    private static JwtUtils jwtUtils;
+
+    /**
+     * 通过Spring注入JwtUtils（静态方法注入）
+     */
+    @Autowired
+    public void setJwtUtils(JwtUtils jwtUtils) {
+        AdminStatsWebSocket.jwtUtils = jwtUtils;
+    }
 
     /**
      * 与某个客户端的连接会话，需要通过它来给客户端发送数据
@@ -36,35 +59,94 @@ public class AdminStatsWebSocket {
     private String adminId = "";
 
     /**
-     * 用于存放每个管理员ID对应的WebSocket连接
-     */
-    private static final ConcurrentHashMap<String, AdminStatsWebSocket> webSocketMap = new ConcurrentHashMap<>();
-
-    /**
      * JSON转换器
      */
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * 连接建立成功调用的方法
+     * 
+     * 安全增强：
+     * 1. JWT Token认证
+     * 2. 验证adminId与token匹配
+     * 3. 限制同一管理员只能有一个活跃连接
      */
     @OnOpen
     public void onOpen(Session session, @PathParam("adminId") String adminId) {
-        this.session = session;
-        this.adminId = adminId;
-
-        // 加入set中
-        webSocketSet.add(this);
-
-        // 加入map中
-        webSocketMap.put(adminId, this);
-
-        log.info("管理员{}连接WebSocket成功，当前在线人数为：{}", adminId, getOnlineCount());
-
         try {
-            sendMessage("连接成功");
-        } catch (IOException e) {
-            log.error("WebSocket IO异常", e);
+            // 1. 从查询参数获取token
+            Map<String, List<String>> params = session.getRequestParameterMap();
+            if (!params.containsKey("token") || params.get("token").isEmpty()) {
+                log.warn("管理员{}尝试连接WebSocket但未提供token", adminId);
+                session.close(new CloseReason(
+                    CloseReason.CloseCodes.VIOLATED_POLICY, 
+                    "未提供认证token"
+                ));
+                return;
+            }
+
+            String token = params.get("token").get(0);
+
+            // 2. 验证token有效性
+            if (jwtUtils == null || !jwtUtils.validateToken(token)) {
+                log.warn("管理员{}的token验证失败", adminId);
+                session.close(new CloseReason(
+                    CloseReason.CloseCodes.VIOLATED_POLICY, 
+                    "token无效或已过期"
+                ));
+                return;
+            }
+
+            // 3. 验证adminId与token是否匹配
+            String tokenAdminId = jwtUtils.getAdminIdFromToken(token);
+            if (!adminId.equals(tokenAdminId)) {
+                log.warn("管理员{}的adminId与token不匹配，token中的adminId为{}", adminId, tokenAdminId);
+                session.close(new CloseReason(
+                    CloseReason.CloseCodes.VIOLATED_POLICY, 
+                    "adminId与token不匹配"
+                ));
+                return;
+            }
+
+            // 4. 检查是否已有连接，如有则关闭旧连接
+            AdminStatsWebSocket existingWs = webSocketMap.get(adminId);
+            if (existingWs != null) {
+                log.info("管理员{}已有连接，关闭旧连接", adminId);
+                try {
+                    existingWs.session.close(new CloseReason(
+                        CloseReason.CloseCodes.NORMAL_CLOSURE, 
+                        "新连接已建立"
+                    ));
+                } catch (IOException e) {
+                    log.error("关闭旧连接失败", e);
+                }
+            }
+
+            // 5. 建立新连接
+            this.session = session;
+            this.adminId = adminId;
+            webSocketMap.put(adminId, this);
+
+            log.info("管理员{}连接WebSocket成功，当前在线人数为：{}", adminId, getOnlineCount());
+
+            // 发送连接成功消息
+            Map<String, Object> successMessage = Map.of(
+                "type", "connected",
+                "message", "连接成功",
+                "timestamp", System.currentTimeMillis()
+            );
+            sendMessage(objectMapper.writeValueAsString(successMessage));
+
+        } catch (Exception e) {
+            log.error("建立WebSocket连接失败", e);
+            try {
+                session.close(new CloseReason(
+                    CloseReason.CloseCodes.UNEXPECTED_CONDITION, 
+                    "服务器内部错误"
+                ));
+            } catch (IOException ioException) {
+                log.error("关闭连接失败", ioException);
+            }
         }
     }
 
@@ -73,9 +155,6 @@ public class AdminStatsWebSocket {
      */
     @OnClose
     public void onClose() {
-        // 从set中删除
-        webSocketSet.remove(this);
-
         // 从map中删除
         webSocketMap.remove(adminId);
 
@@ -198,13 +277,14 @@ public class AdminStatsWebSocket {
 
     /**
      * 广播消息到所有在线管理员
+     * 优化：直接使用Map的values()遍历
      */
     public static void broadcast(String message) {
-        for (AdminStatsWebSocket item : webSocketSet) {
+        for (AdminStatsWebSocket ws : webSocketMap.values()) {
             try {
-                item.sendMessage(message);
+                ws.sendMessage(message);
             } catch (IOException e) {
-                log.error("广播消息失败", e);
+                log.error("广播消息到管理员{}失败", ws.adminId, e);
             }
         }
     }
@@ -228,9 +308,10 @@ public class AdminStatsWebSocket {
 
     /**
      * 获取当前在线连接数
+     * 优化：直接使用Map的size()
      */
-    public static synchronized int getOnlineCount() {
-        return webSocketSet.size();
+    public static int getOnlineCount() {
+        return webSocketMap.size();
     }
 
     /**
