@@ -182,6 +182,25 @@ public class JwtUtils {
         }
     }
 
+    /**
+     * 从token中获取管理员ID
+     * 用于WebSocket连接验证
+     *
+     * @param token JWT令牌
+     * @return 管理员ID（字符串形式）
+     */
+    public String getAdminIdFromToken(String token) {
+        try {
+            Claims claims = getClaimsFromToken(token);
+            // 尝试从userId字段获取（管理员也使用userId存储）
+            Integer adminId = claims.get("userId", Integer.class);
+            return adminId != null ? adminId.toString() : null;
+        } catch (Exception e) {
+            log.error("从token中获取管理员ID失败", e);
+            return null;
+        }
+    }
+
     // Removed temporary getter for debugging
     // public String getSigningKeyBase64ForDebug() {
     // if (this.signingKey != null) {
