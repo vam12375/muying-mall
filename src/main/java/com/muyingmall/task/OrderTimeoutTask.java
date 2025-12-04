@@ -2,6 +2,7 @@ package com.muyingmall.task;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.muyingmall.dto.SkuStockDTO;
 import com.muyingmall.entity.Order;
 import com.muyingmall.entity.OrderProduct;
 import com.muyingmall.entity.Product;
@@ -10,6 +11,7 @@ import com.muyingmall.mapper.OrderMapper;
 import com.muyingmall.mapper.OrderProductMapper;
 import com.muyingmall.service.OrderStateService;
 import com.muyingmall.service.ProductService;
+import com.muyingmall.service.ProductSkuService;
 import com.muyingmall.statemachine.OrderEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,6 +36,7 @@ public class OrderTimeoutTask {
     private final OrderStateService orderStateService;
     private final OrderProductMapper orderProductMapper;
     private final ProductService productService;
+    private final ProductSkuService productSkuService;
 
     /**
      * 每分钟执行一次，检查并取消超时订单
@@ -82,7 +86,7 @@ public class OrderTimeoutTask {
     }
 
     /**
-     * 恢复订单商品库存
+     * 恢复订单商品库存（支持SKU）
      * 
      * @param orderId 订单ID
      */
@@ -99,14 +103,39 @@ public class OrderTimeoutTask {
                 return;
             }
 
-            // 逐个恢复商品库存
+            // 分别处理SKU商品和普通商品
+            List<SkuStockDTO> skuStockList = new ArrayList<>();
+            
             for (OrderProduct orderProduct : orderProducts) {
-                productService.update(
-                        new LambdaUpdateWrapper<Product>()
-                                .eq(Product::getProductId, orderProduct.getProductId())
-                                .setSql("stock = stock + " + orderProduct.getQuantity()));
+                Long skuId = orderProduct.getSkuId();
+                Integer quantity = orderProduct.getQuantity();
+                
+                if (skuId != null && skuId > 0) {
+                    // 有SKU，恢复SKU库存
+                    SkuStockDTO stockDTO = new SkuStockDTO();
+                    stockDTO.setSkuId(skuId);
+                    stockDTO.setQuantity(quantity);
+                    stockDTO.setOrderId(orderId);
+                    stockDTO.setOperator("system");
+                    stockDTO.setRemark("订单超时自动取消恢复库存");
+                    skuStockList.add(stockDTO);
+                    
+                    log.info("准备恢复SKU库存: skuId={}, quantity={}, orderId={}", skuId, quantity, orderId);
+                } else {
+                    // 无SKU，恢复商品库存
+                    productService.update(
+                            new LambdaUpdateWrapper<Product>()
+                                    .eq(Product::getProductId, orderProduct.getProductId())
+                                    .setSql("stock = stock + " + quantity));
+                    
+                    log.info("已恢复商品库存: productId={}, quantity={}", orderProduct.getProductId(), quantity);
+                }
+            }
 
-                log.info("已恢复商品库存: 商品ID={}, 数量={}", orderProduct.getProductId(), orderProduct.getQuantity());
+            // 批量恢复SKU库存
+            if (!skuStockList.isEmpty()) {
+                productSkuService.batchRestoreStock(skuStockList);
+                log.info("订单 {} SKU库存恢复完成，共 {} 个SKU", orderId, skuStockList.size());
             }
 
             log.info("订单 {} 的所有商品库存已恢复", orderId);
