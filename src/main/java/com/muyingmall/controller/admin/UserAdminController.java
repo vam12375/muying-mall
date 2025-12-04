@@ -1,4 +1,4 @@
-package com.muyingmall.controller;
+package com.muyingmall.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.common.api.Result;
