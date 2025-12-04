@@ -47,6 +47,8 @@ public class SecurityConfig {
                 .requestMatchers("/search/**").permitAll()
                 // 允许访问测试连接接口
                 .requestMatchers("/test/connection", "/test/jwt-demo", "/test/**").permitAll()
+                // 允许访问WebSocket端点（WebSocket握手请求）
+                .requestMatchers("/ws/**").permitAll()
                 // 允许访问支付回调接口
                 .requestMatchers("/payment/alipay/notify", "/payment/wechat/notify").permitAll()
                 .requestMatchers("/payment/alipay/return").permitAll() // 支付宝同步回调通常也需放行
