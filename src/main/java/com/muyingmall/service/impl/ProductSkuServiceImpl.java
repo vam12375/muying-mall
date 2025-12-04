@@ -84,9 +84,10 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
 
         boolean result = saveBatch(entities);
 
-        // 更新商品的价格范围
+        // 更新商品的价格范围和总库存
         if (result) {
             updateProductPriceRange(productId);
+            updateProductTotalStock(productId);
         }
 
         return result;
@@ -122,12 +123,18 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
         String logRemark = remark != null ? remark : "扣减库存";
         recordStockLog(skuId, orderId, "DEDUCT", -quantity, sku.getStock(), sku.getStock() - quantity, null, logRemark);
 
+        // 自动更新商品总库存
+        updateProductTotalStock(sku.getProductId());
+
         return true;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchDeductStock(List<SkuStockDTO> stockList) {
+        // 记录需要更新总库存的商品ID（去重）
+        java.util.Set<Integer> productIds = new java.util.HashSet<>();
+        
         for (SkuStockDTO stockDTO : stockList) {
             // 查询SKU信息
             ProductSku sku = productSkuMapper.selectById(stockDTO.getSkuId());
@@ -151,6 +158,14 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
             recordStockLog(stockDTO.getSkuId(), stockDTO.getOrderId(), "DEDUCT", 
                 -stockDTO.getQuantity(), sku.getStock(), sku.getStock() - stockDTO.getQuantity(),
                 stockDTO.getOperator(), stockDTO.getRemark());
+            
+            // 记录商品ID
+            productIds.add(sku.getProductId());
+        }
+
+        // 批量更新商品总库存
+        for (Integer productId : productIds) {
+            updateProductTotalStock(productId);
         }
 
         return true;
@@ -174,12 +189,18 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
         // 记录日志
         recordStockLog(skuId, null, "RESTORE", quantity, sku.getStock(), sku.getStock() + quantity, null, "恢复库存");
 
+        // 自动更新商品总库存
+        updateProductTotalStock(sku.getProductId());
+
         return true;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchRestoreStock(List<SkuStockDTO> stockList) {
+        // 记录需要更新总库存的商品ID（去重）
+        java.util.Set<Integer> productIds = new java.util.HashSet<>();
+        
         for (SkuStockDTO stockDTO : stockList) {
             // 查询SKU信息
             ProductSku sku = productSkuMapper.selectById(stockDTO.getSkuId());
@@ -197,6 +218,14 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
             recordStockLog(stockDTO.getSkuId(), stockDTO.getOrderId(), "RESTORE",
                 stockDTO.getQuantity(), sku.getStock(), sku.getStock() + stockDTO.getQuantity(),
                 stockDTO.getOperator(), stockDTO.getRemark());
+            
+            // 记录商品ID
+            productIds.add(sku.getProductId());
+        }
+
+        // 批量更新商品总库存
+        for (Integer productId : productIds) {
+            updateProductTotalStock(productId);
         }
 
         return true;
@@ -223,6 +252,9 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
 
         // 记录日志
         recordStockLog(skuId, null, "ADJUST", newStock - oldStock, oldStock, newStock, operator, remark);
+
+        // 自动更新商品总库存
+        updateProductTotalStock(sku.getProductId());
 
         return true;
     }
@@ -274,6 +306,33 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
         product.setMaxPrice(maxPrice);
         product.setHasSku(1);
         productMapper.updateById(product);
+    }
+
+    /**
+     * 更新商品总库存（所有启用SKU的库存之和）
+     * 
+     * @param productId 商品ID
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateProductTotalStock(Integer productId) {
+        List<ProductSku> skuList = productSkuMapper.selectByProductId(productId);
+        if (skuList.isEmpty()) {
+            return;
+        }
+
+        // 计算总库存（只统计启用状态的SKU）
+        Integer totalStock = skuList.stream()
+            .filter(sku -> sku.getStatus() == 1) // 只统计启用的SKU
+            .mapToInt(sku -> sku.getStock() != null ? sku.getStock() : 0)
+            .sum();
+
+        // 更新商品表的库存字段
+        Product product = new Product();
+        product.setProductId(productId);
+        product.setStock(totalStock);
+        productMapper.updateById(product);
+        
+        log.info("商品 {} 总库存已更新为: {}", productId, totalStock);
     }
 
     /**
