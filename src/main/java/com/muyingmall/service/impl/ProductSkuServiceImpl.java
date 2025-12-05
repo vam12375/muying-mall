@@ -14,6 +14,7 @@ import com.muyingmall.mapper.ProductMapper;
 import com.muyingmall.mapper.ProductSkuMapper;
 import com.muyingmall.mapper.ProductSkuStockLogMapper;
 import com.muyingmall.service.ProductSkuService;
+import com.muyingmall.service.SeckillService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -39,6 +40,7 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
     private final ProductSkuMapper productSkuMapper;
     private final ProductSkuStockLogMapper stockLogMapper;
     private final ProductMapper productMapper;
+    private final SeckillService seckillService;
 
     @Override
     public List<ProductSkuDTO> getSkuListByProductId(Integer productId) {
@@ -102,31 +104,69 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deductStock(Long skuId, Integer quantity, Integer orderId, String remark) {
-        // 查询SKU信息
-        ProductSku sku = productSkuMapper.selectById(skuId);
-        if (sku == null) {
-            throw new BusinessException("SKU不存在");
+        // Redis预减库存 - 快速失败，避免数据库压力
+        if (!seckillService.preDeductStock(skuId, quantity)) {
+            throw new BusinessException("库存不足");
         }
 
-        // 检查库存
-        if (sku.getStock() < quantity) {
-            throw new BusinessException("库存不足，当前库存：" + sku.getStock() + "，需要：" + quantity);
+        try {
+            // 查询SKU信息
+            ProductSku sku = productSkuMapper.selectById(skuId);
+            if (sku == null) {
+                // 回滚Redis库存
+                seckillService.restoreRedisStock(skuId, quantity);
+                throw new BusinessException("SKU不存在");
+            }
+
+            // 检查数据库库存（双重保险）
+            if (sku.getStock() < quantity) {
+                // 回滚Redis库存
+                seckillService.restoreRedisStock(skuId, quantity);
+                throw new BusinessException("库存不足，当前库存：" + sku.getStock() + "，需要：" + quantity);
+            }
+
+            // 扣减数据库库存（使用乐观锁，最多重试3次）
+            int retryCount = 0;
+            int maxRetries = 3;
+            int rows = 0;
+            
+            while (retryCount < maxRetries) {
+                rows = productSkuMapper.deductStock(skuId, quantity, sku.getVersion());
+                if (rows > 0) {
+                    break;
+                }
+                
+                // 重新查询最新版本
+                sku = productSkuMapper.selectById(skuId);
+                if (sku == null || sku.getStock() < quantity) {
+                    break;
+                }
+                
+                retryCount++;
+                log.debug("库存扣减乐观锁冲突，重试第{}次: skuId={}", retryCount, skuId);
+            }
+            
+            if (rows == 0) {
+                // 回滚Redis库存
+                seckillService.restoreRedisStock(skuId, quantity);
+                throw new BusinessException("库存扣减失败，请重试");
+            }
+
+            // 记录日志
+            String logRemark = remark != null ? remark : "扣减库存";
+            recordStockLog(skuId, orderId, "DEDUCT", -quantity, sku.getStock(), 
+                          sku.getStock() - quantity, null, logRemark);
+
+            // 更新商品总库存
+            updateProductTotalStock(sku.getProductId());
+
+            return true;
+            
+        } catch (Exception e) {
+            // 异常时回滚Redis库存
+            seckillService.restoreRedisStock(skuId, quantity);
+            throw e;
         }
-
-        // 扣减库存（使用乐观锁）
-        int rows = productSkuMapper.deductStock(skuId, quantity, sku.getVersion());
-        if (rows == 0) {
-            throw new BusinessException("库存扣减失败，请重试");
-        }
-
-        // 记录日志（包含订单ID）
-        String logRemark = remark != null ? remark : "扣减库存";
-        recordStockLog(skuId, orderId, "DEDUCT", -quantity, sku.getStock(), sku.getStock() - quantity, null, logRemark);
-
-        // 自动更新商品总库存
-        updateProductTotalStock(sku.getProductId());
-
-        return true;
     }
 
     @Override

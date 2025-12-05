@@ -14,6 +14,7 @@ import com.muyingmall.mapper.ProductImageMapper;
 import com.muyingmall.mapper.ProductMapper;
 import com.muyingmall.mapper.ProductSpecsMapper;
 import com.muyingmall.service.ProductService;
+import com.muyingmall.util.CacheProtectionUtil;
 import com.muyingmall.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 
 /**
  * 商品服务实现类
+ * 优化：增加缓存穿透保护，提升高并发场景下的稳定性
  */
 @Service
 @RequiredArgsConstructor
@@ -48,6 +50,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     private final RedisUtil redisUtil;
     private final ProductMapper productMapper;
     private final CategoryMapper categoryMapper;
+    private final CacheProtectionUtil cacheProtectionUtil;
 
     @Override
     public Page<Product> getProductPage(int page, int size, Integer categoryId, Integer brandId, Boolean isHot, Boolean isNew,
@@ -81,55 +84,55 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             cacheKey.append("_keyword_").append(keyword);
         }
 
-        // 查询缓存
-        Object cacheResult = redisUtil.get(cacheKey.toString());
-        if (cacheResult != null) {
-            return (Page<Product>) cacheResult;
-        }
+        String finalCacheKey = cacheKey.toString();
+        String lockKey = "lock:" + finalCacheKey;
 
-        // 缓存不存在，查询数据库
-        Page<Product> pageParam = new Page<>(page, size);
+        // 使用缓存保护工具查询，防止缓存击穿
+        return cacheProtectionUtil.queryWithMutex(
+                finalCacheKey,
+                lockKey,
+                CacheConstants.MEDIUM_EXPIRE_TIME,
+                () -> {
+                    // 缓存不存在，查询数据库
+                    Page<Product> pageParam = new Page<>(page, size);
 
-        LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
-        // 只查询上架商品
-        queryWrapper.eq(Product::getProductStatus, "上架");
+                    LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
+                    // 只查询上架商品
+                    queryWrapper.eq(Product::getProductStatus, "上架");
 
-        // 条件查询
-        if (categoryId != null) {
-            queryWrapper.eq(Product::getCategoryId, categoryId);
-        }
+                    // 条件查询
+                    if (categoryId != null) {
+                        queryWrapper.eq(Product::getCategoryId, categoryId);
+                    }
 
-        if (brandId != null) {
-            queryWrapper.eq(Product::getBrandId, brandId);
-        }
+                    if (brandId != null) {
+                        queryWrapper.eq(Product::getBrandId, brandId);
+                    }
 
-        if (isHot != null && isHot) {
-            queryWrapper.eq(Product::getIsHot, 1);
-        }
+                    if (isHot != null && isHot) {
+                        queryWrapper.eq(Product::getIsHot, 1);
+                    }
 
-        if (isNew != null && isNew) {
-            queryWrapper.eq(Product::getIsNew, 1);
-        }
+                    if (isNew != null && isNew) {
+                        queryWrapper.eq(Product::getIsNew, 1);
+                    }
 
-        if (isRecommend != null && isRecommend) {
-            queryWrapper.eq(Product::getIsRecommend, 1);
-        }
+                    if (isRecommend != null && isRecommend) {
+                        queryWrapper.eq(Product::getIsRecommend, 1);
+                    }
 
-        if (StringUtils.hasText(keyword)) {
-            queryWrapper.and(wrapper -> wrapper.like(Product::getProductName, keyword)
-                    .or()
-                    .like(Product::getProductDetail, keyword));
-        }
+                    if (StringUtils.hasText(keyword)) {
+                        queryWrapper.and(wrapper -> wrapper.like(Product::getProductName, keyword)
+                                .or()
+                                .like(Product::getProductDetail, keyword));
+                    }
 
-        // 默认按创建时间降序排序
-        queryWrapper.orderByDesc(Product::getCreateTime);
+                    // 默认按创建时间降序排序
+                    queryWrapper.orderByDesc(Product::getCreateTime);
 
-        Page<Product> result = page(pageParam, queryWrapper);
-
-        // 缓存结果
-        redisUtil.set(cacheKey.toString(), result, CacheConstants.MEDIUM_EXPIRE_TIME);
-
-        return result;
+                    return page(pageParam, queryWrapper);
+                }
+        );
     }
 
     @Override
@@ -409,6 +412,53 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
 
         return product;
+    }
+
+    /**
+     * 获取商品详情（带缓存穿透保护）
+     * 使用CacheProtectionUtil防止缓存穿透攻击
+     * 对不存在的商品ID也会缓存空值标记，避免频繁查询数据库
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Product getProductDetailWithProtection(Integer id) {
+        if (id == null || id <= 0) {
+            return null;
+        }
+
+        String cacheKey = CacheConstants.PRODUCT_DETAIL_KEY + id;
+        String lockKey = "lock:product:detail:" + id;
+
+        // 使用带互斥锁的缓存查询，防止缓存击穿和穿透
+        return cacheProtectionUtil.queryWithMutex(
+                cacheKey,
+                lockKey,
+                CacheConstants.PRODUCT_EXPIRE_TIME,
+                () -> {
+                    // 查询数据库
+                    Product product = getById(id);
+                    if (product == null) {
+                        log.debug("商品不存在: productId={}", id);
+                        return null;
+                    }
+
+                    // 获取商品图片
+                    List<ProductImage> images = productImageMapper.selectList(
+                            new LambdaQueryWrapper<ProductImage>()
+                                    .eq(ProductImage::getProductId, id)
+                                    .orderByAsc(ProductImage::getSortOrder));
+                    product.setImages(images);
+
+                    // 获取商品规格
+                    List<ProductSpecs> specs = productSpecsMapper.selectList(
+                            new LambdaQueryWrapper<ProductSpecs>()
+                                    .eq(ProductSpecs::getProductId, id)
+                                    .orderByAsc(ProductSpecs::getSortOrder));
+                    product.setSpecsList(specs);
+
+                    return product;
+                }
+        );
     }
 
     @Override

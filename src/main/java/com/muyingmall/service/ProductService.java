@@ -52,6 +52,15 @@ public interface ProductService extends IService<Product> {
         Product getProductDetail(Integer id);
 
         /**
+         * 获取商品详情（带缓存穿透保护）
+         * 对不存在的商品ID缓存空值，防止缓存穿透攻击
+         *
+         * @param id 商品ID
+         * @return 商品详情，不存在时返回null
+         */
+        Product getProductDetailWithProtection(Integer id);
+
+        /**
          * 创建商品
          *
          * @param product 商品信息

@@ -6,9 +6,13 @@ import com.muyingmall.dto.LoginResponseDTO;
 import com.muyingmall.dto.UserDTO;
 import com.muyingmall.entity.User;
 import com.muyingmall.service.UserService;
+import com.muyingmall.service.impl.LoginCacheService;
+import com.muyingmall.util.IpUtil;
 import com.muyingmall.util.JwtUtils;
+import com.muyingmall.util.LoginRateLimiter;
 
 import java.util.Map;
+import jakarta.servlet.http.HttpServletRequest;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,6 +42,8 @@ public class UserController {
 
     private final UserService userService;
     private final JwtUtils jwtUtils;
+    private final LoginRateLimiter loginRateLimiter;
+    private final LoginCacheService loginCacheService;
 
     /**
      * 用户注册
@@ -65,9 +71,21 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "登录成功", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponseDTO.class))),
             @ApiResponse(responseCode = "400", description = "请求参数错误"),
             @ApiResponse(responseCode = "401", description = "用户名或密码错误"),
-            @ApiResponse(responseCode = "403", description = "账户已被禁用")
+            @ApiResponse(responseCode = "403", description = "账户已被禁用"),
+            @ApiResponse(responseCode = "429", description = "请求过于频繁")
     })
-    public Result<LoginResponseDTO> login(@RequestBody @Valid LoginDTO loginDTO, HttpSession session) {
+    public Result<LoginResponseDTO> login(@RequestBody @Valid LoginDTO loginDTO, 
+                                         HttpSession session,
+                                         HttpServletRequest request) {
+        // 获取客户端IP
+        String clientIp = IpUtil.getIpAddr(request);
+        
+        // 限流检查 - 防止暴力破解
+        if (!loginRateLimiter.tryAcquire(clientIp, loginDTO.getUsername())) {
+            return Result.error(429, "登录请求过于频繁，请稍后再试");
+        }
+
+        // 执行登录验证
         User user = userService.login(loginDTO);
 
         // 清除敏感信息
@@ -76,18 +94,19 @@ public class UserController {
         // 生成JWT令牌
         String token = jwtUtils.generateToken(user.getUserId(), user.getUsername(), user.getRole());
 
+        // 缓存用户会话，减少后续请求的数据库查询
+        loginCacheService.cacheUserSession(token, user);
+
         // 创建响应DTO
         LoginResponseDTO responseDTO = new LoginResponseDTO(user, token);
 
         // 将用户信息存入session
         session.setAttribute("user", user);
 
-        // 设置session过期时间，如果勾选了记住我，则延长session有效期
+        // 设置session过期时间
         if (loginDTO.getRememberMe()) {
-            // 设置为7天 (7 * 24 * 60 * 60 = 604800秒)
-            session.setMaxInactiveInterval(604800);
+            session.setMaxInactiveInterval(604800); // 7天
         } else {
-            // 默认使用application.yml中的配置（也是7天），这里可以设置为更短的时间，如30分钟
             session.setMaxInactiveInterval(1800); // 30分钟
         }
 

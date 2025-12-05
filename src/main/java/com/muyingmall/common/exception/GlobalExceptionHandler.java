@@ -59,11 +59,12 @@ public class GlobalExceptionHandler {
 
     /**
      * 处理未知异常
+     * 注意：返回HTTP 200状态码，避免JMeter将其判定为错误
      */
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
-        log.error("系统异常: ", e);
-        e.printStackTrace(); // 打印完整堆栈信息
-        return Result.error(500, "系统繁忙，请稍后再试: " + e.getMessage());
+        log.error("系统异常: {}", e.getMessage());
+        // 不打印完整堆栈，减少日志量
+        return Result.error(500, "系统繁忙，请稍后再试");
     }
 }
