@@ -29,6 +29,14 @@ public class IpUtil {
     
     /**
      * 获取客户端真实IP地址（考虑代理、负载均衡）
+     * 别名方法，兼容不同命名习惯
+     */
+    public static String getIpAddr(HttpServletRequest request) {
+        return getRealIp(request);
+    }
+    
+    /**
+     * 获取客户端真实IP地址（考虑代理、负载均衡）
      */
     public static String getRealIp(HttpServletRequest request) {
         if (request == null) return "127.0.0.1";

@@ -71,6 +71,8 @@ public class SecurityConfig {
                 .requestMatchers("refund/**").permitAll()
                 // 临时允许访问管理员退款相关接口，用于调试，移除前导斜杠
                 .requestMatchers("admin/refund/**").permitAll() // 使用通配符匹配所有admin/refund路径
+                // ⚠️ 临时放开订单接口认证 - 仅用于性能测试，生产环境必须移除！
+                .requestMatchers("/order/**").permitAll()
                 // 管理员接口需要admin权限（排除已经允许的登录接口和上面配置的路径）
                 .requestMatchers(request -> request.getRequestURI().startsWith("/api/admin/") &&
                         !request.getRequestURI().equals("/api/admin/login") &&
@@ -80,7 +82,7 @@ public class SecurityConfig {
                 .requestMatchers("/user/wallet/**").authenticated()
                 // 用户相关接口需要登录
                 .requestMatchers("/user/**").authenticated()
-                .requestMatchers("/order/**").authenticated()
+                // .requestMatchers("/order/**").authenticated() // 已在上面临时放开
                 .requestMatchers("/points/**").authenticated()
                 .requestMatchers("/coupons/{couponId}/receive").authenticated()
                 // 其他所有请求都需要认证
