@@ -82,7 +82,8 @@ public class CacheProtectionUtil {
 
     /**
      * 防止缓存击穿的查询方法
-     * 使用分布式锁确保同一时刻只有一个线程查询数据库
+     * 使用setIfAbsent实现简单的互斥锁，确保同一时刻只有一个线程查询数据库
+     * 优化：未获取锁时直接查询数据库，避免高并发下大量请求返回null
      *
      * @param cacheKey   缓存键
      * @param lockKey    锁键(可以与cacheKey相同)
@@ -104,66 +105,46 @@ public class CacheProtectionUtil {
             return (T) cacheResult;
         }
 
-        // 3. 获取分布式锁
-        String requestId = java.util.UUID.randomUUID().toString();
-        boolean lockAcquired = redisUtil.getLock(lockKey, requestId, (int) LOCK_EXPIRE_TIME);
+        // 3. 尝试获取简单互斥锁（使用setIfAbsent，更可靠）
+        boolean lockAcquired = redisUtil.setIfAbsent(lockKey, "1", LOCK_EXPIRE_TIME);
 
-        if (lockAcquired) {
-            try {
+        try {
+            if (lockAcquired) {
                 // 双重检查，再次查询缓存
                 cacheResult = redisUtil.get(cacheKey);
                 if (cacheResult != null) {
-                    // 特殊处理：如果是空值标记，则返回null
                     if (CacheConstants.EMPTY_CACHE_VALUE.equals(cacheResult.toString())) {
                         return null;
                     }
                     return (T) cacheResult;
                 }
+            }
 
-                // 4. 查询数据库
-                T dbResult = dbFallback.call();
+            // 4. 查询数据库（无论是否获取锁都查询，避免高并发下返回null）
+            T dbResult = dbFallback.call();
 
-                // 5. 写入缓存
+            // 5. 写入缓存（只有获取锁的线程写入，避免并发写入）
+            if (lockAcquired) {
                 if (dbResult != null) {
-                    // 添加随机过期时间，避免缓存雪崩
                     long finalExpireTime = getRandomExpireTime(expireTime);
                     redisUtil.set(cacheKey, dbResult, finalExpireTime);
                     log.debug("将查询结果写入缓存: key={}, expireTime={}s", cacheKey, finalExpireTime);
                 } else {
                     // 缓存空值，避免缓存穿透
                     redisUtil.set(cacheKey, CacheConstants.EMPTY_CACHE_VALUE, NULL_VALUE_EXPIRE_TIME);
-                    log.debug("数据不存在，写入空值缓存: key={}, expireTime={}s", cacheKey, NULL_VALUE_EXPIRE_TIME);
+                    log.debug("数据不存在，写入空值缓存: key={}", cacheKey);
                 }
-
-                return dbResult;
-            } catch (Exception e) {
-                log.error("查询数据库失败: key={}, error={}", cacheKey, e.getMessage(), e);
-                return null;
-            } finally {
-                // 6. 释放分布式锁
-                redisUtil.releaseLock(lockKey, requestId);
-            }
-        } else {
-            // 没有获取到锁，等待一段时间后重试查询缓存
-            try {
-                TimeUnit.MILLISECONDS.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
             }
 
-            // 再次查询缓存
-            cacheResult = redisUtil.get(cacheKey);
-            if (cacheResult != null) {
-                // 特殊处理：如果是空值标记，则返回null
-                if (CacheConstants.EMPTY_CACHE_VALUE.equals(cacheResult.toString())) {
-                    return null;
-                }
-                return (T) cacheResult;
-            }
-
-            // 重试几次后仍未获取到数据，则直接返回null
-            log.warn("未能获取分布式锁且重试后仍未命中缓存: key={}", cacheKey);
+            return dbResult;
+        } catch (Exception e) {
+            log.error("查询数据库失败: key={}, error={}", cacheKey, e.getMessage(), e);
             return null;
+        } finally {
+            // 6. 释放锁
+            if (lockAcquired) {
+                redisUtil.del(lockKey);
+            }
         }
     }
 
