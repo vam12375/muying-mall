@@ -12,7 +12,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${upload.path:E:/11/muying-web/public}")
+    @Value("${upload.path:G:/muying/muying-web/public}")
     private String uploadPath;
 
     @Value("${file.access.url:http://localhost:5173/avatars}")
@@ -42,6 +42,14 @@ public class WebConfig implements WebMvcConfigurer {
         // 配置上传文件的访问路径
         registry.addResourceHandler("/upload/**")
                 .addResourceLocations("file:" + uploadPath + "/");
+
+        // 配置育儿圈上传图片的访问路径
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:uploads/");
+
+        // 配置商品图片访问路径（使用独立路径避免与API冲突）
+        registry.addResourceHandler("/images/products/**")
+                .addResourceLocations("file:G:/muying/muying-web/public/products/");
 
         // 其他静态资源
         registry.addResourceHandler("/static/**")
