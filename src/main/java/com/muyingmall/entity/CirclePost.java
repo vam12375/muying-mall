@@ -47,6 +47,16 @@ public class CirclePost implements Serializable {
     private Integer productId;
 
     /**
+     * 关联SKU ID
+     */
+    private Integer skuId;
+
+    /**
+     * SKU规格信息(JSON)
+     */
+    private String skuSpecs;
+
+    /**
      * 浏览量
      */
     private Integer viewCount;
@@ -110,6 +120,12 @@ public class CirclePost implements Serializable {
      */
     @TableField(exist = false)
     private Product product;
+
+    /**
+     * 关联SKU信息
+     */
+    @TableField(exist = false)
+    private ProductSku sku;
 
     /**
      * 当前用户是否已点赞
