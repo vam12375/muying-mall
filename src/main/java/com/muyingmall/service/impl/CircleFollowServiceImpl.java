@@ -4,12 +4,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.entity.CircleFollow;
+import com.muyingmall.entity.CircleMessage;
 import com.muyingmall.entity.User;
 import com.muyingmall.mapper.CircleFollowMapper;
 import com.muyingmall.service.CircleFollowService;
+import com.muyingmall.service.CircleMessageService;
 import com.muyingmall.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,8 @@ import java.util.stream.Collectors;
 public class CircleFollowServiceImpl extends ServiceImpl<CircleFollowMapper, CircleFollow> implements CircleFollowService {
 
     private final UserService userService;
+    @Lazy
+    private final CircleMessageService messageService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -42,7 +47,13 @@ public class CircleFollowServiceImpl extends ServiceImpl<CircleFollowMapper, Cir
         CircleFollow follow = new CircleFollow();
         follow.setUserId(userId);
         follow.setFollowUserId(followUserId);
-        return save(follow);
+        boolean saved = save(follow);
+        
+        // 发送关注消息通知
+        if (saved) {
+            messageService.createMessage(followUserId, userId, CircleMessage.TYPE_FOLLOW, userId.longValue(), null);
+        }
+        return saved;
     }
 
     @Override

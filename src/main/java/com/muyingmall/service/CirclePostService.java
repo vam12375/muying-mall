@@ -12,7 +12,7 @@ public interface CirclePostService extends IService<CirclePost> {
     /**
      * 发布帖子
      */
-    CirclePost createPost(Integer userId, Integer topicId, String content, String images, Integer productId);
+    CirclePost createPost(Integer userId, Integer topicId, String content, String images, Integer productId, Integer skuId, String skuSpecs);
 
     /**
      * 获取帖子详情
@@ -43,4 +43,52 @@ public interface CirclePostService extends IService<CirclePost> {
      * 增加浏览量
      */
     void incrementViewCount(Long postId);
+
+    // ==================== 后台管理接口 ====================
+
+    /**
+     * 后台管理-分页获取帖子列表
+     */
+    Page<CirclePost> getAdminPostPage(int page, int size, Integer topicId, Integer userId, 
+                                       Integer status, Integer isTop, Integer isHot, String keyword);
+
+    /**
+     * 按状态统计帖子数量
+     */
+    long countByStatus(Integer status);
+
+    /**
+     * 统计置顶帖子数量
+     */
+    long countTopPosts();
+
+    /**
+     * 统计热门帖子数量
+     */
+    long countHotPosts();
+
+    /**
+     * 统计今日帖子数量
+     */
+    long countTodayPosts();
+
+    /**
+     * 更新帖子状态
+     */
+    boolean updatePostStatus(Long postId, Integer status);
+
+    /**
+     * 设置帖子置顶
+     */
+    boolean updatePostTop(Long postId, Integer isTop);
+
+    /**
+     * 设置帖子热门
+     */
+    boolean updatePostHot(Long postId, Integer isHot);
+
+    /**
+     * 管理员删除帖子
+     */
+    boolean adminDeletePost(Long postId);
 }
