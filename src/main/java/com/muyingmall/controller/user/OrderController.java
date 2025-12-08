@@ -460,6 +460,84 @@ public class OrderController {
     }
 
     /**
+     * 获取用户已购买的商品列表（用于育儿圈分享）
+     * 只返回已完成订单中的商品，去重处理
+     */
+    @GetMapping("/purchased-products")
+    @Operation(summary = "获取已购买商品列表", description = "获取用户已购买的商品列表，用于育儿圈分享关联商品")
+    public Result<List<Map<String, Object>>> getPurchasedProducts(
+            @RequestParam(required = false) String keyword) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        try {
+            // 获取用户已完成的订单
+            LambdaQueryWrapper<Order> orderWrapper = new LambdaQueryWrapper<>();
+            orderWrapper.eq(Order::getUserId, user.getUserId())
+                    .in(Order::getStatus, 
+                        EnumUtil.getOrderStatusByCode("completed"),
+                        EnumUtil.getOrderStatusByCode("pending_receive"),
+                        EnumUtil.getOrderStatusByCode("shipped"));
+            List<Order> orders = orderService.list(orderWrapper);
+
+            if (orders.isEmpty()) {
+                return Result.success(new java.util.ArrayList<>());
+            }
+
+            // 获取订单ID列表
+            List<Integer> orderIds = orders.stream()
+                    .map(Order::getOrderId)
+                    .collect(Collectors.toList());
+
+            // 查询订单商品
+            LambdaQueryWrapper<OrderProduct> productWrapper = new LambdaQueryWrapper<>();
+            productWrapper.in(OrderProduct::getOrderId, orderIds);
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                productWrapper.like(OrderProduct::getProductName, keyword.trim());
+            }
+            productWrapper.orderByDesc(OrderProduct::getCreateTime);
+            List<OrderProduct> orderProducts = orderProductMapper.selectList(productWrapper);
+
+            // 按商品ID+SKU ID去重，保留最新购买记录
+            Map<String, OrderProduct> uniqueProducts = new java.util.LinkedHashMap<>();
+            for (OrderProduct op : orderProducts) {
+                String key = op.getProductId() + "_" + (op.getSkuId() != null ? op.getSkuId() : "0");
+                if (!uniqueProducts.containsKey(key)) {
+                    uniqueProducts.put(key, op);
+                }
+            }
+
+            // 转换为前端需要的格式
+            List<Map<String, Object>> result = new java.util.ArrayList<>();
+            for (OrderProduct op : uniqueProducts.values()) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("productId", op.getProductId());
+                item.put("productName", op.getProductName());
+                item.put("productImg", op.getProductImg());
+                item.put("price", op.getPrice());
+                item.put("skuId", op.getSkuId());
+                item.put("specs", op.getSpecs());
+                item.put("skuCode", op.getSkuCode());
+                result.add(item);
+            }
+
+            return Result.success(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error("获取已购买商品失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 直接购买商品（不添加到购物车）
      */
     @PostMapping("/direct-purchase")

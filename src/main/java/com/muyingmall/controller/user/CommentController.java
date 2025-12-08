@@ -65,7 +65,7 @@ public class CommentController {
     private final CommentRewardConfigService commentRewardConfigService;
     private final UserMessageService userMessageService;
 
-    @Value("${upload.path:E:/11/muying-web/public}")
+    @Value("${upload.path:G:/muying/muying-web/public}")
     private String uploadPath;
 
     @Value("${upload.domain:http://localhost:5173}")

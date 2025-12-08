@@ -64,7 +64,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final com.muyingmall.mapper.UserPointsMapper userPointsMapper;
     private final com.muyingmall.mapper.UserCouponMapper userCouponMapper;
 
-    @Value("${upload.path:E:/11/muying-web/public}")
+    @Value("${upload.path:G:/muying/muying-web/public}")
     private String uploadPath;
 
     @Value("${upload.avatar.path:/avatars}")

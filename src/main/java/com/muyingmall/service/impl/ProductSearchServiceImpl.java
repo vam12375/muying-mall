@@ -176,20 +176,38 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             if (cached instanceof List) {
                 @SuppressWarnings("unchecked")
                 List<String> cachedList = (List<String>) cached;
+                log.debug("从缓存获取搜索建议: keyword={}, count={}", keyword, cachedList.size());
                 return cachedList;
             }
 
-            // 构建前缀查询
-            PrefixQuery prefixQuery = PrefixQuery.of(p -> p
-                    .field("productName.keyword")
-                    .value(keyword));
+            // 使用 match_phrase_prefix 查询，更好地支持中文搜索建议
+            // 同时使用 multi_match 查询多个字段，提高召回率
+            BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+            
+            // 使用 should 组合多种查询方式，提高中文搜索建议的准确性
+            boolQueryBuilder.should(Query.of(q -> q
+                    .matchPhrasePrefix(m -> m
+                            .field("productName")
+                            .query(keyword)
+                            .maxExpansions(50))));
+            
+            // 添加 match 查询作为补充，支持分词后的匹配
+            boolQueryBuilder.should(Query.of(q -> q
+                    .match(m -> m
+                            .field("productName")
+                            .query(keyword)
+                            .fuzziness("AUTO"))));
+            
+            // 至少匹配一个条件
+            boolQueryBuilder.minimumShouldMatch("1");
+            
+            // 只搜索上架商品
+            boolQueryBuilder.filter(Query.of(fq -> fq.term(t -> t.field("productStatus").value("上架"))));
 
             SearchRequest searchRequest = SearchRequest.of(s -> s
                     .index("products")
-                    .query(Query.of(q -> q.bool(b -> b
-                            .must(Query.of(mq -> mq.prefix(prefixQuery)))
-                            .filter(Query.of(fq -> fq.term(t -> t.field("productStatus").value("上架")))))))
-                    .size(limit)
+                    .query(Query.of(q -> q.bool(boolQueryBuilder.build())))
+                    .size(limit * 2) // 多查一些，去重后保证数量
                     .source(so -> so.filter(f -> f.includes("productName"))));
 
             SearchResponse<ProductDocument> response = elasticsearchClient.search(searchRequest, ProductDocument.class);
@@ -202,13 +220,46 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                     .limit(limit)
                     .collect(Collectors.toList());
 
-            // 缓存结果
-            redisUtil.set(cacheKey, suggestions, 300); // 5分钟缓存
+            log.info("搜索建议查询: keyword={}, 返回数量={}", keyword, suggestions.size());
+
+            // 如果ES返回空结果，尝试从数据库获取
+            if (suggestions.isEmpty()) {
+                log.info("ES搜索建议为空，尝试从数据库获取: keyword={}", keyword);
+                suggestions = fallbackGetSuggestionsFromDb(keyword, limit);
+            }
+
+            // 缓存结果（缩短缓存时间，提高实时性）
+            if (!suggestions.isEmpty()) {
+                redisUtil.set(cacheKey, suggestions, 180); // 3分钟缓存
+            }
 
             return suggestions;
 
         } catch (Exception e) {
-            log.error("获取搜索建议失败: {}", e.getMessage(), e);
+            log.error("获取搜索建议失败: keyword={}, error={}", keyword, e.getMessage(), e);
+            // 降级：尝试从数据库获取
+            return fallbackGetSuggestionsFromDb(keyword, limit);
+        }
+    }
+    
+    /**
+     * 降级方案：从数据库获取搜索建议
+     */
+    private List<String> fallbackGetSuggestionsFromDb(String keyword, int limit) {
+        try {
+            log.info("ES搜索建议失败，降级到数据库查询: keyword={}", keyword);
+            // 使用ProductService从数据库模糊查询商品名称
+            com.baomidou.mybatisplus.extension.plugins.pagination.Page<Product> page = 
+                productService.getProductPage(1, limit, null, null, keyword, 1);
+            
+            return page.getRecords().stream()
+                    .map(Product::getProductName)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .limit(limit)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("数据库搜索建议也失败: {}", e.getMessage());
             return Collections.emptyList();
         }
     }
