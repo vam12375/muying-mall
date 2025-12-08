@@ -35,3 +35,6 @@ build/
 
 ### u654fu611fu914du7f6eu6587u4ef6 ###
 **/application-private.yml
+
+# IDE and editor files
+.cunzhi-memory/
