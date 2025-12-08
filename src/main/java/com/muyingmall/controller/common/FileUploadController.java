@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,11 +20,9 @@ import java.util.UUID;
 @RequestMapping("/upload")
 public class FileUploadController {
 
-    @Value("${file.upload.path:uploads}")
+    // 上传到前端public目录
+    @Value("${file.upload.path:G:/muying/muying-web/public}")
     private String uploadPath;
-
-    @Value("${file.upload.url-prefix:/uploads}")
-    private String urlPrefix;
 
     /**
      * 上传图片
@@ -70,8 +67,8 @@ public class FileUploadController {
             Path filePath = dirPath.resolve(newFilename);
             file.transferTo(filePath.toFile());
 
-            // 返回访问URL
-            String fileUrl = urlPrefix + "/" + relativePath + "/" + newFilename;
+            // 返回访问URL（直接使用/circle/路径，前端public目录可直接访问）
+            String fileUrl = "/" + relativePath + "/" + newFilename;
             log.info("文件上传成功: {}", fileUrl);
             
             return Result.success(fileUrl);
