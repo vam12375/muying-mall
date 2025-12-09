@@ -153,6 +153,54 @@ public class ProductController {
         }
     }
 
+    @GetMapping("/new")
+    @Operation(summary = "获取新品列表", description = "获取最新上架的商品列表")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    public Result<List<Product>> getNewProducts(
+            @Parameter(description = "返回数量限制", example = "8") @RequestParam(defaultValue = "8") int limit) {
+        try {
+            // 限制最大返回数量
+            limit = Math.min(Math.max(1, limit), 50);
+            
+            // 查询新品（isNew=true）
+            Page<Product> productPage = productService.getProductPage(1, limit, null, null, null, true, null, null);
+            List<Product> newProducts = productPage.getRecords();
+            
+            log.debug("获取新品列表成功，数量：{}", newProducts.size());
+            return Result.success(newProducts);
+        } catch (Exception e) {
+            log.error("获取新品列表失败: {}", e.getMessage(), e);
+            return Result.success(Collections.emptyList()); // 返回空列表而非错误
+        }
+    }
+
+    @GetMapping("/hot")
+    @Operation(summary = "获取热门商品列表", description = "获取热门销售的商品列表")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    public Result<List<Product>> getHotProducts(
+            @Parameter(description = "返回数量限制", example = "6") @RequestParam(defaultValue = "6") int limit) {
+        try {
+            // 限制最大返回数量
+            limit = Math.min(Math.max(1, limit), 50);
+            
+            // 查询热门商品（isHot=true）
+            Page<Product> productPage = productService.getProductPage(1, limit, null, null, true, null, null, null);
+            List<Product> hotProducts = productPage.getRecords();
+            
+            log.debug("获取热门商品列表成功，数量：{}", hotProducts.size());
+            return Result.success(hotProducts);
+        } catch (Exception e) {
+            log.error("获取热门商品列表失败: {}", e.getMessage(), e);
+            return Result.success(Collections.emptyList()); // 返回空列表而非错误
+        }
+    }
+
     @GetMapping("/recommended")
     @Operation(summary = "获取推荐商品列表", description = "根据类型返回本店推荐或猜你喜欢商品")
     public Result<List<Product>> recommended(

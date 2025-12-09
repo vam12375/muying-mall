@@ -131,8 +131,22 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             cart.setSpecsHash(specsHash);
             cart.setSkuId(skuId);
             cart.setSkuName(skuName);
-            cart.setPriceSnapshot(product.getPriceNew()); // 记录当前价格
+            
+            // 调试：打印传入的价格
+            log.info("【购物车添加】传入的价格参数: cartAddDTO.getPrice()={}", cartAddDTO.getPrice());
+            
+            // 记录价格快照：优先使用传入的SKU价格，否则使用商品主表价格
+            if (cartAddDTO.getPrice() != null) {
+                cart.setPriceSnapshot(cartAddDTO.getPrice());
+                log.info("【购物车添加】使用传入的SKU价格: {}", cartAddDTO.getPrice());
+            } else {
+                cart.setPriceSnapshot(product.getPriceNew());
+                log.info("【购物车添加】使用商品主表价格: {}", product.getPriceNew());
+            }
             cart.setStatus(1); // 有效
+            
+            // 调试：打印最终设置的价格快照
+            log.info("【购物车添加】最终价格快照: {}", cart.getPriceSnapshot());
             
             // 插入前打印完整的 cart 对象，确认所有字段值
             log.info("【购物车添加】准备插入，userId={}, productId={}, skuId={}, specsHash={}, skuName={}", 

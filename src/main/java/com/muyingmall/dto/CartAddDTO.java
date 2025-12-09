@@ -49,4 +49,9 @@ public class CartAddDTO implements Serializable {
      * SKU名称（可选，用于显示）
      */
     private String skuName;
+
+    /**
+     * SKU价格（有SKU的商品传入SKU价格）
+     */
+    private java.math.BigDecimal price;
 }

@@ -87,4 +87,36 @@ public class Comment implements Serializable {
      */
     @TableField(exist = false)
     private Product product;
+
+    // ========== SQL查询直接映射的用户字段 ==========
+    
+    /**
+     * 用户名（SQL JOIN查询时直接映射）
+     */
+    @TableField(exist = false)
+    private String username;
+
+    /**
+     * 用户昵称（SQL JOIN查询时直接映射）
+     */
+    @TableField(exist = false)
+    private String nickname;
+
+    /**
+     * 用户头像（SQL JOIN查询时直接映射）
+     */
+    @TableField(exist = false)
+    private String avatar;
+
+    /**
+     * 商品名称（SQL JOIN查询时直接映射）
+     */
+    @TableField(exist = false)
+    private String productName;
+
+    /**
+     * 商品图片（SQL JOIN查询时直接映射）
+     */
+    @TableField(exist = false)
+    private String productImage;
 }

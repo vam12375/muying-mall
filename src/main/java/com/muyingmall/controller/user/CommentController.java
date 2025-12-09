@@ -780,15 +780,24 @@ public class CommentController {
                 }
             }
 
-            // 设置用户信息
-            if (comment.getUser() != null) {
+            // 设置用户信息 - 优先使用SQL直接映射的字段
+            if (comment.getUsername() != null || comment.getNickname() != null) {
+                dto.setUserName(comment.getUsername());
+                dto.setUserNickname(comment.getNickname());
+                dto.setUserAvatar(comment.getAvatar());
+            } else if (comment.getUser() != null) {
+                // 兼容旧的嵌套对象方式
                 dto.setUserName(comment.getUser().getUsername());
                 dto.setUserNickname(comment.getUser().getNickname());
                 dto.setUserAvatar(comment.getUser().getAvatar());
             }
 
-            // 设置商品信息
-            if (comment.getProduct() != null) {
+            // 设置商品信息 - 优先使用SQL直接映射的字段
+            if (comment.getProductName() != null) {
+                dto.setProductName(comment.getProductName());
+                dto.setProductImage(comment.getProductImage());
+            } else if (comment.getProduct() != null) {
+                // 兼容旧的嵌套对象方式
                 dto.setProductName(comment.getProduct().getProductName());
                 dto.setProductImage(comment.getProduct().getProductImg());
             }
