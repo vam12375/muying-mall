@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.muyingmall.entity.SysMenu;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 系统菜单服务接口
@@ -39,4 +40,15 @@ public interface SysMenuService extends IService<SysMenu> {
      * 更新菜单排序
      */
     boolean updateSort(Integer id, Integer sort);
+
+    /**
+     * 批量更新菜单排序
+     * @param sortList 排序列表，包含id和sort
+     */
+    boolean batchUpdateSort(List<Map<String, Integer>> sortList);
+
+    /**
+     * 获取所有菜单树（包含隐藏的，用于侧边栏）
+     */
+    List<SysMenu> getAllMenuTree();
 }

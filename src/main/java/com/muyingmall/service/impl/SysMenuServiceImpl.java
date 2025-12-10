@@ -99,4 +99,39 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         menu.setSort(sort);
         return updateById(menu);
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean batchUpdateSort(List<Map<String, Integer>> sortList) {
+        if (sortList == null || sortList.isEmpty()) {
+            return true;
+        }
+        for (Map<String, Integer> item : sortList) {
+            Integer id = item.get("id");
+            Integer sort = item.get("sort");
+            Integer parentId = item.get("parentId");
+            if (id != null && sort != null) {
+                SysMenu menu = new SysMenu();
+                menu.setId(id);
+                menu.setSort(sort);
+                if (parentId != null) {
+                    menu.setParentId(parentId);
+                }
+                updateById(menu);
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public List<SysMenu> getAllMenuTree() {
+        // 查询所有启用且可见的菜单，按排序值排序
+        List<SysMenu> allMenus = list(new LambdaQueryWrapper<SysMenu>()
+                .eq(SysMenu::getStatus, 1)
+                .eq(SysMenu::getVisible, 1)
+                .orderByAsc(SysMenu::getSort));
+        
+        // 构建树形结构
+        return buildMenuTree(allMenus, 0);
+    }
 }
