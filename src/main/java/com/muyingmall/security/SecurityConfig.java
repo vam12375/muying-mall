@@ -39,6 +39,8 @@ public class SecurityConfig {
                 .requestMatchers("/doc.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**", "/swagger-resources/**").permitAll()
                 // 允许访问用户注册和登录接口
                 .requestMatchers("/user/register", "/user/login").permitAll()
+                // 允许访问密码重置相关接口（忘记密码功能）
+                .requestMatchers("/user/captcha", "/user/password/reset/**").permitAll()
                 // 允许访问管理员登录接口
                 .requestMatchers("/admin/login").permitAll()
                 // 允许访问商品、分类和品牌相关接口
@@ -49,6 +51,8 @@ public class SecurityConfig {
                 .requestMatchers("/test/connection", "/test/jwt-demo", "/test/**").permitAll()
                 // 允许访问WebSocket端点（WebSocket握手请求）
                 .requestMatchers("/ws/**").permitAll()
+                // 允许访问支付配置接口（获取启用的支付方式）
+                .requestMatchers("/payment/config/**").permitAll()
                 // 允许访问支付回调接口
                 .requestMatchers("/payment/alipay/notify", "/payment/wechat/notify").permitAll()
                 .requestMatchers("/payment/alipay/return").permitAll() // 支付宝同步回调通常也需放行

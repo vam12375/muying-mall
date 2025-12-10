@@ -217,6 +217,13 @@
 			<scope>test</scope>
 		</dependency>
 		
+		<!-- 图形验证码 Kaptcha -->
+		<dependency>
+			<groupId>pro.fessional</groupId>
+			<artifactId>kaptcha</artifactId>
+			<version>2.3.3</version>
+		</dependency>
+		
 		<!-- JWT依赖 -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
