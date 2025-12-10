@@ -134,4 +134,12 @@ public interface UserAccountService {
      * @param description 退款描述
      */
     void refundToWallet(Integer userId, BigDecimal amount, String description);
+    
+    /**
+     * 获取全局用户统计数据（用于管理后台）
+     * 包含：总用户数、活跃用户数、冻结用户数、今日新增、总余额、总充值、总消费
+     *
+     * @return 统计数据Map
+     */
+    Map<String, Object> getGlobalUserStats();
 }

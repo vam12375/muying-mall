@@ -291,4 +291,15 @@ public interface AccountTransactionMapper extends BaseMapper<AccountTransaction>
          */
         @Select("SELECT type, status, COUNT(*) as count, SUM(amount) as total_amount FROM account_transaction WHERE user_id = #{userId} GROUP BY type, status")
         List<Map<String, Object>> getTransactionStatsByUserId(@Param("userId") Integer userId);
+
+        /**
+         * 根据交易类型和状态统计所有用户的交易金额总和
+         * 用于全局统计（如：总充值、总消费）
+         *
+         * @param type   交易类型（1-充值，2-消费，3-退款，4-调整）
+         * @param status 交易状态（1-成功）
+         * @return 交易金额总和
+         */
+        @Select("SELECT COALESCE(SUM(ABS(amount)), 0) FROM account_transaction WHERE type = #{type} AND status = #{status}")
+        BigDecimal sumByTypeAndStatus(@Param("type") Integer type, @Param("status") Integer status);
 }

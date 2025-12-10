@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.common.api.Result;
 import com.muyingmall.entity.User;
 import com.muyingmall.service.UserService;
+import com.muyingmall.service.UserAccountService;
+
+import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserAdminController {
 
     private final UserService userService;
+    private final UserAccountService userAccountService;
 
     /**
      * 分页获取用户列表
@@ -37,11 +41,13 @@ public class UserAdminController {
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "搜索关键字（用户名、邮箱或昵称）") @RequestParam(required = false) String keyword,
             @Parameter(description = "状态筛选（0-禁用，1-正常）") @RequestParam(required = false) String status,
-            @Parameter(description = "角色筛选（admin-管理员，user-普通用户）") @RequestParam(required = false) String role) {
+            @Parameter(description = "角色筛选（admin-管理员，user-普通用户）") @RequestParam(required = false) String role,
+            @Parameter(description = "排序字段（id, balance, createTime）") @RequestParam(required = false) String sortBy,
+            @Parameter(description = "排序方向（asc, desc）") @RequestParam(required = false) String sortOrder) {
 
         log.info(
-                "[UserAdminController] Entering getUserPage - Params: page={}, size={}, keyword={}, status={}, role={}",
-                page, size, keyword, status, role);
+                "[UserAdminController] Entering getUserPage - Params: page={}, size={}, keyword={}, status={}, role={}, sortBy={}, sortOrder={}",
+                page, size, keyword, status, role, sortBy, sortOrder);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null) {
@@ -70,7 +76,7 @@ public class UserAdminController {
          * , username);
          */
 
-        Page<User> userPage = userService.getUserPage(page, size, keyword, status, role);
+        Page<User> userPage = userService.getUserPage(page, size, keyword, status, role, sortBy, sortOrder);
         userPage.getRecords().forEach(user -> user.setPassword(null));
         log.info("[UserAdminController] getUserPage - Successfully fetched. Record count: {}",
                 userPage.getRecords().size());
@@ -218,6 +224,25 @@ public class UserAdminController {
             log.error("[UserAdminController] updateUserRole - Error updating role for id: {}: {}", id, e.getMessage(),
                     e);
             return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 获取全局用户统计数据
+     * 包含：总用户数、活跃用户、冻结用户、今日新增、总余额、总充值、总消费
+     */
+    @GetMapping("/stats")
+    @Operation(summary = "获取全局用户统计数据")
+    @PreAuthorize("hasAuthority('admin')")
+    public Result<Map<String, Object>> getGlobalUserStats() {
+        log.info("[UserAdminController] Entering getGlobalUserStats");
+        try {
+            Map<String, Object> stats = userAccountService.getGlobalUserStats();
+            log.info("[UserAdminController] getGlobalUserStats - Successfully fetched stats: {}", stats);
+            return Result.success(stats);
+        } catch (Exception e) {
+            log.error("[UserAdminController] getGlobalUserStats - Error: {}", e.getMessage(), e);
+            return Result.error("获取统计数据失败: " + e.getMessage());
         }
     }
 }

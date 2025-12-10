@@ -138,4 +138,12 @@ public interface UserAccountMapper extends BaseMapper<UserAccount> {
          */
         @Select("SELECT account_id as id, user_id, balance, status, create_time, update_time FROM user_account WHERE user_id = #{userId}")
         UserAccount getUserAccountByUserId(@Param("userId") Integer userId);
+        
+        /**
+         * 统计所有用户账户余额总和
+         *
+         * @return 总余额
+         */
+        @Select("SELECT COALESCE(SUM(balance), 0) FROM user_account")
+        java.math.BigDecimal sumAllBalance();
 }

@@ -388,20 +388,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public Page<User> getUserPage(int page, int size, String keyword, String status, String role) {
+    public Page<User> getUserPage(int page, int size, String keyword, String status, String role, String sortBy, String sortOrder) {
         // 创建分页对象
         Page<User> pageParam = new Page<>(page, size);
+        
+        // 判断排序方向（默认降序）
+        boolean isAsc = "asc".equalsIgnoreCase(sortOrder);
+
+        // 如果按余额排序，需要关联 user_account 表
+        if ("balance".equals(sortBy)) {
+            return getUserPageWithBalanceSort(pageParam, keyword, status, role, isAsc);
+        }
 
         // 创建查询条件构造器
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
 
         // 添加关键字搜索条件（用户名、邮箱或昵称）
         if (StringUtils.hasText(keyword)) {
-            queryWrapper.like(User::getUsername, keyword)
+            queryWrapper.and(wrapper -> wrapper
+                    .like(User::getUsername, keyword)
                     .or()
                     .like(User::getEmail, keyword)
                     .or()
-                    .like(User::getNickname, keyword);
+                    .like(User::getNickname, keyword));
         }
 
         // 添加状态筛选条件
@@ -414,10 +423,81 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             queryWrapper.eq(User::getRole, role);
         }
 
-        // 按创建时间降序排序
-        queryWrapper.orderByDesc(User::getCreateTime);
+        // 根据排序字段排序
+        if ("id".equals(sortBy)) {
+            if (isAsc) {
+                queryWrapper.orderByAsc(User::getUserId);
+            } else {
+                queryWrapper.orderByDesc(User::getUserId);
+            }
+        } else if ("createTime".equals(sortBy)) {
+            if (isAsc) {
+                queryWrapper.orderByAsc(User::getCreateTime);
+            } else {
+                queryWrapper.orderByDesc(User::getCreateTime);
+            }
+        } else {
+            // 默认按创建时间降序排序
+            queryWrapper.orderByDesc(User::getCreateTime);
+        }
 
         // 执行分页查询
+        return page(pageParam, queryWrapper);
+    }
+    
+    /**
+     * 按余额排序的用户分页查询（需要关联 user_account 表）
+     */
+    private Page<User> getUserPageWithBalanceSort(Page<User> pageParam, String keyword, String status, String role, boolean isAsc) {
+        // 构建基础SQL条件
+        StringBuilder whereSql = new StringBuilder("1=1");
+        
+        if (StringUtils.hasText(keyword)) {
+            whereSql.append(" AND (u.username LIKE '%").append(keyword).append("%'")
+                    .append(" OR u.email LIKE '%").append(keyword).append("%'")
+                    .append(" OR u.nickname LIKE '%").append(keyword).append("%')");
+        }
+        
+        if (StringUtils.hasText(status)) {
+            whereSql.append(" AND u.status = ").append(status);
+        }
+        
+        if (StringUtils.hasText(role)) {
+            whereSql.append(" AND u.role = '").append(role).append("'");
+        }
+        
+        // 使用原生SQL查询，关联 user_account 表按余额排序
+        String orderDirection = isAsc ? "ASC" : "DESC";
+        String sql = "SELECT u.* FROM user u " +
+                     "LEFT JOIN user_account ua ON u.user_id = ua.user_id " +
+                     "WHERE " + whereSql.toString() + " " +
+                     "ORDER BY COALESCE(ua.balance, 0) " + orderDirection;
+        
+        // 使用 MyBatis-Plus 的 baseMapper 执行原生查询
+        // 由于复杂度较高，这里使用简化方案：先查询所有符合条件的用户ID，再分页
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        
+        if (StringUtils.hasText(keyword)) {
+            queryWrapper.and(wrapper -> wrapper
+                    .like(User::getUsername, keyword)
+                    .or()
+                    .like(User::getEmail, keyword)
+                    .or()
+                    .like(User::getNickname, keyword));
+        }
+        
+        if (StringUtils.hasText(status)) {
+            queryWrapper.eq(User::getStatus, Integer.parseInt(status));
+        }
+        
+        if (StringUtils.hasText(role)) {
+            queryWrapper.eq(User::getRole, role);
+        }
+        
+        // 使用 last 方法添加自定义排序（关联子查询）
+        String balanceOrderSql = "ORDER BY (SELECT COALESCE(ua.balance, 0) FROM user_account ua WHERE ua.user_id = user.user_id) " + orderDirection;
+        queryWrapper.last(balanceOrderSql);
+        
         return page(pageParam, queryWrapper);
     }
 

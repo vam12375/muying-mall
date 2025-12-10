@@ -10,8 +10,10 @@ import com.muyingmall.entity.Product;
 import com.muyingmall.entity.ProductImage;
 import com.muyingmall.entity.ProductSpecs;
 import com.muyingmall.mapper.CategoryMapper;
+import com.muyingmall.entity.ProductSku;
 import com.muyingmall.mapper.ProductImageMapper;
 import com.muyingmall.mapper.ProductMapper;
+import com.muyingmall.mapper.ProductSkuMapper;
 import com.muyingmall.mapper.ProductSpecsMapper;
 import com.muyingmall.service.ProductService;
 import com.muyingmall.util.CacheProtectionUtil;
@@ -47,6 +49,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     private final ProductImageMapper productImageMapper;
     private final ProductSpecsMapper productSpecsMapper;
+    private final ProductSkuMapper productSkuMapper;
     private final RedisUtil redisUtil;
     private final ProductMapper productMapper;
     private final CategoryMapper categoryMapper;
@@ -202,216 +205,12 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     /**
      * 获取商品详情
-     * 优化：使用Hash存储商品详情，减少序列化/反序列化开销
+     * 委托给带缓存保护的方法，统一缓存策略
      */
     @Override
     @Transactional(readOnly = true)
     public Product getProductDetail(Integer id) {
-        if (id == null) {
-            return null;
-        }
-
-        // 构建缓存键
-        String cacheKey = CacheConstants.PRODUCT_DETAIL_KEY + id;
-
-        // 使用Hash结构优化 - 查询缓存
-        // 首先检查Hash键是否存在
-        boolean hasKey = redisUtil.hasKey(cacheKey);
-        if (hasKey) {
-            log.info("从缓存获取商品详情: productId={}", id);
-
-            try {
-                // 从Hash中获取所有字段
-                Map<Object, Object> productMap = redisUtil.hGetAll(cacheKey);
-                if (productMap != null && !productMap.isEmpty()) {
-                    // 将Map转换为Product对象
-                    Product product = new Product();
-
-                    // 设置基本属性
-                    if (productMap.get("productId") != null)
-                        product.setProductId(Integer.valueOf(productMap.get("productId").toString()));
-                    if (productMap.get("productName") != null)
-                        product.setProductName(productMap.get("productName").toString());
-                    if (productMap.get("productImg") != null)
-                        product.setProductImg(productMap.get("productImg").toString());
-                    if (productMap.get("categoryId") != null)
-                        product.setCategoryId(Integer.valueOf(productMap.get("categoryId").toString()));
-                    if (productMap.get("brandId") != null && !"null".equals(productMap.get("brandId"))) {
-                        product.setBrandId(Integer.valueOf(productMap.get("brandId").toString()));
-                    }
-                    if (productMap.get("description") != null)
-                        product.setProductDetail(productMap.get("description").toString());
-                    if (productMap.get("detail") != null)
-                        product.setProductDetail(productMap.get("detail").toString());
-                    if (productMap.get("priceOld") != null) {
-                        product.setPriceOld(new BigDecimal(productMap.get("priceOld").toString()));
-                    }
-                    if (productMap.get("priceNew") != null) {
-                        product.setPriceNew(new BigDecimal(productMap.get("priceNew").toString()));
-                    }
-                    if (productMap.get("stock") != null)
-                        product.setStock(Integer.valueOf(productMap.get("stock").toString()));
-                    if (productMap.get("sales") != null)
-                        product.setSales(Integer.valueOf(productMap.get("sales").toString()));
-                    if (productMap.get("isHot") != null)
-                        product.setIsHot(Integer.valueOf(productMap.get("isHot").toString()));
-                    if (productMap.get("isNew") != null)
-                        product.setIsNew(Integer.valueOf(productMap.get("isNew").toString()));
-                    if (productMap.get("isRecommend") != null)
-                        product.setIsRecommend(Integer.valueOf(productMap.get("isRecommend").toString()));
-                    if (productMap.get("productStatus") != null)
-                        product.setProductStatus(productMap.get("productStatus").toString());
-                    if (productMap.get("rating") != null)
-                        product.setRating(new BigDecimal(productMap.get("rating").toString()));
-                    
-                    // 处理SKU相关字段
-                    if (productMap.get("hasSku") != null)
-                        product.setHasSku(Integer.valueOf(productMap.get("hasSku").toString()));
-                    if (productMap.get("minPrice") != null)
-                        product.setMinPrice(new BigDecimal(productMap.get("minPrice").toString()));
-                    if (productMap.get("maxPrice") != null)
-                        product.setMaxPrice(new BigDecimal(productMap.get("maxPrice").toString()));
-
-                    // 处理日期字段
-                    if (productMap.get("createTime") != null) {
-                        try {
-                            product.setCreateTime(LocalDateTime.parse(productMap.get("createTime").toString()));
-                        } catch (Exception e) {
-                            log.warn("解析创建时间失败: {}", e.getMessage());
-                        }
-                    }
-
-                    if (productMap.get("updateTime") != null) {
-                        try {
-                            product.setUpdateTime(LocalDateTime.parse(productMap.get("updateTime").toString()));
-                        } catch (Exception e) {
-                            log.warn("解析更新时间失败: {}", e.getMessage());
-                        }
-                    }
-
-                    // 获取商品图片列表(作为单独的列表存储)
-                    String imagesKey = cacheKey + ":images";
-                    if (redisUtil.hasKey(imagesKey)) {
-                        List<Object> imagesList = redisUtil.lRange(imagesKey, 0, -1);
-                        if (imagesList != null && !imagesList.isEmpty()) {
-                            List<ProductImage> images = new ArrayList<>();
-                            for (Object img : imagesList) {
-                                if (img instanceof ProductImage) {
-                                    images.add((ProductImage) img);
-                                }
-                            }
-                            product.setImages(images);
-                        }
-                    }
-
-                    // 获取商品规格列表(作为单独的列表存储)
-                    String specsKey = cacheKey + ":specs";
-                    if (redisUtil.hasKey(specsKey)) {
-                        List<Object> specsList = redisUtil.lRange(specsKey, 0, -1);
-                        if (specsList != null && !specsList.isEmpty()) {
-                            List<ProductSpecs> specs = new ArrayList<>();
-                            for (Object spec : specsList) {
-                                if (spec instanceof ProductSpecs) {
-                                    specs.add((ProductSpecs) spec);
-                                }
-                            }
-                            product.setSpecsList(specs);
-                        }
-                    }
-
-                    return product;
-                }
-            } catch (Exception e) {
-                log.error("从缓存获取商品详情失败: {}", e.getMessage(), e);
-                // 发生异常，继续从数据库获取
-            }
-        }
-
-        log.info("缓存未命中，从数据库获取商品详情: productId={}", id);
-
-        // 缓存不存在或获取失败，查询数据库
-        // 获取商品基本信息
-        Product product = getById(id);
-        if (product == null) {
-            return null;
-        }
-
-        // 获取商品图片
-        List<ProductImage> images = productImageMapper.selectList(
-                new LambdaQueryWrapper<ProductImage>()
-                        .eq(ProductImage::getProductId, id)
-                        .orderByAsc(ProductImage::getSortOrder));
-        product.setImages(images);
-
-        // 获取商品规格
-        List<ProductSpecs> specs = productSpecsMapper.selectList(
-                new LambdaQueryWrapper<ProductSpecs>()
-                        .eq(ProductSpecs::getProductId, id)
-                        .orderByAsc(ProductSpecs::getSortOrder));
-        product.setSpecsList(specs);
-
-        // 使用Hash结构缓存商品详情
-        try {
-            // 主键
-            Map<String, Object> productMap = new HashMap<>();
-
-            // 基本属性
-            productMap.put("productId", product.getProductId());
-            productMap.put("productName", product.getProductName());
-            productMap.put("productImg", product.getProductImg());
-            productMap.put("categoryId", product.getCategoryId());
-            productMap.put("brandId", product.getBrandId());
-            productMap.put("description", product.getProductDetail());
-            productMap.put("detail", product.getProductDetail());
-            productMap.put("priceOld", product.getPriceOld());
-            productMap.put("priceNew", product.getPriceNew());
-            productMap.put("stock", product.getStock());
-            productMap.put("sales", product.getSales());
-            productMap.put("isHot", product.getIsHot());
-            productMap.put("isNew", product.getIsNew());
-            productMap.put("isRecommend", product.getIsRecommend());
-            productMap.put("productStatus", product.getProductStatus());
-            productMap.put("rating", product.getRating());
-            
-            // 添加SKU相关字段到缓存
-            productMap.put("hasSku", product.getHasSku());
-            productMap.put("minPrice", product.getMinPrice());
-            productMap.put("maxPrice", product.getMaxPrice());
-
-            // 日期时间
-            if (product.getCreateTime() != null) {
-                productMap.put("createTime", product.getCreateTime().toString());
-            }
-            if (product.getUpdateTime() != null) {
-                productMap.put("updateTime", product.getUpdateTime().toString());
-            }
-
-            // 缓存商品基本信息到Hash
-            redisUtil.hPutAll(cacheKey, productMap, CacheConstants.PRODUCT_EXPIRE_TIME);
-
-            // 单独缓存图片列表
-            if (images != null && !images.isEmpty()) {
-                String imagesKey = cacheKey + ":images";
-                redisUtil.del(imagesKey); // 先删除，再添加
-                redisUtil.lRightPushAll(imagesKey, new ArrayList<>(images));
-                redisUtil.expire(imagesKey, CacheConstants.PRODUCT_EXPIRE_TIME);
-            }
-
-            // 单独缓存规格列表
-            if (specs != null && !specs.isEmpty()) {
-                String specsKey = cacheKey + ":specs";
-                redisUtil.del(specsKey); // 先删除，再添加
-                redisUtil.lRightPushAll(specsKey, new ArrayList<>(specs));
-                redisUtil.expire(specsKey, CacheConstants.PRODUCT_EXPIRE_TIME);
-            }
-
-            log.info("商品详情已缓存到Redis(Hash): productId={}", id);
-        } catch (Exception e) {
-            log.error("缓存商品详情到Redis失败: {}", e.getMessage(), e);
-            // 缓存失败不影响正常业务
-        }
-
-        return product;
+        return getProductDetailWithProtection(id);
     }
 
     /**
@@ -496,11 +295,26 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     @Override
     @Transactional
     public boolean updateProduct(Product product) {
+        Integer productId = product.getProductId();
+        
+        // 如果启用了SKU，自动计算总库存（SKU库存之和）
+        if (product.getHasSku() != null && product.getHasSku() == 1) {
+            List<ProductSku> skuList = productSkuMapper.selectByProductId(productId);
+            if (skuList != null && !skuList.isEmpty()) {
+                // 计算所有启用状态SKU的库存总和
+                int totalStock = skuList.stream()
+                    .filter(sku -> sku.getStatus() != null && sku.getStatus() == 1)
+                    .mapToInt(sku -> sku.getStock() != null ? sku.getStock() : 0)
+                    .sum();
+                product.setStock(totalStock);
+                log.info("商品 {} 启用SKU，自动计算总库存: {}", productId, totalStock);
+            }
+        }
+        
         // 更新商品基本信息
         boolean result = updateById(product);
 
         if (result) {
-            Integer productId = product.getProductId();
 
             // 如果有商品图片，先删除原有图片，再保存新图片
             List<ProductImage> images = product.getImages();

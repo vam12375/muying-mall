@@ -127,14 +127,16 @@ public interface UserService extends IService<User> {
     /**
      * 分页获取用户列表
      *
-     * @param page    页码
-     * @param size    每页大小
-     * @param keyword 关键字（用户名、邮箱、昵称）
-     * @param status  状态筛选
-     * @param role    角色筛选
+     * @param page      页码
+     * @param size      每页大小
+     * @param keyword   关键字（用户名、邮箱、昵称）
+     * @param status    状态筛选
+     * @param role      角色筛选
+     * @param sortBy    排序字段（id, balance, createTime）
+     * @param sortOrder 排序方向（asc, desc）
      * @return 用户分页数据
      */
-    Page<User> getUserPage(int page, int size, String keyword, String status, String role);
+    Page<User> getUserPage(int page, int size, String keyword, String status, String role, String sortBy, String sortOrder);
 
     /**
      * 添加用户（管理员权限）

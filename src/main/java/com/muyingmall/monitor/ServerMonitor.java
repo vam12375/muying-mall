@@ -73,14 +73,37 @@ public class ServerMonitor {
         }
     }
 
+    // 上一次CPU时间采样数据，用于计算准确的CPU使用率
+    private long lastCpuTime = 0;
+    private long lastSampleTime = 0;
+
     /**
-     * 获取CPU使用率
+     * 获取系统CPU使用率
+     * 优先使用getCpuLoad()，如果返回值异常则使用基于时间差的计算方式
      */
     private Double getCpuUsage() {
         try {
             if (osBean instanceof com.sun.management.OperatingSystemMXBean sunOsBean) {
-                double cpuLoad = sunOsBean.getProcessCpuLoad();
-                return cpuLoad >= 0 ? cpuLoad * 100 : 0.0;
+                // 方式1：直接使用系统CPU负载
+                double cpuLoad = sunOsBean.getCpuLoad();
+                if (cpuLoad >= 0 && cpuLoad <= 1) {
+                    return Math.round(cpuLoad * 1000) / 10.0; // 保留一位小数
+                }
+
+                // 方式2：使用系统负载平均值估算（适用于Linux/Mac）
+                double loadAverage = osBean.getSystemLoadAverage();
+                int cpuCores = osBean.getAvailableProcessors();
+                if (loadAverage >= 0 && cpuCores > 0) {
+                    // 负载平均值除以核心数，转换为百分比
+                    double estimatedUsage = (loadAverage / cpuCores) * 100;
+                    return Math.min(100.0, Math.round(estimatedUsage * 10) / 10.0);
+                }
+
+                // 方式3：使用进程CPU作为最后备选
+                double processCpuLoad = sunOsBean.getProcessCpuLoad();
+                if (processCpuLoad >= 0) {
+                    return Math.round(processCpuLoad * 1000) / 10.0;
+                }
             }
             return 0.0;
         } catch (Exception e) {

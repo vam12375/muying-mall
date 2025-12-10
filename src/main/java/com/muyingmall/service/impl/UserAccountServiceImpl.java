@@ -729,4 +729,47 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         log.info("钱包退款完成: userId={}, amount={}, 交易ID={}", userId, amount, transaction.getId());
     }
+    
+    @Override
+    public Map<String, Object> getGlobalUserStats() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        // 1. 总用户数
+        Long totalUsers = userMapper.selectCount(null);
+        stats.put("totalUsers", totalUsers != null ? totalUsers : 0L);
+        
+        // 2. 活跃用户数（状态为1的用户）
+        LambdaQueryWrapper<User> activeWrapper = new LambdaQueryWrapper<>();
+        activeWrapper.eq(User::getStatus, 1);
+        Long activeUsers = userMapper.selectCount(activeWrapper);
+        stats.put("activeUsers", activeUsers != null ? activeUsers : 0L);
+        
+        // 3. 冻结用户数（状态为0的用户）
+        LambdaQueryWrapper<User> frozenWrapper = new LambdaQueryWrapper<>();
+        frozenWrapper.eq(User::getStatus, 0);
+        Long frozenUsers = userMapper.selectCount(frozenWrapper);
+        stats.put("frozenUsers", frozenUsers != null ? frozenUsers : 0L);
+        
+        // 4. 今日新增用户数
+        LambdaQueryWrapper<User> todayWrapper = new LambdaQueryWrapper<>();
+        LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        todayWrapper.ge(User::getCreateTime, todayStart);
+        Long newUsersToday = userMapper.selectCount(todayWrapper);
+        stats.put("newUsersToday", newUsersToday != null ? newUsersToday : 0L);
+        
+        // 5. 总余额（所有用户账户余额之和）
+        BigDecimal totalBalance = userAccountMapper.sumAllBalance();
+        stats.put("totalBalance", totalBalance != null ? totalBalance : BigDecimal.ZERO);
+        
+        // 6. 总充值（所有充值交易之和，type=1且status=1）
+        BigDecimal totalRecharge = accountTransactionMapper.sumByTypeAndStatus(1, 1);
+        stats.put("totalRecharge", totalRecharge != null ? totalRecharge : BigDecimal.ZERO);
+        
+        // 7. 总消费（所有消费交易之和，type=2且status=1）
+        BigDecimal totalConsumption = accountTransactionMapper.sumByTypeAndStatus(2, 1);
+        stats.put("totalConsumption", totalConsumption != null ? totalConsumption.abs() : BigDecimal.ZERO);
+        
+        log.info("获取全局用户统计: {}", stats);
+        return stats;
+    }
 }

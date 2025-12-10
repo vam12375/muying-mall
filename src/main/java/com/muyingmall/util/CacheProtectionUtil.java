@@ -93,8 +93,8 @@ public class CacheProtectionUtil {
      * @return 查询结果
      */
     public <T> T queryWithMutex(String cacheKey, String lockKey, long expireTime, Callable<T> dbFallback) {
-        // 1. 查询缓存
-        Object cacheResult = redisUtil.get(cacheKey);
+        // 1. 查询缓存（带类型兼容处理）
+        Object cacheResult = safeGetCache(cacheKey);
 
         // 2. 判断是否命中
         if (cacheResult != null) {
@@ -111,7 +111,7 @@ public class CacheProtectionUtil {
         try {
             if (lockAcquired) {
                 // 双重检查，再次查询缓存
-                cacheResult = redisUtil.get(cacheKey);
+                cacheResult = safeGetCache(cacheKey);
                 if (cacheResult != null) {
                     if (CacheConstants.EMPTY_CACHE_VALUE.equals(cacheResult.toString())) {
                         return null;
@@ -146,6 +146,52 @@ public class CacheProtectionUtil {
                 redisUtil.del(lockKey);
             }
         }
+    }
+
+    /**
+     * 安全获取缓存，处理类型不匹配的情况
+     * 如果缓存key存在但类型不是String，则删除后返回null，让调用方重新查询数据库
+     *
+     * @param cacheKey 缓存键
+     * @return 缓存值，如果类型不匹配则返回null
+     */
+    private Object safeGetCache(String cacheKey) {
+        try {
+            return redisUtil.get(cacheKey);
+        } catch (Exception e) {
+            // 检查是否为WRONGTYPE错误（可能在异常消息或cause中）
+            if (isWrongTypeException(e)) {
+                log.warn("缓存类型不匹配，删除旧缓存: key={}", cacheKey);
+                try {
+                    redisUtil.del(cacheKey);
+                    // 同时清理可能存在的附属缓存（旧Hash结构的images和specs）
+                    redisUtil.del(cacheKey + ":images");
+                    redisUtil.del(cacheKey + ":specs");
+                } catch (Exception delEx) {
+                    log.error("删除旧缓存失败: key={}, error={}", cacheKey, delEx.getMessage());
+                }
+                return null;
+            }
+            // 其他异常记录日志并返回null，避免影响业务
+            log.error("获取缓存失败: key={}, error={}", cacheKey, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 检查异常是否为Redis WRONGTYPE错误
+     * WRONGTYPE错误可能在异常本身或其cause链中
+     */
+    private boolean isWrongTypeException(Throwable e) {
+        Throwable current = e;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null && message.contains("WRONGTYPE")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     /**
