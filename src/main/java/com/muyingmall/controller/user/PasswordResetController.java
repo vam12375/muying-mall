@@ -62,6 +62,26 @@ public class PasswordResetController {
     }
 
     /**
+     * 验证数字验证码（仅验证，不重置密码）
+     */
+    @PostMapping("/password/reset/check")
+    @Operation(summary = "验证数字验证码", description = "仅验证6位数字验证码是否正确，不重置密码")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "验证码正确"),
+        @ApiResponse(responseCode = "400", description = "验证码错误或已过期")
+    })
+    public Result<Void> checkVerifyCode(
+            @RequestParam String resetToken,
+            @RequestParam String verifyCode) {
+        try {
+            passwordResetService.checkVerifyCode(resetToken, verifyCode);
+            return Result.success(null, "验证码正确");
+        } catch (RuntimeException e) {
+            return Result.error(400, e.getMessage());
+        }
+    }
+
+    /**
      * 验证并重置密码
      */
     @PostMapping("/password/reset/verify")

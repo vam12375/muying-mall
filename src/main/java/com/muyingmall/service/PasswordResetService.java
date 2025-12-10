@@ -25,6 +25,13 @@ public interface PasswordResetService {
     Map<String, Object> requestPasswordReset(PasswordResetRequestDTO requestDTO);
 
     /**
+     * 仅验证数字验证码（不重置密码）
+     * @param resetToken 重置令牌
+     * @param verifyCode 6位数字验证码
+     */
+    void checkVerifyCode(String resetToken, String verifyCode);
+
+    /**
      * 验证数字验证码并重置密码
      * @param verifyDTO 验证参数
      * @return 是否成功
