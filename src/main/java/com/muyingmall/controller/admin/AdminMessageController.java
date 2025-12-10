@@ -17,7 +17,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -106,6 +108,29 @@ public class AdminMessageController {
         } catch (Exception e) {
             log.error("获取消息列表失败: ", e);
             return CommonResult.failed("获取消息列表失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取消息统计数据
+     * 注意：此接口必须放在 /{id} 之前，确保路由优先匹配
+     *
+     * @return 消息统计数据
+     */
+    @GetMapping("/statistics")
+    @Operation(summary = "获取消息统计", description = "获取消息统计数据")
+    public CommonResult<Map<String, Object>> getMessageStatistics() {
+        try {
+            Map<String, Object> stats = new HashMap<>();
+            // 获取催发货消息总数作为未读消息数
+            Page<UserMessage> messagePage = userMessageService.getShippingReminderMessages(1, 1);
+            stats.put("total", messagePage.getTotal());
+            stats.put("unread", messagePage.getTotal());
+            stats.put("today", 0); // TODO: 实现今日消息统计
+            return CommonResult.success(stats);
+        } catch (Exception e) {
+            log.error("获取消息统计失败: ", e);
+            return CommonResult.failed("获取消息统计失败: " + e.getMessage());
         }
     }
 
