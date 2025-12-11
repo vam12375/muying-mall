@@ -38,3 +38,6 @@ build/
 
 # IDE and editor files
 .cunzhi-memory/
+
+# JMeter 测试报告依赖
+**/bower_components/
