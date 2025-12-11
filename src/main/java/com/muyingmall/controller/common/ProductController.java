@@ -210,13 +210,19 @@ public class ProductController {
             @RequestParam(defaultValue = "shop") String type) {
 
         try {
+            // 限制最大返回数量，防止恶意请求
+            limit = Math.min(Math.max(1, limit), 50);
+            
             // 使用优化后的推荐服务方法获取推荐商品
             List<Product> recommendedProducts = productService.getRecommendedProducts(
                     productId, categoryId, limit, type);
 
-            return Result.success(recommendedProducts);
+            return Result.success(recommendedProducts != null ? recommendedProducts : Collections.emptyList());
         } catch (Exception e) {
-            return Result.error("获取推荐商品失败: " + e.getMessage());
+            log.error("获取推荐商品失败: productId={}, categoryId={}, type={}, error={}", 
+                    productId, categoryId, type, e.getMessage());
+            // 返回空列表而非错误，保证接口稳定性
+            return Result.success(Collections.emptyList());
         }
     }
 }

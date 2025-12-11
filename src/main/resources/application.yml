@@ -2,11 +2,26 @@ server:
   port: 8080
   servlet:
     context-path: /api
-  # 添加Tomcat配置，允许请求路径中包含特殊字符
+  # Tomcat高并发优化配置 - 支持5000-10000并发用户
   tomcat:
     relaxed-query-chars: '[,],{,},|'
     relaxed-path-chars: '[,],{,},|'
     max-http-form-post-size: 20MB
+    # 线程池配置
+    threads:
+      max: 500              # 最大工作线程数，从默认200提升到500
+      min-spare: 100        # 最小空闲线程数，从默认10提升到100
+    # 连接配置
+    max-connections: 20000  # 最大连接数，从默认8192提升到20000
+    accept-count: 1000      # 等待队列大小，从默认100提升到1000
+    connection-timeout: 20000  # 连接超时时间(毫秒)
+    keep-alive-timeout: 30000  # Keep-Alive超时时间(毫秒)
+    max-keep-alive-requests: 200  # 单个连接最大Keep-Alive请求数
+  # 响应压缩
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
 
 spring:
   application:
@@ -23,12 +38,12 @@ spring:
     url: jdbc:mysql://localhost:3306/muying_mall?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
     # 密码已移至application-private.yml
-    # HikariCP连接池优化配置
+    # HikariCP连接池优化配置 - 针对高并发场景调优
     hikari:
-      # 连接池最大连接数（根据测试结果调整，避免数据库过载）
-      maximum-pool-size: 60
-      # 最小空闲连接数（保持足够的可用连接）
-      minimum-idle: 10
+      # 连接池最大连接数，从60提升到80以支持更高并发
+      maximum-pool-size: 80
+      # 最小空闲连接数，从10提升到20，减少连接创建开销
+      minimum-idle: 20
       # 连接超时时间（毫秒）
       connection-timeout: 30000
       # 空闲连接最大存活时间（10分钟）
@@ -53,18 +68,18 @@ spring:
       port: 6379
       # 密码已移至application-private.yml
       database: 0
-      # Redis连接池配置
+      # Redis连接池配置 - 优化：扩大连接池以支持高并发场景
       lettuce:
         pool:
-          max-active: 16       # 最大连接数，增加以支持高并发
-          max-idle: 8          # 最大空闲连接数
-          min-idle: 4          # 最小空闲连接数，提高以保持足够的可用连接
-          max-wait: 1000ms     # 连接池最大阻塞等待时间
+          max-active: 64       # 最大连接数，从16提升到64以支持高并发
+          max-idle: 32         # 最大空闲连接数，从8提升到32
+          min-idle: 16         # 最小空闲连接数，从4提升到16，保持足够的可用连接
+          max-wait: 3000ms     # 连接池最大阻塞等待时间，从1000ms提升到3000ms
           time-between-eviction-runs: 60000ms # 空闲连接检测周期
-      timeout: 3000ms          # 连接超时时间
+      timeout: 5000ms          # 连接超时时间，从3000ms提升到5000ms
       # Redis客户端配置
       client-name: muying-mall # 客户端名称，便于监控识别
-      connect-timeout: 3000ms  # 连接超时时间
+      connect-timeout: 5000ms  # 连接超时时间，从3000ms提升到5000ms
       # Redis高级配置
       client-type: lettuce     # 使用lettuce客户端
   

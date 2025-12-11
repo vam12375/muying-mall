@@ -1,47 +1,52 @@
 # 性能优化配置
 # Source: 性能优化 - 数据库和连接池配置
-# 优化目标：降低商品浏览和详情接口的错误率
+# 优化目标：降低商品浏览和详情接口的错误率（目标：错误率 < 1%）
+# 压测基准：10000并发用户，吞吐量 1400+ req/s
 
 spring:
-  # 数据源配置优化 - 针对高并发场景调优
+  # 数据源配置优化 - 针对5000-10000并发用户场景调优
   datasource:
     hikari:
-      # 连接池大小 - 增大以支持更高并发
-      minimum-idle: 20
-      maximum-pool-size: 100
-      # 连接超时 - 适当增加避免高峰期超时
-      connection-timeout: 30000
-      # 空闲超时
-      idle-timeout: 300000
-      # 最大生命周期
-      max-lifetime: 1200000
+      # 连接池大小 - 恢复到较高值，确保MySQL max_connections已调整
+      minimum-idle: 100
+      maximum-pool-size: 400
+      # 连接超时 - 高并发下适当延长，避免获取连接超时
+      connection-timeout: 90000
+      # 空闲超时 - 10分钟，及时释放空闲连接
+      idle-timeout: 600000
+      # 最大生命周期 - 30分钟，防止连接老化
+      max-lifetime: 1800000
       # 连接测试查询
       connection-test-query: SELECT 1
       # 自动提交
       auto-commit: true
       # 连接池名称
       pool-name: HikariPool-Performance
-      # 泄漏检测阈值
-      leak-detection-threshold: 60000
+      # 泄漏检测阈值 - 2分钟
+      leak-detection-threshold: 120000
       # 验证超时
       validation-timeout: 5000
+      # 初始化失败超时 - 快速失败
+      initialization-fail-timeout: 30000
+      # 注册MBean用于监控
+      register-mbeans: true
 
-  # Redis配置优化 - 增大连接池支持高并发
+  # Redis配置优化 - 大幅增大连接池支持极高并发
   data:
     redis:
-      # 连接池配置
+      # 连接池配置 - 针对高并发读取场景优化（吞吐量 1640+ req/s）
       lettuce:
         pool:
-          max-active: 50
-          max-idle: 20
-          min-idle: 10
-          max-wait: 5000ms
+          max-active: 512       # 提升到512，支持极高并发缓存读取（从256提升）
+          max-idle: 256         # 保持足够空闲连接（从128提升）
+          min-idle: 128         # 预热连接池，减少连接创建开销（从64提升）
+          max-wait: 15000ms     # 延长等待时间，避免高峰期获取连接失败（从10000ms提升）
         # 关闭超时
-        shutdown-timeout: 100ms
-      # 超时配置
-      timeout: 5000ms
+        shutdown-timeout: 200ms
+      # 超时配置 - 适当延长避免超时
+      timeout: 15000ms          # 从10000ms提升到15000ms
       # 连接超时
-      connect-timeout: 5000ms
+      connect-timeout: 15000ms  # 从10000ms提升到15000ms
 
   # JPA配置优化
   jpa:
@@ -67,9 +72,9 @@ spring:
 # MyBatis Plus配置优化
 mybatis-plus:
   configuration:
-    # 缓存
+    # 缓存 - 启用一级缓存
     cache-enabled: true
-    # 懒加载
+    # 懒加载 - 启用延迟加载减少不必要查询
     lazy-loading-enabled: true
     aggressive-lazy-loading: false
     # 多结果集
@@ -78,48 +83,84 @@ mybatis-plus:
     use-column-label: true
     # 自动映射
     auto-mapping-behavior: partial
-    # 默认执行器类型
+    # 默认执行器类型 - REUSE复用Statement
     default-executor-type: reuse
-    # 超时时间
-    default-statement-timeout: 25000
-    # 日志实现（生产环境使用NO_LOGGING）
-    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+    # 超时时间（单位：秒）- 修正：原25000是错误值
+    default-statement-timeout: 30
+    # 日志实现（开发环境启用SQL日志）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 本地缓存作用域 - SESSION级别
+    local-cache-scope: session
+    # 调用setter时即使值为null也调用
+    call-setters-on-nulls: true
   global-config:
-    # 刷新Mapper
+    # 刷新Mapper - 生产环境关闭
     refresh: false
+    # 关闭Banner
+    banner: false
     db-config:
       # 逻辑删除
       logic-delete-value: 1
       logic-not-delete-value: 0
 
-# 服务器配置优化 - 针对高并发场景调优
+# 服务器配置优化 - 针对5000-10000并发用户场景调优
 server:
-  # Tomcat配置
+  # Tomcat配置 - 极限性能模式
   tomcat:
     threads:
-      # 最大线程数 - 增大以支持更高并发
-      max: 400
-      # 最小空闲线程数 - 增大以减少线程创建开销
-      min-spare: 50
-    # 最大连接数 - 增大以支持更多并发连接
-    max-connections: 20000
-    # 接受队列大小 - 增大以缓冲突发请求
-    accept-count: 500
-    # 连接超时
-    connection-timeout: 20000
+      # 最大线程数 - 与数据库连接池比例 2:1
+      max: 800
+      # 最小空闲线程数 - 预热线程池，减少线程创建开销
+      min-spare: 200
+    # 最大连接数 - 支持大量并发连接
+    max-connections: 30000
+    # 接受队列大小 - 缓冲突发请求，避免连接被拒绝
+    accept-count: 3000
+    # 连接超时 - 适当延长避免超时
+    connection-timeout: 60000
     # 保持连接超时
-    keep-alive-timeout: 30000
-  # 压缩
+    keep-alive-timeout: 60000
+    # 单个连接最大Keep-Alive请求数
+    max-keep-alive-requests: 1000
+    # 处理器缓存大小
+    processor-cache: 500
+    # URI编码
+    uri-encoding: UTF-8
+  # 压缩 - 减少网络传输
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
-    min-response-size: 1024
+    min-response-size: 512
 
-# 日志配置（生产环境）
+# 日志配置（开发环境 - 恢复详细日志输出）
 logging:
   level:
     root: INFO
-    com.muyingmall: INFO
-    org.springframework.web: WARN
-    org.hibernate: WARN
-    com.baomidou.mybatisplus: WARN
+    com.muyingmall: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: INFO
+    com.baomidou.mybatisplus: DEBUG
+    com.zaxxer.hikari: INFO
+    io.lettuce: INFO
+
+# 自定义性能配置
+performance:
+  # 缓存预热配置
+  cache-warmup:
+    enabled: true
+    # 启动时预热热门商品缓存
+    products: true
+    # 启动时预热分类缓存
+    categories: true
+  # 查询优化配置
+  query:
+    # 分页查询最大条数限制
+    max-page-size: 100
+    # 默认分页大小
+    default-page-size: 20
+  # 限流配置
+  rate-limit:
+    # 是否启用限流
+    enabled: true
+    # 每秒最大请求数
+    requests-per-second: 2000

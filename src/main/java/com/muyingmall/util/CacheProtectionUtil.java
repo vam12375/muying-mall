@@ -21,14 +21,20 @@ public class CacheProtectionUtil {
 
     private final RedisUtil redisUtil;
 
-    // 空值缓存的过期时间(秒)
-    private static final long NULL_VALUE_EXPIRE_TIME = 60;
+    // 空值缓存的过期时间(秒) - 优化：从60秒延长到300秒，减少缓存穿透
+    private static final long NULL_VALUE_EXPIRE_TIME = 300;
 
     // 布隆过滤器缓存键前缀
     private static final String BLOOM_FILTER_KEY_PREFIX = "bloom:";
 
-    // 缓存锁过期时间(秒)
-    private static final long LOCK_EXPIRE_TIME = 10;
+    // 缓存锁过期时间(秒) - 保持60秒，避免极高并发下锁等待超时
+    private static final long LOCK_EXPIRE_TIME = 60;
+
+    // 缓存锁重试次数 - 优化：减少到5次，总等待时间250ms，避免响应过慢
+    private static final int LOCK_RETRY_TIMES = 5;
+
+    // 缓存锁重试间隔(毫秒) - 优化：减少到50ms，快速重试
+    private static final long LOCK_RETRY_INTERVAL = 50;
 
     /**
      * 防止缓存穿透的查询方法
@@ -82,8 +88,8 @@ public class CacheProtectionUtil {
 
     /**
      * 防止缓存击穿的查询方法
-     * 使用setIfAbsent实现简单的互斥锁，确保同一时刻只有一个线程查询数据库
-     * 优化：未获取锁时直接查询数据库，避免高并发下大量请求返回null
+     * 使用setIfAbsent实现互斥锁，确保同一时刻只有一个线程查询数据库
+     * 优化：未获取锁时等待并重试，避免高并发下数据库压力过大
      *
      * @param cacheKey   缓存键
      * @param lockKey    锁键(可以与cacheKey相同)
@@ -93,7 +99,7 @@ public class CacheProtectionUtil {
      * @return 查询结果
      */
     public <T> T queryWithMutex(String cacheKey, String lockKey, long expireTime, Callable<T> dbFallback) {
-        // 1. 查询缓存（带类型兼容处理）
+        // 1. 首次查询缓存（带类型兼容处理）
         Object cacheResult = safeGetCache(cacheKey);
 
         // 2. 判断是否命中
@@ -105,8 +111,13 @@ public class CacheProtectionUtil {
             return (T) cacheResult;
         }
 
-        // 3. 尝试获取简单互斥锁（使用setIfAbsent，更可靠）
-        boolean lockAcquired = redisUtil.setIfAbsent(lockKey, "1", LOCK_EXPIRE_TIME);
+        // 3. 尝试获取互斥锁
+        boolean lockAcquired = false;
+        try {
+            lockAcquired = redisUtil.setIfAbsent(lockKey, "1", LOCK_EXPIRE_TIME);
+        } catch (Exception lockEx) {
+            log.warn("获取缓存锁失败: key={}, error={}", lockKey, lockEx.getMessage());
+        }
 
         try {
             if (lockAcquired) {
@@ -118,32 +129,80 @@ public class CacheProtectionUtil {
                     }
                     return (T) cacheResult;
                 }
-            }
 
-            // 4. 查询数据库（无论是否获取锁都查询，避免高并发下返回null）
-            T dbResult = dbFallback.call();
+                // 4. 持锁线程查询数据库
+                T dbResult = null;
+                try {
+                    dbResult = dbFallback.call();
+                } catch (Exception dbEx) {
+                    // 数据库查询异常，记录日志但不抛出
+                    log.warn("数据库查询异常: key={}, error={}", cacheKey, dbEx.getMessage());
+                }
 
-            // 5. 写入缓存（只有获取锁的线程写入，避免并发写入）
-            if (lockAcquired) {
-                if (dbResult != null) {
-                    long finalExpireTime = getRandomExpireTime(expireTime);
-                    redisUtil.set(cacheKey, dbResult, finalExpireTime);
-                    log.debug("将查询结果写入缓存: key={}, expireTime={}s", cacheKey, finalExpireTime);
-                } else {
-                    // 缓存空值，避免缓存穿透
-                    redisUtil.set(cacheKey, CacheConstants.EMPTY_CACHE_VALUE, NULL_VALUE_EXPIRE_TIME);
-                    log.debug("数据不存在，写入空值缓存: key={}", cacheKey);
+                // 5. 写入缓存
+                try {
+                    if (dbResult != null) {
+                        long finalExpireTime = getRandomExpireTime(expireTime);
+                        redisUtil.set(cacheKey, dbResult, finalExpireTime);
+                        log.debug("将查询结果写入缓存: key={}, expireTime={}s", cacheKey, finalExpireTime);
+                    } else {
+                        // 缓存空值，避免缓存穿透
+                        redisUtil.set(cacheKey, CacheConstants.EMPTY_CACHE_VALUE, NULL_VALUE_EXPIRE_TIME);
+                        log.debug("数据不存在，写入空值缓存: key={}", cacheKey);
+                    }
+                } catch (Exception cacheEx) {
+                    log.warn("缓存写入失败: key={}, error={}", cacheKey, cacheEx.getMessage());
+                }
+
+                return dbResult;
+            } else {
+                // 6. 未获取到锁，等待并重试查询缓存
+                for (int i = 0; i < LOCK_RETRY_TIMES; i++) {
+                    try {
+                        // 等待一小段时间，让持锁线程完成缓存写入
+                        Thread.sleep(LOCK_RETRY_INTERVAL);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        log.warn("等待缓存重建被中断: key={}", cacheKey);
+                        break;
+                    }
+
+                    // 重新查询缓存
+                    cacheResult = safeGetCache(cacheKey);
+                    if (cacheResult != null) {
+                        if (CacheConstants.EMPTY_CACHE_VALUE.equals(cacheResult.toString())) {
+                            return null;
+                        }
+                        return (T) cacheResult;
+                    }
+                }
+
+                // 7. 重试后仍未命中缓存，降级查询数据库
+                log.debug("重试{}次后仍未命中缓存，降级查询数据库: key={}", LOCK_RETRY_TIMES, cacheKey);
+                try {
+                    return dbFallback.call();
+                } catch (Exception dbEx) {
+                    log.warn("降级查询数据库失败: key={}, error={}", cacheKey, dbEx.getMessage());
+                    return null;
                 }
             }
-
-            return dbResult;
         } catch (Exception e) {
-            log.error("查询数据库失败: key={}, error={}", cacheKey, e.getMessage(), e);
-            return null;
+            log.error("缓存查询流程异常: key={}, error={}", cacheKey, e.getMessage(), e);
+            // 最终降级：直接查询数据库
+            try {
+                return dbFallback.call();
+            } catch (Exception fallbackEx) {
+                log.error("最终降级查询也失败: key={}, error={}", cacheKey, fallbackEx.getMessage());
+                return null;
+            }
         } finally {
-            // 6. 释放锁
+            // 8. 释放锁
             if (lockAcquired) {
-                redisUtil.del(lockKey);
+                try {
+                    redisUtil.del(lockKey);
+                } catch (Exception delEx) {
+                    log.warn("释放缓存锁失败: key={}, error={}", lockKey, delEx.getMessage());
+                }
             }
         }
     }

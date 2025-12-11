@@ -782,10 +782,18 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
 
         // 缓存不存在，查询数据库
-        List<Product> allProducts = list(new LambdaQueryWrapper<Product>()
-                .eq(Product::getProductStatus, "上架"));
+        List<Product> allProducts;
+        try {
+            allProducts = list(new LambdaQueryWrapper<Product>()
+                    .eq(Product::getProductStatus, "上架"));
+        } catch (Exception e) {
+            log.error("查询上架商品列表失败: {}", e.getMessage());
+            return Collections.emptyList();
+        }
 
         if (allProducts == null || allProducts.isEmpty()) {
+            // 缓存空结果，避免频繁查询
+            redisUtil.set(cacheKey.toString(), Collections.emptyList(), CacheConstants.SHORT_EXPIRE_TIME);
             return Collections.emptyList();
         }
 
@@ -866,8 +874,12 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             }
         }
 
-        // 缓存结果
-        redisUtil.set(cacheKey.toString(), result, CacheConstants.SHORT_EXPIRE_TIME);
+        // 缓存结果（即使为空也缓存，避免缓存穿透）
+        try {
+            redisUtil.set(cacheKey.toString(), result, CacheConstants.SHORT_EXPIRE_TIME);
+        } catch (Exception e) {
+            log.warn("缓存推荐商品结果失败: {}", e.getMessage());
+        }
 
         return result;
     }

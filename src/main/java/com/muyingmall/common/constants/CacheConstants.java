@@ -218,13 +218,15 @@ public class CacheConstants {
 
     /**
      * 通用短时缓存过期时间（秒）
+     * 优化：从5分钟提升到10分钟，减少缓存重建频率
      */
-    public static final long SHORT_EXPIRE_TIME = 300; // 5分钟
+    public static final long SHORT_EXPIRE_TIME = 600; // 10分钟
 
     /**
      * 通用中时缓存过期时间（秒）
+     * 优化：从30分钟提升到1小时，提高缓存命中率
      */
-    public static final long MEDIUM_EXPIRE_TIME = 1800; // 30分钟
+    public static final long MEDIUM_EXPIRE_TIME = 3600; // 1小时
 
     /**
      * 通用长时缓存过期时间（秒）
