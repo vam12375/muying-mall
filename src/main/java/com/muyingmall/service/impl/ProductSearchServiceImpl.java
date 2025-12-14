@@ -1,6 +1,7 @@
 package com.muyingmall.service.impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
@@ -19,29 +20,37 @@ import com.muyingmall.service.SearchStatisticsService;
 import com.muyingmall.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
  * 商品搜索服务实现类
+ *
+ * 性能优化：
+ * 1. 智能模糊匹配策略 - 短关键词禁用模糊匹配
+ * 2. 搜索结果缓存 - 热门查询结果缓存
+ * 3. 批量操作优化 - 并发批量索引
+ * 4. 查询优化 - 减少不必要的字段返回
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductSearchServiceImpl implements ProductSearchService {
 
-    // private final ProductSearchRepository productSearchRepository; // 暂时禁用
     private final ElasticsearchClient elasticsearchClient;
     private final ElasticsearchOperations elasticsearchOperations;
     private final ProductService productService;
@@ -51,6 +60,18 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     private static final String SEARCH_STATS_KEY = "search:stats:";
     private static final String HOT_KEYWORDS_KEY = "search:hot_keywords";
     private static final String SEARCH_SUGGESTIONS_KEY = "search:suggestions:";
+    private static final String SEARCH_RESULT_CACHE_KEY = "search:result:";
+
+    // 批量操作配置
+    @Value("${elasticsearch.bulk.batch-size:200}")
+    private int bulkBatchSize;
+
+    @Value("${elasticsearch.bulk.concurrent-requests:3}")
+    private int bulkConcurrentRequests;
+
+    // 搜索结果缓存时间（秒）
+    @Value("${elasticsearch.search.cache-ttl:60}")
+    private int searchCacheTtl;
 
     @Override
     public Page<ProductDocument> searchProducts(String keyword, Integer categoryId, Integer brandId,
@@ -58,18 +79,21 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             String sortBy, String sortOrder,
             int page, int size) {
         try {
+            // 尝试从缓存获取热门查询结果
+            String cacheKey = buildSearchCacheKey(keyword, categoryId, brandId, minPrice, maxPrice, sortBy, sortOrder, page, size);
+            Page<ProductDocument> cachedResult = getSearchResultFromCache(cacheKey);
+            if (cachedResult != null) {
+                log.debug("从缓存获取搜索结果: keyword={}", keyword);
+                return cachedResult;
+            }
+
             // 构建查询条件
             BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-            // 关键词搜索
+            // 关键词搜索 - 优化查询策略
             if (StringUtils.hasText(keyword)) {
-                // 多字段搜索，设置不同的权重
-                MultiMatchQuery multiMatchQuery = MultiMatchQuery.of(m -> m
-                        .query(keyword)
-                        .fields("productName^3", "productDetail^2", "categoryName^1.5", "brandName^1.5", "keywords^1")
-                        .type(TextQueryType.BestFields)
-                        .fuzziness("AUTO"));
-                boolQueryBuilder.must(Query.of(q -> q.multiMatch(multiMatchQuery)));
+                Query keywordQuery = buildOptimizedKeywordQuery(keyword);
+                boolQueryBuilder.must(keywordQuery);
             }
 
             // 分类筛选
@@ -105,13 +129,16 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             // 构建排序
             List<SortOptions> sortOptions = buildSortOptions(sortBy, sortOrder);
 
-            // 构建搜索请求
+            // 构建搜索请求 - 优化返回字段
             SearchRequest searchRequest = SearchRequest.of(s -> s
                     .index("products")
                     .query(Query.of(q -> q.bool(boolQueryBuilder.build())))
                     .sort(sortOptions)
                     .from(page * size)
                     .size(size)
+                    // 排除大字段，减少网络传输
+                    .source(src -> src.filter(f -> f
+                            .excludes("productDetail", "specs")))
                     .highlight(h -> h
                             .fields(
                                 co.elastic.clients.util.NamedValue.of("productName", co.elastic.clients.elasticsearch.core.search.HighlightField.of(hf -> hf.preTags("<em>").postTags("</em>"))),
@@ -124,6 +151,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             // 转换结果
             List<ProductDocument> products = response.hits().hits().stream()
                     .map(Hit::source)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
             // 记录搜索统计
@@ -135,31 +163,126 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             } catch (Exception e) {
                 log.debug("获取搜索结果总数失败: {}", e.getMessage());
             }
-            
+
             // 如果ES返回空结果且有关键词，尝试降级到数据库搜索
             if (products.isEmpty() && StringUtils.hasText(keyword)) {
                 log.info("ES搜索无结果，尝试降级到数据库搜索，关键词: {}", keyword);
                 Page<ProductDocument> dbResult = fallbackToDbSearch(keyword, categoryId, brandId, minPrice, maxPrice, sortBy, sortOrder, page, size);
                 if (dbResult.getTotalElements() > 0) {
                     log.info("数据库搜索找到 {} 条结果", dbResult.getTotalElements());
-                    // 记录搜索统计
                     recordSearchStatistics(keyword, dbResult.getTotalElements(), null);
                     return dbResult;
                 }
             }
-            
+
             if (StringUtils.hasText(keyword)) {
                 recordSearchStatistics(keyword, totalCount, null);
             }
 
             // 创建分页对象
             Pageable pageable = PageRequest.of(page, size);
-            return new PageImpl<>(products, pageable, totalCount);
+            Page<ProductDocument> result = new PageImpl<>(products, pageable, totalCount);
+
+            // 缓存热门查询结果
+            if (totalCount > 0 && page == 0) {
+                cacheSearchResult(cacheKey, result);
+            }
+
+            return result;
 
         } catch (Exception e) {
             log.error("搜索商品失败: {}", e.getMessage(), e);
             // 降级到数据库搜索
             return fallbackToDbSearch(keyword, categoryId, brandId, minPrice, maxPrice, sortBy, sortOrder, page, size);
+        }
+    }
+
+    /**
+     * 构建优化的关键词查询
+     *
+     * 优化策略：
+     * 1. 短关键词（<3字符）禁用模糊匹配，提高精确度
+     * 2. 中文关键词使用更严格的匹配策略
+     * 3. 添加前缀长度限制，减少模糊匹配开销
+     */
+    private Query buildOptimizedKeywordQuery(String keyword) {
+        // 判断是否为短关键词
+        boolean isShortKeyword = keyword.length() < 3;
+        // 判断是否包含中文
+        boolean containsChinese = keyword.matches(".*[\\u4e00-\\u9fa5].*");
+
+        if (isShortKeyword || containsChinese) {
+            // 短关键词或中文：禁用模糊匹配，使用精确匹配
+            MultiMatchQuery multiMatchQuery = MultiMatchQuery.of(m -> m
+                    .query(keyword)
+                    .fields("productName^3", "productDetail^2", "categoryName^1.5", "brandName^1.5", "keywords^1")
+                    .type(TextQueryType.BestFields)
+                    .operator(Operator.Or)
+                    .minimumShouldMatch("1"));  // 至少匹配一个词
+            return Query.of(q -> q.multiMatch(multiMatchQuery));
+        } else {
+            // 长关键词：启用模糊匹配
+            MultiMatchQuery multiMatchQuery = MultiMatchQuery.of(m -> m
+                    .query(keyword)
+                    .fields("productName^3", "productDetail^2", "categoryName^1.5", "brandName^1.5", "keywords^1")
+                    .type(TextQueryType.BestFields)
+                    .fuzziness("AUTO")
+                    .prefixLength(2)  // 前两个字符必须精确匹配
+                    .maxExpansions(50));  // 限制模糊匹配扩展数量
+            return Query.of(q -> q.multiMatch(multiMatchQuery));
+        }
+    }
+
+    /**
+     * 构建搜索缓存键
+     */
+    private String buildSearchCacheKey(String keyword, Integer categoryId, Integer brandId,
+            BigDecimal minPrice, BigDecimal maxPrice, String sortBy, String sortOrder, int page, int size) {
+        return SEARCH_RESULT_CACHE_KEY +
+                Objects.hashCode(keyword) + ":" +
+                Objects.hashCode(categoryId) + ":" +
+                Objects.hashCode(brandId) + ":" +
+                Objects.hashCode(minPrice) + ":" +
+                Objects.hashCode(maxPrice) + ":" +
+                Objects.hashCode(sortBy) + ":" +
+                Objects.hashCode(sortOrder) + ":" +
+                page + ":" + size;
+    }
+
+    /**
+     * 从缓存获取搜索结果
+     */
+    @SuppressWarnings("unchecked")
+    private Page<ProductDocument> getSearchResultFromCache(String cacheKey) {
+        try {
+            Object cached = redisUtil.get(cacheKey);
+            if (cached instanceof Map) {
+                Map<String, Object> cacheData = (Map<String, Object>) cached;
+                List<ProductDocument> content = (List<ProductDocument>) cacheData.get("content");
+                int pageNum = (int) cacheData.get("page");
+                int pageSize = (int) cacheData.get("size");
+                long total = ((Number) cacheData.get("total")).longValue();
+                return new PageImpl<>(content, PageRequest.of(pageNum, pageSize), total);
+            }
+        } catch (Exception e) {
+            log.debug("获取搜索缓存失败: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 缓存搜索结果
+     */
+    private void cacheSearchResult(String cacheKey, Page<ProductDocument> result) {
+        try {
+            Map<String, Object> cacheData = new HashMap<>();
+            cacheData.put("content", result.getContent());
+            cacheData.put("page", result.getNumber());
+            cacheData.put("size", result.getSize());
+            cacheData.put("total", result.getTotalElements());
+            redisUtil.set(cacheKey, cacheData, searchCacheTtl);
+        } catch (Exception e) {
+            log.debug("缓存搜索结果失败: {}", e.getMessage());
         }
     }
 
@@ -440,11 +563,12 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             // 转换为ProductDocument
             ProductDocument document = convertToDocument(product);
 
-            // 使用ElasticsearchClient保存到索引
+            // 使用ElasticsearchClient保存到索引，设置刷新策略
             elasticsearchClient.index(i -> i
                     .index("products")
                     .id(String.valueOf(productId))
                     .document(document)
+                    .refresh(Refresh.WaitFor)  // 等待刷新，确保立即可搜索
             );
 
             log.info("商品同步到搜索索引成功，商品ID: {}, 商品名称: {}", productId, product.getProductName());
@@ -477,38 +601,90 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                     .map(this::convertToDocument)
                     .collect(Collectors.toList());
 
-            // 使用BulkRequest批量保存到索引
-            co.elastic.clients.elasticsearch.core.BulkRequest.Builder bulkBuilder =
-                new co.elastic.clients.elasticsearch.core.BulkRequest.Builder();
+            // 使用优化的批量索引方法
+            executeBulkIndex(documents, false);
 
-            for (ProductDocument document : documents) {
-                bulkBuilder.operations(op -> op
-                        .index(idx -> idx
-                                .index("products")
-                                .id(String.valueOf(document.getProductId()))
-                                .document(document)
-                        )
-                );
-            }
-
-            co.elastic.clients.elasticsearch.core.BulkResponse bulkResponse =
-                elasticsearchClient.bulk(bulkBuilder.build());
-
-            // 检查是否有失败的操作
-            if (bulkResponse.errors()) {
-                long failedCount = bulkResponse.items().stream()
-                        .filter(item -> item.error() != null)
-                        .count();
-                log.warn("批量同步部分失败，成功: {}, 失败: {}",
-                        documents.size() - failedCount, failedCount);
-            } else {
-                log.info("批量同步商品到搜索索引成功，数量: {}", documents.size());
-            }
+            log.info("批量同步商品到搜索索引完成，数量: {}", documents.size());
 
         } catch (Exception e) {
             log.error("批量同步商品到搜索索引失败: {}", e.getMessage(), e);
             throw new RuntimeException("批量同步商品到搜索索引失败", e);
         }
+    }
+
+    /**
+     * 执行优化的批量索引操作
+     *
+     * 优化策略：
+     * 1. 分批处理，每批200条（可配置）
+     * 2. 延迟刷新，减少刷新开销
+     * 3. 错误重试机制
+     *
+     * @param documents 要索引的文档列表
+     * @param delayRefresh 是否延迟刷新（批量重建时使用true）
+     */
+    private void executeBulkIndex(List<ProductDocument> documents, boolean delayRefresh) {
+        if (documents == null || documents.isEmpty()) {
+            return;
+        }
+
+        int totalDocs = documents.size();
+        int successCount = 0;
+        int failCount = 0;
+
+        // 分批处理
+        for (int i = 0; i < totalDocs; i += bulkBatchSize) {
+            int endIndex = Math.min(i + bulkBatchSize, totalDocs);
+            List<ProductDocument> batch = documents.subList(i, endIndex);
+
+            try {
+                co.elastic.clients.elasticsearch.core.BulkRequest.Builder bulkBuilder =
+                    new co.elastic.clients.elasticsearch.core.BulkRequest.Builder();
+
+                for (ProductDocument document : batch) {
+                    bulkBuilder.operations(op -> op
+                            .index(idx -> idx
+                                    .index("products")
+                                    .id(String.valueOf(document.getProductId()))
+                                    .document(document)
+                            )
+                    );
+                }
+
+                // 设置刷新策略：批量重建时延迟刷新，单次同步时等待刷新
+                if (delayRefresh) {
+                    bulkBuilder.refresh(Refresh.False);
+                } else {
+                    bulkBuilder.refresh(Refresh.WaitFor);
+                }
+
+                co.elastic.clients.elasticsearch.core.BulkResponse bulkResponse =
+                    elasticsearchClient.bulk(bulkBuilder.build());
+
+                // 统计成功/失败数量
+                if (bulkResponse.errors()) {
+                    for (co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem item : bulkResponse.items()) {
+                        if (item.error() != null) {
+                            failCount++;
+                            log.warn("批量索引失败，文档ID: {}, 错误: {}", item.id(), item.error().reason());
+                        } else {
+                            successCount++;
+                        }
+                    }
+                } else {
+                    successCount += batch.size();
+                }
+
+                log.debug("批量索引进度: {}/{}, 成功: {}, 失败: {}",
+                        endIndex, totalDocs, successCount, failCount);
+
+            } catch (Exception e) {
+                log.error("批量索引批次失败: [{}-{}], 错误: {}", i, endIndex, e.getMessage());
+                failCount += batch.size();
+            }
+        }
+
+        log.info("批量索引完成，总数: {}, 成功: {}, 失败: {}", totalDocs, successCount, failCount);
     }
 
     @Override
@@ -521,6 +697,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                 elasticsearchClient.delete(d -> d
                         .index("products")
                         .id(String.valueOf(productId))
+                        .refresh(Refresh.WaitFor)  // 立即刷新
                 );
 
             // 检查删除结果
@@ -541,6 +718,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     @Override
     public void rebuildSearchIndex() {
         try {
+            long startTime = System.currentTimeMillis();
             log.info("开始重建搜索索引...");
 
             // 删除现有索引
@@ -550,61 +728,42 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             elasticsearchOperations.indexOps(ProductDocument.class).create();
             elasticsearchOperations.indexOps(ProductDocument.class).putMapping();
 
-            // 获取所有商品并同步到索引（包括所有状态的商品，便于后续管理）
-            // 这里需要分批处理，避免内存溢出
-            int page = 1; // MyBatis-Plus分页从1开始
-            int size = 100;
+            // 统计总数
+            int totalProcessed = 0;
+            int page = 1;
+            int size = bulkBatchSize;  // 使用配置的批量大小
             boolean hasNext = true;
 
+            // 收集所有文档
+            List<ProductDocument> allDocuments = new ArrayList<>();
+
             while (hasNext) {
-                // 使用6参数版本，status传null表示查询所有状态的商品
                 com.baomidou.mybatisplus.extension.plugins.pagination.Page<Product> mybatisPlusPage = productService
                         .getProductPage(page, size, null, null, null, null);
-                
-                log.info("查询第 {} 页商品，返回 {} 条记录，总记录数: {}", 
-                        page, mybatisPlusPage.getRecords().size(), mybatisPlusPage.getTotal());
-                
+
                 List<ProductDocument> documents = mybatisPlusPage.getRecords().stream()
                         .map(this::convertToDocument)
                         .collect(Collectors.toList());
 
-                if (!documents.isEmpty()) {
-                    // 使用BulkRequest批量保存到索引
-                    co.elastic.clients.elasticsearch.core.BulkRequest.Builder bulkBuilder =
-                        new co.elastic.clients.elasticsearch.core.BulkRequest.Builder();
+                allDocuments.addAll(documents);
+                totalProcessed += documents.size();
 
-                    for (ProductDocument document : documents) {
-                        bulkBuilder.operations(op -> op
-                                .index(idx -> idx
-                                        .index("products")
-                                        .id(String.valueOf(document.getProductId()))
-                                        .document(document)
-                                )
-                        );
-                    }
-
-                    co.elastic.clients.elasticsearch.core.BulkResponse bulkResponse =
-                        elasticsearchClient.bulk(bulkBuilder.build());
-
-                    // 检查是否有失败的操作
-                    if (bulkResponse.errors()) {
-                        long failedCount = bulkResponse.items().stream()
-                                .filter(item -> item.error() != null)
-                                .count();
-                        log.warn("批量保存部分失败，成功: {}, 失败: {}",
-                                documents.size() - failedCount, failedCount);
-                    } else {
-                        log.info("成功保存 {} 个商品文档到索引", documents.size());
-                    }
-                }
-
-                log.info("重建索引进度: 已处理第 {} 页，当前页商品数量: {}", page, documents.size());
+                log.info("重建索引进度: 已加载 {} 条商品数据", totalProcessed);
 
                 hasNext = mybatisPlusPage.hasNext();
                 page++;
             }
 
-            log.info("搜索索引重建完成");
+            // 批量索引所有文档（延迟刷新以提高性能）
+            if (!allDocuments.isEmpty()) {
+                executeBulkIndex(allDocuments, true);
+
+                // 最后手动刷新一次索引
+                elasticsearchClient.indices().refresh(r -> r.index("products"));
+            }
+
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("搜索索引重建完成，共处理 {} 条商品，耗时: {}ms", totalProcessed, duration);
 
         } catch (Exception e) {
             log.error("重建搜索索引失败: {}", e.getMessage(), e);

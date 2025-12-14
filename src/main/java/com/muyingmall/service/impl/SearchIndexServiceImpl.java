@@ -1,6 +1,7 @@
 package com.muyingmall.service.impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.mapping.*;
 import co.elastic.clients.elasticsearch.indices.*;
 import com.muyingmall.document.ProductDocument;
 import com.muyingmall.service.SearchIndexService;
@@ -14,6 +15,8 @@ import java.util.Map;
 
 /**
  * 搜索索引管理服务实现类
+ *
+ * 使用ES原生API创建索引，避免Spring Data ES与ES 9.x的兼容性问题
  */
 @Slf4j
 @Service
@@ -34,11 +37,64 @@ public class SearchIndexServiceImpl implements SearchIndexService {
                 return true;
             }
 
-            // 使用Spring Data Elasticsearch创建索引
-            boolean created = elasticsearchOperations.indexOps(ProductDocument.class).create();
-            if (created) {
-                // 设置映射
-                elasticsearchOperations.indexOps(ProductDocument.class).putMapping();
+            // 使用ES原生API创建索引（避免Spring Data ES兼容性问题）
+            CreateIndexRequest createRequest = CreateIndexRequest.of(c -> c
+                    .index(PRODUCT_INDEX_NAME)
+                    .settings(s -> s
+                            .numberOfShards("1")
+                            .numberOfReplicas("0")
+                            .refreshInterval(t -> t.time("1s"))
+                            .analysis(a -> a
+                                    .analyzer("ik_max_word", an -> an.custom(ca -> ca
+                                            .tokenizer("ik_max_word")))
+                                    .analyzer("ik_smart", an -> an.custom(ca -> ca
+                                            .tokenizer("ik_smart")))))
+                    .mappings(m -> m
+                            .properties("productId", p -> p.integer(i -> i))
+                            .properties("productName", p -> p.text(t -> t
+                                    .analyzer("ik_max_word")
+                                    .searchAnalyzer("ik_smart")
+                                    .fields("keyword", f -> f.keyword(k -> k))))
+                            .properties("productDetail", p -> p.text(t -> t
+                                    .analyzer("ik_max_word")
+                                    .searchAnalyzer("ik_smart")))
+                            .properties("productSummary", p -> p.text(t -> t
+                                    .analyzer("ik_max_word")
+                                    .searchAnalyzer("ik_smart")))
+                            .properties("productPrice", p -> p.double_(d -> d))
+                            .properties("originalPrice", p -> p.double_(d -> d))
+                            .properties("productStock", p -> p.integer(i -> i))
+                            .properties("productStatus", p -> p.keyword(k -> k))
+                            .properties("categoryId", p -> p.integer(i -> i))
+                            .properties("categoryName", p -> p.text(t -> t
+                                    .analyzer("ik_max_word")
+                                    .searchAnalyzer("ik_smart")
+                                    .fields("keyword", f -> f.keyword(k -> k))))
+                            .properties("brandId", p -> p.integer(i -> i))
+                            .properties("brandName", p -> p.text(t -> t
+                                    .analyzer("ik_max_word")
+                                    .searchAnalyzer("ik_smart")
+                                    .fields("keyword", f -> f.keyword(k -> k))))
+                            .properties("productImage", p -> p.keyword(k -> k.index(false)))
+                            .properties("productImages", p -> p.keyword(k -> k.index(false)))
+                            .properties("isHot", p -> p.boolean_(b -> b))
+                            .properties("isNew", p -> p.boolean_(b -> b))
+                            .properties("isRecommend", p -> p.boolean_(b -> b))
+                            .properties("salesCount", p -> p.integer(i -> i))
+                            .properties("rating", p -> p.double_(d -> d))
+                            .properties("commentCount", p -> p.integer(i -> i))
+                            .properties("tags", p -> p.keyword(k -> k))
+                            .properties("specs", p -> p.object(o -> o.enabled(false)))
+                            .properties("createTime", p -> p.long_(l -> l))
+                            .properties("updateTime", p -> p.long_(l -> l))
+                            .properties("searchWeight", p -> p.double_(d -> d))
+                            .properties("keywords", p -> p.text(t -> t
+                                    .analyzer("ik_max_word")
+                                    .searchAnalyzer("ik_smart")))));
+
+            CreateIndexResponse response = elasticsearchClient.indices().create(createRequest);
+
+            if (response.acknowledged()) {
                 log.info("商品索引创建成功: {}", PRODUCT_INDEX_NAME);
                 return true;
             } else {

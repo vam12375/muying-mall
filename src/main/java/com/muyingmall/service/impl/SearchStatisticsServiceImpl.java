@@ -57,9 +57,14 @@ public class SearchStatisticsServiceImpl extends ServiceImpl<SearchStatisticsMap
                 existing.setResultCount(resultCount);
                 existing.setSearchTime(LocalDateTime.now());
                 if (responseTime != null) {
-                    // 计算平均响应时间
-                    long avgResponseTime = (existing.getResponseTime() + responseTime) / 2;
-                    existing.setResponseTime(avgResponseTime);
+                    // 计算平均响应时间，处理existing.getResponseTime()为null的情况
+                    Long existingResponseTime = existing.getResponseTime();
+                    if (existingResponseTime != null) {
+                        long avgResponseTime = (existingResponseTime + responseTime) / 2;
+                        existing.setResponseTime(avgResponseTime);
+                    } else {
+                        existing.setResponseTime(responseTime);
+                    }
                 }
                 updateById(existing);
             } else {

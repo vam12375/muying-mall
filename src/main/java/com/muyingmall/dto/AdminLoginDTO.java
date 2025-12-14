@@ -24,4 +24,14 @@ public class AdminLoginDTO implements Serializable {
      */
     @NotBlank(message = "密码不能为空")
     private String admin_pass;
+
+    /**
+     * 验证码Key（用于从Redis获取验证码）
+     */
+    private String captcha_key;
+
+    /**
+     * 用户输入的验证码
+     */
+    private String captcha_code;
 }

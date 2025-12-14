@@ -51,17 +51,42 @@ public class AdminController {
     @Autowired
     private ExcelExportService excelExportService;
 
+    @Autowired
+    private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+
     @Value("${file.upload.path}")
     private String uploadPath;
 
     @Value("${file.access.url}")
     private String accessUrl;
 
+    // Redis验证码Key前缀
+    private static final String CAPTCHA_KEY_PREFIX = "captcha:";
+
     /**
      * 管理员登录
      */
     @PostMapping("/login")
     public CommonResult login(@RequestBody AdminLoginDTO loginParam, HttpServletRequest request) {
+        // 验证图形验证码
+        if (loginParam.getCaptcha_key() != null && loginParam.getCaptcha_code() != null) {
+            String redisKey = CAPTCHA_KEY_PREFIX + loginParam.getCaptcha_key();
+            String storedCaptcha = redisTemplate.opsForValue().get(redisKey);
+            
+            // 验证码不存在或已过期
+            if (storedCaptcha == null) {
+                return CommonResult.failed("验证码已过期，请重新获取");
+            }
+            
+            // 验证码错误（忽略大小写）
+            if (!storedCaptcha.equalsIgnoreCase(loginParam.getCaptcha_code())) {
+                return CommonResult.failed("验证码错误");
+            }
+            
+            // 验证通过，删除已使用的验证码
+            redisTemplate.delete(redisKey);
+        }
+
         // 根据用户名查询用户
         User user = userService.getUserByUsername(loginParam.getAdmin_name());
 

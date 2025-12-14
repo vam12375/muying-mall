@@ -50,14 +50,8 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Set;
 
 /**
  * 订单服务实现类
@@ -490,15 +484,20 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             cacheKey.append("_status_").append(normalizedStatus);
         }
 
-        // 查询缓存
+        // 查询缓存 - 添加性能监控
+        long startTime = System.currentTimeMillis();
         Object cacheResult = redisUtil.get(cacheKey.toString());
         if (cacheResult != null) {
-            log.debug("从缓存中获取用户订单列表: userId={}, page={}, size={}, status={}", userId, page, size, status);
+            long cacheTime = System.currentTimeMillis() - startTime;
+            log.debug("从缓存中获取用户订单列表: userId={}, page={}, size={}, status={}, 耗时={}ms", 
+                    userId, page, size, status, cacheTime);
             return (Page<Order>) cacheResult;
         }
 
         // 缓存未命中，从数据库查询
-        log.debug("缓存未命中，从数据库查询用户订单列表: userId={}, page={}, size={}, status={}", userId, page, size, status);
+        log.debug("缓存未命中，从数据库查询用户订单列表: userId={}, page={}, size={}, status={}", 
+                userId, page, size, status);
+        long dbStartTime = System.currentTimeMillis();
 
         Page<Order> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
@@ -521,29 +520,36 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         queryWrapper.orderByDesc(Order::getCreateTime);
 
         Page<Order> orderPage = page(pageParam, queryWrapper);
-        log.info("查询到订单总数: {}", orderPage.getTotal());
+        long orderQueryTime = System.currentTimeMillis() - dbStartTime;
+        log.info("查询到订单总数: {}, 订单查询耗时={}ms", orderPage.getTotal(), orderQueryTime);
 
-        // 查询订单商品
+        // 优化：批量查询订单商品，避免N+1问题
         List<Order> orders = orderPage.getRecords();
         if (!orders.isEmpty()) {
+            long productStartTime = System.currentTimeMillis();
             List<Integer> orderIds = orders.stream()
                     .map(Order::getOrderId)
                     .collect(Collectors.toList());
 
-            log.info("开始查询订单商品，订单ID: {}", orderIds);
+            log.info("开始批量查询订单商品，订单数量: {}, 订单ID: {}", orderIds.size(), orderIds);
 
+            // 批量查询所有订单的商品
             LambdaQueryWrapper<OrderProduct> productQueryWrapper = new LambdaQueryWrapper<>();
             productQueryWrapper.in(OrderProduct::getOrderId, orderIds);
             List<OrderProduct> allOrderProducts = orderProductMapper.selectList(productQueryWrapper);
+            
+            long productQueryTime = System.currentTimeMillis() - productStartTime;
+            log.info("批量查询到 {} 条订单商品记录, 耗时={}ms", allOrderProducts.size(), productQueryTime);
 
-            log.info("查询到 {} 条订单商品记录", allOrderProducts.size());
+            // 优化：使用Map分组，避免多次stream过滤
+            Map<Integer, List<OrderProduct>> orderProductMap = allOrderProducts.stream()
+                    .peek(this::processOrderProductSpecs)
+                    .collect(Collectors.groupingBy(OrderProduct::getOrderId));
 
             // 为每个订单设置商品
             for (Order order : orders) {
-                List<OrderProduct> orderProducts = allOrderProducts.stream()
-                        .filter(op -> op.getOrderId().equals(order.getOrderId()))
-                        .peek(this::processOrderProductSpecs)
-                        .collect(Collectors.toList());
+                List<OrderProduct> orderProducts = orderProductMap.getOrDefault(
+                        order.getOrderId(), Collections.emptyList());
 
                 if (orderProducts.isEmpty()) {
                     log.warn("订单ID {} 没有关联商品数据", order.getOrderId());
@@ -553,9 +559,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
         }
 
-        // 缓存结果
-        redisUtil.set(cacheKey.toString(), orderPage, CacheConstants.ORDER_LIST_EXPIRE_TIME);
-        log.debug("将用户订单列表缓存到Redis: userId={}, page={}, size={}, status={}", userId, page, size, status);
+        // 缓存结果 - 优化：延长缓存时间到5分钟（300秒）
+        long cacheStartTime = System.currentTimeMillis();
+        redisUtil.set(cacheKey.toString(), orderPage, 300L);
+        long cacheWriteTime = System.currentTimeMillis() - cacheStartTime;
+        
+        long totalTime = System.currentTimeMillis() - startTime;
+        log.info("订单列表查询完成: userId={}, 总耗时={}ms, 数据库耗时={}ms, 缓存写入耗时={}ms, 缓存命中=false", 
+                userId, totalTime, (System.currentTimeMillis() - dbStartTime), cacheWriteTime);
 
         return orderPage;
     }

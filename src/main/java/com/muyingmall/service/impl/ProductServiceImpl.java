@@ -58,45 +58,22 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     @Override
     public Page<Product> getProductPage(int page, int size, Integer categoryId, Integer brandId, Boolean isHot, Boolean isNew,
             Boolean isRecommend, String keyword) {
-        // 构建缓存键
-        StringBuilder cacheKey = new StringBuilder(CacheConstants.PRODUCT_LIST_KEY);
-        cacheKey.append("page_").append(page)
-                .append("_size_").append(size);
-
-        if (categoryId != null) {
-            cacheKey.append("_category_").append(categoryId);
-        }
-
-        if (brandId != null) {
-            cacheKey.append("_brand_").append(brandId);
-        }
-
-        if (isHot != null && isHot) {
-            cacheKey.append("_hot_").append(1);
-        }
-
-        if (isNew != null && isNew) {
-            cacheKey.append("_new_").append(1);
-        }
-
-        if (isRecommend != null && isRecommend) {
-            cacheKey.append("_recommend_").append(1);
-        }
-
-        if (StringUtils.hasText(keyword)) {
-            cacheKey.append("_keyword_").append(keyword);
-        }
-
-        String finalCacheKey = cacheKey.toString();
-        String lockKey = "lock:" + finalCacheKey;
+        // 优化：使用参数哈希值简化缓存键，提高缓存命中率
+        String cacheKey = buildProductListCacheKey(page, size, categoryId, brandId, isHot, isNew, isRecommend, keyword);
+        String lockKey = "lock:" + cacheKey;
+        
+        // 优化：根据查询类型动态调整缓存时间
+        long cacheExpireTime = calculateCacheExpireTime(isHot, isNew, isRecommend, keyword);
 
         // 使用缓存保护工具查询，防止缓存击穿
-        return cacheProtectionUtil.queryWithMutex(
-                finalCacheKey,
+        long startTime = System.currentTimeMillis();
+        Page<Product> result = cacheProtectionUtil.queryWithMutex(
+                cacheKey,
                 lockKey,
-                CacheConstants.MEDIUM_EXPIRE_TIME,
+                cacheExpireTime,
                 () -> {
                     // 缓存不存在，查询数据库
+                    long dbStartTime = System.currentTimeMillis();
                     Page<Product> pageParam = new Page<>(page, size);
 
                     LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
@@ -133,9 +110,76 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                     // 默认按创建时间降序排序
                     queryWrapper.orderByDesc(Product::getCreateTime);
 
-                    return page(pageParam, queryWrapper);
+                    Page<Product> productPage = page(pageParam, queryWrapper);
+                    long dbTime = System.currentTimeMillis() - dbStartTime;
+                    log.info("商品列表数据库查询完成: 数量={}, 耗时={}ms, 缓存时间={}秒", 
+                            productPage.getRecords().size(), dbTime, cacheExpireTime);
+                    
+                    return productPage;
                 }
         );
+        
+        long totalTime = System.currentTimeMillis() - startTime;
+        log.debug("商品列表查询完成: 总耗时={}ms, 缓存键={}", totalTime, cacheKey);
+        
+        return result;
+    }
+    
+    /**
+     * 构建商品列表缓存键
+     * 优化：使用简化的缓存键格式，提高可读性和命中率
+     */
+    private String buildProductListCacheKey(int page, int size, Integer categoryId, Integer brandId, 
+            Boolean isHot, Boolean isNew, Boolean isRecommend, String keyword) {
+        StringBuilder cacheKey = new StringBuilder(CacheConstants.PRODUCT_LIST_KEY);
+        cacheKey.append("p").append(page)
+                .append("_s").append(size);
+
+        if (categoryId != null) {
+            cacheKey.append("_c").append(categoryId);
+        }
+
+        if (brandId != null) {
+            cacheKey.append("_b").append(brandId);
+        }
+
+        if (isHot != null && isHot) {
+            cacheKey.append("_hot");
+        }
+
+        if (isNew != null && isNew) {
+            cacheKey.append("_new");
+        }
+
+        if (isRecommend != null && isRecommend) {
+            cacheKey.append("_rec");
+        }
+
+        if (StringUtils.hasText(keyword)) {
+            // 对关键词进行哈希，避免缓存键过长
+            cacheKey.append("_k").append(Math.abs(keyword.hashCode()));
+        }
+
+        return cacheKey.toString();
+    }
+    
+    /**
+     * 根据查询类型计算缓存过期时间
+     * 优化：热点数据使用更长的缓存时间
+     */
+    private long calculateCacheExpireTime(Boolean isHot, Boolean isNew, Boolean isRecommend, String keyword) {
+        // 热门商品、新品、推荐商品：15分钟（900秒）
+        if ((isHot != null && isHot) || (isNew != null && isNew) || (isRecommend != null && isRecommend)) {
+            return 900L;
+        }
+        
+        // 搜索结果：5分钟（300秒）
+        if (StringUtils.hasText(keyword)) {
+            return 300L;
+        }
+        
+        // 普通列表：5分钟（300秒）
+        return 300L;
     }
 
     @Override

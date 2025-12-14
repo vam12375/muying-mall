@@ -14,6 +14,11 @@ import java.util.List;
 /**
  * 商品搜索文档实体
  * 用于Elasticsearch索引的商品数据结构
+ *
+ * 性能优化：
+ * 1. 使用keyword子字段 - 支持精确匹配和排序
+ * 2. 优化分词器配置 - 索引时使用ik_max_word，搜索时使用ik_smart
+ * 3. 禁用不必要的索引 - 图片等纯展示字段
  */
 @Data
 @Builder
@@ -30,8 +35,14 @@ public class ProductDocument {
 
     /**
      * 商品名称 - 支持中文分词搜索
+     * 使用MultiField支持精确匹配和全文搜索
      */
-    @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
+    @MultiField(
+            mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart"),
+            otherFields = {
+                    @InnerField(suffix = "keyword", type = FieldType.Keyword)
+            }
+    )
     @JsonProperty("name")
     private String productName;
 
@@ -48,7 +59,7 @@ public class ProductDocument {
     private String productSummary;
 
     /**
-     * 商品价格
+     * 商品价格 - 用于排序和范围筛选
      */
     @Field(type = FieldType.Double)
     @JsonProperty("price")
@@ -61,7 +72,7 @@ public class ProductDocument {
     private BigDecimal originalPrice;
 
     /**
-     * 商品库存
+     * 商品库存 - 用于筛选
      */
     @Field(type = FieldType.Integer)
     private Integer productStock;
@@ -73,7 +84,7 @@ public class ProductDocument {
     private String productStatus;
 
     /**
-     * 商品分类ID
+     * 商品分类ID - 用于筛选和聚合
      */
     @Field(type = FieldType.Integer)
     private Integer categoryId;
@@ -81,11 +92,16 @@ public class ProductDocument {
     /**
      * 商品分类名称 - 支持搜索
      */
-    @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
+    @MultiField(
+            mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart"),
+            otherFields = {
+                    @InnerField(suffix = "keyword", type = FieldType.Keyword)
+            }
+    )
     private String categoryName;
 
     /**
-     * 品牌ID
+     * 品牌ID - 用于筛选和聚合
      */
     @Field(type = FieldType.Integer)
     private Integer brandId;
@@ -93,54 +109,59 @@ public class ProductDocument {
     /**
      * 品牌名称 - 支持搜索
      */
-    @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
+    @MultiField(
+            mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart"),
+            otherFields = {
+                    @InnerField(suffix = "keyword", type = FieldType.Keyword)
+            }
+    )
     private String brandName;
 
     /**
-     * 商品主图
+     * 商品主图 - 仅用于展示，不索引
      */
     @Field(type = FieldType.Keyword, index = false)
     @JsonProperty("image")
     private String productImage;
 
     /**
-     * 商品图片列表
+     * 商品图片列表 - 仅用于展示，不索引
      */
     @Field(type = FieldType.Keyword, index = false)
     private List<String> productImages;
 
     /**
-     * 是否热门商品
+     * 是否热门商品 - 用于筛选
      */
     @Field(type = FieldType.Boolean)
     private Boolean isHot;
 
     /**
-     * 是否新品
+     * 是否新品 - 用于筛选
      */
     @Field(type = FieldType.Boolean)
     private Boolean isNew;
 
     /**
-     * 是否推荐商品
+     * 是否推荐商品 - 用于筛选
      */
     @Field(type = FieldType.Boolean)
     private Boolean isRecommend;
 
     /**
-     * 销量
+     * 销量 - 用于排序
      */
     @Field(type = FieldType.Integer)
     private Integer salesCount;
 
     /**
-     * 评分
+     * 评分 - 用于排序
      */
     @Field(type = FieldType.Double)
     private Double rating;
 
     /**
-     * 评论数量
+     * 评论数量 - 用于排序
      */
     @Field(type = FieldType.Integer)
     private Integer commentCount;
@@ -148,7 +169,7 @@ public class ProductDocument {
     /**
      * 商品标签 - 支持多标签搜索
      */
-    @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
+    @Field(type = FieldType.Keyword)
     private List<String> tags;
 
     /**
@@ -158,13 +179,13 @@ public class ProductDocument {
     private Object specs;
 
     /**
-     * 创建时间（时间戳，毫秒）
+     * 创建时间（时间戳，毫秒）- 用于排序
      */
     @Field(type = FieldType.Long)
     private Long createTime;
 
     /**
-     * 更新时间（时间戳，毫秒）
+     * 更新时间（时间戳，毫秒）- 用于排序
      */
     @Field(type = FieldType.Long)
     private Long updateTime;

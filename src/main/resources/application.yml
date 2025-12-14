@@ -132,6 +132,34 @@ spring:
     socket-timeout: 30s # 套接字超时时间
     username: # 如果有认证信息，可在此处配置
     password: # 如果有认证信息，可在此处配置
+    # 连接池配置 (高并发优化)
+    pool:
+      max-total: 100          # 最大连接数
+      max-per-route: 50       # 每个路由最大连接数
+      connection-timeout: 5000  # 连接超时(毫秒)
+      socket-timeout: 30000     # Socket超时(毫秒)
+
+# Elasticsearch扩展配置
+elasticsearch:
+  # 批量操作配置
+  bulk:
+    batch-size: 200           # 批量操作每批大小
+    concurrent-requests: 3    # 并发请求数
+  # 搜索配置
+  search:
+    cache-ttl: 60             # 搜索结果缓存时间(秒)
+  # 缓存预热配置
+  warmup:
+    enabled: true             # 是否启用缓存预热
+    hot-keywords-count: 20    # 预热的热门关键词数量
+
+# 异步任务线程池配置
+async:
+  executor:
+    core-pool-size: 0         # 0表示自动根据CPU核心数计算
+    max-pool-size: 0          # 0表示自动根据CPU核心数计算
+    queue-capacity: 500       # 队列容量
+    keep-alive-seconds: 60    # 空闲线程存活时间
 
 # 健康检查配置
 management:
