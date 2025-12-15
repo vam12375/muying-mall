@@ -47,21 +47,20 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:uploads/");
 
-        // 配置商品图片访问路径 - 映射 /products/** 到本地文件（优先级低于Controller）
-        registry.addResourceHandler("/products/**")
-                .addResourceLocations("file:" + uploadPath + "/products/")
-                .resourceChain(true);
+        // 配置静态图片访问路径 - 使用 /static 前缀避免与 API Controller 冲突
+        registry.addResourceHandler("/static/products/**")
+                .addResourceLocations("file:" + uploadPath + "/products/");
         
         // 配置品牌图片访问路径
-        registry.addResourceHandler("/brands/**")
+        registry.addResourceHandler("/static/brands/**")
                 .addResourceLocations("file:" + uploadPath + "/brands/");
         
         // 配置分类图标访问路径
-        registry.addResourceHandler("/categorys/**")
+        registry.addResourceHandler("/static/categorys/**")
                 .addResourceLocations("file:" + uploadPath + "/categorys/");
         
         // 配置详情图片访问路径
-        registry.addResourceHandler("/details/**")
+        registry.addResourceHandler("/static/details/**")
                 .addResourceLocations("file:" + uploadPath + "/details/");
         
         // 配置商品图片访问路径（使用独立路径避免与API冲突）
