@@ -119,7 +119,7 @@ public class CommentRewardConfigServiceImpl extends ServiceImpl<CommentRewardCon
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> grantReward(Comment comment) {
-        log.info("开始计算评价奖励, commentId={}, userId={}", comment.getCommentId(), comment.getUserId());
+        log.debug("开始计算评价奖励, commentId={}, userId={}", comment.getCommentId(), comment.getUserId());
         Map<String, Object> rewardInfo = calculateReward(comment);
         Map<String, Object> result = new HashMap<>(rewardInfo);
         result.put("success", false);
@@ -127,10 +127,10 @@ public class CommentRewardConfigServiceImpl extends ServiceImpl<CommentRewardCon
         Integer totalReward = (Integer) rewardInfo.get("totalReward");
         List<Map<String, Object>> rewards = (List<Map<String, Object>>) rewardInfo.get("rewards");
 
-        log.info("评价奖励计算结果: totalReward={}, rewards={}", totalReward, rewards);
+        log.debug("评价奖励计算结果: totalReward={}, rewards={}", totalReward, rewards);
 
         if (totalReward <= 0 || rewards.isEmpty()) {
-            log.info("无可用奖励，commentId={}, userId={}", comment.getCommentId(), comment.getUserId());
+            log.debug("无可用奖励，commentId={}, userId={}", comment.getCommentId(), comment.getUserId());
             return result;
         }
 
@@ -144,10 +144,10 @@ public class CommentRewardConfigServiceImpl extends ServiceImpl<CommentRewardCon
                     productName = productName.substring(0, 12) + "...";
                 }
             }
-            log.info("获取商品信息成功: productId={}, productName={}", comment.getProductId(), productName);
+            log.debug("获取商品信息成功: productId={}, productName={}", comment.getProductId(), productName);
 
             // 发放积分奖励
-            log.info("准备发放积分奖励: userId={}, points={}, source={}, referenceId={}",
+            log.debug("准备发放积分奖励: userId={}, points={}, source={}, referenceId={}",
                     comment.getUserId(), totalReward, "comment_reward", comment.getCommentId().toString());
             boolean success = pointsService.addPoints(
                     comment.getUserId(),
@@ -156,7 +156,7 @@ public class CommentRewardConfigServiceImpl extends ServiceImpl<CommentRewardCon
                     comment.getCommentId().toString(),
                     "评价奖励");
 
-            log.info("积分发放结果: success={}, userId={}, points={}",
+            log.debug("积分发放结果: success={}, userId={}, points={}",
                     success, comment.getUserId(), totalReward);
 
             result.put("success", success);
@@ -170,7 +170,7 @@ public class CommentRewardConfigServiceImpl extends ServiceImpl<CommentRewardCon
                         .append("积分), ");
             }
 
-            log.info("用户 {} 因评价 {} 获得奖励: {}",
+            log.debug("用户 {} 因评价 {} 获得奖励: {}",
                     comment.getUserId(), comment.getCommentId(), rewardDesc.toString());
 
             // 发送消息到消息中心
@@ -203,7 +203,7 @@ public class CommentRewardConfigServiceImpl extends ServiceImpl<CommentRewardCon
                     extra = "{\"commentId\":" + comment.getCommentId() + "}";
                 }
 
-                log.info("准备发送消息通知: userId={}, type={}, title={}",
+                log.debug("准备发送消息通知: userId={}, type={}, title={}",
                         comment.getUserId(), MessageType.COMMENT_REWARD.getCode(), messageTitle);
                 // 发送积分消息通知
                 userMessageService.createMessage(
@@ -213,7 +213,7 @@ public class CommentRewardConfigServiceImpl extends ServiceImpl<CommentRewardCon
                         messageContent.toString(),
                         extra);
 
-                log.info("已发送评价奖励消息通知给用户 {}: 奖励 {} 积分", comment.getUserId(), totalReward);
+                log.debug("已发送评价奖励消息通知给用户 {}: 奖励 {} 积分", comment.getUserId(), totalReward);
             }
         } catch (Exception e) {
             log.error("发放评价奖励失败, commentId={}, userId={}, error={}",

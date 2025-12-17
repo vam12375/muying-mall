@@ -44,7 +44,7 @@ public class SessionController {
         }
 
         // 记录会话同步日志
-        log.info("用户会话已同步: {}", user.getUsername());
+        log.debug("用户会话已同步: {}", user.getUsername());
 
         // 会话同步成功，不需要返回用户数据，前端已有缓存
         return Result.success(null, "会话同步成功");

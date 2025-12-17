@@ -227,7 +227,7 @@ public class PaymentTccServiceImpl implements PaymentTccService {
             // 根据事务类型执行不同的操作
             if (Objects.equals("createPayment", getTransactionType(payment))) {
                 // 创建支付确认操作，实际上不需要做什么，因为在try阶段已经创建了
-                log.info("支付创建确认成功：{}", payment.getPaymentNo());
+                log.debug("支付创建确认成功：{}", payment.getPaymentNo());
             } else if (Objects.equals("processPayment", getTransactionType(payment))) {
                 // 处理支付确认操作，更新为支付成功
                 Payment existingPayment = paymentService.getByPaymentNo(payment.getPaymentNo());
@@ -260,10 +260,10 @@ public class PaymentTccServiceImpl implements PaymentTccService {
                 // 记录状态变更日志
                 paymentStateLogService.recordStateChange(context);
 
-                log.info("支付处理确认成功：{}", payment.getPaymentNo());
+                log.debug("支付处理确认成功：{}", payment.getPaymentNo());
             } else if (Objects.equals("closePayment", getTransactionType(payment))) {
                 // 关闭支付确认操作，状态已经在try阶段更新为关闭
-                log.info("支付关闭确认成功：{}", payment.getPaymentNo());
+                log.debug("支付关闭确认成功：{}", payment.getPaymentNo());
             }
         } finally {
             // 释放锁
@@ -290,7 +290,7 @@ public class PaymentTccServiceImpl implements PaymentTccService {
                 Payment existingPayment = paymentService.getByPaymentNo(payment.getPaymentNo());
                 if (existingPayment != null) {
                     paymentService.removeById(existingPayment.getId());
-                    log.info("支付创建取消成功：{}", payment.getPaymentNo());
+                    log.debug("支付创建取消成功：{}", payment.getPaymentNo());
                 }
             } else if (Objects.equals("processPayment", getTransactionType(payment))
                     || Objects.equals("closePayment", getTransactionType(payment))) {
@@ -318,7 +318,7 @@ public class PaymentTccServiceImpl implements PaymentTccService {
                 // 记录状态变更日志
                 paymentStateLogService.recordStateChange(context);
 
-                log.info("支付操作取消成功：{}", payment.getPaymentNo());
+                log.debug("支付操作取消成功：{}", payment.getPaymentNo());
             }
         } finally {
             // 释放锁

@@ -70,7 +70,7 @@ public class AdminOperationLogServiceImpl extends ServiceImpl<AdminOperationLogM
             // 发布操作事件
             eventPublisher.publishEvent(new AdminOperationEvent(this, operationLog));
 
-            log.info("记录管理员操作日志成功: adminId={}, operation={}, module={}",
+            log.debug("记录管理员操作日志成功: adminId={}, operation={}, module={}",
                     adminId, operation, module);
 
             return operationLog.getId();
@@ -86,7 +86,7 @@ public class AdminOperationLogServiceImpl extends ServiceImpl<AdminOperationLogM
             LocalDateTime startTime, LocalDateTime endTime,
             String operationType, String module,
             String operationResult) {
-        log.info(
+        log.debug(
                 "Service层查询参数 - page: {}, size: {}, adminId: {}, startTime: {}, endTime: {}, operationType: {}, module: {}, operationResult: {}",
                 page, size, adminId, startTime, endTime, operationType, module, operationResult);
 
@@ -95,7 +95,7 @@ public class AdminOperationLogServiceImpl extends ServiceImpl<AdminOperationLogM
                 endTime,
                 operationType, module, operationResult);
 
-        log.info("Service层查询结果 - total: {}, records: {}", result.getTotal(), result.getRecords().size());
+        log.debug("Service层查询结果 - total: {}, records: {}", result.getTotal(), result.getRecords().size());
         return result;
     }
 

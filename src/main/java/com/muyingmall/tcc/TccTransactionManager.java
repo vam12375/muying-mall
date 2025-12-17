@@ -158,7 +158,7 @@ public class TccTransactionManager {
 
         // 检查事务状态
         if (transaction.getStatus() == TccTransaction.TccTransactionStatus.CONFIRMED) {
-            log.info("事务已确认，忽略重复确认：{}", transactionId);
+            log.debug("事务已确认，忽略重复确认：{}", transactionId);
             return;
         }
 
@@ -192,7 +192,7 @@ public class TccTransactionManager {
                 transaction.setLastUpdateTime(LocalDateTime.now());
                 saveTransaction(transaction);
 
-                log.info("事务确认成功：{}", transactionId);
+                log.debug("事务确认成功：{}", transactionId);
             } catch (Exception e) {
                 // 增加重试次数
                 transaction.setRetryCount(transaction.getRetryCount() + 1);
@@ -234,7 +234,7 @@ public class TccTransactionManager {
 
         // 检查事务状态
         if (transaction.getStatus() == TccTransaction.TccTransactionStatus.CANCELLED) {
-            log.info("事务已取消，忽略重复取消：{}", transactionId);
+            log.debug("事务已取消，忽略重复取消：{}", transactionId);
             return;
         }
 
@@ -268,7 +268,7 @@ public class TccTransactionManager {
                 transaction.setLastUpdateTime(LocalDateTime.now());
                 saveTransaction(transaction);
 
-                log.info("事务取消成功：{}", transactionId);
+                log.debug("事务取消成功：{}", transactionId);
             } catch (Exception e) {
                 // 增加重试次数
                 transaction.setRetryCount(transaction.getRetryCount() + 1);

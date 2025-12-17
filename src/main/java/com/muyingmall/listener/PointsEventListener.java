@@ -34,14 +34,14 @@ public class PointsEventListener {
     @Transactional(propagation = Propagation.REQUIRES_NEW) // 在新事务中执行积分操作
     // @Async // 取消注释以启用异步处理 (需要 @EnableAsync 配置)
     public void handleOrderCompleted(OrderCompletedEvent event) {
-        log.info("接收到订单完成事件: Order ID {}, 开始处理积分奖励", event.getOrderId());
+        log.debug("接收到订单完成事件: Order ID {}, 开始处理积分奖励", event.getOrderId());
         try {
             Integer userId = event.getUserId();
             BigDecimal actualAmount = event.getActualAmount();
             String orderNo = event.getOrderNo();
             Integer orderId = event.getOrderId();
 
-            log.info("订单完成事件详情 - 用户ID: {}, 订单号: {}, 订单ID: {}, 实付金额: {}", 
+            log.debug("订单完成事件详情 - 用户ID: {}, 订单号: {}, 订单ID: {}, 实付金额: {}", 
                     userId, orderNo, orderId, actualAmount);
 
             // 检查用户ID和金额是否有效
@@ -51,9 +51,9 @@ public class PointsEventListener {
             }
 
             // 调用pointsService的awardPointsForOrder方法处理积分奖励
-            log.info("调用 pointsService.awardPointsForOrder 为订单 {} 奖励积分", orderId);
+            log.debug("调用 pointsService.awardPointsForOrder 为订单 {} 奖励积分", orderId);
             pointsService.awardPointsForOrder(userId, orderId, actualAmount);
-            log.info("订单 {} 积分奖励处理完成", orderId);
+            log.debug("订单 {} 积分奖励处理完成", orderId);
 
         } catch (Exception e) {
             log.error("处理订单完成事件积分奖励失败 for Order ID {}: {}", event.getOrderId(), e.getMessage(), e);

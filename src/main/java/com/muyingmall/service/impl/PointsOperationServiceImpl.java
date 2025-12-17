@@ -57,7 +57,7 @@ public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMa
             newUserPoints.setUpdateTime(LocalDateTime.now());
             try {
                 userPointsMapper.insert(newUserPoints);
-                log.info("已为用户ID: {} 创建新的积分记录，初始积分为0。", userId);
+                log.debug("已为用户ID: {} 创建新的积分记录，初始积分为0。", userId);
                 return 0;
             } catch (Exception e) {
                 log.error("为用户ID: {} 创建积分记录失败", userId, e);
@@ -82,7 +82,7 @@ public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMa
             userPoints.setUpdateTime(LocalDateTime.now());
             try {
                 userPointsMapper.insert(userPoints);
-                log.info("已为用户ID: {} 创建新的UserPoints记录，ID为: {}", userId, userPoints.getId());
+                log.debug("已为用户ID: {} 创建新的UserPoints记录，ID为: {}", userId, userPoints.getId());
             } catch (Exception e) {
                 log.error("为用户ID: {} 插入新的UserPoints记录失败", userId, e);
                 // 根据期望行为，此处可以抛出异常或返回null
@@ -155,11 +155,11 @@ public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMa
 
         // 如果等级发生变化，记录日志
         if (!oldLevel.equals(newLevel)) {
-            log.info("会员等级升级 - 用户ID: {} 从 {} 升级到 {}，当前积分: {}", 
+            log.debug("会员等级升级 - 用户ID: {} 从 {} 升级到 {}，当前积分: {}", 
                     userId, oldLevel, newLevel, newPoints);
         }
 
-        log.info("增加积分 - 成功为用户ID: {} 添加 {} 积分。来源: {}。user_points表中的新总积分: {}",
+        log.debug("增加积分 - 成功为用户ID: {} 添加 {} 积分。来源: {}。user_points表中的新总积分: {}",
                 userId, points, source, userPoints.getPoints());
         return true;
     }
@@ -231,11 +231,11 @@ public class PointsOperationServiceImpl extends ServiceImpl<PointsOperationLogMa
 
         // 如果等级发生变化，记录日志
         if (!oldLevel.equals(newLevel)) {
-            log.info("会员等级变更 - 用户ID: {} 从 {} 变更到 {}，当前积分: {}", 
+            log.debug("会员等级变更 - 用户ID: {} 从 {} 变更到 {}，当前积分: {}", 
                     userId, oldLevel, newLevel, newPoints);
         }
 
-        log.info(
+        log.debug(
                 "扣减积分 - 成功为用户ID: {} 扣除 {} 积分。来源: {}。user_points表中的新总积分: {}",
                 userId, points, source, userPoints.getPoints());
         return true;

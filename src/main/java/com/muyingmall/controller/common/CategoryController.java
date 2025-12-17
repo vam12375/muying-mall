@@ -39,14 +39,14 @@ public class CategoryController {
     @Operation(summary = "获取所有分类列表")
     public Result<List<Category>> getAllCategories() {
         try {
-            log.info("获取所有分类列表");
+            log.debug("获取所有分类列表");
             // 获取所有状态正常的分类
             List<Category> categories = categoryService.list()
                     .stream()
                     .filter(category -> category.getStatus() != null && category.getStatus() == 1)
                     .collect(Collectors.toList());
 
-            log.info("分类列表获取成功: 分类数量={}", categories.size());
+            log.debug("分类列表获取成功: 分类数量={}", categories.size());
             return Result.success(categories);
         } catch (Exception e) {
             log.error("获取分类列表失败: {}", e.getMessage(), e);
@@ -64,7 +64,7 @@ public class CategoryController {
     @Operation(summary = "获取分类详情")
     public Result<Category> getCategoryDetail(@Parameter(description = "分类ID") @PathVariable Integer id) {
         try {
-            log.info("获取分类详情: id={}", id);
+            log.debug("获取分类详情: id={}", id);
             if (id == null || id <= 0) {
                 log.warn("无效的分类ID: {}", id);
                 return Result.error(HttpStatus.BAD_REQUEST.value(), "无效的分类ID");
@@ -81,7 +81,7 @@ public class CategoryController {
                 return Result.error(HttpStatus.BAD_REQUEST.value(), "分类已禁用");
             }
 
-            log.info("分类详情获取成功: id={}, name={}", id, category.getName());
+            log.debug("分类详情获取成功: id={}, name={}", id, category.getName());
             return Result.success(category);
         } catch (Exception e) {
             log.error("获取分类详情失败: id={}, 错误: {}", id, e.getMessage(), e);
@@ -104,7 +104,7 @@ public class CategoryController {
             @Parameter(description = "页码，默认1") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "每页大小，默认10") @RequestParam(defaultValue = "10") int size) {
         try {
-            log.info("获取分类商品: categoryId={}, page={}, size={}", id, page, size);
+            log.debug("获取分类商品: categoryId={}, page={}, size={}", id, page, size);
 
             if (id == null || id <= 0) {
                 log.warn("无效的分类ID: {}", id);
@@ -142,7 +142,7 @@ public class CategoryController {
     public Result<List<Category>> getSubCategories(
             @Parameter(description = "父分类ID") @RequestParam Integer parentId) {
         try {
-            log.info("获取子分类列表: parentId={}", parentId);
+            log.debug("获取子分类列表: parentId={}", parentId);
 
             if (parentId == null) {
                 log.warn("无效的父分类ID: null");
@@ -158,7 +158,7 @@ public class CategoryController {
                             category.getStatus() == 1)
                     .collect(Collectors.toList());
 
-            log.info("子分类列表获取成功: parentId={}, 子分类数量={}", parentId, subCategories.size());
+            log.debug("子分类列表获取成功: parentId={}, 子分类数量={}", parentId, subCategories.size());
             return Result.success(subCategories);
         } catch (Exception e) {
             log.error("获取子分类列表失败: parentId={}, 错误: {}", parentId, e.getMessage(), e);

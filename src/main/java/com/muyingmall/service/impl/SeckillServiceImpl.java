@@ -28,7 +28,7 @@ public class SeckillServiceImpl implements SeckillService {
     public void initSeckillStock(Long skuId, Integer stock) {
         String key = SECKILL_STOCK_KEY + skuId;
         redisTemplate.opsForValue().set(key, stock, STOCK_CACHE_EXPIRE, TimeUnit.SECONDS);
-        log.info("初始化秒杀库存到Redis: skuId={}, stock={}", skuId, stock);
+        log.debug("初始化秒杀库存到Redis: skuId={}, stock={}", skuId, stock);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class SeckillServiceImpl implements SeckillService {
     public void restoreRedisStock(Long skuId, Integer quantity) {
         String key = SECKILL_STOCK_KEY + skuId;
         redisTemplate.opsForValue().increment(key, quantity);
-        log.info("恢复Redis库存: skuId={}, quantity={}", skuId, quantity);
+        log.debug("恢复Redis库存: skuId={}, quantity={}", skuId, quantity);
     }
 
     @Override

@@ -57,7 +57,7 @@ public class RabbitMQRetryHandler implements MessageRecoverer {
             // 执行恢复策略
             executeRecoveryStrategy(message, cause, messageId, queueName);
             
-            log.info("消息恢复策略执行完成: messageId={}, queue={}", messageId, queueName);
+            log.debug("消息恢复策略执行完成: messageId={}, queue={}", messageId, queueName);
             
         } catch (Exception e) {
             log.error("执行消息恢复策略失败", e);
@@ -72,7 +72,7 @@ public class RabbitMQRetryHandler implements MessageRecoverer {
      */
     public void recordRetrySuccess(String queueName, String messageId) {
         try {
-            log.info("消息重试成功: queue={}, messageId={}", queueName, messageId);
+            log.debug("消息重试成功: queue={}, messageId={}", queueName, messageId);
             
             // 更新重试统计
             updateRetryStats(queueName, true);
@@ -142,7 +142,7 @@ public class RabbitMQRetryHandler implements MessageRecoverer {
      */
     public boolean reprocessFailedMessage(String messageId) {
         try {
-            log.info("开始重新处理失败消息: messageId={}", messageId);
+            log.debug("开始重新处理失败消息: messageId={}", messageId);
             
             // 查找失败消息记录
             String failedMessageKey = FAILED_MESSAGE_KEY_PREFIX + messageId;
@@ -156,7 +156,7 @@ public class RabbitMQRetryHandler implements MessageRecoverer {
             // 这里应该实现具体的重新处理逻辑
             // 例如：重新发送消息到原队列，或者发送到特殊的重处理队列
             
-            log.info("失败消息重新处理完成: messageId={}", messageId);
+            log.debug("失败消息重新处理完成: messageId={}", messageId);
             return true;
             
         } catch (Exception e) {
@@ -185,7 +185,7 @@ public class RabbitMQRetryHandler implements MessageRecoverer {
             // 保存失败消息记录，保留7天
             redisTemplate.opsForValue().set(failedMessageKey, record, 7, TimeUnit.DAYS);
             
-            log.info("失败消息记录已保存: messageId={}, queue={}", messageId, queueName);
+            log.debug("失败消息记录已保存: messageId={}, queue={}", messageId, queueName);
             
         } catch (Exception e) {
             log.error("记录失败消息失败", e);
@@ -229,7 +229,7 @@ public class RabbitMQRetryHandler implements MessageRecoverer {
      */
     private void executeRecoveryStrategy(Message message, Throwable cause, String messageId, String queueName) {
         try {
-            log.info("执行消息恢复策略: messageId={}, queue={}", messageId, queueName);
+            log.debug("执行消息恢复策略: messageId={}, queue={}", messageId, queueName);
             
             // 策略1: 发送告警通知
             sendAlertNotification(messageId, queueName, cause);
@@ -271,7 +271,7 @@ public class RabbitMQRetryHandler implements MessageRecoverer {
             // 这里可以集成Prometheus、Grafana等监控系统
             // 记录失败指标，用于监控和告警
             
-            log.info("记录失败指标到监控系统: messageId={}, queue={}", messageId, queueName);
+            log.debug("记录失败指标到监控系统: messageId={}, queue={}", messageId, queueName);
             
         } catch (Exception e) {
             log.error("记录监控指标失败", e);

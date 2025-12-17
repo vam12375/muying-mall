@@ -21,8 +21,10 @@ import com.muyingmall.mapper.AccountTransactionMapper;
 import com.muyingmall.mapper.UserAccountMapper;
 import com.muyingmall.mapper.UserMapper;
 import com.muyingmall.service.UserAccountService;
+import com.muyingmall.util.RedisUtil;
 import com.muyingmall.util.SecurityUtil;
 import com.muyingmall.util.SpringContextUtil;
+import com.muyingmall.common.constants.CacheConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -59,6 +61,7 @@ public class UserAccountServiceImpl implements UserAccountService {
     private UserMapper userMapper;
 
     private final AlipayConfig alipayConfig;
+    private final RedisUtil redisUtil;
 
     @Override
     public PageResult<UserAccount> getUserAccountPage(Integer page, Integer size, String keyword, Integer status) {
@@ -89,12 +92,29 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new BusinessException("用户ID不能为空");
         }
 
-        // 查询用户账户
+        // 构建缓存键
+        String cacheKey = CacheConstants.USER_ACCOUNT_DETAIL_KEY + userId;
+        
+        // 尝试从缓存获取
+        Object cached = redisUtil.get(cacheKey);
+        if (cached != null) {
+            log.debug("从缓存获取用户账户: userId={}", userId);
+            return (UserAccount) cached;
+        }
+
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询用户账户: userId={}", userId);
         UserAccount userAccount = userAccountMapper.getUserAccountByUserId(userId);
         if (userAccount == null) {
             // 用户账户不存在，自动创建一个
-            log.info("用户账户不存在，自动创建: userId={}", userId);
+            log.debug("用户账户不存在，自动创建: userId={}", userId);
             userAccount = createUserAccount(userId);
+        }
+        
+        // 缓存结果
+        if (userAccount != null) {
+            redisUtil.set(cacheKey, userAccount, CacheConstants.USER_ACCOUNT_EXPIRE_TIME);
+            log.debug("将用户账户缓存到Redis: userId={}, 过期时间={}秒", userId, CacheConstants.USER_ACCOUNT_EXPIRE_TIME);
         }
 
         return userAccount;
@@ -129,7 +149,7 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new BusinessException("创建用户账户失败");
         }
 
-        log.info("用户账户创建成功: userId={}, accountId={}", userId, userAccount.getId());
+        log.debug("用户账户创建成功: userId={}, accountId={}", userId, userAccount.getId());
         return userAccount;
     }
 
@@ -210,6 +230,9 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         accountTransactionMapper.secureInsert(transaction);
 
+        // 清除用户账户缓存
+        clearUserAccountCache(userId);
+
         System.out.println("充值操作完成: 交易ID=" + transaction.getId());
     }
 
@@ -282,6 +305,9 @@ public class UserAccountServiceImpl implements UserAccountService {
         System.out.println("余额调整 - 交易记录设置完成，准备插入，accountId=" + transaction.getAccountId());
 
         accountTransactionMapper.secureInsert(transaction);
+
+        // 清除用户账户缓存
+        clearUserAccountCache(userId);
 
         System.out.println("余额调整操作完成: 交易ID=" + transaction.getId());
     }
@@ -371,27 +397,27 @@ public class UserAccountServiceImpl implements UserAccountService {
     public Map<String, BigDecimal> getWalletStats(Integer userId) {
         Map<String, BigDecimal> stats = new HashMap<>();
 
-        log.info("开始获取用户{}的钱包统计信息", userId);
+        log.debug("开始获取用户{}的钱包统计信息", userId);
 
         // 先查询用户的交易记录统计信息（用于调试）
         try {
             List<Map<String, Object>> transactionStats = accountTransactionMapper.getTransactionStatsByUserId(userId);
-            log.info("用户{}的交易记录统计: {}", userId, transactionStats);
+            log.debug("用户{}的交易记录统计: {}", userId, transactionStats);
         } catch (Exception e) {
             log.warn("获取用户{}交易记录统计失败: {}", userId, e.getMessage());
         }
 
         // 获取累计充值金额
         BigDecimal totalRecharge = accountTransactionMapper.sumAmountByUserIdAndType(userId, 1);
-        log.info("用户{}累计充值金额查询结果: {}", userId, totalRecharge);
+        log.debug("用户{}累计充值金额查询结果: {}", userId, totalRecharge);
         stats.put("totalRecharge", totalRecharge != null ? totalRecharge : BigDecimal.ZERO);
 
         // 获取累计消费金额
         BigDecimal totalConsumption = accountTransactionMapper.sumAmountByUserIdAndType(userId, 2);
-        log.info("用户{}累计消费金额查询结果: {}", userId, totalConsumption);
+        log.debug("用户{}累计消费金额查询结果: {}", userId, totalConsumption);
         stats.put("totalConsumption", totalConsumption != null ? totalConsumption : BigDecimal.ZERO);
 
-        log.info("用户{}钱包统计信息: {}", userId, stats);
+        log.debug("用户{}钱包统计信息: {}", userId, stats);
         return stats;
     }
 
@@ -688,7 +714,7 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new BusinessException("退款描述不能为空");
         }
 
-        log.info("开始钱包退款: userId={}, amount={}, description={}", userId, amount, description);
+        log.debug("开始钱包退款: userId={}, amount={}, description={}", userId, amount, description);
 
         // 查询用户账户
         UserAccount userAccount = getUserAccountByUserId(userId);
@@ -727,7 +753,10 @@ public class UserAccountServiceImpl implements UserAccountService {
         // 保存交易记录
         accountTransactionMapper.insert(transaction);
 
-        log.info("钱包退款完成: userId={}, amount={}, 交易ID={}", userId, amount, transaction.getId());
+        // 清除用户账户缓存
+        clearUserAccountCache(userId);
+
+        log.debug("钱包退款完成: userId={}, amount={}, 交易ID={}", userId, amount, transaction.getId());
     }
     
     @Override
@@ -769,7 +798,21 @@ public class UserAccountServiceImpl implements UserAccountService {
         BigDecimal totalConsumption = accountTransactionMapper.sumByTypeAndStatus(2, 1);
         stats.put("totalConsumption", totalConsumption != null ? totalConsumption.abs() : BigDecimal.ZERO);
         
-        log.info("获取全局用户统计: {}", stats);
+        log.debug("获取全局用户统计: {}", stats);
         return stats;
+    }
+    
+    /**
+     * 清除用户账户缓存
+     *
+     * @param userId 用户ID
+     */
+    private void clearUserAccountCache(Integer userId) {
+        if (userId == null) {
+            return;
+        }
+        String cacheKey = CacheConstants.USER_ACCOUNT_DETAIL_KEY + userId;
+        redisUtil.del(cacheKey);
+        log.debug("清除用户账户缓存: userId={}", userId);
     }
 }

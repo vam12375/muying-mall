@@ -26,7 +26,7 @@ public class CacheRefreshService {
      */
     public void refreshOrderCache(Integer orderId, Integer userId) {
         try {
-            log.info("开始刷新订单缓存: orderId={}, userId={}", orderId, userId);
+            log.debug("开始刷新订单缓存: orderId={}, userId={}", orderId, userId);
             
             // 1. 清理订单详情缓存
             clearOrderDetailCache(orderId);
@@ -42,7 +42,7 @@ public class CacheRefreshService {
             // 4. 清理相关的业务缓存
             clearRelatedBusinessCache(orderId, userId);
             
-            log.info("订单缓存刷新完成: orderId={}, userId={}", orderId, userId);
+            log.debug("订单缓存刷新完成: orderId={}, userId={}", orderId, userId);
             
         } catch (Exception e) {
             log.error("刷新订单缓存失败: orderId={}, userId={}, error={}", 
@@ -198,7 +198,7 @@ public class CacheRefreshService {
     public void forceRefreshCache(String cacheKey) {
         try {
             Boolean deleted = redisTemplate.delete(cacheKey);
-            log.info("强制刷新缓存: key={}, deleted={}", cacheKey, deleted);
+            log.debug("强制刷新缓存: key={}, deleted={}", cacheKey, deleted);
         } catch (Exception e) {
             log.error("强制刷新缓存失败: key={}, error={}", cacheKey, e.getMessage(), e);
         }

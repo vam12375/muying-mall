@@ -309,7 +309,7 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean generateStandardTracks(Long logisticsId, String operator) {
-        log.info("开始生成标准物流轨迹: logisticsId={}, operator={}", logisticsId, operator);
+        log.debug("开始生成标准物流轨迹: logisticsId={}, operator={}", logisticsId, operator);
 
         try {
             // 获取物流信息
@@ -338,7 +338,7 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
             boolean result = logisticsTrackService.batchAddTracks(logisticsId, standardTracks);
 
             if (result) {
-                log.info("成功生成{}个标准物流轨迹: logisticsId={}", standardTracks.size(), logisticsId);
+                log.debug("成功生成{}个标准物流轨迹: logisticsId={}", standardTracks.size(), logisticsId);
             } else {
                 log.error("批量添加标准轨迹失败: logisticsId={}", logisticsId);
             }

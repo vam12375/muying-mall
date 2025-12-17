@@ -372,7 +372,7 @@ public class ProductSkuServiceImpl extends ServiceImpl<ProductSkuMapper, Product
         product.setStock(totalStock);
         productMapper.updateById(product);
         
-        log.info("商品 {} 总库存已更新为: {}", productId, totalStock);
+        log.debug("商品 {} 总库存已更新为: {}", productId, totalStock);
     }
 
     /**

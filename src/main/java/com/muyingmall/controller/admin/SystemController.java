@@ -408,7 +408,7 @@ public class SystemController {
                 connection.serverCommands().flushDb();
                 return true;
             });
-            log.info("缓存清除成功");
+            log.debug("缓存清除成功");
             return Result.success(true);
         } catch (Exception e) {
             log.error("清除缓存失败", e);
@@ -422,13 +422,13 @@ public class SystemController {
      */
     @PostMapping("/redis/refresh")
     public Result<Map<String, Object>> refreshRedisStats() {
-        log.info("接收到刷新Redis状态请求");
+        log.debug("接收到刷新Redis状态请求");
         try {
             // 清除部分系统缓存，但不清除用户会话和重要数据
             Set<String> keys = redisTemplate.keys("product:*");
             if (keys != null && !keys.isEmpty()) {
                 redisTemplate.delete(keys);
-                log.info("已清除商品相关缓存, 共{}个键", keys.size());
+                log.debug("已清除商品相关缓存, 共{}个键", keys.size());
             }
             
             // 返回最新的Redis服务器信息

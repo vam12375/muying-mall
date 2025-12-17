@@ -33,15 +33,15 @@ public class ProductSkuController {
     public Result<List<ProductSkuDTO>> getProductSkus(
             @Parameter(description = "商品ID") @PathVariable Integer productId) {
         try {
-            log.info("开始获取商品SKU列表，商品ID: {}", productId);
+            log.debug("开始获取商品SKU列表，商品ID: {}", productId);
             List<ProductSkuDTO> skuList = productSkuService.getSkuListByProductId(productId);
-            log.info("查询到SKU数量: {}", skuList != null ? skuList.size() : 0);
+            log.debug("查询到SKU数量: {}", skuList != null ? skuList.size() : 0);
             
             // 只返回启用状态的SKU
             List<ProductSkuDTO> enabledSkus = skuList.stream()
                     .filter(sku -> sku.getStatus() == 1)
                     .collect(Collectors.toList());
-            log.info("启用状态的SKU数量: {}", enabledSkus.size());
+            log.debug("启用状态的SKU数量: {}", enabledSkus.size());
             return Result.success(enabledSkus);
         } catch (Exception e) {
             log.error("获取商品SKU列表失败，商品ID: {}", productId, e);

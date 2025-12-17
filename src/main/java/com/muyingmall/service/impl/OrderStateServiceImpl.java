@@ -147,7 +147,7 @@ public class OrderStateServiceImpl implements OrderStateService {
      */
     private void recordStateLog(OrderStateContext context) {
         // 记录日志到控制台
-        log.info("订单状态变更：orderId={}, oldStatus={}, newStatus={}, event={}, operator={}, reason={}",
+        log.debug("订单状态变更：orderId={}, oldStatus={}, newStatus={}, event={}, operator={}, reason={}",
                 context.getOrder().getOrderId(),
                 context.getOldStatus(),
                 context.getNewStatus(),

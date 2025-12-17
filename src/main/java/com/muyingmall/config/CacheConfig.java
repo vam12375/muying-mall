@@ -31,7 +31,7 @@ public class CacheConfig {
     public CommandLineRunner cacheWarmUp() {
         return args -> {
             try {
-                log.info("开始预热商品缓存...");
+                log.debug("开始预热商品缓存...");
 
                 // 预热热门商品
                 warmUpHotProducts();
@@ -42,7 +42,7 @@ public class CacheConfig {
                 // 预热推荐商品
                 warmUpRecommendProducts();
 
-                log.info("商品缓存预热完成！");
+                log.debug("商品缓存预热完成！");
             } catch (Exception e) {
                 log.error("商品缓存预热失败: {}", e.getMessage(), e);
             }
@@ -56,7 +56,7 @@ public class CacheConfig {
         try {
             // 检查缓存是否已存在
             if (redisUtil.hasKey(CacheConstants.PRODUCT_HOT_KEY)) {
-                log.info("热门商品缓存已存在，跳过预热");
+                log.debug("热门商品缓存已存在，跳过预热");
                 return;
             }
 
@@ -66,7 +66,7 @@ public class CacheConfig {
             // 缓存热门商品
             if (hotProducts != null && !hotProducts.isEmpty()) {
                 redisUtil.set(CacheConstants.PRODUCT_HOT_KEY, hotProducts, CacheConstants.PRODUCT_HOT_EXPIRE_TIME);
-                log.info("预热热门商品缓存成功，共{}个商品", hotProducts.size());
+                log.debug("预热热门商品缓存成功，共{}个商品", hotProducts.size());
 
                 // 同时缓存每个热门商品的详情
                 for (Product product : hotProducts) {
@@ -86,7 +86,7 @@ public class CacheConfig {
         try {
             // 检查缓存是否已存在
             if (redisUtil.hasKey(CacheConstants.PRODUCT_NEW_KEY)) {
-                log.info("新品商品缓存已存在，跳过预热");
+                log.debug("新品商品缓存已存在，跳过预热");
                 return;
             }
 
@@ -96,7 +96,7 @@ public class CacheConfig {
             // 缓存新品商品
             if (newProducts != null && !newProducts.isEmpty()) {
                 redisUtil.set(CacheConstants.PRODUCT_NEW_KEY, newProducts, CacheConstants.PRODUCT_HOT_EXPIRE_TIME);
-                log.info("预热新品商品缓存成功，共{}个商品", newProducts.size());
+                log.debug("预热新品商品缓存成功，共{}个商品", newProducts.size());
 
                 // 同时缓存每个新品商品的详情
                 for (Product product : newProducts) {
@@ -118,7 +118,7 @@ public class CacheConfig {
         try {
             // 检查缓存是否已存在
             if (redisUtil.hasKey(CacheConstants.PRODUCT_RECOMMEND_KEY)) {
-                log.info("推荐商品缓存已存在，跳过预热");
+                log.debug("推荐商品缓存已存在，跳过预热");
                 return;
             }
 
@@ -129,7 +129,7 @@ public class CacheConfig {
             if (recommendProducts != null && !recommendProducts.isEmpty()) {
                 redisUtil.set(CacheConstants.PRODUCT_RECOMMEND_KEY, recommendProducts,
                         CacheConstants.PRODUCT_HOT_EXPIRE_TIME);
-                log.info("预热推荐商品缓存成功，共{}个商品", recommendProducts.size());
+                log.debug("预热推荐商品缓存成功，共{}个商品", recommendProducts.size());
 
                 // 同时缓存每个推荐商品的详情
                 for (Product product : recommendProducts) {

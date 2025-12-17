@@ -46,7 +46,7 @@ public class PaymentMessageConsumer {
                                    @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         long startTime = System.currentTimeMillis();
         
-        log.info("接收到支付成功消息: paymentId={}, orderId={}, amount={}", 
+        log.debug("接收到支付成功消息: paymentId={}, orderId={}, amount={}", 
                 paymentMessage.getPaymentId(), paymentMessage.getOrderId(), paymentMessage.getAmount());
         
 
@@ -69,7 +69,7 @@ public class PaymentMessageConsumer {
             
             long processingTime = System.currentTimeMillis() - startTime;
             
-            log.info("支付成功消息处理完成: paymentId={}, orderId={}, 处理时间: {}ms", 
+            log.debug("支付成功消息处理完成: paymentId={}, orderId={}, 处理时间: {}ms", 
                     paymentMessage.getPaymentId(), paymentMessage.getOrderId(), processingTime);
             
         } catch (Exception e) {
@@ -99,7 +99,7 @@ public class PaymentMessageConsumer {
     public void handlePaymentFailed(@Payload PaymentMessage paymentMessage, 
                                   Channel channel, 
                                   @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
-        log.info("接收到支付失败消息: paymentId={}, orderId={}, amount={}", 
+        log.debug("接收到支付失败消息: paymentId={}, orderId={}, amount={}", 
                 paymentMessage.getPaymentId(), paymentMessage.getOrderId(), paymentMessage.getAmount());
         
         try {
@@ -116,7 +116,7 @@ public class PaymentMessageConsumer {
             
             // 手动确认消息
             channel.basicAck(deliveryTag, false);
-            log.info("支付失败消息处理完成: paymentId={}, orderId={}", 
+            log.debug("支付失败消息处理完成: paymentId={}, orderId={}", 
                     paymentMessage.getPaymentId(), paymentMessage.getOrderId());
             
         } catch (Exception e) {
@@ -143,7 +143,7 @@ public class PaymentMessageConsumer {
     public void handlePaymentRefund(@Payload PaymentMessage paymentMessage, 
                                   Channel channel, 
                                   @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
-        log.info("接收到退款消息: paymentId={}, orderId={}, amount={}", 
+        log.debug("接收到退款消息: paymentId={}, orderId={}, amount={}", 
                 paymentMessage.getPaymentId(), paymentMessage.getOrderId(), paymentMessage.getAmount());
         
         try {
@@ -160,7 +160,7 @@ public class PaymentMessageConsumer {
             
             // 手动确认消息
             channel.basicAck(deliveryTag, false);
-            log.info("退款消息处理完成: paymentId={}, orderId={}", 
+            log.debug("退款消息处理完成: paymentId={}, orderId={}", 
                     paymentMessage.getPaymentId(), paymentMessage.getOrderId());
             
         } catch (Exception e) {
@@ -182,20 +182,20 @@ public class PaymentMessageConsumer {
      */
     private void processPaymentSuccess(PaymentMessage paymentMessage) {
         try {
-            log.info("开始处理支付成功业务逻辑: paymentId={}, orderId={}", 
+            log.debug("开始处理支付成功业务逻辑: paymentId={}, orderId={}", 
                     paymentMessage.getPaymentId(), paymentMessage.getOrderId());
             
             // 1. 更新订单状态为已支付
             Integer orderId = paymentMessage.getOrderId();
             if (orderId != null) {
-                log.info("更新订单状态为已支付: orderId={}", orderId);
+                log.debug("更新订单状态为已支付: orderId={}", orderId);
                 // 这里应该调用OrderService的方法来更新订单状态
                 // orderService.updateOrderStatus(orderId, "PAID");
             }
             
             // 2. 确认库存扣减
             // 将预扣减的库存转为实际扣减
-            log.info("确认库存扣减: orderId={}", orderId);
+            log.debug("确认库存扣减: orderId={}", orderId);
             
             // 3. 发送支付成功通知
             sendPaymentSuccessNotification(paymentMessage);
@@ -207,7 +207,7 @@ public class PaymentMessageConsumer {
             // 如自动发货、积分奖励等
             triggerPostPaymentProcesses(paymentMessage);
             
-            log.info("支付成功业务逻辑处理完成: paymentId={}, orderId={}", 
+            log.debug("支付成功业务逻辑处理完成: paymentId={}, orderId={}", 
                     paymentMessage.getPaymentId(), paymentMessage.getOrderId());
             
         } catch (Exception e) {
@@ -224,24 +224,24 @@ public class PaymentMessageConsumer {
      */
     private void processPaymentFailed(PaymentMessage paymentMessage) {
         try {
-            log.info("开始处理支付失败业务逻辑: paymentId={}, orderId={}", 
+            log.debug("开始处理支付失败业务逻辑: paymentId={}, orderId={}", 
                     paymentMessage.getPaymentId(), paymentMessage.getOrderId());
             
             // 1. 更新订单状态
             Integer orderId = paymentMessage.getOrderId();
             if (orderId != null) {
-                log.info("更新订单状态为支付失败: orderId={}", orderId);
+                log.debug("更新订单状态为支付失败: orderId={}", orderId);
                 // 根据业务规则，可能需要取消订单或保持待支付状态
                 // orderService.updateOrderStatus(orderId, "PAYMENT_FAILED");
             }
             
             // 2. 恢复库存
             // 释放预扣减的库存
-            log.info("恢复库存: orderId={}", orderId);
+            log.debug("恢复库存: orderId={}", orderId);
             
             // 3. 恢复优惠券
             // 如果使用了优惠券，需要恢复优惠券状态
-            log.info("恢复优惠券: orderId={}", orderId);
+            log.debug("恢复优惠券: orderId={}", orderId);
             
             // 4. 发送支付失败通知
             sendPaymentFailedNotification(paymentMessage);
@@ -249,7 +249,7 @@ public class PaymentMessageConsumer {
             // 5. 记录支付失败日志
             recordPaymentFailure(paymentMessage);
             
-            log.info("支付失败业务逻辑处理完成: paymentId={}, orderId={}", 
+            log.debug("支付失败业务逻辑处理完成: paymentId={}, orderId={}", 
                     paymentMessage.getPaymentId(), paymentMessage.getOrderId());
             
         } catch (Exception e) {
@@ -266,22 +266,22 @@ public class PaymentMessageConsumer {
      */
     private void processPaymentRefund(PaymentMessage paymentMessage) {
         try {
-            log.info("开始处理退款业务逻辑: paymentId={}, orderId={}", 
+            log.debug("开始处理退款业务逻辑: paymentId={}, orderId={}", 
                     paymentMessage.getPaymentId(), paymentMessage.getOrderId());
             
             // 1. 更新订单状态
             Integer orderId = paymentMessage.getOrderId();
             if (orderId != null) {
-                log.info("更新订单状态为已退款: orderId={}", orderId);
+                log.debug("更新订单状态为已退款: orderId={}", orderId);
                 // orderService.updateOrderStatus(orderId, "REFUNDED");
             }
             
             // 2. 恢复库存（如果商品还未发货）
-            log.info("检查并恢复库存: orderId={}", orderId);
+            log.debug("检查并恢复库存: orderId={}", orderId);
             
             // 3. 处理积分回退
             // 如果订单获得了积分，需要扣回积分
-            log.info("处理积分回退: orderId={}", orderId);
+            log.debug("处理积分回退: orderId={}", orderId);
             
             // 4. 发送退款通知
             sendRefundNotification(paymentMessage);
@@ -289,7 +289,7 @@ public class PaymentMessageConsumer {
             // 5. 记录退款日志
             recordRefund(paymentMessage);
             
-            log.info("退款业务逻辑处理完成: paymentId={}, orderId={}", 
+            log.debug("退款业务逻辑处理完成: paymentId={}, orderId={}", 
                     paymentMessage.getPaymentId(), paymentMessage.getOrderId());
             
         } catch (Exception e) {
@@ -303,7 +303,7 @@ public class PaymentMessageConsumer {
      * 发送支付成功通知
      */
     private void sendPaymentSuccessNotification(PaymentMessage paymentMessage) {
-        log.info("发送支付成功通知: userId={}, orderId={}, amount={}", 
+        log.debug("发送支付成功通知: userId={}, orderId={}, amount={}", 
                 paymentMessage.getUserId(), paymentMessage.getOrderId(), paymentMessage.getAmount());
         
         // 1. 发送邮件通知
@@ -316,7 +316,7 @@ public class PaymentMessageConsumer {
      * 发送支付失败通知
      */
     private void sendPaymentFailedNotification(PaymentMessage paymentMessage) {
-        log.info("发送支付失败通知: userId={}, orderId={}, reason={}", 
+        log.debug("发送支付失败通知: userId={}, orderId={}, reason={}", 
                 paymentMessage.getUserId(), paymentMessage.getOrderId(), paymentMessage.getStatus());
         
         // 1. 发送邮件通知
@@ -329,7 +329,7 @@ public class PaymentMessageConsumer {
      * 发送退款通知
      */
     private void sendRefundNotification(PaymentMessage paymentMessage) {
-        log.info("发送退款通知: userId={}, orderId={}, amount={}", 
+        log.debug("发送退款通知: userId={}, orderId={}, amount={}", 
                 paymentMessage.getUserId(), paymentMessage.getOrderId(), paymentMessage.getAmount());
         
         // 1. 发送邮件通知
@@ -342,7 +342,7 @@ public class PaymentMessageConsumer {
      * 记录支付成功统计
      */
     private void recordPaymentSuccess(PaymentMessage paymentMessage) {
-        log.info("记录支付成功统计: paymentMethod={}, amount={}", 
+        log.debug("记录支付成功统计: paymentMethod={}, amount={}", 
                 paymentMessage.getPaymentMethod(), paymentMessage.getAmount());
         
         // 1. 更新支付方式统计
@@ -355,7 +355,7 @@ public class PaymentMessageConsumer {
      * 记录支付失败统计
      */
     private void recordPaymentFailure(PaymentMessage paymentMessage) {
-        log.info("记录支付失败统计: paymentMethod={}, reason={}", 
+        log.debug("记录支付失败统计: paymentMethod={}, reason={}", 
                 paymentMessage.getPaymentMethod(), paymentMessage.getStatus());
         
         // 1. 更新支付失败统计
@@ -367,7 +367,7 @@ public class PaymentMessageConsumer {
      * 记录退款统计
      */
     private void recordRefund(PaymentMessage paymentMessage) {
-        log.info("记录退款统计: paymentMethod={}, amount={}", 
+        log.debug("记录退款统计: paymentMethod={}, amount={}", 
                 paymentMessage.getPaymentMethod(), paymentMessage.getAmount());
         
         // 1. 更新退款统计
@@ -379,7 +379,7 @@ public class PaymentMessageConsumer {
      * 触发支付后续流程
      */
     private void triggerPostPaymentProcesses(PaymentMessage paymentMessage) {
-        log.info("触发支付后续流程: orderId={}", paymentMessage.getOrderId());
+        log.debug("触发支付后续流程: orderId={}", paymentMessage.getOrderId());
         
         // 1. 自动发货流程（对于虚拟商品）
         // 2. 积分奖励流程

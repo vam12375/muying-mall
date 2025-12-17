@@ -223,7 +223,7 @@ public class AdminController {
             // 如果文件已存在，先删除旧文件（支持覆盖）
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
-                log.info("删除旧文件: {}", filePath);
+                log.debug("删除旧文件: {}", filePath);
             }
 
             // 保存文件
@@ -448,7 +448,7 @@ public class AdminController {
             @RequestParam(required = false) String operationResult) {
 
         try {
-            log.info(
+            log.debug(
                     "获取系统日志请求 - page: {}, size: {}, startTime: {}, endTime: {}, operationType: {}, module: {}, operationResult: {}",
                     page, size, startTime, endTime, operationType, module, operationResult);
 
@@ -458,11 +458,11 @@ public class AdminController {
 
             if (startTime != null && !startTime.isEmpty()) {
                 startDateTime = java.time.LocalDateTime.parse(startTime + "T00:00:00");
-                log.info("解析开始时间: {}", startDateTime);
+                log.debug("解析开始时间: {}", startDateTime);
             }
             if (endTime != null && !endTime.isEmpty()) {
                 endDateTime = java.time.LocalDateTime.parse(endTime + "T23:59:59");
-                log.info("解析结束时间: {}", endDateTime);
+                log.debug("解析结束时间: {}", endDateTime);
             }
 
             // 查询操作记录
@@ -470,7 +470,7 @@ public class AdminController {
                     .getOperationLogsPage(page, size, null, startDateTime, endDateTime,
                             operationType, module, operationResult);
 
-            log.info("查询结果 - total: {}, records size: {}", operationLogsPage.getTotal(),
+            log.debug("查询结果 - total: {}, records size: {}", operationLogsPage.getTotal(),
                     operationLogsPage.getRecords().size());
 
             Map<String, Object> result = new HashMap<>();

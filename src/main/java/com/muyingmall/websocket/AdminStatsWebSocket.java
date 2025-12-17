@@ -111,7 +111,7 @@ public class AdminStatsWebSocket {
             // 4. 检查是否已有连接，如有则关闭旧连接
             AdminStatsWebSocket existingWs = webSocketMap.get(adminId);
             if (existingWs != null) {
-                log.info("管理员{}已有连接，关闭旧连接", adminId);
+                log.debug("管理员{}已有连接，关闭旧连接", adminId);
                 try {
                     existingWs.session.close(new CloseReason(
                         CloseReason.CloseCodes.NORMAL_CLOSURE, 
@@ -127,7 +127,7 @@ public class AdminStatsWebSocket {
             this.adminId = adminId;
             webSocketMap.put(adminId, this);
 
-            log.info("管理员{}连接WebSocket成功，当前在线人数为：{}", adminId, getOnlineCount());
+            log.debug("管理员{}连接WebSocket成功，当前在线人数为：{}", adminId, getOnlineCount());
 
             // 发送连接成功消息
             Map<String, Object> successMessage = Map.of(
@@ -158,7 +158,7 @@ public class AdminStatsWebSocket {
         // 从map中删除
         webSocketMap.remove(adminId);
 
-        log.info("管理员{}断开WebSocket连接，当前在线人数为：{}", adminId, getOnlineCount());
+        log.debug("管理员{}断开WebSocket连接，当前在线人数为：{}", adminId, getOnlineCount());
     }
 
     /**
@@ -168,7 +168,7 @@ public class AdminStatsWebSocket {
      */
     @OnMessage
     public void onMessage(String message, Session session) {
-        log.info("收到来自管理员{}的信息：{}", adminId, message);
+        log.debug("收到来自管理员{}的信息：{}", adminId, message);
 
         try {
             // 解析消息
@@ -181,7 +181,7 @@ public class AdminStatsWebSocket {
             } else if ("requestStats".equals(type)) {
                 // 请求统计数据
                 // 这里可以触发统计数据的推送
-                log.info("管理员{}请求统计数据", adminId);
+                log.debug("管理员{}请求统计数据", adminId);
             }
         } catch (Exception e) {
             log.error("处理WebSocket消息失败", e);
@@ -207,7 +207,7 @@ public class AdminStatsWebSocket {
      * 群发自定义消息
      */
     public static void sendInfo(String message, @PathParam("adminId") String adminId) throws IOException {
-        log.info("推送消息到管理员{}，推送内容：{}", adminId, message);
+        log.debug("推送消息到管理员{}，推送内容：{}", adminId, message);
 
         AdminStatsWebSocket webSocket = webSocketMap.get(adminId);
         if (webSocket != null) {

@@ -1,14 +1,19 @@
 package com.muyingmall.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import jakarta.annotation.PostConstruct;
+import java.io.File;
+
 /**
  * Web配置类
  */
+@Slf4j
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -19,57 +24,95 @@ public class WebConfig implements WebMvcConfigurer {
     private String fileAccessUrl;
 
     /**
+     * 启动时打印配置信息
+     */
+    @PostConstruct
+    public void init() {
+        log.debug("【WebConfig】upload.path 配置值: {}", uploadPath);
+        log.debug("【WebConfig】file.access.url 配置值: {}", fileAccessUrl);
+        
+        // 验证路径是否存在
+        File productsDir = new File(uploadPath + "/products");
+        log.debug("【WebConfig】products 目录是否存在: {}, 路径: {}", productsDir.exists(), productsDir.getAbsolutePath());
+        
+        if (productsDir.exists()) {
+            File[] files = productsDir.listFiles();
+            log.debug("【WebConfig】products 目录文件数量: {}", files != null ? files.length : 0);
+        }
+    }
+
+    /**
+     * 获取 Windows 兼容的文件路径 URI
+     * 将路径转换为 file:/// 格式，确保 Windows 兼容性
+     */
+    private String getFileLocation(String subPath) {
+        // 确保路径使用正斜杠，并添加 file:/// 前缀（Windows 需要三个斜杠）
+        String normalizedPath = uploadPath.replace("\\", "/");
+        if (!normalizedPath.endsWith("/")) {
+            normalizedPath += "/";
+        }
+        String location = "file:///" + normalizedPath + subPath + "/";
+        log.debug("【WebConfig】资源路径映射: {} -> {}", subPath, location);
+        return location;
+    }
+
+    /**
      * 配置静态资源映射
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        String productsLocation = getFileLocation("products");
+        log.debug("【静态资源配置】/static/products/** -> {}", productsLocation);
+        
         // 配置头像文件的访问路径
         registry.addResourceHandler("/avatars/**")
-                .addResourceLocations("file:" + uploadPath + "/avatars/");
+                .addResourceLocations(getFileLocation("avatars"));
 
         // 配置评论图片的访问路径
         registry.addResourceHandler("/comment/**")
-                .addResourceLocations("file:" + uploadPath + "/comment/");
+                .addResourceLocations(getFileLocation("comment"));
 
-        // 配置商品图片的访问路径（修改为/product-images/避免与API路径冲突）
+        // 配置商品图片的访问路径
         registry.addResourceHandler("/product-images/**")
-                .addResourceLocations("file:" + uploadPath + "/products/");
+                .addResourceLocations(productsLocation);
         
-        // 兼容旧路径（仅用于静态文件，不会影响API）
+        // 配置静态图片访问路径 - 使用 /static 前缀（注意：必须在通配 /static/** 之前注册）
         registry.addResourceHandler("/static/products/**")
-                .addResourceLocations("file:" + uploadPath + "/products/");
-
-        // 配置上传文件的访问路径
-        registry.addResourceHandler("/upload/**")
-                .addResourceLocations("file:" + uploadPath + "/");
-
-        // 配置育儿圈上传图片的访问路径
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/");
-
-        // 配置静态图片访问路径 - 使用 /static 前缀避免与 API Controller 冲突
-        registry.addResourceHandler("/static/products/**")
-                .addResourceLocations("file:" + uploadPath + "/products/");
+                .addResourceLocations(productsLocation);
         
         // 配置品牌图片访问路径
         registry.addResourceHandler("/static/brands/**")
-                .addResourceLocations("file:" + uploadPath + "/brands/");
+                .addResourceLocations(getFileLocation("brands"));
         
         // 配置分类图标访问路径
         registry.addResourceHandler("/static/categorys/**")
-                .addResourceLocations("file:" + uploadPath + "/categorys/");
+                .addResourceLocations(getFileLocation("categorys"));
         
         // 配置详情图片访问路径
         registry.addResourceHandler("/static/details/**")
-                .addResourceLocations("file:" + uploadPath + "/details/");
+                .addResourceLocations(getFileLocation("details"));
         
         // 配置商品图片访问路径（使用独立路径避免与API冲突）
         registry.addResourceHandler("/images/products/**")
-                .addResourceLocations("file:" + uploadPath + "/products/");
+                .addResourceLocations(productsLocation);
 
-        // 其他静态资源
-        registry.addResourceHandler("/static/**")
-                .addResourceLocations("classpath:/static/");
+        // 配置上传文件的访问路径
+        registry.addResourceHandler("/upload/**")
+                .addResourceLocations(getFileLocation(""));
+
+        // 配置育儿圈上传图片的访问路径
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:///uploads/");
+
+        // 配置育儿圈图片访问路径（支持日期子目录）
+        registry.addResourceHandler("/static/circle/**")
+                .addResourceLocations(getFileLocation("circle"));
+
+        // 配置头像图片访问路径
+        registry.addResourceHandler("/static/avatars/**")
+                .addResourceLocations(getFileLocation("avatars"));
+
+        // 注意：classpath:/static/ 的通配映射已移除，避免覆盖上面的具体路径配置
     }
 
     /**

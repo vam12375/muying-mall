@@ -43,7 +43,7 @@ public class LogisticsEventListener {
         OrderEvent orderEvent = event.getEvent();
         OrderStatus newStatus = event.getNewStatus();
 
-        log.info("接收到订单状态变更事件: orderId={}, event={}, newStatus={}, operator={}",
+        log.debug("接收到订单状态变更事件: orderId={}, event={}, newStatus={}, operator={}",
                 order.getOrderId(), orderEvent, newStatus, event.getOperator());
 
         try {
@@ -66,13 +66,13 @@ public class LogisticsEventListener {
      * 自动创建物流记录和初始轨迹
      */
     private void handleOrderShipped(Order order, String operator) {
-        log.info("处理订单发货事件: orderId={}, operator={}", order.getOrderId(), operator);
+        log.debug("处理订单发货事件: orderId={}, operator={}", order.getOrderId(), operator);
 
         try {
             // 检查是否已存在物流记录
             Logistics existingLogistics = logisticsService.getLogisticsByOrderId(order.getOrderId());
             if (existingLogistics != null) {
-                log.info("订单 {} 已存在物流记录，跳过创建", order.getOrderId());
+                log.debug("订单 {} 已存在物流记录，跳过创建", order.getOrderId());
                 return;
             }
 
@@ -88,12 +88,12 @@ public class LogisticsEventListener {
             boolean logisticsCreated = logisticsService.createLogistics(logistics);
 
             if (logisticsCreated) {
-                log.info("成功创建物流记录: orderId={}, logisticsId={}", order.getOrderId(), logistics.getId());
+                log.debug("成功创建物流记录: orderId={}, logisticsId={}", order.getOrderId(), logistics.getId());
 
                 // 创建初始物流轨迹
                 boolean trackCreated = logisticsTrackService.createInitialTrack(logistics);
                 if (trackCreated) {
-                    log.info("成功创建初始物流轨迹: orderId={}, logisticsId={}", order.getOrderId(), logistics.getId());
+                    log.debug("成功创建初始物流轨迹: orderId={}, logisticsId={}", order.getOrderId(), logistics.getId());
 
                     // 自动生成标准物流轨迹
                     generateStandardLogisticsTracks(logistics, operator);
@@ -113,7 +113,7 @@ public class LogisticsEventListener {
      * 更新物流状态为已送达
      */
     private void handleOrderReceived(Order order, String operator) {
-        log.info("处理订单收货事件: orderId={}, operator={}", order.getOrderId(), operator);
+        log.debug("处理订单收货事件: orderId={}, operator={}", order.getOrderId(), operator);
 
         try {
             // 获取物流记录
@@ -129,12 +129,12 @@ public class LogisticsEventListener {
             boolean updated = logisticsService.updateById(logistics);
 
             if (updated) {
-                log.info("成功更新物流状态为已送达: orderId={}, logisticsId={}", order.getOrderId(), logistics.getId());
+                log.debug("成功更新物流状态为已送达: orderId={}, logisticsId={}", order.getOrderId(), logistics.getId());
 
                 // 创建送达轨迹
                 boolean trackCreated = logisticsTrackService.createStatusTrack(logistics, operator, "用户确认收货");
                 if (trackCreated) {
-                    log.info("成功创建送达轨迹: orderId={}, logisticsId={}", order.getOrderId(), logistics.getId());
+                    log.debug("成功创建送达轨迹: orderId={}, logisticsId={}", order.getOrderId(), logistics.getId());
                 } else {
                     log.error("创建送达轨迹失败: orderId={}, logisticsId={}", order.getOrderId(), logistics.getId());
                 }
@@ -190,13 +190,13 @@ public class LogisticsEventListener {
      * 自动生成标准物流轨迹
      */
     private void generateStandardLogisticsTracks(Logistics logistics, String operator) {
-        log.info("开始生成标准物流轨迹: logisticsId={}", logistics.getId());
+        log.debug("开始生成标准物流轨迹: logisticsId={}", logistics.getId());
 
         try {
             // 调用物流服务的自动生成轨迹方法
             boolean generated = logisticsService.generateStandardTracks(logistics.getId(), operator);
             if (generated) {
-                log.info("成功生成标准物流轨迹: logisticsId={}", logistics.getId());
+                log.debug("成功生成标准物流轨迹: logisticsId={}", logistics.getId());
             } else {
                 log.warn("生成标准物流轨迹失败: logisticsId={}", logistics.getId());
             }

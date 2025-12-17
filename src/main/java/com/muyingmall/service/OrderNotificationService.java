@@ -30,7 +30,7 @@ public class OrderNotificationService {
      */
     public void notifyOrderStatusChange(Integer orderId, Integer userId, String oldStatus, String newStatus, String reason) {
         try {
-            log.info("发送订单状态变更通知: orderId={}, userId={}, oldStatus={}, newStatus={}, reason={}", 
+            log.debug("发送订单状态变更通知: orderId={}, userId={}, oldStatus={}, newStatus={}, reason={}", 
                     orderId, userId, oldStatus, newStatus, reason);
             
             // 构建通知消息
@@ -50,7 +50,7 @@ public class OrderNotificationService {
             // 同时发布到全局频道
             redisTemplate.convertAndSend("order_notifications:all", notification);
             
-            log.info("订单状态变更通知发送成功: channel={}", channel);
+            log.debug("订单状态变更通知发送成功: channel={}", channel);
             
         } catch (Exception e) {
             log.error("发送订单状态变更通知失败: orderId={}, userId={}, error={}", 
@@ -68,7 +68,7 @@ public class OrderNotificationService {
      */
     public void notifyPaymentSuccess(Integer orderId, Integer userId, String paymentMethod, Double amount) {
         try {
-            log.info("发送支付成功通知: orderId={}, userId={}, paymentMethod={}, amount={}", 
+            log.debug("发送支付成功通知: orderId={}, userId={}, paymentMethod={}, amount={}", 
                     orderId, userId, paymentMethod, amount);
             
             // 构建通知消息
@@ -87,7 +87,7 @@ public class OrderNotificationService {
             // 同时发布到全局频道
             redisTemplate.convertAndSend("payment_notifications:all", notification);
             
-            log.info("支付成功通知发送成功: channel={}", channel);
+            log.debug("支付成功通知发送成功: channel={}", channel);
             
         } catch (Exception e) {
             log.error("发送支付成功通知失败: orderId={}, userId={}, error={}", 
@@ -104,7 +104,7 @@ public class OrderNotificationService {
      */
     public void notifyCacheRefresh(Integer orderId, Integer userId, String cacheType) {
         try {
-            log.info("发送缓存刷新通知: orderId={}, userId={}, cacheType={}", 
+            log.debug("发送缓存刷新通知: orderId={}, userId={}, cacheType={}", 
                     orderId, userId, cacheType);
             
             // 构建通知消息
@@ -119,7 +119,7 @@ public class OrderNotificationService {
             String channel = "cache_notifications:" + userId;
             redisTemplate.convertAndSend(channel, notification);
             
-            log.info("缓存刷新通知发送成功: channel={}", channel);
+            log.debug("缓存刷新通知发送成功: channel={}", channel);
             
         } catch (Exception e) {
             log.error("发送缓存刷新通知失败: orderId={}, userId={}, error={}", 
@@ -135,7 +135,7 @@ public class OrderNotificationService {
      */
     public void notifyRealTimeSync(Integer orderId, Integer userId) {
         try {
-            log.info("发送实时状态同步通知: orderId={}, userId={}", orderId, userId);
+            log.debug("发送实时状态同步通知: orderId={}, userId={}", orderId, userId);
             
             // 构建通知消息
             Map<String, Object> notification = new HashMap<>();
@@ -162,7 +162,7 @@ public class OrderNotificationService {
                     delayedNotification.put("timestamp", System.currentTimeMillis());
                     
                     redisTemplate.convertAndSend(channel, delayedNotification);
-                    log.info("延迟同步通知发送成功: orderId={}", orderId);
+                    log.debug("延迟同步通知发送成功: orderId={}", orderId);
                     
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -172,7 +172,7 @@ public class OrderNotificationService {
                 }
             }).start();
             
-            log.info("实时状态同步通知发送成功: channel={}", channel);
+            log.debug("实时状态同步通知发送成功: channel={}", channel);
             
         } catch (Exception e) {
             log.error("发送实时状态同步通知失败: orderId={}, userId={}, error={}", 

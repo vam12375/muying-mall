@@ -32,12 +32,12 @@ public class CorsConfig {
 
     @Bean
     public CorsFilter corsFilter() {
-        log.info("初始化CORS配置...");
-        log.info("允许的域: {}", allowedOrigins);
-        log.info("允许的方法: {}", allowedMethods);
-        log.info("允许的头: {}", allowedHeaders);
-        log.info("允许凭证: {}", allowCredentials);
-        log.info("最大缓存时间: {}", maxAge);
+        log.debug("初始化CORS配置...");
+        log.debug("允许的域: {}", allowedOrigins);
+        log.debug("允许的方法: {}", allowedMethods);
+        log.debug("允许的头: {}", allowedHeaders);
+        log.debug("允许凭证: {}", allowCredentials);
+        log.debug("最大缓存时间: {}", maxAge);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();

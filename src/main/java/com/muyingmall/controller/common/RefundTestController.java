@@ -93,7 +93,7 @@ public class RefundTestController {
 
         try {
             RefundEvent event = RefundEvent.valueOf(eventName.toUpperCase());
-            log.info("手动触发退款状态事件: refundId={}, event={}, operatorType={}, operatorName={}, reason={}",
+            log.debug("手动触发退款状态事件: refundId={}, event={}, operatorType={}, operatorName={}, reason={}",
                     refundId, event, operatorType, operatorName, reason);
 
             Refund refund = refundService.getById(refundId);
@@ -101,13 +101,13 @@ public class RefundTestController {
                 return Result.error("退款不存在");
             }
 
-            log.info("当前退款状态: {}", refund.getStatus());
+            log.debug("当前退款状态: {}", refund.getStatus());
 
             boolean success = refundStateService.sendEvent(refundId, event, operatorType, operatorName, 0, reason);
 
             // 重新获取状态
             refund = refundService.getById(refundId);
-            log.info("触发后状态: {}", refund.getStatus());
+            log.debug("触发后状态: {}", refund.getStatus());
 
             return Result.success(success);
         } catch (IllegalArgumentException e) {

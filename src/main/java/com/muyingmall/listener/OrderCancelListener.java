@@ -40,7 +40,7 @@ public class OrderCancelListener {
         if ((OrderEvent.CANCEL.equals(orderEvent) || OrderEvent.TIMEOUT.equals(orderEvent))
                 && OrderStatus.CANCELLED.equals(newStatus)) {
 
-            log.info("接收到订单取消事件: orderId={}, event={}, operator={}",
+            log.debug("接收到订单取消事件: orderId={}, event={}, operator={}",
                     order.getOrderId(), orderEvent, event.getOperator());
 
             // 检查订单是否使用了积分
@@ -49,7 +49,7 @@ public class OrderCancelListener {
                 Integer userId = order.getUserId();
                 String orderNo = order.getOrderNo();
 
-                log.info("订单 {} 取消，开始退还积分 {}", orderNo, pointsUsed);
+                log.debug("订单 {} 取消，开始退还积分 {}", orderNo, pointsUsed);
 
                 try {
                     // 调用积分服务，退还积分
@@ -61,7 +61,7 @@ public class OrderCancelListener {
                             "订单取消返还积分");
 
                     if (success) {
-                        log.info("订单 {} 取消，成功退还积分 {} 给用户 {}", orderNo, pointsUsed, userId);
+                        log.debug("订单 {} 取消，成功退还积分 {} 给用户 {}", orderNo, pointsUsed, userId);
                     } else {
                         log.error("订单 {} 取消，退还积分 {} 失败", orderNo, pointsUsed);
                     }
@@ -69,7 +69,7 @@ public class OrderCancelListener {
                     log.error("订单 {} 取消退还积分异常: {}", orderNo, e.getMessage(), e);
                 }
             } else {
-                log.info("订单 {} 取消，未使用积分，无需退还", order.getOrderNo());
+                log.debug("订单 {} 取消，未使用积分，无需退还", order.getOrderNo());
             }
         }
     }

@@ -107,7 +107,7 @@ public class MessageProducerService {
             return;
         }
 
-        log.info("开始发送订单消息: orderId={}, eventType={}, userId={}", 
+        log.debug("开始发送订单消息: orderId={}, eventType={}, userId={}", 
                 message.getOrderId(), message.getEventType(), message.getUserId());
 
         boolean rabbitmqSuccess = false;
@@ -117,7 +117,7 @@ public class MessageProducerService {
         if (shouldUseRabbitMQ) {
             rabbitmqSuccess = sendOrderMessageToRabbitMQ(message);
         } else {
-            log.info("RabbitMQ不可用，直接使用Redis通知: orderId={}", message.getOrderId());
+            log.debug("RabbitMQ不可用，直接使用Redis通知: orderId={}", message.getOrderId());
         }
 
         // 发送Redis通知（保留现有机制）
@@ -140,7 +140,7 @@ public class MessageProducerService {
             return;
         }
 
-        log.info("开始发送支付消息: paymentId={}, eventType={}, orderId={}, userId={}", 
+        log.debug("开始发送支付消息: paymentId={}, eventType={}, orderId={}, userId={}", 
                 message.getPaymentId(), message.getEventType(), message.getOrderId(), message.getUserId());
 
         boolean rabbitmqSuccess = false;
@@ -150,7 +150,7 @@ public class MessageProducerService {
         if (shouldUseRabbitMQ) {
             rabbitmqSuccess = sendPaymentMessageToRabbitMQ(message);
         } else {
-            log.info("RabbitMQ不可用，直接使用Redis通知: paymentId={}", message.getPaymentId());
+            log.debug("RabbitMQ不可用，直接使用Redis通知: paymentId={}", message.getPaymentId());
         }
 
         // 发送Redis通知（保留现有机制）
@@ -165,11 +165,11 @@ public class MessageProducerService {
      */
     private void logOrderMessageResult(OrderMessage message, boolean shouldUseRabbitMQ, boolean rabbitmqSuccess) {
         if (shouldUseRabbitMQ && rabbitmqSuccess) {
-            log.info("订单消息发送成功: orderId={}, 使用RabbitMQ+Redis混合模式", message.getOrderId());
+            log.debug("订单消息发送成功: orderId={}, 使用RabbitMQ+Redis混合模式", message.getOrderId());
         } else if (shouldUseRabbitMQ && !rabbitmqSuccess && rabbitMQProperties.isFallbackToSync()) {
             log.warn("订单消息RabbitMQ发送失败，已回退到Redis通知: orderId={}", message.getOrderId());
         } else if (!shouldUseRabbitMQ) {
-            log.info("订单消息发送成功: orderId={}, 使用Redis通知模式", message.getOrderId());
+            log.debug("订单消息发送成功: orderId={}, 使用Redis通知模式", message.getOrderId());
         }
     }
 
@@ -178,11 +178,11 @@ public class MessageProducerService {
      */
     private void logPaymentMessageResult(PaymentMessage message, boolean shouldUseRabbitMQ, boolean rabbitmqSuccess) {
         if (shouldUseRabbitMQ && rabbitmqSuccess) {
-            log.info("支付消息发送成功: paymentId={}, 使用RabbitMQ+Redis混合模式", message.getPaymentId());
+            log.debug("支付消息发送成功: paymentId={}, 使用RabbitMQ+Redis混合模式", message.getPaymentId());
         } else if (shouldUseRabbitMQ && !rabbitmqSuccess && rabbitMQProperties.isFallbackToSync()) {
             log.warn("支付消息RabbitMQ发送失败，已回退到Redis通知: paymentId={}", message.getPaymentId());
         } else if (!shouldUseRabbitMQ) {
-            log.info("支付消息发送成功: paymentId={}, 使用Redis通知模式", message.getPaymentId());
+            log.debug("支付消息发送成功: paymentId={}, 使用Redis通知模式", message.getPaymentId());
         }
     }
 
@@ -212,7 +212,7 @@ public class MessageProducerService {
 
 
 
-                log.info("订单消息RabbitMQ发送成功: orderId={}, routingKey={}", 
+                log.debug("订单消息RabbitMQ发送成功: orderId={}, routingKey={}", 
                         message.getOrderId(), routingKey);
                 return true;
 
@@ -271,7 +271,7 @@ public class MessageProducerService {
 
 
 
-                log.info("支付消息RabbitMQ发送成功: paymentId={}, routingKey={}", 
+                log.debug("支付消息RabbitMQ发送成功: paymentId={}, routingKey={}", 
                         message.getPaymentId(), routingKey);
                 return true;
 

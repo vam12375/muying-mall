@@ -23,6 +23,7 @@ import com.muyingmall.mapper.UserMapper;
 import com.muyingmall.service.CommentService;
 import com.muyingmall.service.CommentTagService;
 import com.muyingmall.service.CommentRewardConfigService;
+import com.muyingmall.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -61,6 +62,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     private final CommentTagRelationMapper commentTagRelationMapper;
     private final CommentTagService commentTagService;
     private final CommentRewardConfigService commentRewardConfigService;
+    private final RedisUtil redisUtil;
+    
+    // 评论缓存键前缀和过期时间
+    private static final String COMMENT_CACHE_PREFIX = "comment:product:";
+    private static final long COMMENT_CACHE_EXPIRE = 300L; // 5分钟
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -109,11 +115,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         if (comment.getStatus() == null) {
             if (comment.getRating() < 3) {
                 comment.setStatus(0); // 待审核
-                log.info("评价评分低于3星，自动进入待审核状态: rating={}, userId={}, productId={}", 
+                log.debug("评价评分低于3星，自动进入待审核状态: rating={}, userId={}, productId={}", 
                     comment.getRating(), comment.getUserId(), comment.getProductId());
             } else {
                 comment.setStatus(1); // 自动通过
-                log.info("评价评分达到3星及以上，自动通过审核: rating={}, userId={}, productId={}", 
+                log.debug("评价评分达到3星及以上，自动通过审核: rating={}, userId={}, productId={}", 
                     comment.getRating(), comment.getUserId(), comment.getProductId());
             }
         }
@@ -127,19 +133,19 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
             // 计算并发放奖励
             try {
-                log.info("评价创建成功，准备计算并发放奖励: commentId={}, userId={}",
+                log.debug("评价创建成功，准备计算并发放奖励: commentId={}, userId={}",
                         comment.getCommentId(), comment.getUserId());
                 Map<String, Object> rewardResult = commentRewardConfigService.grantReward(comment);
-                log.info("用户 {} 评价 {} 奖励发放结果: {}",
+                log.debug("用户 {} 评价 {} 奖励发放结果: {}",
                         comment.getUserId(), comment.getCommentId(), rewardResult);
 
                 // 检查奖励发放是否成功
                 Boolean success = (Boolean) rewardResult.get("success");
                 if (success != null && success) {
-                    log.info("奖励发放成功: commentId={}, userId={}, reward={}",
+                    log.debug("奖励发放成功: commentId={}, userId={}, reward={}",
                             comment.getCommentId(), comment.getUserId(), rewardResult.get("totalReward"));
                 } else {
-                    log.warn("奖励发放失败或无奖励: commentId={}, userId={}, result={}",
+                    log.debug("奖励发放失败或无奖励: commentId={}, userId={}, result={}",
                             comment.getCommentId(), comment.getUserId(), rewardResult);
                 }
             } catch (Exception e) {
@@ -154,20 +160,18 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createCommentWithTags(Comment comment, List<Integer> tagIds) {
-        log.info("开始创建带标签的评价, comment={}, tagIds={}", comment, tagIds);
+        log.debug("开始创建带标签的评价, commentId将生成, tagIds={}", tagIds);
 
         try {
             // 创建评价
             boolean result = createComment(comment);
-            log.info("评价创建结果: {}, commentId={}", result, comment.getCommentId());
+            log.debug("评价创建结果: {}, commentId={}", result, comment.getCommentId());
 
             // 如果评价创建成功且有标签，添加标签关联
             if (result) {
                 if (!CollectionUtils.isEmpty(tagIds)) {
-                    log.info("开始关联评价标签, commentId={}, tagIds={}", comment.getCommentId(), tagIds);
+                    log.debug("开始关联评价标签, commentId={}, tagIds={}", comment.getCommentId(), tagIds);
                     addCommentTags(comment.getCommentId(), tagIds);
-                } else {
-                    log.info("没有标签需要关联, commentId={}", comment.getCommentId());
                 }
             } else {
                 log.error("评价创建失败，无法关联标签");
@@ -182,7 +186,18 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public IPage<Comment> getProductCommentPage(Integer productId, Integer page, Integer size) {
+        // 优化：添加缓存支持，减少数据库查询
+        String cacheKey = COMMENT_CACHE_PREFIX + productId + ":p" + page + "_s" + size;
+        
+        // 尝试从缓存获取
+        Object cached = redisUtil.get(cacheKey);
+        if (cached != null) {
+            log.debug("从缓存获取商品评论: productId={}, page={}", productId, page);
+            return (IPage<Comment>) cached;
+        }
+        
         Page<Comment> pageParam = new Page<>(page, size);
 
         LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
@@ -217,6 +232,12 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                     }
                 });
             }
+        }
+
+        // 缓存结果
+        if (commentPage.getRecords() != null) {
+            redisUtil.set(cacheKey, commentPage, COMMENT_CACHE_EXPIRE);
+            log.debug("缓存商品评论: productId={}, page={}, 过期时间={}秒", productId, page, COMMENT_CACHE_EXPIRE);
         }
 
         return commentPage;
@@ -327,7 +348,18 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Map<String, Object> getProductRatingStats(Integer productId) {
+        // 优化：添加缓存支持，减少数据库查询
+        String cacheKey = COMMENT_CACHE_PREFIX + productId + ":stats";
+        
+        // 尝试从缓存获取
+        Object cached = redisUtil.get(cacheKey);
+        if (cached != null) {
+            log.debug("从缓存获取商品评分统计: productId={}", productId);
+            return (Map<String, Object>) cached;
+        }
+        
         Map<String, Object> result = new HashMap<>();
 
         // 获取平均评分
@@ -386,6 +418,10 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         
         result.put("tags", tags);
         result.put("tagCounts", tagCounts);
+
+        // 缓存结果
+        redisUtil.set(cacheKey, result, COMMENT_CACHE_EXPIRE);
+        log.debug("缓存商品评分统计: productId={}, 过期时间={}秒", productId, COMMENT_CACHE_EXPIRE);
 
         return result;
     }
@@ -761,7 +797,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         }
 
         try {
-            log.info("开始添加评价标签, commentId={}, tagIds={}", commentId, tagIds);
+            log.debug("开始添加评价标签, commentId={}, tagIds={}", commentId, tagIds);
 
             // 检查标签ID是否有效
             for (Integer tagId : tagIds) {
@@ -773,7 +809,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
             // 批量插入标签关联
             int insertCount = commentTagRelationMapper.batchInsert(commentId, tagIds);
-            log.info("批量插入评价标签关系成功, commentId={}, 插入数量={}", commentId, insertCount);
+            log.debug("批量插入评价标签关系成功, commentId={}, 插入数量={}", commentId, insertCount);
 
             // 更新标签使用次数
             for (Integer tagId : tagIds) {
@@ -803,7 +839,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             return false;
         }
 
-        log.info("开始更新评价标签, commentId={}, tagIds={}", commentId, tagIds);
+        log.debug("开始更新评价标签, commentId={}, tagIds={}", commentId, tagIds);
 
         // 检查评价是否存在
         Comment comment = this.getById(commentId);
@@ -819,18 +855,18 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                     .map(CommentTag::getTagId)
                     .collect(Collectors.toList());
 
-            log.info("当前评价标签: commentId={}, 现有标签={}", commentId, currentTagIds);
+            log.debug("当前评价标签: commentId={}, 现有标签={}", commentId, currentTagIds);
 
             // 检查是否需要更新
             boolean needsUpdate = tagIds == null || tagIds.size() != currentTagIds.size() ||
                     !new HashSet<>(tagIds).equals(new HashSet<>(currentTagIds));
 
             if (!needsUpdate) {
-                log.info("标签没有变化，无需更新: commentId={}", commentId);
+                log.debug("标签没有变化，无需更新: commentId={}", commentId);
                 return true;
             }
 
-            log.info("开始删除评价现有标签: commentId={}", commentId);
+            log.debug("开始删除评价现有标签: commentId={}", commentId);
             // 删除所有现有标签关联
             boolean removeResult = removeAllCommentTags(commentId);
             if (!removeResult && !currentTags.isEmpty()) {
@@ -840,17 +876,17 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
             // 如果有新标签，添加新的标签关联
             if (tagIds != null && !tagIds.isEmpty()) {
-                log.info("开始添加新标签: commentId={}, 新标签={}", commentId, tagIds);
+                log.debug("开始添加新标签: commentId={}, 新标签={}", commentId, tagIds);
                 boolean addResult = addCommentTags(commentId, tagIds);
                 if (!addResult) {
                     log.error("添加新标签失败: commentId={}, tagIds={}", commentId, tagIds);
                     throw new BusinessException("添加新标签失败");
                 }
             } else {
-                log.info("没有新标签需要添加: commentId={}", commentId);
+                log.debug("没有新标签需要添加: commentId={}", commentId);
             }
 
-            log.info("评价标签更新成功: commentId={}", commentId);
+            log.debug("评价标签更新成功: commentId={}", commentId);
             return true;
         } catch (Exception e) {
             log.error("更新评价标签失败: commentId={}, error={}", commentId, e.getMessage(), e);
@@ -892,17 +928,17 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         List<CommentTag> currentTags = getCommentTags(commentId);
 
         if (currentTags.isEmpty()) {
-            log.info("评价没有标签，无需删除, commentId={}", commentId);
+            log.debug("评价没有标签，无需删除, commentId={}", commentId);
             return true;
         }
 
-        log.info("开始删除评价所有标签, commentId={}, 标签数量={}", commentId, currentTags.size());
+        log.debug("开始删除评价所有标签, commentId={}, 标签数量={}", commentId, currentTags.size());
 
         // 记录标签IDs用于日志
         List<Integer> tagIds = currentTags.stream()
                 .map(CommentTag::getTagId)
                 .collect(Collectors.toList());
-        log.info("要删除的标签IDs: {}", tagIds);
+        log.debug("要删除的标签IDs: {}", tagIds);
 
         // 重试机制
         int maxRetries = 3;
@@ -914,7 +950,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             try {
                 // 删除所有标签关联
                 int result = commentTagRelationMapper.deleteByCommentId(commentId);
-                log.info("删除评价标签关联结果: commentId={}, 影响行数={}", commentId, result);
+                log.debug("删除评价标签关联结果: commentId={}, 影响行数={}", commentId, result);
 
                 if (result >= 0) { // 删除成功，即使没有实际删除任何行
                     success = true;

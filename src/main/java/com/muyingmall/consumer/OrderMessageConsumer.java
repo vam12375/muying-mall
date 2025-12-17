@@ -43,7 +43,7 @@ public class OrderMessageConsumer {
                                  @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         long startTime = System.currentTimeMillis();
         
-        log.info("接收到订单创建消息: orderId={}, orderNo={}, userId={}", 
+        log.debug("接收到订单创建消息: orderId={}, orderNo={}, userId={}", 
                 orderMessage.getOrderId(), orderMessage.getOrderNo(), orderMessage.getUserId());
         
 
@@ -66,7 +66,7 @@ public class OrderMessageConsumer {
             
             long processingTime = System.currentTimeMillis() - startTime;
             
-            log.info("订单创建消息处理完成: orderId={}, 处理时间: {}ms", orderMessage.getOrderId(), processingTime);
+            log.debug("订单创建消息处理完成: orderId={}, 处理时间: {}ms", orderMessage.getOrderId(), processingTime);
             
         } catch (Exception e) {
             log.error("处理订单创建消息失败: orderId={}, error={}", 
@@ -97,7 +97,7 @@ public class OrderMessageConsumer {
                                        @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         long startTime = System.currentTimeMillis();
         
-        log.info("接收到订单状态变更消息: orderId={}, oldStatus={}, newStatus={}", 
+        log.debug("接收到订单状态变更消息: orderId={}, oldStatus={}, newStatus={}", 
                 orderMessage.getOrderId(), orderMessage.getOldStatus(), orderMessage.getNewStatus());
         
 
@@ -120,7 +120,7 @@ public class OrderMessageConsumer {
             
             long processingTime = System.currentTimeMillis() - startTime;
             
-            log.info("订单状态变更消息处理完成: orderId={}, newStatus={}, 处理时间: {}ms", 
+            log.debug("订单状态变更消息处理完成: orderId={}, newStatus={}, 处理时间: {}ms", 
                     orderMessage.getOrderId(), orderMessage.getNewStatus(), processingTime);
             
         } catch (Exception e) {
@@ -145,7 +145,7 @@ public class OrderMessageConsumer {
      */
     private void processOrderCreation(OrderMessage orderMessage) {
         try {
-            log.info("开始处理订单创建业务逻辑: orderId={}", orderMessage.getOrderId());
+            log.debug("开始处理订单创建业务逻辑: orderId={}", orderMessage.getOrderId());
             
             // 1. 库存扣减确认（如果需要）
             // 注意：库存扣减通常在订单创建时已经完成，这里可能是二次确认或者处理异步库存操作
@@ -154,7 +154,7 @@ public class OrderMessageConsumer {
             if (orderMessage.getTotalAmount() != null) {
                 // 根据订单金额计算积分（这里是示例逻辑）
                 // 实际业务中可能需要调用积分服务
-                log.info("为订单计算积分: orderId={}, amount={}", 
+                log.debug("为订单计算积分: orderId={}, amount={}", 
                         orderMessage.getOrderId(), orderMessage.getTotalAmount());
             }
             
@@ -163,13 +163,13 @@ public class OrderMessageConsumer {
             
             // 4. 发送订单创建通知
             // 可以发送邮件、短信或推送通知给用户
-            log.info("发送订单创建通知: userId={}, orderId={}", 
+            log.debug("发送订单创建通知: userId={}, orderId={}", 
                     orderMessage.getUserId(), orderMessage.getOrderId());
             
             // 5. 更新相关统计数据
             // 更新用户订单统计、商品销量统计等
             
-            log.info("订单创建业务逻辑处理完成: orderId={}", orderMessage.getOrderId());
+            log.debug("订单创建业务逻辑处理完成: orderId={}", orderMessage.getOrderId());
             
         } catch (Exception e) {
             log.error("处理订单创建业务逻辑失败: orderId={}", orderMessage.getOrderId(), e);
@@ -184,7 +184,7 @@ public class OrderMessageConsumer {
      */
     private void processOrderStatusChange(OrderMessage orderMessage) {
         try {
-            log.info("开始处理订单状态变更业务逻辑: orderId={}, oldStatus={}, newStatus={}", 
+            log.debug("开始处理订单状态变更业务逻辑: orderId={}, oldStatus={}, newStatus={}", 
                     orderMessage.getOrderId(), orderMessage.getOldStatus(), orderMessage.getNewStatus());
             
             String newStatus = orderMessage.getNewStatus();
@@ -212,11 +212,11 @@ public class OrderMessageConsumer {
                     handleOrderCompleted(orderMessage);
                     break;
                 default:
-                    log.info("订单状态变更，无需特殊处理: orderId={}, status={}", 
+                    log.debug("订单状态变更，无需特殊处理: orderId={}, status={}", 
                             orderMessage.getOrderId(), newStatus);
             }
             
-            log.info("订单状态变更业务逻辑处理完成: orderId={}, newStatus={}", 
+            log.debug("订单状态变更业务逻辑处理完成: orderId={}, newStatus={}", 
                     orderMessage.getOrderId(), newStatus);
             
         } catch (Exception e) {
@@ -230,7 +230,7 @@ public class OrderMessageConsumer {
      * 处理订单支付完成
      */
     private void handleOrderPaid(OrderMessage orderMessage) {
-        log.info("处理订单支付完成: orderId={}", orderMessage.getOrderId());
+        log.debug("处理订单支付完成: orderId={}", orderMessage.getOrderId());
         // 1. 通知仓库准备发货
         // 2. 发送支付成功通知给用户
         // 3. 更新库存状态（从预扣减转为实际扣减）
@@ -240,7 +240,7 @@ public class OrderMessageConsumer {
      * 处理订单发货
      */
     private void handleOrderShipped(OrderMessage orderMessage) {
-        log.info("处理订单发货: orderId={}", orderMessage.getOrderId());
+        log.debug("处理订单发货: orderId={}", orderMessage.getOrderId());
         // 1. 发送发货通知给用户
         // 2. 开始物流跟踪
         // 3. 更新预计送达时间
@@ -250,7 +250,7 @@ public class OrderMessageConsumer {
      * 处理订单送达
      */
     private void handleOrderDelivered(OrderMessage orderMessage) {
-        log.info("处理订单送达: orderId={}", orderMessage.getOrderId());
+        log.debug("处理订单送达: orderId={}", orderMessage.getOrderId());
         // 1. 发送送达确认通知
         // 2. 开始售后服务期计时
         // 3. 邀请用户评价
@@ -260,7 +260,7 @@ public class OrderMessageConsumer {
      * 处理订单取消
      */
     private void handleOrderCancelled(OrderMessage orderMessage) {
-        log.info("处理订单取消: orderId={}", orderMessage.getOrderId());
+        log.debug("处理订单取消: orderId={}", orderMessage.getOrderId());
         // 1. 恢复库存
         // 2. 处理退款（如果已支付）
         // 3. 恢复优惠券（如果使用了）
@@ -271,7 +271,7 @@ public class OrderMessageConsumer {
      * 处理订单完成
      */
     private void handleOrderCompleted(OrderMessage orderMessage) {
-        log.info("处理订单完成: orderId={}", orderMessage.getOrderId());
+        log.debug("处理订单完成: orderId={}", orderMessage.getOrderId());
         // 1. 发放积分奖励
         // 2. 更新用户等级
         // 3. 生成推荐商品

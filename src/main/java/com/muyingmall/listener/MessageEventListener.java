@@ -31,7 +31,7 @@ public class MessageEventListener {
     @Async
     @EventListener
     public void handleMessageEvent(MessageEvent event) {
-        log.info("接收到消息事件: type={}, userId={}", event.getMessageType(), event.getUserId());
+        log.debug("接收到消息事件: type={}, userId={}", event.getMessageType(), event.getUserId());
 
         try {
             // 创建用户消息
@@ -42,7 +42,7 @@ public class MessageEventListener {
                     event.getContent(),
                     event.getExtra());
 
-            log.info("成功创建用户消息: messageId={}, type={}", message.getMessageId(), event.getMessageType());
+            log.debug("成功创建用户消息: messageId={}, type={}", message.getMessageId(), event.getMessageType());
         } catch (Exception e) {
             log.error("处理消息事件异常: type={}, userId={}, error={}",
                     event.getMessageType(), event.getUserId(), e.getMessage(), e);
@@ -57,7 +57,7 @@ public class MessageEventListener {
     @Async
     @EventListener
     public void handlePointsChangedEvent(PointsChangedEvent event) {
-        log.info("接收到积分变更事件: userId={}, pointsChange={}", event.getUserId(), event.getPointsChange());
+        log.debug("接收到积分变更事件: userId={}, pointsChange={}", event.getUserId(), event.getPointsChange());
 
         // 具体的积分变更消息处理逻辑
         // 此事件会被上面的通用事件处理器捕获并创建消息，这里可以添加特殊处理逻辑
@@ -71,7 +71,7 @@ public class MessageEventListener {
     @Async
     @EventListener
     public void handleOrderStatusChangedEvent(OrderStatusChangedEvent event) {
-        log.info("接收到订单状态变更事件: userId={}, orderId={}, newStatus={}",
+        log.debug("接收到订单状态变更事件: userId={}, orderId={}, newStatus={}",
                 event.getUserId(), event.getOrderId(), event.getNewStatus());
 
         // 具体的订单状态变更消息处理逻辑
@@ -86,7 +86,7 @@ public class MessageEventListener {
     @Async
     @EventListener
     public void handleShippingReminderEvent(ShippingReminderEvent event) {
-        log.info("接收到催发货事件: userId={}, orderId={}", event.getUserId(), event.getOrderId());
+        log.debug("接收到催发货事件: userId={}, orderId={}", event.getUserId(), event.getOrderId());
 
         try {
             // 1. 创建给用户的回执消息 - 这条消息会显示在用户的消息中心
@@ -107,7 +107,7 @@ public class MessageEventListener {
                     event.getContent(), // 使用事件中预先生成的消息内容
                     event.getExtra());
             
-            log.info("成功创建催发货管理员通知: messageId={}", adminMessage.getMessageId());
+            log.debug("成功创建催发货管理员通知: messageId={}", adminMessage.getMessageId());
         } catch (Exception e) {
             log.error("创建催发货消息异常: userId={}, orderId={}, error={}",
                     event.getUserId(), event.getOrderId(), e.getMessage(), e);
@@ -124,7 +124,7 @@ public class MessageEventListener {
     @Async
     @EventListener
     public void handleCheckinEvent(CheckinEvent event) {
-        log.info("接收到签到事件: userId={}, points={}, consecutiveDays={}",
+        log.debug("接收到签到事件: userId={}, points={}, consecutiveDays={}",
                 event.getUserId(), event.getPoints(), event.getConsecutiveDays());
 
         // 具体的签到消息处理逻辑

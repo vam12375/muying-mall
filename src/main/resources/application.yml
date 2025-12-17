@@ -128,16 +128,16 @@ spring:
   # Elasticsearch配置
   elasticsearch:
     uris: localhost:9200 # Elasticsearch访问地址
-    connection-timeout: 5s # 连接超时时间
-    socket-timeout: 30s # 套接字超时时间
+    connection-timeout: 15s # 连接超时时间（优化：从10s提升到15s，解决索引更新超时）
+    socket-timeout: 90s # 套接字超时时间（优化：从60s提升到90s，确保索引操作有足够时间）
     username: # 如果有认证信息，可在此处配置
     password: # 如果有认证信息，可在此处配置
     # 连接池配置 (高并发优化)
     pool:
       max-total: 100          # 最大连接数
       max-per-route: 50       # 每个路由最大连接数
-      connection-timeout: 5000  # 连接超时(毫秒)
-      socket-timeout: 30000     # Socket超时(毫秒)
+      connection-timeout: 15000  # 连接超时(毫秒) - 优化：从10s提升到15s
+      socket-timeout: 90000     # Socket超时(毫秒) - 优化：从30s提升到90s，解决索引更新超时
 
 # Elasticsearch扩展配置
 elasticsearch:
@@ -147,11 +147,19 @@ elasticsearch:
     concurrent-requests: 3    # 并发请求数
   # 搜索配置
   search:
-    cache-ttl: 60             # 搜索结果缓存时间(秒)
+    cache-ttl: 300            # 搜索结果缓存时间(秒) - 优化：从60秒提升到5分钟
+    max-result-window: 10000  # 最大结果窗口
+    default-size: 20          # 默认返回数量
   # 缓存预热配置
   warmup:
     enabled: true             # 是否启用缓存预热
     hot-keywords-count: 20    # 预热的热门关键词数量
+  # 索引配置
+  index:
+    number-of-shards: 3       # 分片数量 - 优化：根据数据量调整
+    number-of-replicas: 1     # 副本数量
+    refresh-interval: 30s     # 刷新间隔 - 优化：从1s提升到30s，减少刷新开销
+    max-result-window: 10000  # 最大结果窗口
 
 # 异步任务线程池配置
 async:
@@ -214,8 +222,14 @@ mybatis-plus:
   type-aliases-package: com.muyingmall.entity
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 优化：生产/压测环境关闭SQL日志输出，减少IO开销
+    # 开发调试时可改为 org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
     database-id: mysql
+    # 优化：启用缓存和延迟加载
+    cache-enabled: true
+    lazy-loading-enabled: true
+    default-executor-type: reuse
   global-config:
     db-config:
       id-type: auto
@@ -290,17 +304,20 @@ wechat:
     # api-v3-key已移至application-private.yml
     notify-url: http://localhost:8080/api/payment/wechat/notify
     
-# 日志配置
+# 日志配置 - 优化：压测/生产环境降低日志级别，减少IO开销
 logging:
   level:
-    com.muyingmall: debug
-    org.springframework.web: info
-    org.springframework.security: DEBUG
-    org.springframework.data.redis: info # 添加Redis日志级别配置
-    org.springframework.data.elasticsearch: WARN # 降低Elasticsearch相关日志级别
-    org.springframework.amqp: ERROR # 降低RabbitMQ日志级别，减少连接失败日志
-    org.springframework.amqp.rabbit.listener: ERROR # 降低RabbitMQ监听器日志级别
-    org.springframework.amqp.rabbit.connection: ERROR # 降低RabbitMQ连接日志级别
+    root: WARN
+    com.muyingmall: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.springframework.data.redis: WARN
+    org.springframework.data.elasticsearch: WARN
+    org.springframework.amqp: ERROR
+    org.springframework.amqp.rabbit.listener: ERROR
+    org.springframework.amqp.rabbit.connection: ERROR
+    com.baomidou.mybatisplus: WARN
+    com.zaxxer.hikari: WARN
 
 # 前端应用地址 (用于支付回调重定向)
 frontend:

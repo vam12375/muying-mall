@@ -206,7 +206,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
                         if (!continuousSuccess) {
                             log.warn("用户 {} 连续签到 {} 天奖励记录失败", userId, newContinuousDays);
                         } else {
-                            log.info("用户 {} 获得连续签到 {} 天额外奖励 {} 积分", userId, newContinuousDays, continuousPoints);
+                            log.debug("用户 {} 获得连续签到 {} 天额外奖励 {} 积分", userId, newContinuousDays, continuousPoints);
                         }
                     }
                 } catch (Exception e) {
@@ -226,7 +226,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
                 throw new BusinessException("签到积分记录失败");
             }
 
-            log.info("用户 {} 签到成功，获得 {} 积分", userId, totalPoints);
+            log.debug("用户 {} 签到成功，获得 {} 积分", userId, totalPoints);
             return totalPoints;
         } catch (BusinessException be) {
             // 业务异常直接抛出
@@ -605,7 +605,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             throw new BusinessException("用户ID不能为空");
         }
 
-        log.info("用户 {} 开始签到", userId);
+        log.debug("用户 {} 开始签到", userId);
         Map<String, Object> result = new HashMap<>();
 
         try {
@@ -689,14 +689,14 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
                 );
 
                 applicationEventPublisher.publishEvent(checkinEvent);
-                log.info("用户 {} 签到事件已发布，连续天数: {}, 获得积分: {}",
+                log.debug("用户 {} 签到事件已发布，连续天数: {}, 获得积分: {}",
                         userId, newContinuousDays, earnedPoints);
             } catch (Exception e) {
                 // 捕获事件发布异常，但不影响签到的主要功能
                 log.error("发布用户 {} 签到事件失败: {}", userId, e.getMessage(), e);
             }
 
-            log.info("用户 {} 签到成功，获得基础积分 {} 点，总计获得 {} 积分", userId, earnedPoints, totalEarnedPoints);
+            log.debug("用户 {} 签到成功，获得基础积分 {} 点，总计获得 {} 积分", userId, earnedPoints, totalEarnedPoints);
             return result;
         } catch (BusinessException be) {
             // 业务异常，如今日已签到
@@ -767,7 +767,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
         Map<String, Object> result = new HashMap<>();
 
         try {
-            log.info("获取用户 {} 的 {} 月份签到日历", userId, month);
+            log.debug("获取用户 {} 的 {} 月份签到日历", userId, month);
 
             // 解析月份参数，如果为空则取当前月
             YearMonth yearMonth;
@@ -968,7 +968,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
 
         // 如果订单使用了积分抵扣，则不再奖励积分
         if (order.getPointsUsed() != null && order.getPointsUsed() > 0) {
-            log.info("订单 {} 使用了积分抵扣 {}，不再奖励积分", order.getOrderNo(), order.getPointsUsed());
+            log.debug("订单 {} 使用了积分抵扣 {}，不再奖励积分", order.getOrderNo(), order.getPointsUsed());
             return;
         }
 
@@ -982,7 +982,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             }
 
             if (pointsToAward <= 0) {
-                log.info("订单奖励积分为0，不进行奖励操作");
+                log.debug("订单奖励积分为0，不进行奖励操作");
                 return;
             }
 
@@ -991,7 +991,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
             boolean success = addPoints(userId, pointsToAward, "order_completed", orderId.toString(), description);
 
             if (success) {
-                log.info("用户 {} 订单 {} 完成，奖励 {} 积分", userId, orderId, pointsToAward);
+                log.debug("用户 {} 订单 {} 完成，奖励 {} 积分", userId, orderId, pointsToAward);
             } else {
                 log.error("用户 {} 订单 {} 奖励积分失败", userId, orderId);
             }

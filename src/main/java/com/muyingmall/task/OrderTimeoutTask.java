@@ -44,7 +44,7 @@ public class OrderTimeoutTask {
      */
     @Scheduled(cron = "0 */1 * * * *")
     public void cancelTimeoutOrders() {
-        log.info("开始执行订单超时自动取消任务");
+        log.debug("开始执行订单超时自动取消任务");
 
         try {
             // 计算5分钟前的时间点
@@ -57,7 +57,7 @@ public class OrderTimeoutTask {
 
             List<Order> timeoutOrders = orderMapper.selectList(queryWrapper);
 
-            log.info("发现 {} 个超时未支付订单需要取消", timeoutOrders.size());
+            log.debug("发现 {} 个超时未支付订单需要取消", timeoutOrders.size());
 
             // 逐个取消超时订单
             for (Order order : timeoutOrders) {
@@ -72,14 +72,14 @@ public class OrderTimeoutTask {
                     // 恢复库存
                     restoreStock(order.getOrderId());
 
-                    log.info("成功取消超时订单: orderId={}, orderNo={}, userId={}, createTime={}",
+                    log.debug("成功取消超时订单: orderId={}, orderNo={}, userId={}, createTime={}",
                             order.getOrderId(), order.getOrderNo(), order.getUserId(), order.getCreateTime());
                 } catch (Exception e) {
                     log.error("取消超时订单失败: orderId={}, error={}", order.getOrderId(), e.getMessage(), e);
                 }
             }
 
-            log.info("订单超时自动取消任务执行完成，共处理 {} 个订单", timeoutOrders.size());
+            log.debug("订单超时自动取消任务执行完成，共处理 {} 个订单", timeoutOrders.size());
         } catch (Exception e) {
             log.error("订单超时自动取消任务执行异常", e);
         }
@@ -120,7 +120,7 @@ public class OrderTimeoutTask {
                     stockDTO.setRemark("订单超时自动取消恢复库存");
                     skuStockList.add(stockDTO);
                     
-                    log.info("准备恢复SKU库存: skuId={}, quantity={}, orderId={}", skuId, quantity, orderId);
+                    log.debug("准备恢复SKU库存: skuId={}, quantity={}, orderId={}", skuId, quantity, orderId);
                 } else {
                     // 无SKU，恢复商品库存
                     productService.update(
@@ -128,17 +128,17 @@ public class OrderTimeoutTask {
                                     .eq(Product::getProductId, orderProduct.getProductId())
                                     .setSql("stock = stock + " + quantity));
                     
-                    log.info("已恢复商品库存: productId={}, quantity={}", orderProduct.getProductId(), quantity);
+                    log.debug("已恢复商品库存: productId={}, quantity={}", orderProduct.getProductId(), quantity);
                 }
             }
 
             // 批量恢复SKU库存
             if (!skuStockList.isEmpty()) {
                 productSkuService.batchRestoreStock(skuStockList);
-                log.info("订单 {} SKU库存恢复完成，共 {} 个SKU", orderId, skuStockList.size());
+                log.debug("订单 {} SKU库存恢复完成，共 {} 个SKU", orderId, skuStockList.size());
             }
 
-            log.info("订单 {} 的所有商品库存已恢复", orderId);
+            log.debug("订单 {} 的所有商品库存已恢复", orderId);
         } catch (Exception e) {
             log.error("恢复订单 {} 商品库存失败: {}", orderId, e.getMessage(), e);
             throw e; // 重新抛出异常，确保事务回滚

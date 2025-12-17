@@ -179,7 +179,7 @@ public class AdminStatsTask {
     public void cleanupConnections() {
         try {
             int onlineCount = AdminStatsWebSocket.getOnlineCount();
-            log.info("当前WebSocket连接数：{}，在线管理员：{}", 
+            log.debug("当前WebSocket连接数：{}，在线管理员：{}", 
                     onlineCount, AdminStatsWebSocket.getWebSocketMap().keySet());
         } catch (Exception e) {
             log.error("清理连接失败", e);

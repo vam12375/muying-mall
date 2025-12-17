@@ -155,7 +155,7 @@ public class PaymentController {
             try {
                 PaymentMessage paymentMessage = PaymentMessage.createRequestMessage(payment);
                 messageProducerService.sendPaymentMessage(paymentMessage);
-                log.info("支付宝支付请求消息发送成功: paymentId={}", payment.getId());
+                log.debug("支付宝支付请求消息发送成功: paymentId={}", payment.getId());
             } catch (Exception e) {
                 log.error("支付宝支付请求消息发送失败: paymentId={}, error={}", payment.getId(), e.getMessage(), e);
                 // 消息发送失败不影响支付流程
@@ -264,7 +264,7 @@ public class PaymentController {
             try {
                 PaymentMessage paymentMessage = PaymentMessage.createRequestMessage(payment);
                 messageProducerService.sendPaymentMessage(paymentMessage);
-                log.info("微信支付请求消息发送成功: paymentId={}", payment.getId());
+                log.debug("微信支付请求消息发送成功: paymentId={}", payment.getId());
             } catch (Exception e) {
                 log.error("微信支付请求消息发送失败: paymentId={}, error={}", payment.getId(), e.getMessage(), e);
                 // 消息发送失败不影响支付流程
@@ -327,13 +327,13 @@ public class PaymentController {
 
         try {
             // 添加详细的请求参数日志
-            log.info("钱包支付请求参数: orderId={}, requestParams={}, requestParams类型={}",
+            log.debug("钱包支付请求参数: orderId={}, requestParams={}, requestParams类型={}",
                     orderId, requestParams, requestParams != null ? requestParams.getClass().getName() : "null");
 
             // 检查请求参数中的每个键值对
             if (requestParams != null) {
                 requestParams.forEach((key, value) -> {
-                    log.info("参数键值对: key={}, value={}, value类型={}",
+                    log.debug("参数键值对: key={}, value={}, value类型={}",
                             key, value, value != null ? value.getClass().getName() : "null");
                 });
             }
@@ -362,11 +362,11 @@ public class PaymentController {
             BigDecimal userBalance = userAccount.getBalance() == null ? BigDecimal.ZERO : userAccount.getBalance();
 
             // 详细记录用于比较的金额值
-            log.info("钱包支付 - 订单金额(数据库): {}, 用户余额(user_account表): {}", orderAmount, userBalance);
+            log.debug("钱包支付 - 订单金额(数据库): {}, 用户余额(user_account表): {}", orderAmount, userBalance);
 
             // 精确比较BigDecimal值，避免精度问题
             int comparisonResult = userBalance.compareTo(orderAmount);
-            log.info("余额比较结果: {} (负数表示余额不足，0或正数表示余额足够)", comparisonResult);
+            log.debug("余额比较结果: {} (负数表示余额不足，0或正数表示余额足够)", comparisonResult);
 
             if (comparisonResult < 0) {
                 log.warn("钱包支付失败 - 余额不足: 用户ID={}, 订单ID={}, 订单金额={}, 用户余额={}, 差额={}",
@@ -375,7 +375,7 @@ public class PaymentController {
                 return Result.error(400, "钱包余额不足，当前余额：" + userBalance + "，订单金额：" + orderAmount);
             }
 
-            log.info("余额检查通过，开始钱包支付");
+            log.debug("余额检查通过，开始钱包支付");
 
             // 使用钱包支付订单（会创建正确的消费交易记录）
             boolean paymentSuccess = userAccountService.payOrderByWallet(user.getUserId(), orderId, orderAmount);
@@ -383,11 +383,11 @@ public class PaymentController {
                 log.error("钱包支付失败: 用户ID={}, 订单ID={}, 金额={}", user.getUserId(), orderId, orderAmount);
                 return Result.error("钱包支付失败");
             }
-            log.info("钱包支付成功，扣减金额: {}", orderAmount);
+            log.debug("钱包支付成功，扣减金额: {}", orderAmount);
 
             // 创建支付记录
             String paymentNo = generatePaymentNo();
-            log.info("生成支付单号: {}", paymentNo);
+            log.debug("生成支付单号: {}", paymentNo);
 
             Payment payment = new Payment();
             payment.setPaymentNo(paymentNo); // 确保设置支付单号
@@ -404,9 +404,9 @@ public class PaymentController {
             // ExpireTime might not be relevant for immediate success
             // payment.setExpireTime(LocalDateTime.now().plusHours(2));
 
-            log.info("即将创建支付记录: {}", payment);
+            log.debug("即将创建支付记录: {}", payment);
             paymentService.createPayment(payment);
-            log.info("支付记录创建成功: ID={}, PaymentNo={}", payment.getId(), payment.getPaymentNo());
+            log.debug("支付记录创建成功: ID={}, PaymentNo={}", payment.getId(), payment.getPaymentNo());
 
             // 更新订单的支付ID和支付方式
             order.setPaymentId(payment.getId());
@@ -414,13 +414,13 @@ public class PaymentController {
             order.setUpdateTime(LocalDateTime.now());
             // Order status will be updated by updatePaymentAndOrderStatus
             orderService.updateById(order);
-            log.info("订单支付信息更新成功: OrderID={}, PaymentID={}", order.getOrderId(), payment.getId());
+            log.debug("订单支付信息更新成功: OrderID={}, PaymentID={}", order.getOrderId(), payment.getId());
 
             // 发送支付请求消息到RabbitMQ（钱包支付立即成功）
             try {
                 PaymentMessage paymentMessage = PaymentMessage.createRequestMessage(payment);
                 messageProducerService.sendPaymentMessage(paymentMessage);
-                log.info("钱包支付请求消息发送成功: paymentId={}", payment.getId());
+                log.debug("钱包支付请求消息发送成功: paymentId={}", payment.getId());
             } catch (Exception e) {
                 log.error("钱包支付请求消息发送失败: paymentId={}, error={}", payment.getId(), e.getMessage(), e);
                 // 消息发送失败不影响支付流程
@@ -428,7 +428,7 @@ public class PaymentController {
 
             // 更新支付和订单状态 (订单状态将变为待发货等)
             updatePaymentAndOrderStatus(payment.getId(), payment.getTransactionId());
-            log.info("支付和订单状态更新成功");
+            log.debug("支付和订单状态更新成功");
 
             Map<String, Object> result = new HashMap<>();
             result.put("paymentId", payment.getId());
@@ -468,7 +468,7 @@ public class PaymentController {
         }
 
         try {
-            log.info("支付宝异步通知参数: {}", params);
+            log.debug("支付宝异步通知参数: {}", params);
 
             // 验签
             boolean signVerified = AlipaySignature.rsaCheckV1(
@@ -476,7 +476,7 @@ public class PaymentController {
                     alipayConfig.getPublicKey(),
                     "UTF-8",
                     "RSA2");
-            log.info("支付宝异步通知验签结果: {}", signVerified);
+            log.debug("支付宝异步通知验签结果: {}", signVerified);
 
             if (signVerified) {
                 String paymentNo = params.get("out_trade_no");
@@ -485,7 +485,7 @@ public class PaymentController {
                 String gmtPayment = params.get("gmt_payment"); // 交易付款时间
                 String totalAmount = params.get("total_amount"); // 订单金额
 
-                log.info("异步通知 - Payment No: {}, Trade Status: {}, Trade No: {}, Payment Time: {}, Amount: {}",
+                log.debug("异步通知 - Payment No: {}, Trade Status: {}, Trade No: {}, Payment Time: {}, Amount: {}",
                         paymentNo, tradeStatus, tradeNo, gmtPayment, totalAmount);
 
                 // 查询本地支付记录
@@ -495,14 +495,14 @@ public class PaymentController {
                     return "failure";
                 }
 
-                log.info("异步通知 - 找到支付记录: ID {}, OrderID {}, Status {}",
+                log.debug("异步通知 - 找到支付记录: ID {}, OrderID {}, Status {}",
                         payment.getId(), payment.getOrderId(), payment.getStatus());
 
                 // 根据通知类型处理
                 if ("TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISHED".equals(tradeStatus)) {
                     // 如果支付已经成功，避免重复处理
                     if (PaymentStatus.SUCCESS.equals(payment.getStatus())) {
-                        log.info("异步通知 - 支付已处理，跳过: {}", paymentNo);
+                        log.debug("异步通知 - 支付已处理，跳过: {}", paymentNo);
                         return "success";
                     }
 
@@ -512,7 +512,7 @@ public class PaymentController {
                         payment.setPayTime(LocalDateTime.now());
                         payment.setUpdateTime(LocalDateTime.now());
                         updatePaymentAndOrderStatus(payment.getId(), tradeNo);
-                        log.info("异步通知 - 订单状态更新成功: {}", paymentNo);
+                        log.debug("异步通知 - 订单状态更新成功: {}", paymentNo);
                         return "success";
                     } catch (Exception e) {
                         log.error("异步通知 - 更新支付记录和订单状态失败: {}", e.getMessage(), e);
@@ -521,7 +521,7 @@ public class PaymentController {
                         try {
                             PaymentMessage paymentMessage = PaymentMessage.createFailedMessage(payment, "支付状态更新失败: " + e.getMessage());
                             messageProducerService.sendPaymentMessage(paymentMessage);
-                            log.info("支付失败消息发送成功: paymentId={}", payment.getId());
+                            log.debug("支付失败消息发送成功: paymentId={}", payment.getId());
                         } catch (Exception msgException) {
                             log.error("支付失败消息发送失败: paymentId={}, error={}", payment.getId(), msgException.getMessage(), msgException);
                         }
@@ -540,12 +540,12 @@ public class PaymentController {
                         try {
                             PaymentMessage paymentMessage = PaymentMessage.createFailedMessage(payment, "交易关闭");
                             messageProducerService.sendPaymentMessage(paymentMessage);
-                            log.info("交易关闭消息发送成功: paymentId={}", payment.getId());
+                            log.debug("交易关闭消息发送成功: paymentId={}", payment.getId());
                         } catch (Exception msgException) {
                             log.error("交易关闭消息发送失败: paymentId={}, error={}", payment.getId(), msgException.getMessage(), msgException);
                         }
                         
-                        log.info("异步通知 - 交易关闭状态更新成功: {}", paymentNo);
+                        log.debug("异步通知 - 交易关闭状态更新成功: {}", paymentNo);
                         return "success";
                     } catch (Exception e) {
                         log.error("异步通知 - 更新交易关闭状态失败: {}", e.getMessage(), e);
@@ -553,7 +553,7 @@ public class PaymentController {
                     }
                 } else {
                     // 其他状态，记录但不处理
-                    log.info("异步通知 - 收到其他交易状态: {}, {}", paymentNo, tradeStatus);
+                    log.debug("异步通知 - 收到其他交易状态: {}, {}", paymentNo, tradeStatus);
                     return "success";
                 }
             } else {
@@ -588,7 +588,7 @@ public class PaymentController {
             params.put(key, valueStr.toString());
         }
 
-        log.info("支付宝同步回调参数: {}", params);
+        log.debug("支付宝同步回调参数: {}", params);
 
         boolean signVerified = false;
         String paymentResult = "unknown";
@@ -601,25 +601,25 @@ public class PaymentController {
                     alipayConfig.getPublicKey(),
                     "UTF-8",
                     "RSA2");
-            log.info("支付宝同步回调验签结果: {}", signVerified);
+            log.debug("支付宝同步回调验签结果: {}", signVerified);
 
             if (signVerified) {
                 // 验签成功，获取支付信息
                 paymentNo = params.get("out_trade_no");
                 String tradeNo = params.get("trade_no"); // 支付宝交易号
-                log.info("同步回调 - Payment No: {}, Trade No: {}", paymentNo, tradeNo);
+                log.debug("同步回调 - Payment No: {}, Trade No: {}", paymentNo, tradeNo);
 
                 Payment payment = paymentService.getByPaymentNo(paymentNo);
 
                 if (payment != null) {
                     orderId = payment.getOrderId();
-                    log.info("同步回调 - 找到支付记录: Payment ID {}, Order ID: {}", payment.getId(), orderId);
+                    log.debug("同步回调 - 找到支付记录: Payment ID {}, Order ID: {}", payment.getId(), orderId);
 
                     // 仅查询支付状态，不进行更新
                     try {
                         queryAlipayTradeStatus(payment);
                         paymentResult = "success";
-                        log.info("同步回调 - 支付状态检查完成，准备重定向到成功页面");
+                        log.debug("同步回调 - 支付状态检查完成，准备重定向到成功页面");
                     } catch (Exception e) {
                         log.error("同步回调 - 查询支付状态失败: {}", e.getMessage(), e);
                         paymentResult = "error";
@@ -654,7 +654,7 @@ public class PaymentController {
             }
 
             try {
-                log.info("重定向到: {}", redirectUrl);
+                log.debug("重定向到: {}", redirectUrl);
                 response.sendRedirect(redirectUrl.toString());
             } catch (IOException e) {
                 log.error("重定向失败: {}", e.getMessage(), e);
@@ -758,7 +758,7 @@ public class PaymentController {
             try {
                 PaymentMessage paymentMessage = PaymentMessage.createFailedMessage(payment, "用户主动关闭支付");
                 messageProducerService.sendPaymentMessage(paymentMessage);
-                log.info("支付关闭消息发送成功: paymentId={}", payment.getId());
+                log.debug("支付关闭消息发送成功: paymentId={}", payment.getId());
             } catch (Exception e) {
                 log.error("支付关闭消息发送失败: paymentId={}, error={}", payment.getId(), e.getMessage(), e);
                 // 消息发送失败不影响关闭流程
@@ -812,12 +812,12 @@ public class PaymentController {
         // 如果payment状态为成功，但order状态仍为待支付，自动修复一下
         if (PaymentStatus.SUCCESS.equals(payment.getStatus())
                 && OrderStatus.PENDING_PAYMENT.equals(order.getStatus())) {
-            log.info("检测到支付已成功但订单状态未更新，自动修复订单状态: Order ID: {}", order.getOrderId());
+            log.debug("检测到支付已成功但订单状态未更新，自动修复订单状态: Order ID: {}", order.getOrderId());
             try {
                 updateOrderStatusAfterPayment(payment);
                 // 重新查询更新后的订单信息
                 order = orderService.getById(orderId);
-                log.info("订单状态修复结果: Order ID: {}, New Status: {}", order.getOrderId(), order.getStatus());
+                log.debug("订单状态修复结果: Order ID: {}, New Status: {}", order.getOrderId(), order.getStatus());
             } catch (Exception e) {
                 log.error("自动修复订单状态失败", e);
             }
@@ -827,7 +827,7 @@ public class PaymentController {
         if (PaymentStatus.PENDING.equals(payment.getStatus())) {
             LocalDateTime now = LocalDateTime.now();
             if (payment.getExpireTime() != null && now.isAfter(payment.getExpireTime())) {
-                log.info("支付已过期，查询最新状态: Payment ID: {}", payment.getId());
+                log.debug("支付已过期，查询最新状态: Payment ID: {}", payment.getId());
                 try {
                     queryAlipayTradeStatus(payment);
                     // 重新查询更新后的支付信息
@@ -871,7 +871,7 @@ public class PaymentController {
 
             // 幂等性检查：如果已经是支付成功状态，不再重复更新
             if (PaymentStatus.SUCCESS.equals(payment.getStatus())) {
-                log.info("支付已处理为成功状态，跳过更新: Payment ID: {}", payment.getId());
+                log.debug("支付已处理为成功状态，跳过更新: Payment ID: {}", payment.getId());
                 // 仍然检查订单状态是否已更新
                 updateOrderStatusAfterPayment(payment);
                 return;
@@ -879,15 +879,15 @@ public class PaymentController {
 
             // 更新本地支付记录
             if ("TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISHED".equals(tradeStatus)) {
-                log.info("支付成功 (Check Status), Payment ID: {}, Alipay TradeNo: {}", payment.getId(), tradeNo);
+                log.debug("支付成功 (Check Status), Payment ID: {}, Alipay TradeNo: {}", payment.getId(), tradeNo);
                 payment.setStatus(PaymentStatus.SUCCESS); // 使用枚举值
                 payment.setTransactionId("AP-" + tradeNo); // 添加前缀
                 payment.setPayTime(LocalDateTime.now()); // 使用 payTime
                 payment.setUpdateTime(LocalDateTime.now());
 
-                log.info("准备更新支付记录 (Check Status): {}", payment);
+                log.debug("准备更新支付记录 (Check Status): {}", payment);
                 boolean paymentUpdated = paymentService.updateById(payment);
-                log.info("支付记录更新结果 (Check Status): {}", paymentUpdated);
+                log.debug("支付记录更新结果 (Check Status): {}", paymentUpdated);
 
                 if (paymentUpdated) {
                     // 更新订单状态
@@ -899,7 +899,7 @@ public class PaymentController {
                 payment.setStatus(PaymentStatus.CLOSED); // 使用枚举值
                 payment.setUpdateTime(LocalDateTime.now());
                 paymentService.updateById(payment);
-                log.info("支付记录状态更新为已关闭 (Check Status), Payment ID: {}", payment.getId());
+                log.debug("支付记录状态更新为已关闭 (Check Status), Payment ID: {}", payment.getId());
             }
         } else {
             log.error("查询支付宝交易失败: Code={}, Message={}", response.getCode(), response.getMsg());
@@ -932,13 +932,13 @@ public class PaymentController {
         if (response.isSuccess()) {
             String tradeStatus = response.getTradeStatus();
             String tradeNo = response.getTradeNo();
-            log.info("查询支付宝交易状态成功 - Payment ID: {}, TradeStatus: {}, TradeNo: {}",
+            log.debug("查询支付宝交易状态成功 - Payment ID: {}, TradeStatus: {}, TradeNo: {}",
                     payment.getId(), tradeStatus, tradeNo);
 
             // 检测是否为支付成功状态，如果是且本地状态未更新，则触发状态更新
             if (("TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISHED".equals(tradeStatus))
                     && !PaymentStatus.SUCCESS.equals(payment.getStatus())) {
-                log.info("检测到支付成功但本地状态未更新，触发状态更新 - Payment ID: {}", payment.getId());
+                log.debug("检测到支付成功但本地状态未更新，触发状态更新 - Payment ID: {}", payment.getId());
                 try {
                     // 在新事务中更新支付和订单状态
                     updatePaymentAndOrderStatus(payment.getId(), tradeNo);
@@ -968,7 +968,7 @@ public class PaymentController {
 
             // 幂等性检查：如果已经是支付成功状态，不再重复更新
             if (PaymentStatus.SUCCESS.equals(payment.getStatus())) {
-                log.info("支付已经是成功状态，无需更新: Payment ID {}", paymentId);
+                log.debug("支付已经是成功状态，无需更新: Payment ID {}", paymentId);
                 // 仍然检查订单状态，确保订单状态和支付状态一致
                 updateOrderStatusAfterPayment(payment);
                 return;
@@ -991,14 +991,14 @@ public class PaymentController {
             payment.setUpdateTime(LocalDateTime.now());
 
             boolean paymentUpdated = paymentService.updateById(payment);
-            log.info("支付状态更新结果: {}, Payment ID: {}", paymentUpdated, paymentId);
+            log.debug("支付状态更新结果: {}, Payment ID: {}", paymentUpdated, paymentId);
 
             if (paymentUpdated) {
                 // 发送支付成功消息到RabbitMQ
                 try {
                     PaymentMessage paymentMessage = PaymentMessage.createSuccessMessage(payment);
                     messageProducerService.sendPaymentMessage(paymentMessage);
-                    log.info("支付成功消息发送成功: paymentId={}", payment.getId());
+                    log.debug("支付成功消息发送成功: paymentId={}", payment.getId());
                 } catch (Exception e) {
                     log.error("支付成功消息发送失败: paymentId={}, error={}", payment.getId(), e.getMessage(), e);
                     // 消息发送失败不影响支付流程
@@ -1038,10 +1038,10 @@ public class PaymentController {
                 return;
             }
 
-            log.info("订单 (ID: {}) 当前状态: {}, 目标状态: {}",
+            log.debug("订单 (ID: {}) 当前状态: {}, 目标状态: {}",
                     order.getOrderId(), order.getStatus(), targetStatus);
-            log.info("准备更新订单 (ID: {}) 状态为: {}", order.getOrderId(), targetStatus);
-            log.info("使用JdbcTemplate更新订单状态，确保SQL精确");
+            log.debug("准备更新订单 (ID: {}) 状态为: {}", order.getOrderId(), targetStatus);
+            log.debug("使用JdbcTemplate更新订单状态，确保SQL精确");
 
             try {
                 if (dataSource == null) {
@@ -1051,7 +1051,7 @@ public class PaymentController {
                 JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
                 String sql = "UPDATE `order` SET `status` = ?, `pay_time` = ?, `update_time` = NOW() WHERE `order_id` = ?";
 
-                log.info("执行SQL: {} 带参数: status={}, pay_time={}, order_id={}",
+                log.debug("执行SQL: {} 带参数: status={}, pay_time={}, order_id={}",
                         sql, targetStatus.getCode(), payment.getPayTime(), order.getOrderId());
 
                 int result = jdbcTemplate.update(
@@ -1061,7 +1061,7 @@ public class PaymentController {
                         order.getOrderId());
 
                 if (result > 0) {
-                    log.info("JdbcTemplate订单状态已成功更新为{}: Order ID {}", targetStatus.getDesc(), order.getOrderId());
+                    log.debug("JdbcTemplate订单状态已成功更新为{}: Order ID {}", targetStatus.getDesc(), order.getOrderId());
 
                     // 立即刷新订单相关缓存
                     cacheRefreshService.refreshOrderCache(order.getOrderId(), order.getUserId());
@@ -1086,7 +1086,7 @@ public class PaymentController {
     private void publishOrderStatusChangeEvent(Order order, OrderStatus newStatus) {
         try {
             // 发布订单状态变更事件
-            log.info("发布订单状态变更事件: orderId={}, oldStatus={}, newStatus={}",
+            log.debug("发布订单状态变更事件: orderId={}, oldStatus={}, newStatus={}",
                     order.getOrderId(), order.getStatus(), newStatus);
 
             // 通知订单状态变更

@@ -186,7 +186,7 @@ public class SearchStatisticsServiceImpl extends ServiceImpl<SearchStatisticsMap
             int count = Math.toIntExact(count(queryWrapper));
             remove(queryWrapper);
             
-            log.info("清理过期搜索统计数据: {} 条记录", count);
+            log.debug("清理过期搜索统计数据: {} 条记录", count);
             return count;
             
         } catch (Exception e) {

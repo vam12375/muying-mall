@@ -333,4 +333,114 @@ public class CacheConstants {
      * 用于标识查询不到的数据，防止缓存穿透
      */
     public static final String EMPTY_CACHE_VALUE = "EMPTY_VALUE_PROTECTION";
+
+    // ==================== 地址缓存 ====================
+    /**
+     * 地址缓存前缀
+     */
+    public static final String ADDRESS_KEY_PREFIX = "address:";
+
+    /**
+     * 用户地址列表缓存键
+     */
+    public static final String USER_ADDRESS_LIST_KEY = ADDRESS_KEY_PREFIX + "user:";
+
+    /**
+     * 地址详情缓存键
+     */
+    public static final String ADDRESS_DETAIL_KEY = ADDRESS_KEY_PREFIX + "detail:";
+
+    /**
+     * 地址缓存过期时间（秒）
+     */
+    public static final long ADDRESS_EXPIRE_TIME = 1800; // 30分钟
+
+    // ==================== 收藏缓存 ====================
+    /**
+     * 收藏缓存前缀
+     */
+    public static final String FAVORITE_KEY_PREFIX = "favorite:";
+
+    /**
+     * 用户收藏列表缓存键
+     */
+    public static final String USER_FAVORITE_LIST_KEY = FAVORITE_KEY_PREFIX + "user:";
+
+    /**
+     * 收藏状态缓存键
+     */
+    public static final String FAVORITE_STATUS_KEY = FAVORITE_KEY_PREFIX + "status:";
+
+    /**
+     * 收藏缓存过期时间（秒）
+     */
+    public static final long FAVORITE_EXPIRE_TIME = 1800; // 30分钟
+
+    // ==================== 优惠券缓存 ====================
+    /**
+     * 优惠券缓存前缀
+     */
+    public static final String COUPON_KEY_PREFIX = "coupon:";
+
+    /**
+     * 可用优惠券列表缓存键
+     */
+    public static final String COUPON_AVAILABLE_KEY = COUPON_KEY_PREFIX + "available";
+
+    /**
+     * 用户优惠券列表缓存键
+     */
+    public static final String USER_COUPON_LIST_KEY = COUPON_KEY_PREFIX + "user:";
+
+    /**
+     * 优惠券详情缓存键
+     */
+    public static final String COUPON_DETAIL_KEY = COUPON_KEY_PREFIX + "detail:";
+
+    /**
+     * 优惠券缓存过期时间（秒）
+     */
+    public static final long COUPON_EXPIRE_TIME = 1800; // 30分钟
+
+    // ==================== 会员等级缓存 ====================
+    /**
+     * 会员等级缓存前缀
+     */
+    public static final String MEMBER_LEVEL_KEY_PREFIX = "member_level:";
+
+    /**
+     * 会员等级列表缓存键
+     */
+    public static final String MEMBER_LEVEL_LIST_KEY = MEMBER_LEVEL_KEY_PREFIX + "list";
+
+    /**
+     * 会员等级详情缓存键
+     */
+    public static final String MEMBER_LEVEL_DETAIL_KEY = MEMBER_LEVEL_KEY_PREFIX + "detail:";
+
+    /**
+     * 会员等级缓存过期时间（秒）
+     */
+    public static final long MEMBER_LEVEL_EXPIRE_TIME = 86400; // 24小时
+
+    // ==================== 用户账户缓存 ====================
+    /**
+     * 用户账户缓存前缀
+     */
+    public static final String USER_ACCOUNT_KEY_PREFIX = "user_account:";
+
+    /**
+     * 用户账户详情缓存键
+     */
+    public static final String USER_ACCOUNT_DETAIL_KEY = USER_ACCOUNT_KEY_PREFIX + "detail:";
+
+    /**
+     * 用户账户统计缓存键
+     */
+    public static final String USER_ACCOUNT_STATS_KEY = USER_ACCOUNT_KEY_PREFIX + "stats:";
+
+    /**
+     * 用户账户缓存过期时间（秒）
+     */
+    public static final long USER_ACCOUNT_EXPIRE_TIME = 600; // 10分钟
 }

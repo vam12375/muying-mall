@@ -9,6 +9,9 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 商品Mapper接口
  */
@@ -61,10 +64,29 @@ public interface ProductMapper extends BaseMapper<Product> {
 
         /**
          * 根据品牌ID统计关联商品数量
-         * 
+         *
          * @param brandId 品牌ID
          * @return 商品数量
          */
         @Select("SELECT COUNT(*) FROM product WHERE brand_id = #{brandId}")
         int countProductByBrandId(@Param("brandId") Integer brandId);
+
+        /**
+         * 批量查询分类商品数量
+         * 性能优化：一次SQL查询所有分类的商品数量，避免N+1查询
+         * Source: N+1查询优化 - 批量统计分类商品数量
+         *
+         * @param categoryIds 分类ID列表
+         * @return 分类ID与商品数量的映射列表
+         */
+        @Select("<script>" +
+                        "SELECT category_id as categoryId, COUNT(*) as productCount " +
+                        "FROM product " +
+                        "WHERE category_id IN " +
+                        "<foreach collection='categoryIds' item='id' open='(' separator=',' close=')'>" +
+                        "#{id}" +
+                        "</foreach>" +
+                        "GROUP BY category_id" +
+                        "</script>")
+        List<Map<String, Object>> batchCountProductsByCategories(@Param("categoryIds") List<Integer> categoryIds);
 }

@@ -33,7 +33,7 @@ public class SearchIndexServiceImpl implements SearchIndexService {
         try {
             // 检查索引是否已存在
             if (indexExists(PRODUCT_INDEX_NAME)) {
-                log.info("商品索引已存在: {}", PRODUCT_INDEX_NAME);
+                log.debug("商品索引已存在: {}", PRODUCT_INDEX_NAME);
                 return true;
             }
 
@@ -95,7 +95,7 @@ public class SearchIndexServiceImpl implements SearchIndexService {
             CreateIndexResponse response = elasticsearchClient.indices().create(createRequest);
 
             if (response.acknowledged()) {
-                log.info("商品索引创建成功: {}", PRODUCT_INDEX_NAME);
+                log.debug("商品索引创建成功: {}", PRODUCT_INDEX_NAME);
                 return true;
             } else {
                 log.error("商品索引创建失败: {}", PRODUCT_INDEX_NAME);
@@ -112,13 +112,13 @@ public class SearchIndexServiceImpl implements SearchIndexService {
     public boolean deleteProductIndex() {
         try {
             if (!indexExists(PRODUCT_INDEX_NAME)) {
-                log.info("商品索引不存在，无需删除: {}", PRODUCT_INDEX_NAME);
+                log.debug("商品索引不存在，无需删除: {}", PRODUCT_INDEX_NAME);
                 return true;
             }
 
             boolean deleted = elasticsearchOperations.indexOps(ProductDocument.class).delete();
             if (deleted) {
-                log.info("商品索引删除成功: {}", PRODUCT_INDEX_NAME);
+                log.debug("商品索引删除成功: {}", PRODUCT_INDEX_NAME);
                 return true;
             } else {
                 log.error("商品索引删除失败: {}", PRODUCT_INDEX_NAME);
@@ -210,7 +210,7 @@ public class SearchIndexServiceImpl implements SearchIndexService {
             RefreshRequest request = RefreshRequest.of(r -> r.index(indexName));
             elasticsearchClient.indices().refresh(request);
 
-            log.info("索引刷新成功: {}", indexName);
+            log.debug("索引刷新成功: {}", indexName);
             return true;
 
         } catch (Exception e) {
@@ -229,7 +229,7 @@ public class SearchIndexServiceImpl implements SearchIndexService {
 
             elasticsearchClient.indices().forcemerge(request);
 
-            log.info("索引优化成功: {}", indexName);
+            log.debug("索引优化成功: {}", indexName);
             return true;
 
         } catch (Exception e) {
@@ -247,7 +247,7 @@ public class SearchIndexServiceImpl implements SearchIndexService {
 
             PutAliasResponse response = elasticsearchClient.indices().putAlias(request);
 
-            log.info("设置索引别名成功: {} -> {}", indexName, aliasName);
+            log.debug("设置索引别名成功: {} -> {}", indexName, aliasName);
             return response.acknowledged();
 
         } catch (Exception e) {
@@ -265,7 +265,7 @@ public class SearchIndexServiceImpl implements SearchIndexService {
 
             DeleteAliasResponse response = elasticsearchClient.indices().deleteAlias(request);
 
-            log.info("删除索引别名成功: {} -> {}", indexName, aliasName);
+            log.debug("删除索引别名成功: {} -> {}", indexName, aliasName);
             return response.acknowledged();
 
         } catch (Exception e) {

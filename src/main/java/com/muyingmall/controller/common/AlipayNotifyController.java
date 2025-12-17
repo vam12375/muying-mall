@@ -32,7 +32,7 @@ public class AlipayNotifyController {
      */
     @PostMapping("/refund/notify")
     public String handleRefundNotify(HttpServletRequest request) {
-        log.info("接收到支付宝退款异步通知");
+        log.debug("接收到支付宝退款异步通知");
 
         // 获取所有请求参数
         Map<String, String> params = new HashMap<>();
@@ -62,12 +62,12 @@ public class AlipayNotifyController {
         String outRequestNo = params.get("out_request_no");
         String refundStatus = params.get("refund_status");
 
-        log.info("支付宝退款通知 - 退款单号: {}, 退款状态: {}", outRequestNo, refundStatus);
+        log.debug("支付宝退款通知 - 退款单号: {}, 退款状态: {}", outRequestNo, refundStatus);
 
         try {
             boolean result = alipayRefundService.handleRefundNotify(params);
             if (result) {
-                log.info("支付宝退款通知处理成功");
+                log.debug("支付宝退款通知处理成功");
                 return "success"; // 处理成功返回success字符串，支付宝将不再重发通知
             } else {
                 log.warn("支付宝退款通知处理失败，等待支付宝重新通知");

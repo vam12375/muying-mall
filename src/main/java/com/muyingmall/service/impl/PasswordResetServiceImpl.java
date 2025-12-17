@@ -70,7 +70,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         // 图片转Base64
         String base64Image = imageToBase64(image);
         
-        log.info("生成图形验证码，key: {}", captchaKey);
+        log.debug("生成图形验证码，key: {}", captchaKey);
         return new CaptchaDTO(captchaKey, "data:image/png;base64," + base64Image);
     }
 
@@ -119,7 +119,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         // 6. 发送通知到后台管理系统
         sendResetNoticeToAdmin(user, verifyCode);
         
-        log.info("用户 {} 请求密码重置，验证码已发送到后台", user.getUsername());
+        log.debug("用户 {} 请求密码重置，验证码已发送到后台", user.getUsername());
         
         Map<String, Object> result = new HashMap<>();
         result.put("resetToken", resetToken);
@@ -138,7 +138,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         if (!storedCode.equals(verifyCode)) {
             throw new RuntimeException("验证码错误");
         }
-        log.info("验证码校验通过，resetToken: {}", resetToken);
+        log.debug("验证码校验通过，resetToken: {}", resetToken);
     }
 
     @Override
@@ -178,7 +178,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         redisTemplate.delete(RESET_CODE_PREFIX + verifyDTO.getResetToken());
         redisTemplate.delete(RESET_TOKEN_PREFIX + verifyDTO.getResetToken());
         
-        log.info("用户 {} 密码重置成功", user.getUsername());
+        log.debug("用户 {} 密码重置成功", user.getUsername());
         return true;
     }
 

@@ -48,17 +48,17 @@ public class CacheMonitor {
             RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
             Properties info = connection.info();
 
-            log.info("===== Redis状态信息 =====");
-            log.info("Redis版本: {}", info.getProperty("redis_version", "unknown"));
-            log.info("连接数: {}", info.getProperty("connected_clients", "unknown"));
-            log.info("内存使用: {}", info.getProperty("used_memory_human", "unknown"));
-            log.info("内存碎片率: {}", info.getProperty("mem_fragmentation_ratio", "unknown"));
-            log.info("已过期键数量: {}", info.getProperty("expired_keys", "unknown"));
-            log.info("每秒执行命令数: {}", info.getProperty("instantaneous_ops_per_sec", "unknown"));
-            log.info("缓存命中率: {}%", info.getProperty("keyspace_hits", "0") + "/" +
+            log.debug("===== Redis状态信息 =====");
+            log.debug("Redis版本: {}", info.getProperty("redis_version", "unknown"));
+            log.debug("连接数: {}", info.getProperty("connected_clients", "unknown"));
+            log.debug("内存使用: {}", info.getProperty("used_memory_human", "unknown"));
+            log.debug("内存碎片率: {}", info.getProperty("mem_fragmentation_ratio", "unknown"));
+            log.debug("已过期键数量: {}", info.getProperty("expired_keys", "unknown"));
+            log.debug("每秒执行命令数: {}", info.getProperty("instantaneous_ops_per_sec", "unknown"));
+            log.debug("缓存命中率: {}%", info.getProperty("keyspace_hits", "0") + "/" +
                     (Integer.parseInt(info.getProperty("keyspace_hits", "0"))
                             + Integer.parseInt(info.getProperty("keyspace_misses", "0"))));
-            log.info("=======================");
+            log.debug("=======================");
 
         } catch (Exception e) {
             log.error("收集Redis状态信息失败: {}", e.getMessage(), e);
@@ -79,18 +79,18 @@ public class CacheMonitor {
             RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
             // 临时注释，等actuator依赖添加后再恢复
             // List<Map<String, String>> slowLogs = connection.slowLog("get", 10);
-            log.info("===== Redis慢查询日志功能暂时禁用 =====");
+            log.debug("===== Redis慢查询日志功能暂时禁用 =====");
 
             /*
              * if (slowLogs != null && !slowLogs.isEmpty()) {
-             * log.info("===== Redis慢查询日志 =====");
+             * log.debug("===== Redis慢查询日志 =====");
              * for (Map<String, String> slowLog : slowLogs) {
-             * log.info("ID: {}, 执行时间: {}微秒, 命令: {}",
+             * log.debug("ID: {}, 执行时间: {}微秒, 命令: {}",
              * slowLog.get("id"),
              * slowLog.get("executionTime"),
              * slowLog.get("args"));
              * }
-             * log.info("==========================");
+             * log.debug("==========================");
              * }
              */
         } catch (Exception e) {
@@ -126,7 +126,7 @@ public class CacheMonitor {
             RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
             // 临时注释，等actuator依赖添加后再恢复
             // connection.serverCommands().resetStat();
-            log.info("已重置Redis统计信息");
+            log.debug("已重置Redis统计信息");
         } catch (Exception e) {
             log.error("重置Redis统计信息失败: {}", e.getMessage(), e);
         }

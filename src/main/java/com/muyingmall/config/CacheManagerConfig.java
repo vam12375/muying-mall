@@ -54,9 +54,9 @@ public class CacheManagerConfig {
         // 初始化缓存前缀与过期时间的映射关系
         initCachePrefixMap();
 
-        log.info("缓存管理器初始化完成，缓存状态: {}", cacheEnabled ? "启用" : "禁用");
-        log.info("缓存统计功能: {}", statsEnabled ? "启用" : "禁用");
-        log.info("默认缓存过期时间: {}秒", defaultTtl);
+        log.debug("缓存管理器初始化完成，缓存状态: {}", cacheEnabled ? "启用" : "禁用");
+        log.debug("缓存统计功能: {}", statsEnabled ? "启用" : "禁用");
+        log.debug("默认缓存过期时间: {}秒", defaultTtl);
     }
 
     /**
@@ -183,7 +183,7 @@ public class CacheManagerConfig {
             return;
         }
 
-        log.info("====== 缓存统计信息 ======");
+        log.debug("====== 缓存统计信息 ======");
 
         // 统计各类型缓存命中率
         for (String cacheType : cachePrefixExpireTime.keySet()) {
@@ -193,7 +193,7 @@ public class CacheManagerConfig {
             long total = hits + misses;
 
             if (total > 0) {
-                log.info("缓存类型: {}, 命中率: {:.2f}%, 总请求: {}, 命中: {}, 未命中: {}",
+                log.debug("缓存类型: {}, 命中率: {:.2f}%, 总请求: {}, 命中: {}, 未命中: {}",
                         cacheType, hitRate, total, hits, misses);
             }
         }
@@ -201,20 +201,20 @@ public class CacheManagerConfig {
         // 统计缓存键数量
         try {
             long totalKeys = redisTemplate.getConnectionFactory().getConnection().dbSize();
-            log.info("Redis总键数: {}", totalKeys);
+            log.debug("Redis总键数: {}", totalKeys);
 
             // 统计各类型缓存键数量
             for (String prefix : cachePrefixExpireTime.keySet()) {
                 Set<String> keys = redisUtil.keys(prefix + "*");
                 if (keys != null) {
-                    log.info("缓存类型: {}, 键数量: {}", prefix, keys.size());
+                    log.debug("缓存类型: {}, 键数量: {}", prefix, keys.size());
                 }
             }
         } catch (Exception e) {
             log.error("统计缓存键数量失败: {}", e.getMessage());
         }
 
-        log.info("====== 缓存统计信息结束 ======");
+        log.debug("====== 缓存统计信息结束 ======");
     }
 
     /**
@@ -223,7 +223,7 @@ public class CacheManagerConfig {
      */
     @Scheduled(cron = "0 0 2 * * ?")
     public void cleanExpiredCache() {
-        log.info("开始执行过期缓存清理任务");
+        log.debug("开始执行过期缓存清理任务");
 
         // 记录清理前的键数量
         long beforeCount = 0;
@@ -243,7 +243,7 @@ public class CacheManagerConfig {
         long afterCount = 0;
         try {
             afterCount = redisTemplate.getConnectionFactory().getConnection().dbSize();
-            log.info("过期缓存清理完成，清理前: {}个键，清理后: {}个键，共清理: {}个键",
+            log.debug("过期缓存清理完成，清理前: {}个键，清理后: {}个键，共清理: {}个键",
                     beforeCount, afterCount, beforeCount - afterCount);
         } catch (Exception e) {
             log.error("获取清理后键数量失败: {}", e.getMessage());

@@ -45,7 +45,7 @@ public class UserAdminController {
             @Parameter(description = "排序字段（id, balance, createTime）") @RequestParam(required = false) String sortBy,
             @Parameter(description = "排序方向（asc, desc）") @RequestParam(required = false) String sortOrder) {
 
-        log.info(
+        log.debug(
                 "[UserAdminController] Entering getUserPage - Params: page={}, size={}, keyword={}, status={}, role={}, sortBy={}, sortOrder={}",
                 page, size, keyword, status, role, sortBy, sortOrder);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -55,10 +55,10 @@ public class UserAdminController {
             // 注意：通常 @PreAuthorize 应该已经处理了认证失败的情况，这里可能不会执行到
             return Result.error(401, "未认证 (Authentication is null in controller)");
         } else {
-            log.info("[UserAdminController] getUserPage - Authentication Principal: {}", authentication.getPrincipal());
-            log.info("[UserAdminController] getUserPage - Authentication Authorities: {}",
+            log.debug("[UserAdminController] getUserPage - Authentication Principal: {}", authentication.getPrincipal());
+            log.debug("[UserAdminController] getUserPage - Authentication Authorities: {}",
                     authentication.getAuthorities());
-            log.info("[UserAdminController] getUserPage - Is Authenticated: {}", authentication.isAuthenticated());
+            log.debug("[UserAdminController] getUserPage - Is Authenticated: {}", authentication.isAuthenticated());
         }
 
         // 内部手动权限检查已暂时注释掉，优先依赖 @PreAuthorize
@@ -78,7 +78,7 @@ public class UserAdminController {
 
         Page<User> userPage = userService.getUserPage(page, size, keyword, status, role, sortBy, sortOrder);
         userPage.getRecords().forEach(user -> user.setPassword(null));
-        log.info("[UserAdminController] getUserPage - Successfully fetched. Record count: {}",
+        log.debug("[UserAdminController] getUserPage - Successfully fetched. Record count: {}",
                 userPage.getRecords().size());
         return Result.success(userPage);
     }
@@ -90,10 +90,10 @@ public class UserAdminController {
     @Operation(summary = "获取用户详情")
     @PreAuthorize("hasAuthority('admin')")
     public Result<User> getUserById(@PathVariable Integer id) {
-        log.info("[UserAdminController] Entering getUserById - ID: {}", id);
+        log.debug("[UserAdminController] Entering getUserById - ID: {}", id);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
-            log.info("[UserAdminController] getUserById - Auth Principal: {}, Authorities: {}",
+            log.debug("[UserAdminController] getUserById - Auth Principal: {}, Authorities: {}",
                     authentication.getPrincipal(), authentication.getAuthorities());
         } else {
             log.warn("[UserAdminController] getUserById - Authentication object is null.");
@@ -105,7 +105,7 @@ public class UserAdminController {
             return Result.error(404, "用户不存在");
         }
         user.setPassword(null);
-        log.info("[UserAdminController] getUserById - Successfully fetched user details for id: {}", id);
+        log.debug("[UserAdminController] getUserById - Successfully fetched user details for id: {}", id);
         return Result.success(user);
     }
 
@@ -116,11 +116,11 @@ public class UserAdminController {
     @Operation(summary = "添加用户")
     @PreAuthorize("hasAuthority('admin')")
     public Result<User> addUser(@RequestBody User user) {
-        log.info("[UserAdminController] Entering addUser - Username: {}", user.getUsername());
+        log.debug("[UserAdminController] Entering addUser - Username: {}", user.getUsername());
         try {
             User newUser = userService.addUser(user);
             newUser.setPassword(null);
-            log.info("[UserAdminController] addUser - Successfully added user: {}", newUser.getUsername());
+            log.debug("[UserAdminController] addUser - Successfully added user: {}", newUser.getUsername());
             return Result.success(newUser, "添加成功");
         } catch (Exception e) {
             log.error("[UserAdminController] addUser - Error adding user: {}", e.getMessage(), e);
@@ -135,12 +135,12 @@ public class UserAdminController {
     @Operation(summary = "更新用户信息")
     @PreAuthorize("hasAuthority('admin')")
     public Result<Boolean> updateUser(@PathVariable Integer id, @RequestBody User user) {
-        log.info("[UserAdminController] Entering updateUser - ID: {}, Username: {}", id, user.getUsername());
+        log.debug("[UserAdminController] Entering updateUser - ID: {}, Username: {}", id, user.getUsername());
         user.setUserId(id);
         try {
             boolean success = userService.updateUserByAdmin(user);
             if (success) {
-                log.info("[UserAdminController] updateUser - Successfully updated user for id: {}", id);
+                log.debug("[UserAdminController] updateUser - Successfully updated user for id: {}", id);
                 return Result.success(true, "更新成功");
             } else {
                 log.warn("[UserAdminController] updateUser - Failed to update user for id: {}", id);
@@ -159,11 +159,11 @@ public class UserAdminController {
     @Operation(summary = "删除用户")
     @PreAuthorize("hasAuthority('admin')")
     public Result<Boolean> deleteUser(@PathVariable Integer id) {
-        log.info("[UserAdminController] Entering deleteUser - ID: {}", id);
+        log.debug("[UserAdminController] Entering deleteUser - ID: {}", id);
         try {
             boolean success = userService.deleteUser(id);
             if (success) {
-                log.info("[UserAdminController] deleteUser - Successfully deleted user for id: {}", id);
+                log.debug("[UserAdminController] deleteUser - Successfully deleted user for id: {}", id);
                 return Result.success(true, "删除成功");
             } else {
                 log.warn("[UserAdminController] deleteUser - Failed to delete user for id: {}", id);
@@ -184,11 +184,11 @@ public class UserAdminController {
     public Result<Boolean> toggleUserStatus(
             @PathVariable Integer id,
             @Parameter(description = "状态值：0-禁用，1-正常") @RequestParam Integer status) {
-        log.info("[UserAdminController] Entering toggleUserStatus - ID: {}, Status: {}", id, status);
+        log.debug("[UserAdminController] Entering toggleUserStatus - ID: {}, Status: {}", id, status);
         try {
             boolean success = userService.toggleUserStatus(id, status);
             if (success) {
-                log.info("[UserAdminController] toggleUserStatus - Successfully toggled status for id: {}", id);
+                log.debug("[UserAdminController] toggleUserStatus - Successfully toggled status for id: {}", id);
                 return Result.success(true, status == 1 ? "启用成功" : "禁用成功");
             } else {
                 log.warn("[UserAdminController] toggleUserStatus - Failed to toggle status for id: {}", id);
@@ -210,11 +210,11 @@ public class UserAdminController {
     public Result<Boolean> updateUserRole(
             @PathVariable Integer id,
             @Parameter(description = "角色值：admin-管理员，user-普通用户") @RequestParam String role) {
-        log.info("[UserAdminController] Entering updateUserRole - ID: {}, Role: {}", id, role);
+        log.debug("[UserAdminController] Entering updateUserRole - ID: {}, Role: {}", id, role);
         try {
             boolean success = userService.updateUserRole(id, role);
             if (success) {
-                log.info("[UserAdminController] updateUserRole - Successfully updated role for id: {}", id);
+                log.debug("[UserAdminController] updateUserRole - Successfully updated role for id: {}", id);
                 return Result.success(true, "角色修改成功");
             } else {
                 log.warn("[UserAdminController] updateUserRole - Failed to update role for id: {}", id);
@@ -235,10 +235,10 @@ public class UserAdminController {
     @Operation(summary = "获取全局用户统计数据")
     @PreAuthorize("hasAuthority('admin')")
     public Result<Map<String, Object>> getGlobalUserStats() {
-        log.info("[UserAdminController] Entering getGlobalUserStats");
+        log.debug("[UserAdminController] Entering getGlobalUserStats");
         try {
             Map<String, Object> stats = userAccountService.getGlobalUserStats();
-            log.info("[UserAdminController] getGlobalUserStats - Successfully fetched stats: {}", stats);
+            log.debug("[UserAdminController] getGlobalUserStats - Successfully fetched stats: {}", stats);
             return Result.success(stats);
         } catch (Exception e) {
             log.error("[UserAdminController] getGlobalUserStats - Error: {}", e.getMessage(), e);

@@ -77,7 +77,7 @@ public class DeadLetterMessageConsumer {
             // 手动确认消息（死信消息处理完成后确认）
             channel.basicAck(deliveryTag, false);
             
-            log.info("死信消息处理完成: messageId={}, originalQueue={}", 
+            log.debug("死信消息处理完成: messageId={}, originalQueue={}", 
                     deadLetterInfo.getMessageId(), deadLetterInfo.getOriginalQueue());
             
         } catch (Exception e) {
@@ -152,12 +152,12 @@ public class DeadLetterMessageConsumer {
      */
     public void cleanupExpiredDeadLetterRecords() {
         try {
-            log.info("开始清理过期的死信记录");
+            log.debug("开始清理过期的死信记录");
             
             // 保留最近1000条死信日志
             redisTemplate.opsForList().trim(DEAD_LETTER_LOG_KEY, 0, 999);
             
-            log.info("死信记录清理完成");
+            log.debug("死信记录清理完成");
             
         } catch (Exception e) {
             log.error("清理死信记录失败", e);
@@ -230,7 +230,7 @@ public class DeadLetterMessageConsumer {
             // 设置过期时间
             redisTemplate.expire(DEAD_LETTER_LOG_KEY, 7, TimeUnit.DAYS);
             
-            log.info("死信消息记录已保存: messageId={}, originalQueue={}", 
+            log.debug("死信消息记录已保存: messageId={}, originalQueue={}", 
                     deadLetterInfo.getMessageId(), deadLetterInfo.getOriginalQueue());
             
         } catch (Exception e) {

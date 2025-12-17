@@ -133,7 +133,7 @@ public class PaymentStateServiceImpl implements PaymentStateService {
      */
     private void recordStateLog(PaymentStateContext context) {
         // 记录日志到控制台
-        log.info("支付状态变更：paymentId={}, paymentNo={}, oldStatus={}, newStatus={}, event={}, operator={}, reason={}",
+        log.debug("支付状态变更：paymentId={}, paymentNo={}, oldStatus={}, newStatus={}, event={}, operator={}, reason={}",
                 context.getPayment().getId(),
                 context.getPayment().getPaymentNo(),
                 context.getOldStatus(),

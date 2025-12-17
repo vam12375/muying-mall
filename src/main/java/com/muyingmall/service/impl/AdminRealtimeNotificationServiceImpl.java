@@ -111,7 +111,7 @@ public class AdminRealtimeNotificationServiceImpl implements AdminRealtimeNotifi
             String message = objectMapper.writeValueAsString(notification);
             AdminStatsWebSocket.broadcast(message);
             
-            log.info("管理员{}上线通知已发送", adminName);
+            log.debug("管理员{}上线通知已发送", adminName);
         } catch (Exception e) {
             log.error("发送管理员上线通知失败", e);
         }
@@ -132,7 +132,7 @@ public class AdminRealtimeNotificationServiceImpl implements AdminRealtimeNotifi
             String message = objectMapper.writeValueAsString(notification);
             AdminStatsWebSocket.broadcast(message);
             
-            log.info("管理员{}下线通知已发送", adminName);
+            log.debug("管理员{}下线通知已发送", adminName);
         } catch (Exception e) {
             log.error("发送管理员下线通知失败", e);
         }
@@ -159,7 +159,7 @@ public class AdminRealtimeNotificationServiceImpl implements AdminRealtimeNotifi
                 AdminStatsWebSocket.broadcast(jsonMessage);
             }
             
-            log.info("系统通知已发送：{}", message);
+            log.debug("系统通知已发送：{}", message);
         } catch (Exception e) {
             log.error("发送系统通知失败", e);
         }

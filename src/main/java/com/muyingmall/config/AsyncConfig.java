@@ -69,7 +69,7 @@ public class AsyncConfig {
 
         executor.initialize();
 
-        log.info("异步任务线程池初始化完成: corePoolSize={}, maxPoolSize={}, queueCapacity={}",
+        log.debug("异步任务线程池初始化完成: corePoolSize={}, maxPoolSize={}, queueCapacity={}",
                 actualCoreSize, actualMaxSize, queueCapacity);
 
         return executor;
@@ -103,7 +103,7 @@ public class AsyncConfig {
 
         executor.initialize();
 
-        log.info("ES异步任务线程池初始化完成: corePoolSize={}, maxPoolSize={}, queueCapacity={}",
+        log.debug("ES异步任务线程池初始化完成: corePoolSize={}, maxPoolSize={}, queueCapacity={}",
                 coreSize, maxSize, 200);
 
         return executor;
@@ -131,7 +131,7 @@ public class AsyncConfig {
 
         executor.initialize();
 
-        log.info("统计异步任务线程池初始化完成: corePoolSize=2, maxPoolSize=4, queueCapacity=1000");
+        log.debug("统计异步任务线程池初始化完成: corePoolSize=2, maxPoolSize=4, queueCapacity=1000");
 
         return executor;
     }

@@ -42,27 +42,27 @@ public class AdminRefundController {
             @RequestParam(value = "startTime", required = false) String startTime,
             @RequestParam(value = "endTime", required = false) String endTime) {
 
-        log.info("====================开始处理退款列表请求====================");
-        log.info("请求路径: {}", "/admin/refund/list");
-        log.info("获取退款列表请求: page={}, size={}, status={}, userId={}, orderId={}, startTime={}, endTime={}",
+        log.debug("====================开始处理退款列表请求====================");
+        log.debug("请求路径: {}", "/admin/refund/list");
+        log.debug("获取退款列表请求: page={}, size={}, status={}, userId={}, orderId={}, startTime={}, endTime={}",
                 page, size, status, userId, orderId, startTime, endTime);
 
         // 获取总退款数量以便调试
         long totalRefunds = refundService.count();
-        log.info("系统中总退款数量: {}", totalRefunds);
+        log.debug("系统中总退款数量: {}", totalRefunds);
 
         // 查询各状态退款数量
         for (RefundStatus refundStatus : RefundStatus.values()) {
             LambdaQueryWrapper<Refund> countQuery = new LambdaQueryWrapper<>();
             countQuery.eq(Refund::getStatus, refundStatus.getCode());
             long statusCount = refundService.count(countQuery);
-            log.info("状态[{}]的退款数量: {}", refundStatus.getDesc(), statusCount);
+            log.debug("状态[{}]的退款数量: {}", refundStatus.getDesc(), statusCount);
         }
 
         // 查询退款分页数据
         Page<Refund> refunds = refundService.adminGetRefunds(page, size, status, userId, orderId, startTime, endTime);
 
-        log.info("查询结果: 总记录数={}, 当前页记录数={}",
+        log.debug("查询结果: 总记录数={}, 当前页记录数={}",
                 refunds.getTotal(), refunds.getRecords().size());
 
         return CommonResult.success(refunds);
@@ -82,7 +82,7 @@ public class AdminRefundController {
      */
     @PostMapping("/review")
     public CommonResult<Boolean> reviewRefund(@RequestBody Map<String, Object> requestData) {
-        log.info("收到退款审核请求: {}", requestData);
+        log.debug("收到退款审核请求: {}", requestData);
 
         // 检查必要参数
         if (requestData == null || !requestData.containsKey("refundId") || requestData.get("refundId") == null) {
@@ -106,7 +106,7 @@ public class AdminRefundController {
                     : 0;
             String adminName = (String) requestData.get("adminName");
 
-            log.info("处理退款审核: refundId={}, approved={}, adminId={}, adminName={}, rejectReason={}",
+            log.debug("处理退款审核: refundId={}, approved={}, adminId={}, adminName={}, rejectReason={}",
                     refundId, approved, adminId, adminName, rejectReason);
 
             boolean success = refundService.reviewRefund(refundId, approved, rejectReason, adminId, adminName);
@@ -122,7 +122,7 @@ public class AdminRefundController {
      */
     @PostMapping("/process")
     public CommonResult<Boolean> processRefund(@RequestBody Map<String, Object> requestData) {
-        log.info("收到退款处理请求: {}", requestData);
+        log.debug("收到退款处理请求: {}", requestData);
 
         // 检查必要参数
         if (requestData == null || !requestData.containsKey("refundId") || requestData.get("refundId") == null) {
@@ -146,7 +146,7 @@ public class AdminRefundController {
                     : 0;
             String adminName = (String) requestData.get("adminName");
 
-            log.info("处理退款: refundId={}, refundChannel={}, adminId={}, adminName={}",
+            log.debug("处理退款: refundId={}, refundChannel={}, adminId={}, adminName={}",
                     refundId, refundChannel, adminId, adminName);
 
             boolean success = refundService.processRefund(refundId, refundChannel, refundAccount, adminId, adminName);
@@ -162,7 +162,7 @@ public class AdminRefundController {
      */
     @PostMapping("/complete")
     public CommonResult<Boolean> completeRefund(@RequestBody Map<String, Object> requestData) {
-        log.info("收到完成退款请求: {}", requestData);
+        log.debug("收到完成退款请求: {}", requestData);
 
         // 检查必要参数
         if (requestData == null || !requestData.containsKey("refundId") || requestData.get("refundId") == null) {
@@ -184,7 +184,7 @@ public class AdminRefundController {
                     : 0;
             String adminName = (String) requestData.get("adminName");
 
-            log.info("完成退款: refundId={}, transactionId={}, adminId={}, adminName={}",
+            log.debug("完成退款: refundId={}, transactionId={}, adminId={}, adminName={}",
                     refundId, transactionId, adminId, adminName);
 
             boolean success = refundService.completeRefund(refundId, transactionId, adminId, adminName);
@@ -200,7 +200,7 @@ public class AdminRefundController {
      */
     @PostMapping("/fail")
     public CommonResult<Boolean> failRefund(@RequestBody Map<String, Object> requestData) {
-        log.info("收到标记退款失败请求: {}", requestData);
+        log.debug("收到标记退款失败请求: {}", requestData);
 
         // 检查必要参数
         if (requestData == null || !requestData.containsKey("refundId") || requestData.get("refundId") == null) {
@@ -222,7 +222,7 @@ public class AdminRefundController {
                     : 0;
             String adminName = (String) requestData.get("adminName");
 
-            log.info("标记退款失败: refundId={}, reason={}, adminId={}, adminName={}",
+            log.debug("标记退款失败: refundId={}, reason={}, adminId={}, adminName={}",
                     refundId, reason, adminId, adminName);
 
             boolean success = refundService.failRefund(refundId, reason, adminId, adminName);
@@ -240,13 +240,13 @@ public class AdminRefundController {
     public CommonResult<Map<String, Object>> getRefundStatistics(
             @RequestParam(value = "startTime", required = false) String startTime,
             @RequestParam(value = "endTime", required = false) String endTime) {
-        log.info("====================开始处理退款统计请求====================");
-        log.info("请求路径: {}", "/admin/refund/statistics");
-        log.info("请求参数: startTime={}, endTime={}", startTime, endTime);
+        log.debug("====================开始处理退款统计请求====================");
+        log.debug("请求路径: {}", "/admin/refund/statistics");
+        log.debug("请求参数: startTime={}, endTime={}", startTime, endTime);
 
         try {
             Map<String, Object> statistics = refundService.getRefundStatistics(startTime, endTime);
-            log.info("统计数据获取成功: {}", statistics);
+            log.debug("统计数据获取成功: {}", statistics);
             return CommonResult.success(statistics);
         } catch (Exception e) {
             log.error("获取统计数据失败", e);
@@ -259,12 +259,12 @@ public class AdminRefundController {
      */
     @GetMapping("/pending/count")
     public CommonResult<Long> getPendingRefundCount() {
-        log.info("====================开始处理待处理退款数量请求====================");
-        log.info("请求路径: {}", "/admin/refund/pending/count");
+        log.debug("====================开始处理待处理退款数量请求====================");
+        log.debug("请求路径: {}", "/admin/refund/pending/count");
 
         try {
             long count = refundService.getPendingRefundCount();
-            log.info("待处理退款数量: {}", count);
+            log.debug("待处理退款数量: {}", count);
             return CommonResult.success(count);
         } catch (Exception e) {
             log.error("获取待处理退款数量失败", e);

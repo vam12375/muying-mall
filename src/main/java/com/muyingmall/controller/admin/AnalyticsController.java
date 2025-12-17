@@ -41,7 +41,7 @@ public class AnalyticsController {
             @RequestParam(value = "startDate", required = false) @Parameter(description = "开始日期") String startDate,
             @RequestParam(value = "endDate", required = false) @Parameter(description = "结束日期") String endDate) {
         try {
-            log.info("获取仪表盘汇总数据，时间范围：{}，开始日期：{}，结束日期：{}", timeRange, startDate, endDate);
+            log.debug("获取仪表盘汇总数据，时间范围：{}，开始日期：{}，结束日期：{}", timeRange, startDate, endDate);
 
             // 构建缓存键
             String cacheKey = CacheConstants.ANALYTICS_KEY_PREFIX + "dashboard:" + timeRange;
@@ -100,7 +100,7 @@ public class AnalyticsController {
             @RequestParam(value = "startDate", required = false) @Parameter(description = "开始日期") String startDate,
             @RequestParam(value = "endDate", required = false) @Parameter(description = "结束日期") String endDate) {
         try {
-            log.info("获取销售趋势数据，时间范围：{}，开始日期：{}，结束日期：{}", timeRange, startDate, endDate);
+            log.debug("获取销售趋势数据，时间范围：{}，开始日期：{}，结束日期：{}", timeRange, startDate, endDate);
 
             // 构建缓存键
             String cacheKey = CacheConstants.ANALYTICS_KEY_PREFIX + "sales-trend:" + timeRange;
@@ -167,7 +167,7 @@ public class AnalyticsController {
     public Result<List<Map<String, Object>>> getCategorySales(
             @RequestParam(value = "timeRange", defaultValue = "month") @Parameter(description = "时间范围") String timeRange) {
         try {
-            log.info("获取分类销售数据，时间范围：{}", timeRange);
+            log.debug("获取分类销售数据，时间范围：{}", timeRange);
 
             // 构建缓存键
             String cacheKey = CacheConstants.ANALYTICS_KEY_PREFIX + "category-sales:" + timeRange;
@@ -243,7 +243,7 @@ public class AnalyticsController {
     @Operation(summary = "获取用户地域分布")
     public Result<List<Map<String, Object>>> getUserRegions() {
         try {
-            log.info("获取用户地域分布");
+            log.debug("获取用户地域分布");
 
             // 构建缓存键
             String cacheKey = CacheConstants.ANALYTICS_KEY_PREFIX + "user-regions";
@@ -316,7 +316,7 @@ public class AnalyticsController {
     @Operation(summary = "获取报表模板列表")
     public Result<List<Map<String, Object>>> getReportTemplates() {
         try {
-            log.info("获取报表模板列表");
+            log.debug("获取报表模板列表");
 
             // 构建缓存键
             String cacheKey = CacheConstants.ANALYTICS_KEY_PREFIX + "report-templates";
@@ -395,7 +395,7 @@ public class AnalyticsController {
             // 使用scan命令清除匹配的缓存
             long count = redisUtil.deleteByScan(pattern);
 
-            log.info("清除分析数据缓存成功，共清除{}个键", count);
+            log.debug("清除分析数据缓存成功，共清除{}个键", count);
             return Result.success(true);
         } catch (Exception e) {
             log.error("清除分析数据缓存失败", e);

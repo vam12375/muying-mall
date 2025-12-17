@@ -247,6 +247,6 @@ public class ApiStatisticsMonitor {
         successRequests.set(0);
         failedRequests.set(0);
         totalResponseTime.set(0);
-        log.info("API统计数据已重置");
+        log.debug("API统计数据已重置");
     }
 }

@@ -78,12 +78,12 @@ public class RefundStateServiceImpl implements RefundStateService {
                 throw new BusinessException("无效的当前退款状态");
             }
 
-            log.info("准备执行状态转换, refundId: {}, 当前状态: {}, 事件: {}, 操作者: {}/{}, 原因: {}",
+            log.debug("准备执行状态转换, refundId: {}, 当前状态: {}, 事件: {}, 操作者: {}/{}, 原因: {}",
                     refundId, currentStatus.getDesc(), event, operatorType, operatorName, reason);
 
             // 特殊处理SUBMIT事件，确保其始终成功
             if (event == RefundEvent.SUBMIT) {
-                log.info("处理SUBMIT事件，重要的状态初始化事件，refundId: {}", refundId);
+                log.debug("处理SUBMIT事件，重要的状态初始化事件，refundId: {}", refundId);
 
                 // 即使当前状态不是PENDING，也尝试更新状态日志
                 if (currentStatus != RefundStatus.PENDING) {
@@ -100,7 +100,7 @@ public class RefundStateServiceImpl implements RefundStateService {
                         operatorId,
                         operatorName,
                         reason);
-                log.info("SUBMIT事件已记录状态日志, refundId: {}", refundId);
+                log.debug("SUBMIT事件已记录状态日志, refundId: {}", refundId);
                 return true;
             }
 
@@ -117,10 +117,10 @@ public class RefundStateServiceImpl implements RefundStateService {
             }
 
             // 执行状态转换
-            log.info("执行状态转换, refundId: {}, 从[{}]状态通过[{}]事件转换",
+            log.debug("执行状态转换, refundId: {}, 从[{}]状态通过[{}]事件转换",
                     refundId, currentStatus.getDesc(), event);
             RefundStatus newStatus = refundStateMachine.sendEvent(currentStatus, event, context);
-            log.info("状态转换成功, refundId: {}, 从[{}]状态转换为[{}]状态",
+            log.debug("状态转换成功, refundId: {}, 从[{}]状态转换为[{}]状态",
                     refundId, currentStatus.getDesc(), newStatus.getDesc());
 
             // 更新退款状态

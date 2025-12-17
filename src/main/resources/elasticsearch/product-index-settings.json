@@ -1,0 +1,101 @@
+{
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 1,
+    "refresh_interval": "30s",
+    "max_result_window": 10000,
+    "analysis": {
+      "analyzer": {
+        "ik_smart_pinyin": {
+          "type": "custom",
+          "tokenizer": "ik_smart",
+          "filter": ["lowercase"]
+        },
+        "ik_max_word_pinyin": {
+          "type": "custom",
+          "tokenizer": "ik_max_word",
+          "filter": ["lowercase"]
+        }
+      }
+    },
+    "index": {
+      "max_ngram_diff": 10,
+      "max_shingle_diff": 8
+    }
+  },
+  "mappings": {
+    "properties": {
+      "productId": {
+        "type": "integer"
+      },
+      "productName": {
+        "type": "text",
+        "analyzer": "ik_max_word",
+        "search_analyzer": "ik_smart",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "productDetail": {
+        "type": "text",
+        "analyzer": "ik_max_word",
+        "search_analyzer": "ik_smart"
+      },
+      "productPrice": {
+        "type": "scaled_float",
+        "scaling_factor": 100
+      },
+      "categoryId": {
+        "type": "integer"
+      },
+      "categoryName": {
+        "type": "text",
+        "analyzer": "ik_smart",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "brandId": {
+        "type": "integer"
+      },
+      "brandName": {
+        "type": "text",
+        "analyzer": "ik_smart",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "keywords": {
+        "type": "text",
+        "analyzer": "ik_max_word"
+      },
+      "productStatus": {
+        "type": "keyword"
+      },
+      "salesCount": {
+        "type": "integer"
+      },
+      "rating": {
+        "type": "half_float"
+      },
+      "searchWeight": {
+        "type": "integer"
+      },
+      "createTime": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+      },
+      "updateTime": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+      }
+    }
+  }
+}

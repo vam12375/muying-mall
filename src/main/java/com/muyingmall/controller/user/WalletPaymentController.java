@@ -86,7 +86,7 @@ public class WalletPaymentController {
         }
 
         try {
-            log.info("支付宝充值异步通知参数: {}", params);
+            log.debug("支付宝充值异步通知参数: {}", params);
 
             // 验签
             boolean signVerified = AlipaySignature.rsaCheckV1(
@@ -94,7 +94,7 @@ public class WalletPaymentController {
                     alipayConfig.getPublicKey(),
                     "UTF-8",
                     "RSA2");
-            log.info("支付宝充值异步通知验签结果: {}", signVerified);
+            log.debug("支付宝充值异步通知验签结果: {}", signVerified);
 
             if (signVerified) {
                 String rechargeOrderNo = params.get("out_trade_no");
@@ -103,7 +103,7 @@ public class WalletPaymentController {
                 String gmtPayment = params.get("gmt_payment"); // 交易付款时间
                 String totalAmount = params.get("total_amount"); // 订单金额
 
-                log.info("充值异步通知 - Order No: {}, Trade Status: {}, Trade No: {}, Payment Time: {}, Amount: {}",
+                log.debug("充值异步通知 - Order No: {}, Trade Status: {}, Trade No: {}, Payment Time: {}, Amount: {}",
                         rechargeOrderNo, tradeStatus, tradeNo, gmtPayment, totalAmount);
 
                 // 查询本地充值记录
@@ -118,14 +118,14 @@ public class WalletPaymentController {
                     return "failure";
                 }
 
-                log.info("充值异步通知 - 找到充值记录: ID {}, UserID {}, Status {}",
+                log.debug("充值异步通知 - 找到充值记录: ID {}, UserID {}, Status {}",
                         transaction.getId(), transaction.getUserId(), transaction.getStatus());
 
                 // 根据通知类型处理
                 if ("TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISHED".equals(tradeStatus)) {
                     // 如果充值已经成功，避免重复处理
                     if (transaction.getStatus() == 1) { // 1表示成功
-                        log.info("充值异步通知 - 充值已处理，跳过: {}", rechargeOrderNo);
+                        log.debug("充值异步通知 - 充值已处理，跳过: {}", rechargeOrderNo);
                         return "success";
                     }
 
@@ -133,7 +133,7 @@ public class WalletPaymentController {
                         // 执行充值操作
                         boolean result = completeRecharge(transaction, tradeNo);
                         if (result) {
-                            log.info("充值异步通知 - 充值成功: {}", rechargeOrderNo);
+                            log.debug("充值异步通知 - 充值成功: {}", rechargeOrderNo);
                             return "success";
                         } else {
                             log.error("充值异步通知 - 充值处理失败: {}", rechargeOrderNo);
@@ -151,7 +151,7 @@ public class WalletPaymentController {
                         transaction.setStatus(2); // 2表示失败
                         transaction.setUpdateTime(new Date());
                         accountTransactionMapper.updateById(transaction);
-                        log.info("充值异步通知 - 交易关闭状态更新成功: {}", rechargeOrderNo);
+                        log.debug("充值异步通知 - 交易关闭状态更新成功: {}", rechargeOrderNo);
                         return "success";
                     } catch (Exception e) {
                         log.error("充值异步通知 - 更新交易关闭状态失败: {}", e.getMessage(), e);
@@ -190,7 +190,7 @@ public class WalletPaymentController {
             params.put(key, valueStr.toString());
         }
 
-        log.info("支付宝充值同步回调参数: {}", params);
+        log.debug("支付宝充值同步回调参数: {}", params);
 
         boolean signVerified = false;
         String rechargeResult = "unknown";
@@ -203,13 +203,13 @@ public class WalletPaymentController {
                     alipayConfig.getPublicKey(),
                     "UTF-8",
                     "RSA2");
-            log.info("支付宝充值同步回调验签结果: {}", signVerified);
+            log.debug("支付宝充值同步回调验签结果: {}", signVerified);
 
             if (signVerified) {
                 // 验签成功，获取支付信息
                 rechargeOrderNo = params.get("out_trade_no");
                 String tradeNo = params.get("trade_no"); // 支付宝交易号
-                log.info("充值同步回调 - Recharge Order No: {}, Trade No: {}", rechargeOrderNo, tradeNo);
+                log.debug("充值同步回调 - Recharge Order No: {}, Trade No: {}", rechargeOrderNo, tradeNo);
 
                 // 查询充值记录
                 AccountTransaction transaction = accountTransactionMapper.selectOne(
@@ -220,7 +220,7 @@ public class WalletPaymentController {
 
                 if (transaction != null) {
                     amount = transaction.getAmount().toString();
-                    log.info("充值同步回调 - 找到充值记录: Transaction ID {}, User ID: {}, Amount: {}",
+                    log.debug("充值同步回调 - 找到充值记录: Transaction ID {}, User ID: {}, Amount: {}",
                             transaction.getId(), transaction.getUserId(), transaction.getAmount());
 
                     // 查询支付宝交易状态
@@ -262,7 +262,7 @@ public class WalletPaymentController {
                 "&amount=" + amount +
                 "&paymentMethod=alipay";
 
-        log.info("充值同步回调 - 重定向到: {}", redirectUrl);
+        log.debug("充值同步回调 - 重定向到: {}", redirectUrl);
         response.sendRedirect(redirectUrl);
     }
 
@@ -271,7 +271,7 @@ public class WalletPaymentController {
      */
     @PostMapping("/manual-complete")
     public CommonResult<Map<String, Object>> manualCompleteRecharge(@RequestParam String orderNo) {
-        log.info("手动完成充值请求: {}", orderNo);
+        log.debug("手动完成充值请求: {}", orderNo);
         Map<String, Object> result = new HashMap<>();
 
         try {
@@ -289,7 +289,7 @@ public class WalletPaymentController {
                 return CommonResult.success(result);
             }
 
-            log.info("找到充值记录: ID={}, 用户ID={}, 金额={}, 状态={}, 账户ID={}",
+            log.debug("找到充值记录: ID={}, 用户ID={}, 金额={}, 状态={}, 账户ID={}",
                     transaction.getId(), transaction.getUserId(), transaction.getAmount(),
                     transaction.getStatus(), transaction.getAccountId());
 
@@ -301,7 +301,7 @@ public class WalletPaymentController {
                     "status", transaction.getStatus()));
 
             if (transaction.getStatus() == 1) {
-                log.info("手动完成充值 - 充值已完成: {}", orderNo);
+                log.debug("手动完成充值 - 充值已完成: {}", orderNo);
                 result.put("success", true);
                 result.put("message", "充值已完成");
                 return CommonResult.success(result);
@@ -316,7 +316,7 @@ public class WalletPaymentController {
                 return CommonResult.success(result);
             }
 
-            log.info("找到用户账户: accountId={}, userId={}, balance={}",
+            log.debug("找到用户账户: accountId={}, userId={}, balance={}",
                     userAccount.getId(), userAccount.getUserId(), userAccount.getBalance());
 
             // 简化的充值逻辑，直接在这里执行，避免调用复杂的方法
@@ -336,7 +336,7 @@ public class WalletPaymentController {
                     return CommonResult.success(result);
                 }
 
-                log.info("充值 - 更新账户余额成功: beforeBalance={}, afterBalance={}", beforeBalance, afterBalance);
+                log.debug("充值 - 更新账户余额成功: beforeBalance={}, afterBalance={}", beforeBalance, afterBalance);
 
                 // 2. 更新交易记录状态
                 transaction.setStatus(1); // 1表示成功
@@ -352,7 +352,7 @@ public class WalletPaymentController {
                     return CommonResult.success(result);
                 }
 
-                log.info("充值 - 更新交易记录状态成功: transactionId={}, status=1(成功)", transaction.getId());
+                log.debug("充值 - 更新交易记录状态成功: transactionId={}, status=1(成功)", transaction.getId());
 
                 result.put("success", true);
                 result.put("message", "充值完成成功");
@@ -384,7 +384,7 @@ public class WalletPaymentController {
      */
     @GetMapping("/query-recharge")
     public CommonResult<Map<String, Object>> queryRechargeRecord(@RequestParam String orderNo) {
-        log.info("查询充值记录请求: {}", orderNo);
+        log.debug("查询充值记录请求: {}", orderNo);
 
         try {
             // 查询充值记录
@@ -403,7 +403,7 @@ public class WalletPaymentController {
                 return CommonResult.success(result);
             }
 
-            log.info("查询到充值记录: ID={}, 用户ID={}, 金额={}, 状态={}, 账户ID={}",
+            log.debug("查询到充值记录: ID={}, 用户ID={}, 金额={}, 状态={}, 账户ID={}",
                     transaction.getId(), transaction.getUserId(), transaction.getAmount(),
                     transaction.getStatus(), transaction.getAccountId());
 
@@ -433,7 +433,7 @@ public class WalletPaymentController {
      */
     @GetMapping("/check-status")
     public CommonResult<Map<String, Object>> checkTransactionStatus(@RequestParam String orderNo) {
-        log.info("检查交易状态请求: {}", orderNo);
+        log.debug("检查交易状态请求: {}", orderNo);
 
         try {
             // 查询本地充值记录
@@ -481,7 +481,7 @@ public class WalletPaymentController {
      */
     @PostMapping("/wechat/notify")
     public String wechatRechargeNotify(HttpServletRequest request) {
-        log.info("收到微信充值回调请求");
+        log.debug("收到微信充值回调请求");
 
         try {
             // 读取请求体中的XML数据
@@ -493,17 +493,17 @@ public class WalletPaymentController {
                 }
             }
             String xmlData = sb.toString();
-            log.info("微信充值回调原始数据: {}", xmlData);
+            log.debug("微信充值回调原始数据: {}", xmlData);
 
             // 解析XML数据
             Map<String, String> notifyMap = parseXml(xmlData);
-            log.info("微信充值回调解析后数据: {}", notifyMap);
+            log.debug("微信充值回调解析后数据: {}", notifyMap);
 
             // 验证签名 - 为简化实现，这里暂不实现完整的验签逻辑
             // 实际生产环境必须进行签名验证，以确保数据真实性
             // boolean isSignValid = verifyWechatSign(notifyMap);
             boolean isSignValid = true; // 临时跳过验签
-            log.info("微信充值回调验签结果: {}", isSignValid);
+            log.debug("微信充值回调验签结果: {}", isSignValid);
 
             if (isSignValid) {
                 // 验签成功，处理业务逻辑
@@ -516,7 +516,7 @@ public class WalletPaymentController {
                     String transactionId = notifyMap.get("transaction_id"); // 微信支付订单号
                     String totalFee = notifyMap.get("total_fee"); // 订单金额，单位为分
 
-                    log.info("微信充值回调 - 订单号: {}, 微信支付单号: {}, 金额: {} 分",
+                    log.debug("微信充值回调 - 订单号: {}, 微信支付单号: {}, 金额: {} 分",
                             outTradeNo, transactionId, totalFee);
 
                     // 查询本地充值记录
@@ -531,7 +531,7 @@ public class WalletPaymentController {
                         return generateWechatResponse(false, "订单不存在");
                     }
 
-                    log.info("微信充值回调 - 找到充值记录: ID {}, UserID {}, Status {}",
+                    log.debug("微信充值回调 - 找到充值记录: ID {}, UserID {}, Status {}",
                             transaction.getId(), transaction.getUserId(), transaction.getStatus());
 
                     // 金额校验 - 将分转换为元进行比较
@@ -544,7 +544,7 @@ public class WalletPaymentController {
 
                     // 如果充值已经成功，避免重复处理
                     if (transaction.getStatus() == 1) { // 1表示成功
-                        log.info("微信充值回调 - 充值已处理，跳过: {}", outTradeNo);
+                        log.debug("微信充值回调 - 充值已处理，跳过: {}", outTradeNo);
                         return generateWechatResponse(true, "OK");
                     }
 
@@ -552,7 +552,7 @@ public class WalletPaymentController {
                         // 执行充值操作
                         boolean result = completeRecharge(transaction, transactionId);
                         if (result) {
-                            log.info("微信充值回调 - 充值成功: {}", outTradeNo);
+                            log.debug("微信充值回调 - 充值成功: {}", outTradeNo);
                             return generateWechatResponse(true, "OK");
                         } else {
                             log.error("微信充值回调 - 充值处理失败: {}", outTradeNo);
@@ -660,13 +660,13 @@ public class WalletPaymentController {
      */
     @Transactional(rollbackFor = Exception.class)
     public boolean completeRecharge(AccountTransaction transaction, String tradeNo) {
-        log.info("开始执行充值操作: 交易ID={}, 用户ID={}, 金额={}, 账户ID={}",
+        log.debug("开始执行充值操作: 交易ID={}, 用户ID={}, 金额={}, 账户ID={}",
                 transaction.getId(), transaction.getUserId(), transaction.getAmount(), transaction.getAccountId());
 
         try {
             // 防止重复处理
             if (transaction.getStatus() == 1) {
-                log.info("充值已完成，跳过重复处理: transactionId={}", transaction.getId());
+                log.debug("充值已完成，跳过重复处理: transactionId={}", transaction.getId());
                 return true;
             }
 
@@ -677,7 +677,7 @@ public class WalletPaymentController {
                 throw new BusinessException("未找到用户账户，accountId=" + transaction.getAccountId());
             }
 
-            log.info("找到用户账户: accountId={}, userId={}, 当前余额={}",
+            log.debug("找到用户账户: accountId={}, userId={}, 当前余额={}",
                     userAccount.getId(), userAccount.getUserId(), userAccount.getBalance());
 
             BigDecimal beforeBalance = userAccount.getBalance();
@@ -694,7 +694,7 @@ public class WalletPaymentController {
                 throw new BusinessException("更新用户账户余额失败");
             }
 
-            log.info("充值 - 更新账户余额成功: beforeBalance={}, afterBalance={}, 影响行数={}",
+            log.debug("充值 - 更新账户余额成功: beforeBalance={}, afterBalance={}, 影响行数={}",
                     beforeBalance, afterBalance, rows);
 
             // 2. 更新交易记录状态
@@ -710,10 +710,10 @@ public class WalletPaymentController {
                 throw new BusinessException("更新交易记录状态失败");
             }
 
-            log.info("充值 - 更新交易记录状态成功: transactionId={}, status=1(成功), 影响行数={}",
+            log.debug("充值 - 更新交易记录状态成功: transactionId={}, status=1(成功), 影响行数={}",
                     transaction.getId(), result);
 
-            log.info("充值操作完成: 用户ID={}, 充值金额={}, 充值前余额={}, 充值后余额={}",
+            log.debug("充值操作完成: 用户ID={}, 充值金额={}, 充值前余额={}, 充值后余额={}",
                     transaction.getUserId(), transaction.getAmount(), beforeBalance, afterBalance);
 
             return true;
@@ -731,7 +731,7 @@ public class WalletPaymentController {
      */
     @GetMapping("/query-account")
     public CommonResult<Map<String, Object>> queryUserAccount(@RequestParam Integer accountId) {
-        log.info("查询用户账户请求: accountId={}", accountId);
+        log.debug("查询用户账户请求: accountId={}", accountId);
         Map<String, Object> result = new HashMap<>();
 
         try {
@@ -745,7 +745,7 @@ public class WalletPaymentController {
                 return CommonResult.success(result);
             }
 
-            log.info("查询到用户账户: accountId={}, userId={}, balance={}, status={}",
+            log.debug("查询到用户账户: accountId={}, userId={}, balance={}, status={}",
                     userAccount.getId(), userAccount.getUserId(), userAccount.getBalance(), userAccount.getStatus());
 
             result.put("found", true);
@@ -773,7 +773,7 @@ public class WalletPaymentController {
     public CommonResult<Map<String, Object>> createTestRecharge(
             @RequestParam Integer userId,
             @RequestParam BigDecimal amount) {
-        log.info("创建测试充值记录: userId={}, amount={}", userId, amount);
+        log.debug("创建测试充值记录: userId={}, amount={}", userId, amount);
         Map<String, Object> result = new HashMap<>();
 
         try {
@@ -814,7 +814,7 @@ public class WalletPaymentController {
                 return CommonResult.success(result);
             }
 
-            log.info("创建测试充值记录成功: transactionId={}, orderNo={}", transaction.getId(), orderNo);
+            log.debug("创建测试充值记录成功: transactionId={}, orderNo={}", transaction.getId(), orderNo);
 
             result.put("success", true);
             result.put("message", "创建测试充值记录成功");

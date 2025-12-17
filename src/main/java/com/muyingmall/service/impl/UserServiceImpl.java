@@ -126,12 +126,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User login(LoginDTO loginDTO) {
-        // 根据用户名或邮箱查询用户
-        User user = lambdaQuery()
-                .eq(User::getUsername, loginDTO.getUsername())
-                .or()
-                .eq(User::getEmail, loginDTO.getUsername())
-                .one();
+        // 优化：优先使用缓存查询，减少数据库压力
+        String loginName = loginDTO.getUsername();
+        User user = null;
+        
+        // 先尝试按用户名查询（利用缓存）
+        user = findByUsername(loginName);
+        
+        // 如果用户名未找到，尝试按邮箱查询（利用缓存）
+        if (user == null) {
+            user = getByEmail(loginName);
+        }
 
         // 验证用户是否存在
         if (user == null) {
@@ -152,14 +157,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User adminLogin(AdminLoginDTO adminLoginDTO) {
-        // 查询用户
-        User admin = lambdaQuery()
-                .eq(User::getUsername, adminLoginDTO.getAdmin_name())
-                .eq(User::getRole, "admin")
-                .one();
+        // 优化：优先使用缓存查询，减少数据库压力
+        User admin = findByUsername(adminLoginDTO.getAdmin_name());
 
         // 验证用户是否存在
         if (admin == null) {
+            throw new BusinessException("用户名或密码错误");
+        }
+        
+        // 验证是否为管理员
+        if (!"admin".equals(admin.getRole())) {
             throw new BusinessException("用户名或密码错误");
         }
 
@@ -331,15 +338,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public String generateToken(User user) {
-        // log.info("[UserServiceImpl] Generating token for user: {}",
+        // log.debug("[UserServiceImpl] Generating token for user: {}",
         // user.getUsername());
-        // log.info("[UserServiceImpl] Using JwtUtils instance hash: {}",
+        // log.debug("[UserServiceImpl] Using JwtUtils instance hash: {}",
         // System.identityHashCode(jwtUtils));
-        // log.info("[UserServiceImpl] JwtUtils signingKey for token generation
+        // log.debug("[UserServiceImpl] JwtUtils signingKey for token generation
         // (Base64): {}", jwtUtils.getSigningKeyBase64ForDebug());
 
         String token = jwtUtils.generateToken(user.getUserId(), user.getUsername(), user.getRole());
-        // log.info("[UserServiceImpl] Token generated via JwtUtils: {}...", (token !=
+        // log.debug("[UserServiceImpl] Token generated via JwtUtils: {}...", (token !=
         // null && token.length() > 10) ? token.substring(0, 10) : token);
         return token;
     }
@@ -360,7 +367,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 Claims claims = jwtUtils.getClaimsFromToken(actualToken);
                 Integer userId = claims.get("userId", Integer.class);
                 if (userId != null) {
-                    // log.info("[UserServiceImpl] User ID {} retrieved from token. Fetching user.",
+                    // log.debug("[UserServiceImpl] User ID {} retrieved from token. Fetching user.",
                     // userId);
                     return getById(userId);
                 } else {
@@ -677,7 +684,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deductBalance(Integer userId, BigDecimal amountToDeduct) {
-        log.info("开始执行扣款操作: userId={}, amount={}", userId, amountToDeduct);
+        log.debug("开始执行扣款操作: userId={}, amount={}", userId, amountToDeduct);
         
         if (userId == null || amountToDeduct == null || amountToDeduct.compareTo(BigDecimal.ZERO) <= 0) {
             log.error("扣款参数错误: userId={}, amount={}", userId, amountToDeduct);
@@ -687,7 +694,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         try {
             // 使用UserAccountService获取真实的用户账户余额
             UserAccount userAccount = userAccountService.getUserAccountByUserId(userId);
-            log.info("获取到用户账户: userId={}, accountId={}, balance={}", 
+            log.debug("获取到用户账户: userId={}, accountId={}, balance={}", 
                      userId, userAccount.getId(), userAccount.getBalance());
             
             // 检查余额是否足够
@@ -696,7 +703,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 currentBalance = BigDecimal.ZERO;
             }
             
-            log.info("余额检查: 当前余额={}, 扣款金额={}, 差额={}", 
+            log.debug("余额检查: 当前余额={}, 扣款金额={}, 差额={}", 
                      currentBalance, amountToDeduct, currentBalance.subtract(amountToDeduct));
             
             if (currentBalance.compareTo(amountToDeduct) < 0) {
@@ -713,7 +720,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             BigDecimal negativeAmount = amountToDeduct.negate(); // 转为负数
             userAccountService.adjustUserBalance(userId, negativeAmount, "系统扣款");
             
-            log.info("扣款成功: userId={}, amount={}", userId, amountToDeduct);
+            log.debug("扣款成功: userId={}, amount={}", userId, amountToDeduct);
             
         } catch (BusinessException e) {
             log.error("扣款业务异常: {}", e.getMessage());
@@ -791,7 +798,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 log.debug("清除用户列表缓存，共{}个键", listKeys.size());
             }
 
-            log.info("已清除用户相关缓存: userId={}", user.getUserId());
+            log.debug("已清除用户相关缓存: userId={}", user.getUserId());
         } catch (Exception e) {
             log.error("清除用户缓存失败: userId={}, error={}", user.getUserId(), e.getMessage());
         }
@@ -801,14 +808,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public Map<String, Object> getUserStats(Integer userId) {
         Map<String, Object> stats = new HashMap<>();
         
-        log.info("开始获取用户统计数据: userId={}", userId);
+        log.debug("开始获取用户统计数据: userId={}", userId);
         
         try {
             // 获取用户账户余额
             UserAccount userAccount = userAccountService.getUserAccountByUserId(userId);
             if (userAccount != null) {
                 stats.put("balance", userAccount.getBalance() != null ? userAccount.getBalance() : BigDecimal.ZERO);
-                log.info("用户账户余额: userId={}, balance={}", userId, userAccount.getBalance());
+                log.debug("用户账户余额: userId={}, balance={}", userId, userAccount.getBalance());
             } else {
                 stats.put("balance", BigDecimal.ZERO);
                 log.warn("用户账户不存在，余额使用默认值: userId={}", userId);
@@ -821,7 +828,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             );
             if (userPoints != null) {
                 stats.put("points", userPoints.getPoints() != null ? userPoints.getPoints() : 0);
-                log.info("用户积分: userId={}, points={}", userId, userPoints.getPoints());
+                log.debug("用户积分: userId={}, points={}", userId, userPoints.getPoints());
             } else {
                 stats.put("points", 0);
                 log.warn("用户积分记录不存在，使用默认值: userId={}", userId);
@@ -834,14 +841,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     .eq(UserCoupon::getStatus, "UNUSED")
             );
             stats.put("couponCount", couponCount != null ? couponCount.intValue() : 0);
-            log.info("用户优惠券数量: userId={}, couponCount={}", userId, couponCount);
+            log.debug("用户优惠券数量: userId={}, couponCount={}", userId, couponCount);
             
             // 获取订单数量
             Long orderCount = orderMapper.selectCount(
                 new LambdaQueryWrapper<Order>()
                     .eq(Order::getUserId, userId)
             );
-            log.info("订单数量查询结果: userId={}, orderCount={}", userId, orderCount);
             stats.put("orderCount", orderCount != null ? orderCount.intValue() : 0);
             
             // 获取收藏数量
@@ -849,7 +855,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 new LambdaQueryWrapper<Favorite>()
                     .eq(Favorite::getUserId, userId)
             );
-            log.info("收藏数量查询结果: userId={}, favoriteCount={}", userId, favoriteCount);
             stats.put("favoriteCount", favoriteCount != null ? favoriteCount.intValue() : 0);
             
             // 获取评价数量
@@ -857,10 +862,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 new LambdaQueryWrapper<Comment>()
                     .eq(Comment::getUserId, userId)
             );
-            log.info("评价数量查询结果: userId={}, commentCount={}", userId, commentCount);
             stats.put("commentCount", commentCount != null ? commentCount.intValue() : 0);
             
-            log.info("用户统计数据获取成功: userId={}, stats={}", userId, stats);
+            // 优化：热点路径使用debug级别日志
+            log.debug("用户统计数据获取成功: userId={}", userId);
             
         } catch (Exception e) {
             log.error("获取用户统计数据失败: userId={}, error={}", userId, e.getMessage(), e);

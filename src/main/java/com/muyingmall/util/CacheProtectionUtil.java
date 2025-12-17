@@ -27,14 +27,14 @@ public class CacheProtectionUtil {
     // 布隆过滤器缓存键前缀
     private static final String BLOOM_FILTER_KEY_PREFIX = "bloom:";
 
-    // 缓存锁过期时间(秒) - 保持60秒，避免极高并发下锁等待超时
-    private static final long LOCK_EXPIRE_TIME = 60;
+    // 缓存锁过期时间(秒) - 优化：缩短到10秒，快速释放锁
+    private static final long LOCK_EXPIRE_TIME = 10;
 
-    // 缓存锁重试次数 - 优化：减少到5次，总等待时间250ms，避免响应过慢
-    private static final int LOCK_RETRY_TIMES = 5;
+    // 缓存锁重试次数 - 优化：减少到3次，总等待时间60ms，大幅降低响应延迟
+    private static final int LOCK_RETRY_TIMES = 3;
 
-    // 缓存锁重试间隔(毫秒) - 优化：减少到50ms，快速重试
-    private static final long LOCK_RETRY_INTERVAL = 50;
+    // 缓存锁重试间隔(毫秒) - 优化：减少到20ms，极速重试
+    private static final long LOCK_RETRY_INTERVAL = 20;
 
     /**
      * 防止缓存穿透的查询方法
@@ -177,8 +177,7 @@ public class CacheProtectionUtil {
                     }
                 }
 
-                // 7. 重试后仍未命中缓存，降级查询数据库
-                log.debug("重试{}次后仍未命中缓存，降级查询数据库: key={}", LOCK_RETRY_TIMES, cacheKey);
+                // 7. 重试后仍未命中缓存，降级查询数据库（无需日志，正常降级流程）
                 try {
                     return dbFallback.call();
                 } catch (Exception dbEx) {

@@ -70,8 +70,14 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     private int bulkConcurrentRequests;
 
     // 搜索结果缓存时间（秒）
-    @Value("${elasticsearch.search.cache-ttl:60}")
+    @Value("${elasticsearch.search.cache-ttl:300}")
     private int searchCacheTtl;
+
+    // 热门查询缓存时间（秒）- 更长的缓存时间
+    private static final int HOT_QUERY_CACHE_TTL = 600;
+    
+    // 搜索建议缓存时间（秒）
+    private static final int SUGGESTION_CACHE_TTL = 300;
 
     @Override
     public Page<ProductDocument> searchProducts(String keyword, Integer categoryId, Integer brandId,
@@ -166,10 +172,10 @@ public class ProductSearchServiceImpl implements ProductSearchService {
 
             // 如果ES返回空结果且有关键词，尝试降级到数据库搜索
             if (products.isEmpty() && StringUtils.hasText(keyword)) {
-                log.info("ES搜索无结果，尝试降级到数据库搜索，关键词: {}", keyword);
+                log.debug("ES搜索无结果，尝试降级到数据库搜索，关键词: {}", keyword);
                 Page<ProductDocument> dbResult = fallbackToDbSearch(keyword, categoryId, brandId, minPrice, maxPrice, sortBy, sortOrder, page, size);
                 if (dbResult.getTotalElements() > 0) {
-                    log.info("数据库搜索找到 {} 条结果", dbResult.getTotalElements());
+                    log.debug("数据库搜索找到 {} 条结果", dbResult.getTotalElements());
                     recordSearchStatistics(keyword, dbResult.getTotalElements(), null);
                     return dbResult;
                 }
@@ -183,9 +189,11 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             Pageable pageable = PageRequest.of(page, size);
             Page<ProductDocument> result = new PageImpl<>(products, pageable, totalCount);
 
-            // 缓存热门查询结果
+            // 缓存热门查询结果（优化：只缓存第一页且有结果的查询）
             if (totalCount > 0 && page == 0) {
-                cacheSearchResult(cacheKey, result);
+                // 热门查询使用更长的缓存时间
+                int cacheTtl = isHotQuery(keyword) ? HOT_QUERY_CACHE_TTL : searchCacheTtl;
+                cacheSearchResult(cacheKey, result, cacheTtl);
             }
 
             return result;
@@ -271,18 +279,35 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     }
 
     /**
-     * 缓存搜索结果
+     * 缓存搜索结果（优化：支持自定义缓存时间）
      */
-    private void cacheSearchResult(String cacheKey, Page<ProductDocument> result) {
+    private void cacheSearchResult(String cacheKey, Page<ProductDocument> result, int ttl) {
         try {
             Map<String, Object> cacheData = new HashMap<>();
             cacheData.put("content", result.getContent());
             cacheData.put("page", result.getNumber());
             cacheData.put("size", result.getSize());
             cacheData.put("total", result.getTotalElements());
-            redisUtil.set(cacheKey, cacheData, searchCacheTtl);
+            redisUtil.set(cacheKey, cacheData, ttl);
+            log.debug("缓存搜索结果成功，TTL: {}秒", ttl);
         } catch (Exception e) {
             log.debug("缓存搜索结果失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 判断是否为热门查询
+     */
+    private boolean isHotQuery(String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return false;
+        }
+        try {
+            // 从热门关键词列表中检查
+            List<String> hotKeywords = getHotSearchKeywords(50);
+            return hotKeywords.contains(keyword.toLowerCase());
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -343,17 +368,17 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                     .limit(limit)
                     .collect(Collectors.toList());
 
-            log.info("搜索建议查询: keyword={}, 返回数量={}", keyword, suggestions.size());
+            log.debug("搜索建议查询: keyword={}, 返回数量={}", keyword, suggestions.size());
 
             // 如果ES返回空结果，尝试从数据库获取
             if (suggestions.isEmpty()) {
-                log.info("ES搜索建议为空，尝试从数据库获取: keyword={}", keyword);
+                log.debug("ES搜索建议为空，尝试从数据库获取: keyword={}", keyword);
                 suggestions = fallbackGetSuggestionsFromDb(keyword, limit);
             }
 
-            // 缓存结果（缩短缓存时间，提高实时性）
+            // 缓存结果（优化：使用常量定义缓存时间）
             if (!suggestions.isEmpty()) {
-                redisUtil.set(cacheKey, suggestions, 180); // 3分钟缓存
+                redisUtil.set(cacheKey, suggestions, SUGGESTION_CACHE_TTL);
             }
 
             return suggestions;
@@ -370,7 +395,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
      */
     private List<String> fallbackGetSuggestionsFromDb(String keyword, int limit) {
         try {
-            log.info("ES搜索建议失败，降级到数据库查询: keyword={}", keyword);
+            log.debug("ES搜索建议失败，降级到数据库查询: keyword={}", keyword);
             // 使用ProductService从数据库模糊查询商品名称
             com.baomidou.mybatisplus.extension.plugins.pagination.Page<Product> page = 
                 productService.getProductPage(1, limit, null, null, keyword, 1);
@@ -551,7 +576,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     @Override
     public void syncProductToIndex(Integer productId) {
         try {
-            log.info("开始同步商品到搜索索引，商品ID: {}", productId);
+            log.debug("开始同步商品到搜索索引，商品ID: {}", productId);
 
             // 从数据库获取商品信息
             Product product = productService.getById(productId);
@@ -571,7 +596,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                     .refresh(Refresh.WaitFor)  // 等待刷新，确保立即可搜索
             );
 
-            log.info("商品同步到搜索索引成功，商品ID: {}, 商品名称: {}", productId, product.getProductName());
+            log.debug("商品同步到搜索索引成功，商品ID: {}, 商品名称: {}", productId, product.getProductName());
 
         } catch (Exception e) {
             log.error("同步商品到搜索索引失败: {}, 错误: {}", productId, e.getMessage(), e);
@@ -587,7 +612,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                 return;
             }
 
-            log.info("开始批量同步商品到搜索索引，商品数量: {}", productIds.size());
+            log.debug("开始批量同步商品到搜索索引，商品数量: {}", productIds.size());
 
             // 批量获取商品信息
             List<Product> products = productService.listByIds(productIds);
@@ -604,7 +629,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             // 使用优化的批量索引方法
             executeBulkIndex(documents, false);
 
-            log.info("批量同步商品到搜索索引完成，数量: {}", documents.size());
+            log.debug("批量同步商品到搜索索引完成，数量: {}", documents.size());
 
         } catch (Exception e) {
             log.error("批量同步商品到搜索索引失败: {}", e.getMessage(), e);
@@ -684,13 +709,13 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             }
         }
 
-        log.info("批量索引完成，总数: {}, 成功: {}, 失败: {}", totalDocs, successCount, failCount);
+        log.debug("批量索引完成，总数: {}, 成功: {}, 失败: {}", totalDocs, successCount, failCount);
     }
 
     @Override
     public void deleteProductFromIndex(Integer productId) {
         try {
-            log.info("开始从搜索索引删除商品，商品ID: {}", productId);
+            log.debug("开始从搜索索引删除商品，商品ID: {}", productId);
 
             // 使用ElasticsearchClient删除文档
             co.elastic.clients.elasticsearch.core.DeleteResponse deleteResponse =
@@ -702,7 +727,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
 
             // 检查删除结果
             if (deleteResponse.result() == co.elastic.clients.elasticsearch._types.Result.Deleted) {
-                log.info("商品从搜索索引删除成功，商品ID: {}", productId);
+                log.debug("商品从搜索索引删除成功，商品ID: {}", productId);
             } else if (deleteResponse.result() == co.elastic.clients.elasticsearch._types.Result.NotFound) {
                 log.warn("商品在搜索索引中不存在，商品ID: {}", productId);
             } else {
@@ -719,7 +744,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     public void rebuildSearchIndex() {
         try {
             long startTime = System.currentTimeMillis();
-            log.info("开始重建搜索索引...");
+            log.debug("开始重建搜索索引...");
 
             // 删除现有索引
             elasticsearchOperations.indexOps(ProductDocument.class).delete();
@@ -748,7 +773,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                 allDocuments.addAll(documents);
                 totalProcessed += documents.size();
 
-                log.info("重建索引进度: 已加载 {} 条商品数据", totalProcessed);
+                log.debug("重建索引进度: 已加载 {} 条商品数据", totalProcessed);
 
                 hasNext = mybatisPlusPage.hasNext();
                 page++;
@@ -763,7 +788,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             }
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("搜索索引重建完成，共处理 {} 条商品，耗时: {}ms", totalProcessed, duration);
+            log.debug("搜索索引重建完成，共处理 {} 条商品，耗时: {}ms", totalProcessed, duration);
 
         } catch (Exception e) {
             log.error("重建搜索索引失败: {}", e.getMessage(), e);
@@ -823,7 +848,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     @Override
     public List<ProductDocument> getSimilarProducts(Integer productId, int limit) {
         try {
-            log.info("开始获取相似商品推荐，商品ID: {}, 推荐数量: {}", productId, limit);
+            log.debug("开始获取相似商品推荐，商品ID: {}, 推荐数量: {}", productId, limit);
 
             // 先从索引获取目标商品信息
             co.elastic.clients.elasticsearch.core.GetResponse<ProductDocument> getResponse =
@@ -894,7 +919,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
-            log.info("成功获取相似商品推荐，商品ID: {}, 推荐数量: {}", productId, similarProducts.size());
+            log.debug("成功获取相似商品推荐，商品ID: {}, 推荐数量: {}", productId, similarProducts.size());
             return similarProducts;
 
         } catch (Exception e) {

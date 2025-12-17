@@ -68,7 +68,7 @@ public class RabbitMQConfig {
             // 添加连接监听器，限制错误日志输出
             connectionFactory.addConnectionListener(connectionListener);
             
-            log.info("RabbitMQ连接工厂配置完成 - Host: {}, Port: {}", 
+            log.debug("RabbitMQ连接工厂配置完成 - Host: {}, Port: {}", 
                     rabbitProperties.getHost(), rabbitProperties.getPort());
             
         } catch (Exception e) {
@@ -142,7 +142,7 @@ public class RabbitMQConfig {
         // 设置恢复间隔
         factory.setRecoveryInterval(30000L);
         
-        log.info("RabbitMQ监听器容器工厂配置完成 - 并发消费者: {}, 最大并发: {}, 预取数量: {}, 自动启动: false", 
+        log.debug("RabbitMQ监听器容器工厂配置完成 - 并发消费者: {}, 最大并发: {}, 预取数量: {}, 自动启动: false", 
                 performance.getConcurrentConsumers(), 
                 performance.getMaxConcurrentConsumers(), 
                 performance.getPrefetchCount());
@@ -172,7 +172,7 @@ public class RabbitMQConfig {
         backOffPolicy.setMaxInterval(errorHandling.getRetryInterval() * 10); // 最大间隔为初始间隔的10倍
         retryTemplate.setBackOffPolicy(backOffPolicy);
         
-        log.info("RabbitMQ重试模板配置完成 - 最大重试次数: {}, 重试间隔: {}ms", 
+        log.debug("RabbitMQ重试模板配置完成 - 最大重试次数: {}, 重试间隔: {}ms", 
                 errorHandling.getMaxRetryAttempts(), errorHandling.getRetryInterval());
         
         return retryTemplate;
@@ -471,27 +471,27 @@ public class RabbitMQConfig {
      */
     @Bean
     public String rabbitMQConfigInitLog() {
-        log.info("=== RabbitMQ配置初始化开始 ===");
-        log.info("配置状态: {}", rabbitMQProperties.getConfigDescription());
-        log.info("配置有效性: {}", rabbitMQProperties.isValidConfiguration());
-        log.info("订单交换机: {}", RabbitMQConstants.ORDER_EXCHANGE);
-        log.info("支付交换机: {}", RabbitMQConstants.PAYMENT_EXCHANGE);
-        log.info("死信交换机: {}", RabbitMQConstants.DLX_EXCHANGE);
-        log.info("消息TTL: {} 毫秒", RabbitMQConstants.DEFAULT_MESSAGE_TTL);
-        log.info("队列最大长度: {}", RabbitMQConstants.MAX_QUEUE_LENGTH);
-        log.info("错误处理配置: 重试次数={}, 重试间隔={}ms, 死信队列={}", 
+        log.debug("=== RabbitMQ配置初始化开始 ===");
+        log.debug("配置状态: {}", rabbitMQProperties.getConfigDescription());
+        log.debug("配置有效性: {}", rabbitMQProperties.isValidConfiguration());
+        log.debug("订单交换机: {}", RabbitMQConstants.ORDER_EXCHANGE);
+        log.debug("支付交换机: {}", RabbitMQConstants.PAYMENT_EXCHANGE);
+        log.debug("死信交换机: {}", RabbitMQConstants.DLX_EXCHANGE);
+        log.debug("消息TTL: {} 毫秒", RabbitMQConstants.DEFAULT_MESSAGE_TTL);
+        log.debug("队列最大长度: {}", RabbitMQConstants.MAX_QUEUE_LENGTH);
+        log.debug("错误处理配置: 重试次数={}, 重试间隔={}ms, 死信队列={}", 
                 rabbitMQProperties.getErrorHandling().getMaxRetryAttempts(),
                 rabbitMQProperties.getErrorHandling().getRetryInterval(),
                 rabbitMQProperties.getErrorHandling().isDeadLetterEnabled());
-        log.info("监控配置: 启用={}, 健康检查间隔={}ms, 指标收集={}", 
+        log.debug("监控配置: 启用={}, 健康检查间隔={}ms, 指标收集={}", 
                 rabbitMQProperties.getMonitoring().isEnabled(),
                 rabbitMQProperties.getMonitoring().getHealthCheckInterval(),
                 rabbitMQProperties.getMonitoring().isMetricsCollectionEnabled());
-        log.info("性能配置: 并发消费者={}, 最大并发={}, 预取数量={}", 
+        log.debug("性能配置: 并发消费者={}, 最大并发={}, 预取数量={}", 
                 rabbitMQProperties.getPerformance().getConcurrentConsumers(),
                 rabbitMQProperties.getPerformance().getMaxConcurrentConsumers(),
                 rabbitMQProperties.getPerformance().getPrefetchCount());
-        log.info("=== RabbitMQ配置初始化完成 ===");
+        log.debug("=== RabbitMQ配置初始化完成 ===");
         return "RabbitMQ配置初始化完成";
     }
 }

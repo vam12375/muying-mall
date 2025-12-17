@@ -96,7 +96,7 @@ public class PaymentServiceImpl extends ServiceImpl<PaymentMapper, Payment> impl
                         PaymentMessage refundMessage = PaymentMessage.createRefundMessage(payment, refundAmount);
                         refundMessage.setExtra(reason);
                         messageProducerService.sendPaymentMessage(refundMessage);
-                        log.info("退款消息发送成功: paymentNo={}, refundAmount={}", paymentNo, refundAmount);
+                        log.debug("退款消息发送成功: paymentNo={}, refundAmount={}", paymentNo, refundAmount);
                     } catch (Exception e) {
                         log.error("退款消息发送失败: paymentNo={}, error={}", paymentNo, e.getMessage(), e);
                         // 消息发送失败不影响退款流程
@@ -105,7 +105,7 @@ public class PaymentServiceImpl extends ServiceImpl<PaymentMapper, Payment> impl
                     log.warn("MessageProducerService未注入，跳过退款消息发送");
                 }
 
-                log.info("退款处理成功: paymentNo={}, refundAmount={}, reason={}", paymentNo, refundAmount, reason);
+                log.debug("退款处理成功: paymentNo={}, refundAmount={}, reason={}", paymentNo, refundAmount, reason);
                 return true;
             } else {
                 log.error("退款失败：更新支付状态失败，paymentNo={}", paymentNo);

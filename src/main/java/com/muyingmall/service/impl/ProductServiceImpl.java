@@ -112,7 +112,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
                     Page<Product> productPage = page(pageParam, queryWrapper);
                     long dbTime = System.currentTimeMillis() - dbStartTime;
-                    log.info("商品列表数据库查询完成: 数量={}, 耗时={}ms, 缓存时间={}秒", 
+                    // 优化：热点路径使用debug级别日志，减少IO开销
+                    log.debug("商品列表数据库查询完成: 数量={}, 耗时={}ms, 缓存时间={}秒", 
                             productPage.getRecords().size(), dbTime, cacheExpireTime);
                     
                     return productPage;
@@ -229,17 +230,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 keyword,
                 statusStr);
 
-        // 打印测试日志
-        if (result != null && result.getRecords() != null) {
-            for (Product product : result.getRecords()) {
-                System.out.println("查询结果 - 商品ID: " + product.getProductId()
-                        + ", 名称: " + product.getProductName()
-                        + ", 分类ID: " + product.getCategoryId()
-                        + ", 分类名称: " + product.getCategoryName()
-                        + ", 品牌ID: " + product.getBrandId()
-                        + ", 品牌名称: " + product.getBrandName());
-            }
-        }
+        // 优化：移除测试日志，减少IO开销
 
         // 缓存结果
         redisUtil.set(cacheKey.toString(), result, CacheConstants.SHORT_EXPIRE_TIME);
@@ -250,9 +241,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     /**
      * 获取商品详情
      * 委托给带缓存保护的方法，统一缓存策略
+     * 优化：移除@Transactional注解，只读查询无需事务开销
      */
     @Override
-    @Transactional(readOnly = true)
     public Product getProductDetail(Integer id) {
         return getProductDetailWithProtection(id);
     }
@@ -261,9 +252,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
      * 获取商品详情（带缓存穿透保护）
      * 使用CacheProtectionUtil防止缓存穿透攻击
      * 对不存在的商品ID也会缓存空值标记，避免频繁查询数据库
+     * 优化：移除@Transactional注解，只读查询无需事务开销
      */
     @Override
-    @Transactional(readOnly = true)
     public Product getProductDetailWithProtection(Integer id) {
         if (id == null || id <= 0) {
             return null;
@@ -351,7 +342,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                     .mapToInt(sku -> sku.getStock() != null ? sku.getStock() : 0)
                     .sum();
                 product.setStock(totalStock);
-                log.info("商品 {} 启用SKU，自动计算总库存: {}", productId, totalStock);
+                log.debug("商品 {} 启用SKU，自动计算总库存: {}", productId, totalStock);
             }
         }
         
@@ -469,7 +460,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 updateProductInSpecificListCache(categoryCacheKey, product);
             }
 
-            log.info("更新商品列表缓存成功: productId={}", product.getProductId());
+            log.debug("更新商品列表缓存成功: productId={}", product.getProductId());
         } catch (Exception e) {
             log.error("更新商品列表缓存失败: productId={}, error={}", product.getProductId(), e.getMessage(), e);
         }
@@ -489,7 +480,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                     // 更新商品基本信息，保留原有的图片和规格等信息
                     products.set(i, product);
                     redisUtil.set(cacheKey, products, getExpireTimeForKey(cacheKey));
-                    log.info("更新缓存列表中的商品: cacheKey={}, productId={}", cacheKey, product.getProductId());
+                    log.debug("更新缓存列表中的商品: cacheKey={}, productId={}", cacheKey, product.getProductId());
                     break;
                 }
             }
@@ -519,7 +510,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         Set<String> keys = redisUtil.keys(CacheConstants.PRODUCT_KEY_PREFIX + "*");
         if (keys != null && !keys.isEmpty()) {
             redisUtil.del(keys.toArray(new String[0]));
-            log.info("清除所有商品相关缓存，共{}个键", keys.size());
+            log.debug("清除所有商品相关缓存，共{}个键", keys.size());
         }
     }
 
@@ -577,7 +568,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             // 删除推荐商品缓存
             redisUtil.del(CacheConstants.PRODUCT_RECOMMEND_KEY);
 
-            log.info("已清除商品缓存，商品ID: {}", productId);
+            log.debug("已清除商品缓存，商品ID: {}", productId);
         } catch (Exception e) {
             log.error("清除商品缓存失败，商品ID: {}", productId, e);
         }
@@ -676,7 +667,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 // 设置过期时间
                 redisUtil.expire(hotProductsRankKey, CacheConstants.PRODUCT_HOT_EXPIRE_TIME);
 
-                log.info("热门商品排名已更新: count={}", hotProducts.size());
+                log.debug("热门商品排名已更新: count={}", hotProducts.size());
             } catch (Exception e) {
                 log.error("更新热门商品排名缓存失败: {}", e.getMessage(), e);
                 // 缓存失败不影响正常业务
@@ -763,7 +754,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 // 设置过期时间
                 redisUtil.expire(newProductsRankKey, CacheConstants.MEDIUM_EXPIRE_TIME);
 
-                log.info("新品商品排名已更新: count={}", newProducts.size());
+                log.debug("新品商品排名已更新: count={}", newProducts.size());
             } catch (Exception e) {
                 log.error("更新新品商品排名缓存失败: {}", e.getMessage(), e);
                 // 缓存失败不影响正常业务

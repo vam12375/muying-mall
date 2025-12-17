@@ -26,9 +26,9 @@ public class SeckillInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         try {
-            log.info("========================================");
-            log.info("开始初始化秒杀库存到Redis...");
-            log.info("========================================");
+            log.debug("========================================");
+            log.debug("开始初始化秒杀库存到Redis...");
+            log.debug("========================================");
             
             // 查询所有启用状态的SKU
             List<ProductSku> skuList = productSkuMapper.selectList(null);
@@ -54,7 +54,7 @@ public class SeckillInitializer implements ApplicationRunner {
                 
                 try {
                     seckillService.initSeckillStock(sku.getSkuId(), sku.getStock());
-                    log.info("✓ 初始化SKU库存: skuId={}, skuCode={}, stock={}", 
+                    log.debug("✓ 初始化SKU库存: skuId={}, skuCode={}, stock={}", 
                              sku.getSkuId(), sku.getSkuCode(), sku.getStock());
                     successCount++;
                 } catch (Exception e) {
@@ -63,17 +63,17 @@ public class SeckillInitializer implements ApplicationRunner {
                 }
             }
             
-            log.info("========================================");
-            log.info("秒杀库存初始化完成:");
-            log.info("  总SKU数量: {}", totalCount);
-            log.info("  成功初始化: {}", successCount);
-            log.info("  跳过数量: {}", skippedCount);
-            log.info("  失败数量: {}", totalCount - successCount - skippedCount);
-            log.info("========================================");
+            log.debug("========================================");
+            log.debug("秒杀库存初始化完成:");
+            log.debug("  总SKU数量: {}", totalCount);
+            log.debug("  成功初始化: {}", successCount);
+            log.debug("  跳过数量: {}", skippedCount);
+            log.debug("  失败数量: {}", totalCount - successCount - skippedCount);
+            log.debug("========================================");
             
             // 验证Redis中的数据
             if (successCount > 0) {
-                log.info("验证Redis库存数据...");
+                log.debug("验证Redis库存数据...");
                 for (ProductSku sku : skuList) {
                     if (sku.getStatus() == 1 && sku.getStock() != null && sku.getStock() > 0) {
                         Integer redisStock = seckillService.getRedisStock(sku.getSkuId());

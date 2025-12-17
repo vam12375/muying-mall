@@ -2,9 +2,11 @@ package com.muyingmall.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.muyingmall.common.constants.CacheConstants;
 import com.muyingmall.entity.MemberLevel;
 import com.muyingmall.mapper.MemberLevelMapper;
 import com.muyingmall.service.MemberLevelService;
+import com.muyingmall.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,12 +23,31 @@ import java.util.List;
 public class MemberLevelServiceImpl extends ServiceImpl<MemberLevelMapper, MemberLevel> implements MemberLevelService {
 
     private final MemberLevelMapper memberLevelMapper;
+    private final RedisUtil redisUtil;
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<MemberLevel> getAllLevels() {
+        // 尝试从缓存获取
+        Object cached = redisUtil.get(CacheConstants.MEMBER_LEVEL_LIST_KEY);
+        if (cached != null) {
+            log.debug("从缓存获取会员等级列表");
+            return (List<MemberLevel>) cached;
+        }
+        
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询会员等级列表");
         LambdaQueryWrapper<MemberLevel> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.orderByAsc(MemberLevel::getMinPoints);
-        return memberLevelMapper.selectList(queryWrapper);
+        List<MemberLevel> levels = memberLevelMapper.selectList(queryWrapper);
+        
+        // 缓存结果
+        if (levels != null && !levels.isEmpty()) {
+            redisUtil.set(CacheConstants.MEMBER_LEVEL_LIST_KEY, levels, CacheConstants.MEMBER_LEVEL_EXPIRE_TIME);
+            log.debug("将会员等级列表缓存到Redis, 过期时间={}秒", CacheConstants.MEMBER_LEVEL_EXPIRE_TIME);
+        }
+        
+        return levels;
     }
 
     @Override

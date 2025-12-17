@@ -69,13 +69,13 @@ public class AdminLogisticsController {
     @Operation(summary = "获取物流详情")
     public CommonResult<Logistics> getLogisticsDetail(@PathVariable("id") Long id) {
         try {
-            log.info("获取物流详情请求，物流ID: {}", id);
+            log.debug("获取物流详情请求，物流ID: {}", id);
             Logistics logistics = logisticsService.getLogisticsById(id);
             if (logistics == null) {
                 log.warn("物流不存在，物流ID: {}", id);
                 return CommonResult.failed("物流不存在");
             }
-            log.info("成功获取物流详情，物流单号: {}, 状态: {}", logistics.getTrackingNo(), logistics.getStatus());
+            log.debug("成功获取物流详情，物流单号: {}, 状态: {}", logistics.getTrackingNo(), logistics.getStatus());
             return CommonResult.success(logistics);
         } catch (Exception e) {
             log.error("获取物流详情失败，物流ID: {}", id, e);
@@ -172,7 +172,7 @@ public class AdminLogisticsController {
             @PathVariable("logisticsId") Long logisticsId,
             @RequestBody List<LogisticsTrack> tracks) {
         try {
-            log.info("接收到批量添加物流轨迹请求，物流ID: {}, 轨迹数量: {}", logisticsId, tracks.size());
+            log.debug("接收到批量添加物流轨迹请求，物流ID: {}, 轨迹数量: {}", logisticsId, tracks.size());
 
             // 首先验证物流信息是否存在
             Logistics logistics = logisticsService.getById(logisticsId);
@@ -181,7 +181,7 @@ public class AdminLogisticsController {
                 return CommonResult.failed("找不到该物流信息，请确认物流ID是否正确");
             }
 
-            log.info("找到物流信息，物流单号: {}, 状态: {}", logistics.getTrackingNo(), logistics.getStatus());
+            log.debug("找到物流信息，物流单号: {}, 状态: {}", logistics.getTrackingNo(), logistics.getStatus());
 
             boolean result = logisticsTrackService.batchAddTracks(logisticsId, tracks);
             if (result) {

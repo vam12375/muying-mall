@@ -38,9 +38,9 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
 
         // log.debug("[JwtFilter] Processing request for: {}", request.getRequestURI());
-        // log.info("[JwtFilter] Injected JwtUtils instance hash: {}",
+        // log.debug("[JwtFilter] Injected JwtUtils instance hash: {}",
         // System.identityHashCode(jwtUtils));
-        // log.info("[JwtFilter] JwtUtils signingKey for token validation (Base64): {}",
+        // log.debug("[JwtFilter] JwtUtils signingKey for token validation (Base64): {}",
         // jwtUtils.getSigningKeyBase64ForDebug());
 
         // 获取Authorization头

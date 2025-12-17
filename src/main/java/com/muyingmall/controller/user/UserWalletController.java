@@ -70,10 +70,10 @@ public class UserWalletController {
     public CommonResult<WalletInfoDTO> getWalletInfo() {
         // 添加详细日志
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        log.info("UserWalletController.getWalletInfo - 当前认证对象: {}", authentication);
+        log.debug("UserWalletController.getWalletInfo - 当前认证对象: {}", authentication);
 
         if (authentication != null) {
-            log.info("认证详情 - Principal: {}, Credentials: {}, Details: {}",
+            log.debug("认证详情 - Principal: {}, Credentials: {}, Details: {}",
                     authentication.getPrincipal(),
                     authentication.getCredentials(),
                     authentication.getDetails());
@@ -81,14 +81,14 @@ public class UserWalletController {
             // 检查和记录认证对象的详情中的userId
             if (authentication.getDetails() instanceof Map) {
                 Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
-                log.info("认证Details中的userId: {}", details.get("userId"));
+                log.debug("认证Details中的userId: {}", details.get("userId"));
             }
         }
 
         // 从当前登录用户获取用户ID
         Integer userId = userAccountService.getCurrentUserId();
-        log.info("UserAccountService.getCurrentUserId() 返回的用户ID: {}", userId);
-        log.info("SecurityUtil.getCurrentUserId() 返回的用户ID: {}", SecurityUtil.getCurrentUserId());
+        log.debug("UserAccountService.getCurrentUserId() 返回的用户ID: {}", userId);
+        log.debug("SecurityUtil.getCurrentUserId() 返回的用户ID: {}", SecurityUtil.getCurrentUserId());
 
         if (userId == null) {
             log.error("获取钱包信息失败：用户ID为null");
@@ -102,7 +102,7 @@ public class UserWalletController {
                 log.error("获取钱包信息失败：用户ID={}的账户不存在", userId);
                 return CommonResult.failed("账户不存在");
             }
-            log.info("找到用户账户: {}", userAccount);
+            log.debug("找到用户账户: {}", userAccount);
 
             // 构建钱包信息VO
             WalletInfoDTO walletInfoDTO = new WalletInfoDTO();
@@ -115,7 +115,7 @@ public class UserWalletController {
             walletInfoDTO.setTotalRecharge(stats.getOrDefault("totalRecharge", BigDecimal.ZERO));
             walletInfoDTO.setTotalConsumption(stats.getOrDefault("totalConsumption", BigDecimal.ZERO));
 
-            log.info("获取钱包信息成功：{}", walletInfoDTO);
+            log.debug("获取钱包信息成功：{}", walletInfoDTO);
 
             return CommonResult.success(walletInfoDTO);
         } catch (Exception e) {
@@ -129,11 +129,11 @@ public class UserWalletController {
     public CommonResult<Map<String, Object>> getWalletBalance() {
         // 添加详细日志
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        log.info("UserWalletController.getWalletBalance - 当前认证对象: {}", authentication);
+        log.debug("UserWalletController.getWalletBalance - 当前认证对象: {}", authentication);
 
         // 从当前登录用户获取用户ID
         Integer userId = userAccountService.getCurrentUserId();
-        log.info("UserAccountService.getCurrentUserId() 返回的用户ID: {}", userId);
+        log.debug("UserAccountService.getCurrentUserId() 返回的用户ID: {}", userId);
 
         if (userId == null) {
             log.error("获取钱包余额失败：用户ID为null");
@@ -147,14 +147,14 @@ public class UserWalletController {
                 log.error("获取钱包余额失败：用户ID={}的账户不存在", userId);
                 return CommonResult.failed("账户不存在");
             }
-            log.info("找到用户账户: {}", userAccount);
+            log.debug("找到用户账户: {}", userAccount);
 
             Map<String, Object> result = new HashMap<>();
             result.put("balance", userAccount.getBalance());
             result.put("frozenBalance", userAccount.getFrozenAmount());
             result.put("points", 0);
 
-            log.info("获取钱包余额成功：{}", result);
+            log.debug("获取钱包余额成功：{}", result);
 
             return CommonResult.success(result);
         } catch (Exception e) {
@@ -174,11 +174,11 @@ public class UserWalletController {
 
         // 添加详细日志
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        log.info("UserWalletController.getTransactions - 当前认证对象: {}", authentication);
+        log.debug("UserWalletController.getTransactions - 当前认证对象: {}", authentication);
 
         // 从当前登录用户获取用户ID
         Integer userId = userAccountService.getCurrentUserId();
-        log.info("UserAccountService.getCurrentUserId() 返回的用户ID: {}", userId);
+        log.debug("UserAccountService.getCurrentUserId() 返回的用户ID: {}", userId);
 
         if (userId == null) {
             log.error("获取交易记录失败：用户ID为null");
@@ -186,7 +186,7 @@ public class UserWalletController {
         }
 
         try {
-            log.info("开始获取交易记录，userId={}, page={}, size={}, type={}, startTime={}, endTime={}",
+            log.debug("开始获取交易记录，userId={}, page={}, size={}, type={}, startTime={}, endTime={}",
                     userId, page, size, type, startTime, endTime);
 
             // 获取交易记录
@@ -201,7 +201,7 @@ public class UserWalletController {
             result.put("current", transactions.getCurrent());
             result.put("pages", transactions.getPages());
 
-            log.info("获取交易记录成功，总记录数：{}", transactions.getTotal());
+            log.debug("获取交易记录成功，总记录数：{}", transactions.getTotal());
 
             return CommonResult.success(result);
         } catch (Exception e) {
@@ -217,11 +217,11 @@ public class UserWalletController {
 
         // 添加详细日志
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        log.info("UserWalletController.createRechargeOrder - 当前认证对象: {}", authentication);
+        log.debug("UserWalletController.createRechargeOrder - 当前认证对象: {}", authentication);
 
         // 从当前登录用户获取用户ID
         Integer userId = userAccountService.getCurrentUserId();
-        log.info("UserAccountService.getCurrentUserId() 返回的用户ID: {}", userId);
+        log.debug("UserAccountService.getCurrentUserId() 返回的用户ID: {}", userId);
 
         if (userId == null) {
             log.error("创建充值订单失败：用户ID为null");
@@ -244,12 +244,12 @@ public class UserWalletController {
                 return CommonResult.validateFailed("不支持的支付方式");
             }
 
-            log.info("开始创建充值订单，userId={}, amount={}, paymentMethod={}", userId, amount, paymentMethod);
+            log.debug("开始创建充值订单，userId={}, amount={}, paymentMethod={}", userId, amount, paymentMethod);
 
             // 创建充值订单
             try {
                 Map<String, Object> result = userAccountService.createRechargeOrder(userId, amount, paymentMethod);
-                log.info("创建充值订单成功：{}", result);
+                log.debug("创建充值订单成功：{}", result);
                 return CommonResult.success(result);
             } catch (Exception e) {
                 log.error("调用userAccountService.createRechargeOrder时发生异常", e);
@@ -269,7 +269,7 @@ public class UserWalletController {
     public CommonResult<Map<String, Object>> queryRechargeStatus(
             @Parameter(description = "充值订单号", required = true) @PathVariable(value = "orderNo") String orderNo) {
 
-        log.info("查询充值订单状态，orderNo={}", orderNo);
+        log.debug("查询充值订单状态，orderNo={}", orderNo);
 
         // 从当前登录用户获取用户ID
         Integer userId = userAccountService.getCurrentUserId();
@@ -303,7 +303,7 @@ public class UserWalletController {
             result.put("createTime", transaction.getCreateTime());
             result.put("updateTime", transaction.getUpdateTime());
 
-            log.info("查询充值订单状态成功：{}", result);
+            log.debug("查询充值订单状态成功：{}", result);
 
             return CommonResult.success(result);
         } catch (Exception e) {
@@ -317,7 +317,7 @@ public class UserWalletController {
     public CommonResult<Map<String, Object>> getRechargeOrderForm(
             @Parameter(description = "充值订单号", required = true) @RequestParam(value = "orderNo") String orderNo) {
 
-        log.info("获取充值订单支付表单，orderNo={}", orderNo);
+        log.debug("获取充值订单支付表单，orderNo={}", orderNo);
 
         // 从当前登录用户获取用户ID
         Integer userId = userAccountService.getCurrentUserId();
@@ -377,7 +377,7 @@ public class UserWalletController {
                 // 返回支付表单HTML
                 Map<String, Object> result = new HashMap<>();
                 result.put("formHtml", formHtml);
-                log.info("获取充值订单支付表单成功");
+                log.debug("获取充值订单支付表单成功");
 
                 return CommonResult.success(result);
             } catch (Exception e) {

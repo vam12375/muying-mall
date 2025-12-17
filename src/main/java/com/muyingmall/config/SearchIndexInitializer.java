@@ -40,12 +40,12 @@ public class SearchIndexInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        log.info("========== 开始检查Elasticsearch索引状态 ==========");
+        log.debug("========== 开始检查Elasticsearch索引状态 ==========");
 
         try {
             // 1. 检查索引健康状态
             Map<String, Object> healthStatus = productSearchService.getIndexHealthStatus();
-            log.info("ES索引健康状态: {}", healthStatus);
+            log.debug("ES索引健康状态: {}", healthStatus);
 
             boolean indexExists = Boolean.TRUE.equals(healthStatus.get("indexExists"));
             Object docCountObj = healthStatus.get("documentCount");
@@ -60,7 +60,7 @@ public class SearchIndexInitializer implements CommandLineRunner {
                 log.warn("ES商品索引不存在，正在创建...");
                 boolean created = searchIndexService.createProductIndex();
                 if (created) {
-                    log.info("ES商品索引创建成功，开始同步数据...");
+                    log.debug("ES商品索引创建成功，开始同步数据...");
                     syncAllProducts();
                 } else {
                     log.error("ES商品索引创建失败");
@@ -75,7 +75,7 @@ public class SearchIndexInitializer implements CommandLineRunner {
                 return;
             }
 
-            log.info("ES索引状态正常，当前文档数: {}", documentCount);
+            log.debug("ES索引状态正常，当前文档数: {}", documentCount);
 
             // 4. 执行缓存预热
             if (warmupEnabled) {
@@ -86,7 +86,7 @@ public class SearchIndexInitializer implements CommandLineRunner {
             log.error("检查ES索引状态失败: {}，搜索功能将降级到数据库查询", e.getMessage());
         }
 
-        log.info("========== Elasticsearch索引检查完成 ==========");
+        log.debug("========== Elasticsearch索引检查完成 ==========");
     }
 
     /**
@@ -94,9 +94,9 @@ public class SearchIndexInitializer implements CommandLineRunner {
      */
     private void syncAllProducts() {
         try {
-            log.info("开始重建ES搜索索引...");
+            log.debug("开始重建ES搜索索引...");
             productSearchService.rebuildSearchIndex();
-            log.info("ES搜索索引重建完成");
+            log.debug("ES搜索索引重建完成");
 
             // 重建完成后进行缓存预热
             if (warmupEnabled) {
@@ -118,11 +118,11 @@ public class SearchIndexInitializer implements CommandLineRunner {
     private void warmUpSearchCache() {
         try {
             long startTime = System.currentTimeMillis();
-            log.info("开始执行搜索缓存预热...");
+            log.debug("开始执行搜索缓存预热...");
 
             // 1. 获取热门搜索词
             List<String> hotKeywords = searchStatisticsService.getHotKeywords(hotKeywordsCount, 7);
-            log.info("预热热门搜索词: {} 个", hotKeywords.size());
+            log.debug("预热热门搜索词: {} 个", hotKeywords.size());
 
             // 2. 预热热门搜索词的查询结果
             int warmupCount = 0;
@@ -155,7 +155,7 @@ public class SearchIndexInitializer implements CommandLineRunner {
             }
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("搜索缓存预热完成，预热关键词: {} 个，耗时: {}ms", warmupCount, duration);
+            log.debug("搜索缓存预热完成，预热关键词: {} 个，耗时: {}ms", warmupCount, duration);
 
         } catch (Exception e) {
             log.warn("搜索缓存预热失败: {}，不影响正常使用", e.getMessage());

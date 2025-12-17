@@ -2,12 +2,14 @@ package com.muyingmall.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.muyingmall.common.constants.CacheConstants;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.entity.Coupon;
 import com.muyingmall.entity.UserCoupon;
 import com.muyingmall.mapper.CouponMapper;
 import com.muyingmall.mapper.UserCouponMapper;
 import com.muyingmall.service.CouponService;
+import com.muyingmall.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 优惠券服务实现类
@@ -33,20 +36,41 @@ import java.util.Map;
 public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> implements CouponService {
 
     private final UserCouponMapper userCouponMapper;
+    private final RedisUtil redisUtil;
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<Coupon> getAvailableCoupons(Integer userId) {
-        // 查询所有可用的优惠券
-        LambdaQueryWrapper<Coupon> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Coupon::getStatus, "ACTIVE") // 优惠券状态为可用
-                .gt(Coupon::getEndTime, LocalDateTime.now()) // 未过期
-                .orderByAsc(Coupon::getMinSpend) // 按最低使用金额排序
-                .orderByDesc(Coupon::getValue); // 再按金额排序
+        // 构建缓存键（可用优惠券列表不包含用户特定信息，用户领取状态单独处理）
+        String cacheKey = CacheConstants.COUPON_AVAILABLE_KEY;
+        
+        // 尝试从缓存获取
+        Object cached = redisUtil.get(cacheKey);
+        List<Coupon> coupons;
+        
+        if (cached != null) {
+            log.debug("从缓存获取可用优惠券列表");
+            coupons = (List<Coupon>) cached;
+        } else {
+            // 缓存未命中，从数据库查询
+            log.debug("缓存未命中，从数据库查询可用优惠券列表");
+            LambdaQueryWrapper<Coupon> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Coupon::getStatus, "ACTIVE") // 优惠券状态为可用
+                    .gt(Coupon::getEndTime, LocalDateTime.now()) // 未过期
+                    .orderByAsc(Coupon::getMinSpend) // 按最低使用金额排序
+                    .orderByDesc(Coupon::getValue); // 再按金额排序
 
-        List<Coupon> coupons = list(queryWrapper);
+            coupons = list(queryWrapper);
+            
+            // 缓存结果
+            if (coupons != null) {
+                redisUtil.set(cacheKey, coupons, CacheConstants.COUPON_EXPIRE_TIME);
+                log.debug("将可用优惠券列表缓存到Redis, 过期时间={}秒", CacheConstants.COUPON_EXPIRE_TIME);
+            }
+        }
 
         // 如果用户已登录，标记哪些优惠券已领取
-        if (userId != null && coupons.size() > 0) {
+        if (userId != null && coupons != null && coupons.size() > 0) {
             // 查询用户已领取的优惠券
             LambdaQueryWrapper<UserCoupon> userCouponQuery = new LambdaQueryWrapper<>();
             userCouponQuery.eq(UserCoupon::getUserId, userId)
@@ -65,7 +89,20 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<UserCoupon> getUserCoupons(Integer userId, String status) {
+        // 构建缓存键
+        String cacheKey = CacheConstants.USER_COUPON_LIST_KEY + userId + ":" + (status != null ? status : "all");
+        
+        // 尝试从缓存获取
+        Object cached = redisUtil.get(cacheKey);
+        if (cached != null) {
+            log.debug("从缓存获取用户优惠券列表: userId={}, status={}", userId, status);
+            return (List<UserCoupon>) cached;
+        }
+        
+        // 缓存未命中，从数据库查询
+        log.debug("缓存未命中，从数据库查询用户优惠券列表: userId={}, status={}", userId, status);
         LambdaQueryWrapper<UserCoupon> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(UserCoupon::getUserId, userId);
 
@@ -103,6 +140,12 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
                         .findFirst()
                         .ifPresent(userCoupon::setCoupon);
             }
+        }
+
+        // 缓存结果
+        if (userCoupons != null) {
+            redisUtil.set(cacheKey, userCoupons, CacheConstants.COUPON_EXPIRE_TIME);
+            log.debug("将用户优惠券列表缓存到Redis: userId={}, status={}, 过期时间={}秒", userId, status, CacheConstants.COUPON_EXPIRE_TIME);
         }
 
         return userCoupons;
@@ -160,6 +203,10 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         // 更新优惠券领取数量
         coupon.setReceivedQuantity(coupon.getReceivedQuantity() + 1);
         updateById(coupon);
+        
+        // 清除用户优惠券缓存和可用优惠券缓存
+        clearUserCouponCache(userId);
+        redisUtil.del(CacheConstants.COUPON_AVAILABLE_KEY);
 
         return true;
     }
@@ -267,18 +314,35 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         coupon.setCreateTime(LocalDateTime.now());
         coupon.setUpdateTime(LocalDateTime.now());
         coupon.setReceivedQuantity(0);
-        return save(coupon);
+        boolean result = save(coupon);
+        if (result) {
+            // 清除可用优惠券缓存
+            redisUtil.del(CacheConstants.COUPON_AVAILABLE_KEY);
+        }
+        return result;
     }
 
     @Override
     public boolean updateCoupon(Coupon coupon) {
         coupon.setUpdateTime(LocalDateTime.now());
-        return updateById(coupon);
+        boolean result = updateById(coupon);
+        if (result) {
+            // 清除可用优惠券缓存和优惠券详情缓存
+            redisUtil.del(CacheConstants.COUPON_AVAILABLE_KEY);
+            redisUtil.del(CacheConstants.COUPON_DETAIL_KEY + coupon.getId());
+        }
+        return result;
     }
 
     @Override
     public boolean deleteCoupon(Long id) {
-        return removeById(id);
+        boolean result = removeById(id);
+        if (result) {
+            // 清除可用优惠券缓存和优惠券详情缓存
+            redisUtil.del(CacheConstants.COUPON_AVAILABLE_KEY);
+            redisUtil.del(CacheConstants.COUPON_DETAIL_KEY + id);
+        }
+        return result;
     }
 
     @Override
@@ -290,7 +354,12 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
 
         coupon.setStatus(status);
         coupon.setUpdateTime(LocalDateTime.now());
-        return updateById(coupon);
+        boolean result = updateById(coupon);
+        if (result) {
+            // 清除可用优惠券缓存
+            redisUtil.del(CacheConstants.COUPON_AVAILABLE_KEY);
+        }
+        return result;
     }
 
     @Override
@@ -434,5 +503,23 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         stats.put("totalSavings", "¥" + totalSavings.toString());
 
         return stats;
+    }
+    
+    /**
+     * 清除用户优惠券缓存
+     *
+     * @param userId 用户ID
+     */
+    private void clearUserCouponCache(Integer userId) {
+        if (userId == null) {
+            return;
+        }
+        // 清除用户所有状态的优惠券缓存
+        String pattern = CacheConstants.USER_COUPON_LIST_KEY + userId + ":*";
+        Set<String> keys = redisUtil.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            redisUtil.del(keys);
+        }
+        log.debug("清除用户优惠券缓存: userId={}", userId);
     }
 }

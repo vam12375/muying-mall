@@ -76,7 +76,7 @@ public class PaymentConfigController {
             wallet.put("enabled", balanceEnabled);
             methods.add(wallet);
 
-            log.info("获取支付方式配置: alipay={}, wechat={}, balance={}", 
+            log.debug("获取支付方式配置: alipay={}, wechat={}, balance={}", 
                     alipayEnabled, wechatEnabled, balanceEnabled);
 
             return Result.success(methods);

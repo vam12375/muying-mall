@@ -114,7 +114,7 @@ public class UserSearchHistoryServiceImpl extends ServiceImpl<UserSearchHistoryM
             long count = count(queryWrapper);
             remove(queryWrapper);
             
-            log.info("清空用户搜索历史: userId={}, count={}", userId, count);
+            log.debug("清空用户搜索历史: userId={}, count={}", userId, count);
             return (int) count;
         } catch (Exception e) {
             log.error("清空用户搜索历史失败: userId={}, error={}", userId, e.getMessage());

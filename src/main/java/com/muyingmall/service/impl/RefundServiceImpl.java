@@ -122,7 +122,7 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
         try {
             refundStateService.sendEvent(refund.getId(), RefundEvent.SUBMIT, "USER",
                     "用户" + userId, userId, "用户申请退款：" + refundReason);
-            log.info("已触发退款申请SUBMIT事件，退款ID: {}, 用户ID: {}", refund.getId(), userId);
+            log.debug("已触发退款申请SUBMIT事件，退款ID: {}, 用户ID: {}", refund.getId(), userId);
         } catch (Exception e) {
             // 不影响退款申请的创建，但需要记录异常
             log.error("触发退款申请SUBMIT事件失败，但退款申请已创建，退款ID: {}, 错误: {}", refund.getId(), e.getMessage(), e);
@@ -140,7 +140,7 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
                 orderService.updateById(orderToUpdate);
 
                 // 记录订单状态变更日志（如果需要）
-                log.info("订单状态已更新为退款中, 订单ID: {}, 退款ID: {}", orderId, refund.getId());
+                log.debug("订单状态已更新为退款中, 订单ID: {}, 退款ID: {}", orderId, refund.getId());
             }
         } catch (Exception e) {
             log.error("更新订单状态失败，但退款申请已创建，订单ID: {}, 错误: {}", orderId, e.getMessage());
@@ -210,13 +210,13 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
             String transactionId = null;
             if ("ALIPAY".equals(refundChannel)) {
                 // 调用支付宝退款
-                log.info("开始调用支付宝退款接口, 退款单号: {}", refund.getRefundNo());
+                log.debug("开始调用支付宝退款接口, 退款单号: {}", refund.getRefundNo());
                 transactionId = alipayRefundService.refund(refund);
                 if (StringUtils.hasText(transactionId)) {
                     // 保存支付宝返回的交易号
                     refund.setTransactionId(transactionId);
                     updateById(refund);
-                    log.info("支付宝退款调用成功, 退款单号: {}, 交易号: {}", refund.getRefundNo(), transactionId);
+                    log.debug("支付宝退款调用成功, 退款单号: {}, 交易号: {}", refund.getRefundNo(), transactionId);
                 }
             }
             // 其他退款渠道处理...
@@ -251,7 +251,7 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
         if ("ALIPAY".equals(refund.getRefundChannel())) {
             try {
                 String refundStatus = alipayRefundService.queryRefundStatus(refund.getRefundNo(), transactionId);
-                log.info("支付宝退款状态查询结果: {}, 退款单号: {}", refundStatus, refund.getRefundNo());
+                log.debug("支付宝退款状态查询结果: {}, 退款单号: {}", refundStatus, refund.getRefundNo());
 
                 // 如果支付宝返回退款失败，则不允许标记为完成
                 if ("REFUND_FAIL".equals(refundStatus)) {
@@ -271,14 +271,14 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
             Order order = orderService.getById(refund.getOrderId());
             if (order != null && "wallet".equals(order.getPaymentMethod())) {
                 // 钱包支付的订单，退款到钱包
-                log.info("处理钱包退款: 订单ID={}, 用户ID={}, 退款金额={}",
+                log.debug("处理钱包退款: 订单ID={}, 用户ID={}, 退款金额={}",
                         order.getOrderId(), order.getUserId(), refund.getAmount());
 
                 // 调用钱包退款方法
                 userAccountService.refundToWallet(order.getUserId(), refund.getAmount(),
                         "订单退款：" + order.getOrderNo());
 
-                log.info("钱包退款完成: 订单ID={}, 退款金额={}", order.getOrderId(), refund.getAmount());
+                log.debug("钱包退款完成: 订单ID={}, 退款金额={}", order.getOrderId(), refund.getAmount());
             }
         } catch (Exception e) {
             log.error("处理钱包退款失败: 退款ID={}, 错误={}", refundId, e.getMessage(), e);
@@ -295,7 +295,7 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
         // 恢复库存
         try {
             restoreStockForRefund(refund.getOrderId());
-            log.info("退款完成，库存已恢复: 订单ID={}", refund.getOrderId());
+            log.debug("退款完成，库存已恢复: 订单ID={}", refund.getOrderId());
         } catch (Exception e) {
             log.error("恢复库存失败: 订单ID={}, 错误={}", refund.getOrderId(), e.getMessage(), e);
             // 库存恢复失败不影响退款状态流转，但需要记录日志
@@ -333,7 +333,7 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
             if (skuId != null) {
                 // 有SKU，恢复SKU库存
                 productSkuService.restoreStock(skuId, quantity);
-                log.info("SKU库存已恢复: skuId={}, quantity={}, orderId={}", skuId, quantity, orderId);
+                log.debug("SKU库存已恢复: skuId={}, quantity={}, orderId={}", skuId, quantity, orderId);
             } else {
                 // 无SKU，恢复商品主表库存
                 Product product = productService.getById(productId);
@@ -341,7 +341,7 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
                     product.setStock(product.getStock() + quantity);
                     product.setSales(Math.max(0, product.getSales() - quantity)); // 销量减少，但不能为负
                     productService.updateById(product);
-                    log.info("商品库存已恢复: productId={}, quantity={}, orderId={}", productId, quantity, orderId);
+                    log.debug("商品库存已恢复: productId={}, quantity={}, orderId={}", productId, quantity, orderId);
                 }
             }
         }
@@ -455,7 +455,7 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
         if (size == null || size < 1)
             size = 10;
 
-        log.info("管理员查询退款列表: page={}, size={}, status={}, userId={}, orderId={}, startTime={}, endTime={}",
+        log.debug("管理员查询退款列表: page={}, size={}, status={}, userId={}, orderId={}, startTime={}, endTime={}",
                 page, size, status, userId, orderId, startTime, endTime);
 
         Page<Refund> pageParam = new Page<>(page, size);
@@ -506,7 +506,7 @@ public class RefundServiceImpl extends ServiceImpl<RefundMapper, Refund> impleme
 
         // 执行查询
         Page<Refund> resultPage = page(pageParam, queryWrapper);
-        log.info("查询结果: 总记录数={}, 当前页记录数={}", resultPage.getTotal(), resultPage.getRecords().size());
+        log.debug("查询结果: 总记录数={}, 当前页记录数={}", resultPage.getTotal(), resultPage.getRecords().size());
 
         // 如果没有记录，记录一下SQL以便调试
         if (resultPage.getTotal() == 0) {

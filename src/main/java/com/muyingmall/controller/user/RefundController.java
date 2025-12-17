@@ -57,7 +57,7 @@ public class RefundController {
             **返回：** 退款申请ID
             """)
     public Result<Long> applyRefund(@RequestBody Map<String, Object> requestData) {
-        log.info("收到退款申请请求: {}", requestData);
+        log.debug("收到退款申请请求: {}", requestData);
 
         // 从请求体中获取参数
         Integer orderId = Integer.valueOf(requestData.get("orderId").toString());
@@ -110,10 +110,10 @@ public class RefundController {
     public Result<Page<Refund>> getOrderRefunds(@PathVariable("orderId") Integer orderId,
                                                 @RequestParam(value = "page", defaultValue = "1") Integer page,
                                                 @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        log.info("获取订单退款列表请求：orderId={}, page={}, size={}", orderId, page, size);
+        log.debug("获取订单退款列表请求：orderId={}, page={}, size={}", orderId, page, size);
         try {
         Page<Refund> refunds = refundService.getOrderRefunds(orderId, page, size);
-            log.info("获取订单退款列表成功：orderId={}, 总记录数={}", orderId, refunds.getTotal());
+            log.debug("获取订单退款列表成功：orderId={}, 总记录数={}", orderId, refunds.getTotal());
         return Result.success(refunds);
         } catch (Exception e) {
             log.error("获取订单退款列表失败：orderId={}", orderId, e);

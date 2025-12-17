@@ -113,13 +113,13 @@ public class AlipayRefundServiceImpl implements AlipayRefundService {
         for (int i = 0; i <= maxRetryCount; i++) {
             try {
                 // 发送退款请求
-                log.info("发起支付宝退款请求，订单号：{}，退款单号：{}，金额：{}，尝试次数：{}/{}",
+                log.debug("发起支付宝退款请求，订单号：{}，退款单号：{}，金额：{}，尝试次数：{}/{}",
                         payment.getPaymentNo(), refund.getRefundNo(), refund.getAmount(), i + 1, maxRetryCount + 1);
                 AlipayTradeRefundResponse response = alipayClient.execute(request);
 
                 // 处理响应结果
                 if (response.isSuccess()) {
-                    log.info("支付宝退款请求成功，响应结果：{}", response.getBody());
+                    log.debug("支付宝退款请求成功，响应结果：{}", response.getBody());
                     // 返回支付宝退款交易号（可能为空，此时使用商户退款单号）
                     String refundTradeNo = response.getTradeNo();
                     return refundTradeNo != null ? refundTradeNo : refund.getRefundNo();
@@ -213,11 +213,11 @@ public class AlipayRefundServiceImpl implements AlipayRefundService {
         for (int i = 0; i <= maxRetryCount; i++) {
             try {
                 // 发送查询请求
-                log.info("查询支付宝退款状态，退款单号：{}，交易号：{}，尝试次数：{}", refundNo, transactionId, i + 1);
+                log.debug("查询支付宝退款状态，退款单号：{}，交易号：{}，尝试次数：{}", refundNo, transactionId, i + 1);
                 AlipayTradeFastpayRefundQueryResponse response = alipayClient.execute(request);
 
                 if (response.isSuccess()) {
-                    log.info("支付宝退款查询成功，退款状态：{}", response.getRefundStatus());
+                    log.debug("支付宝退款查询成功，退款状态：{}", response.getRefundStatus());
                     // 返回退款状态
                     return response.getRefundStatus();
                 } else if ("SYSTEM_ERROR".equals(response.getSubCode())) {
@@ -271,7 +271,7 @@ public class AlipayRefundServiceImpl implements AlipayRefundService {
 
     @Override
     public boolean handleRefundNotify(Map<String, String> params) throws AlipayApiException {
-        log.info("收到支付宝退款异步通知，参数：{}", params);
+        log.debug("收到支付宝退款异步通知，参数：{}", params);
 
         // 验证签名
         boolean signVerified = AlipaySignature.rsaCheckV1(
@@ -292,7 +292,7 @@ public class AlipayRefundServiceImpl implements AlipayRefundService {
         String refundAmount = params.get("refund_amount"); // 退款金额
         String gmtRefund = params.get("gmt_refund"); // 退款时间
 
-        log.info("支付宝退款通知验签成功，退款状态：{}，退款单号：{}，交易号：{}，退款金额：{}，退款时间：{}",
+        log.debug("支付宝退款通知验签成功，退款状态：{}，退款单号：{}，交易号：{}，退款金额：{}，退款时间：{}",
                 refundStatus, outRequestNo, tradeNo, refundAmount, gmtRefund);
 
         try {
@@ -314,7 +314,7 @@ public class AlipayRefundServiceImpl implements AlipayRefundService {
                 // 更新退款记录
                 boolean updated = refundService.updateById(refund);
                 if (updated) {
-                    log.info("退款成功，已更新退款记录：{}", refund.getId());
+                    log.debug("退款成功，已更新退款记录：{}", refund.getId());
 
                     // 触发状态机事件，完成退款状态流转
                     refundStateService.sendEvent(refund.getId(), RefundEvent.COMPLETE, "SYSTEM", "系统自动", 0,

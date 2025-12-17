@@ -63,7 +63,7 @@ public class CommentReplyServiceImpl extends ServiceImpl<CommentReplyMapper, Com
             commentMapper.updateById(updateComment);
 
             // 记录日志
-            log.info("已更新评价[{}]的回复状态为已回复", commentReply.getCommentId());
+            log.debug("已更新评价[{}]的回复状态为已回复", commentReply.getCommentId());
         }
 
         return saveResult;

@@ -38,13 +38,13 @@ public class ProductCacheAspect {
                 if (args[0] instanceof Integer) {
                     Integer productId = (Integer) args[0];
                     productCacheService.evictProductDetail(productId);
-                    log.info("自动清除商品缓存: productId={}", productId);
+                    log.debug("自动清除商品缓存: productId={}", productId);
                 } else if (args[0] instanceof com.muyingmall.entity.Product) {
                     com.muyingmall.entity.Product product = 
                         (com.muyingmall.entity.Product) args[0];
                     if (product.getProductId() != null) {
                         productCacheService.evictProductDetail(product.getProductId());
-                        log.info("自动清除商品缓存: productId={}", product.getProductId());
+                        log.debug("自动清除商品缓存: productId={}", product.getProductId());
                     }
                 }
             } catch (Exception e) {

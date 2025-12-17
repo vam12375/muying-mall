@@ -84,7 +84,7 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
         // 清除该用户的消息计数缓存
         clearMessageCountCache(userId);
 
-        log.info("成功创建用户消息: userId={}, messageId={}, type={}", userId, message.getMessageId(), type);
+        log.debug("成功创建用户消息: userId={}, messageId={}, type={}", userId, message.getMessageId(), type);
         return message;
     }
 

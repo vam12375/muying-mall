@@ -41,7 +41,7 @@ public class ContentController {
             @RequestParam(value = "status", required = false) @Parameter(description = "内容状态") String status,
             @RequestParam(value = "keyword", required = false) @Parameter(description = "关键词") String keyword) {
         try {
-            log.info("获取内容列表，页码：{}，每页条数：{}，类型：{}，状态：{}，关键词：{}", page, pageSize, type, status, keyword);
+            log.debug("获取内容列表，页码：{}，每页条数：{}，类型：{}，状态：{}，关键词：{}", page, pageSize, type, status, keyword);
 
             // 构建缓存键
             StringBuilder cacheKey = new StringBuilder(CacheConstants.CONTENT_LIST_KEY);
@@ -118,7 +118,7 @@ public class ContentController {
     @Operation(summary = "获取内容详情")
     public Result<Map<String, Object>> getContentDetail(@PathVariable("id") String id) {
         try {
-            log.info("获取内容详情，ID：{}", id);
+            log.debug("获取内容详情，ID：{}", id);
 
             // 构建缓存键
             String cacheKey = CacheConstants.CONTENT_DETAIL_KEY + id;
@@ -178,7 +178,7 @@ public class ContentController {
     @Operation(summary = "创建内容")
     public Result<Map<String, Object>> createContent(@RequestBody Map<String, Object> content) {
         try {
-            log.info("创建内容：{}", content);
+            log.debug("创建内容：{}", content);
 
             Map<String, Object> createdContent = new HashMap<>(content);
             createdContent.put("id", "content-" + UUID.randomUUID().toString().substring(0, 8));
@@ -210,7 +210,7 @@ public class ContentController {
             @PathVariable("id") String id,
             @RequestBody Map<String, Object> content) {
         try {
-            log.info("更新内容，ID：{}，内容：{}", id, content);
+            log.debug("更新内容，ID：{}，内容：{}", id, content);
 
             Map<String, Object> updatedContent = new HashMap<>(content);
             updatedContent.put("id", id);
@@ -238,7 +238,7 @@ public class ContentController {
     @Operation(summary = "删除内容")
     public Result<Boolean> deleteContent(@PathVariable("id") String id) {
         try {
-            log.info("删除内容，ID：{}", id);
+            log.debug("删除内容，ID：{}", id);
 
             // 清除相关缓存
             clearContentCache(id);
@@ -261,7 +261,7 @@ public class ContentController {
             @RequestParam(value = "pageSize", defaultValue = "20") @Parameter(description = "每页条数") Integer pageSize,
             @RequestParam(value = "type", required = false) @Parameter(description = "媒体类型") String type) {
         try {
-            log.info("获取媒体资源列表，页码：{}，每页条数：{}，类型：{}", page, pageSize, type);
+            log.debug("获取媒体资源列表，页码：{}，每页条数：{}，类型：{}", page, pageSize, type);
 
             // 构建缓存键
             StringBuilder cacheKey = new StringBuilder(CacheConstants.CONTENT_KEY_PREFIX);
@@ -337,7 +337,7 @@ public class ContentController {
             @RequestParam(value = "folder", required = false) String folder,
             @RequestParam(value = "tags", required = false) String tags) {
         try {
-            log.info("上传媒体资源，文件名：{}，文件夹：{}，标签：{}", file.getOriginalFilename(), folder, tags);
+            log.debug("上传媒体资源，文件名：{}，文件夹：{}，标签：{}", file.getOriginalFilename(), folder, tags);
 
             Map<String, Object> media = new HashMap<>();
             media.put("id", "media-" + UUID.randomUUID().toString().substring(0, 8));
@@ -381,7 +381,7 @@ public class ContentController {
     public Result<List<Map<String, Object>>> getTemplateList(
             @RequestParam(value = "type", required = false) @Parameter(description = "模板类型") String type) {
         try {
-            log.info("获取模板列表，类型：{}", type);
+            log.debug("获取模板列表，类型：{}", type);
 
             // 构建缓存键
             String cacheKey = CacheConstants.CONTENT_KEY_PREFIX + "templates";
@@ -461,7 +461,7 @@ public class ContentController {
     @Operation(summary = "SEO分析")
     public Result<Map<String, Object>> analyzeSeo(@RequestBody Map<String, Object> data) {
         try {
-            log.info("SEO分析，数据：{}", data);
+            log.debug("SEO分析，数据：{}", data);
 
             Map<String, Object> content = (Map<String, Object>) data.get("content");
             String keyword = (String) data.get("keyword");
@@ -539,7 +539,7 @@ public class ContentController {
     public Result<List<String>> getKeywordSuggestions(
             @RequestParam("keyword") @Parameter(description = "关键词") String keyword) {
         try {
-            log.info("获取关键词建议，关键词：{}", keyword);
+            log.debug("获取关键词建议，关键词：{}", keyword);
 
             // 构建缓存键
             String cacheKey = CacheConstants.CONTENT_KEY_PREFIX + "seo:keyword:" + keyword;
@@ -589,7 +589,7 @@ public class ContentController {
             // 使用scan命令清除匹配的缓存
             long count = redisUtil.deleteByScan(pattern);
 
-            log.info("清除内容缓存成功，共清除{}个键", count);
+            log.debug("清除内容缓存成功，共清除{}个键", count);
             return Result.success(true);
         } catch (Exception e) {
             log.error("清除内容缓存失败", e);

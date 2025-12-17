@@ -41,11 +41,11 @@ public class BrandController {
             @Parameter(description = "每页大小，默认10") @RequestParam(value = "size", defaultValue = "10") int size,
             @Parameter(description = "搜索关键词") @RequestParam(value = "keyword", required = false) String keyword) {
         try {
-            log.info("获取品牌分页列表: page={}, size={}, keyword={}", page, size, keyword);
+            log.debug("获取品牌分页列表: page={}, size={}, keyword={}", page, size, keyword);
             Page<Brand> brandPage = brandService.getBrandPage(page, size, keyword);
 
             // 打印结果统计信息
-            log.info("品牌列表获取成功: 总数={}, 当前页数据数量={}",
+            log.debug("品牌列表获取成功: 总数={}, 当前页数据数量={}",
                     brandPage.getTotal(), brandPage.getRecords().size());
 
             return Result.success(brandPage);
@@ -65,9 +65,9 @@ public class BrandController {
     @Operation(summary = "获取所有品牌列表", description = "不分页，用于下拉菜单选择")
     public Result<List<Brand>> getAllBrands() {
         try {
-            log.info("获取所有品牌列表");
+            log.debug("获取所有品牌列表");
             List<Brand> brands = brandService.list();
-            log.info("所有品牌列表获取成功: 品牌数量={}", brands.size());
+            log.debug("所有品牌列表获取成功: 品牌数量={}", brands.size());
             return Result.success(brands);
         } catch (Exception e) {
             log.error("获取所有品牌列表失败: {}", e.getMessage(), e);
@@ -85,13 +85,13 @@ public class BrandController {
     @Operation(summary = "获取品牌详情")
     public Result<Brand> getBrandDetail(@Parameter(description = "品牌ID") @PathVariable Integer id) {
         try {
-            log.info("获取品牌详情: id={}", id);
+            log.debug("获取品牌详情: id={}", id);
             Brand brand = brandService.getBrandDetail(id);
             if (brand == null) {
                 log.warn("品牌不存在: id={}", id);
                 return Result.error(HttpStatus.NOT_FOUND.value(), "品牌不存在");
             }
-            log.info("品牌详情获取成功: id={}, name={}", id, brand.getName());
+            log.debug("品牌详情获取成功: id={}, name={}", id, brand.getName());
             return Result.success(brand);
         } catch (Exception e) {
             log.error("获取品牌详情失败: id={}, 错误: {}", id, e.getMessage(), e);
@@ -109,10 +109,10 @@ public class BrandController {
     @Operation(summary = "创建品牌")
     public Result<Boolean> createBrand(@RequestBody Brand brand) {
         try {
-            log.info("创建品牌: {}", brand);
+            log.debug("创建品牌: {}", brand);
             boolean result = brandService.createBrand(brand);
             if (result) {
-                log.info("创建品牌成功: id={}, name={}", brand.getBrandId(), brand.getName());
+                log.debug("创建品牌成功: id={}, name={}", brand.getBrandId(), brand.getName());
                 return Result.success(true, "创建品牌成功");
             } else {
                 log.warn("创建品牌失败: {}", brand);
@@ -137,11 +137,11 @@ public class BrandController {
             @Parameter(description = "品牌ID") @PathVariable Integer id,
             @RequestBody Brand brand) {
         try {
-            log.info("更新品牌: id={}, brand={}", id, brand);
+            log.debug("更新品牌: id={}, brand={}", id, brand);
             brand.setBrandId(id);
             boolean result = brandService.updateBrand(brand);
             if (result) {
-                log.info("更新品牌成功: id={}", id);
+                log.debug("更新品牌成功: id={}", id);
                 return Result.success(true, "更新品牌成功");
             } else {
                 log.warn("更新品牌失败: id={}", id);
@@ -163,10 +163,10 @@ public class BrandController {
     @Operation(summary = "删除品牌")
     public Result<Boolean> deleteBrand(@Parameter(description = "品牌ID") @PathVariable Integer id) {
         try {
-            log.info("删除品牌: id={}", id);
+            log.debug("删除品牌: id={}", id);
             boolean result = brandService.deleteBrand(id);
             if (result) {
-                log.info("删除品牌成功: id={}", id);
+                log.debug("删除品牌成功: id={}", id);
                 return Result.success(true, "删除品牌成功");
             } else {
                 log.warn("删除品牌失败: id={}", id);

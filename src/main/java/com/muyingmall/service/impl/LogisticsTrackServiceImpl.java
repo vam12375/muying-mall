@@ -178,7 +178,7 @@ public class LogisticsTrackServiceImpl extends ServiceImpl<LogisticsTrackMapper,
             return false;
         }
         
-        log.info("开始批量添加物流轨迹，物流ID: {}, 轨迹数量: {}", logisticsId, tracks.size());
+        log.debug("开始批量添加物流轨迹，物流ID: {}, 轨迹数量: {}", logisticsId, tracks.size());
         
         List<LogisticsTrack> processedTracks = new ArrayList<>(tracks.size());
         LocalDateTime now = LocalDateTime.now();
@@ -222,7 +222,7 @@ public class LogisticsTrackServiceImpl extends ServiceImpl<LogisticsTrackMapper,
         
         // 批量保存所有轨迹
         boolean result = saveBatch(processedTracks);
-        log.info("批量添加物流轨迹{}，物流ID: {}, 轨迹数量: {}", 
+        log.debug("批量添加物流轨迹{}，物流ID: {}, 轨迹数量: {}", 
                 result ? "成功" : "失败", logisticsId, processedTracks.size());
         
         return result;

@@ -129,7 +129,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         // 清除缓存
         clearCache();
         
-        log.info("批量更新系统配置成功，共 {} 项", configs.size());
+        log.debug("批量更新系统配置成功，共 {} 项", configs.size());
         return true;
     }
 
@@ -145,7 +145,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         
         if (updated > 0) {
             clearCache();
-            log.info("更新系统配置成功: {} = {}", key, value);
+            log.debug("更新系统配置成功: {} = {}", key, value);
             return true;
         }
         
@@ -164,7 +164,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         // 清除缓存
         clearCache();
         
-        log.info("系统配置已重置为默认值");
+        log.debug("系统配置已重置为默认值");
         return true;
     }
 
@@ -182,11 +182,11 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         // 检查是否已有配置
         Long count = systemConfigMapper.selectCount(new LambdaQueryWrapper<>());
         if (count != null && count > 0) {
-            log.info("系统配置已存在，跳过初始化");
+            log.debug("系统配置已存在，跳过初始化");
             return;
         }
 
-        log.info("开始初始化系统默认配置...");
+        log.debug("开始初始化系统默认配置...");
         
         List<SystemConfig> defaultConfigs = new ArrayList<>();
         int sortOrder = 0;
@@ -235,7 +235,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
             systemConfigMapper.insert(config);
         }
 
-        log.info("系统默认配置初始化完成，共 {} 项", defaultConfigs.size());
+        log.debug("系统默认配置初始化完成，共 {} 项", defaultConfigs.size());
     }
 
     /**

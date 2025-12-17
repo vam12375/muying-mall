@@ -69,7 +69,7 @@ public class FileUploadController {
 
             // 返回访问URL（直接使用/circle/路径，前端public目录可直接访问）
             String fileUrl = "/" + relativePath + "/" + newFilename;
-            log.info("文件上传成功: {}", fileUrl);
+            log.debug("文件上传成功: {}", fileUrl);
             
             return Result.success(fileUrl);
         } catch (IOException e) {

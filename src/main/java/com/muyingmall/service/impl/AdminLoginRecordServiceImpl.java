@@ -72,7 +72,7 @@ public class AdminLoginRecordServiceImpl extends ServiceImpl<AdminLoginRecordMap
             }
 
             save(record);
-            log.info("记录管理员登录信息成功: adminId={}, loginStatus={}, ip={}",
+            log.debug("记录管理员登录信息成功: adminId={}, loginStatus={}, ip={}",
                     adminId, loginStatus, ipAddress);
 
             // 发布登录事件
@@ -110,7 +110,7 @@ public class AdminLoginRecordServiceImpl extends ServiceImpl<AdminLoginRecordMap
                 }
 
                 updateById(record);
-                log.info("记录管理员登出信息成功: sessionId={}, duration={}秒",
+                log.debug("记录管理员登出信息成功: sessionId={}, duration={}秒",
                         sessionId, record.getDurationSeconds());
                 return true;
             }

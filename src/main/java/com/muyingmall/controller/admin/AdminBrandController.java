@@ -45,7 +45,7 @@ public class AdminBrandController {
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "keyword", required = false) String keyword) {
         try {
-            log.info("获取品牌分页列表: page={}, size={}, keyword={}", page, size, keyword);
+            log.debug("获取品牌分页列表: page={}, size={}, keyword={}", page, size, keyword);
 
             // 获取品牌分页数据
             Page<Brand> brandPage = brandService.getBrandPage(page, size, keyword);
@@ -57,7 +57,7 @@ public class AdminBrandController {
                 return BrandDTO.fromEntity(brand, productCount);
             });
 
-            log.info("获取品牌分页列表成功: 总记录数={}, 当前页记录数={}",
+            log.debug("获取品牌分页列表成功: 总记录数={}, 当前页记录数={}",
                     brandPage.getTotal(), brandPage.getRecords().size());
 
             return CommonResult.success(result);
@@ -76,7 +76,7 @@ public class AdminBrandController {
     @Operation(summary = "获取所有品牌列表")
     public CommonResult<List<BrandDTO>> getAllBrands() {
         try {
-            log.info("获取所有品牌列表");
+            log.debug("获取所有品牌列表");
 
             List<Brand> brands = brandService.list();
             List<BrandDTO> brandDTOs = brands.stream()
@@ -87,7 +87,7 @@ public class AdminBrandController {
                     })
                     .collect(Collectors.toList());
 
-            log.info("获取所有品牌列表成功: 总记录数={}", brands.size());
+            log.debug("获取所有品牌列表成功: 总记录数={}", brands.size());
 
             return CommonResult.success(brandDTOs);
         } catch (Exception e) {
@@ -106,7 +106,7 @@ public class AdminBrandController {
     @Operation(summary = "获取品牌详情")
     public CommonResult<BrandDTO> getBrandDetail(@PathVariable Integer id) {
         try {
-            log.info("获取品牌详情: id={}", id);
+            log.debug("获取品牌详情: id={}", id);
 
             Brand brand = brandService.getBrandDetail(id);
             if (brand == null) {
@@ -118,7 +118,7 @@ public class AdminBrandController {
             int productCount = productService.getProductCountByBrandId(id);
             BrandDTO brandDTO = BrandDTO.fromEntity(brand, productCount);
 
-            log.info("获取品牌详情成功: id={}, name={}", id, brand.getName());
+            log.debug("获取品牌详情成功: id={}, name={}", id, brand.getName());
 
             return CommonResult.success(brandDTO);
         } catch (Exception e) {
@@ -137,11 +137,11 @@ public class AdminBrandController {
     @Operation(summary = "创建品牌")
     public CommonResult<Boolean> createBrand(@RequestBody Brand brand) {
         try {
-            log.info("创建品牌: {}", brand);
+            log.debug("创建品牌: {}", brand);
 
             boolean result = brandService.createBrand(brand);
             if (result) {
-                log.info("创建品牌成功: id={}, name={}", brand.getBrandId(), brand.getName());
+                log.debug("创建品牌成功: id={}, name={}", brand.getBrandId(), brand.getName());
                 return CommonResult.success(true, "创建品牌成功");
             } else {
                 log.warn("创建品牌失败");
@@ -164,12 +164,12 @@ public class AdminBrandController {
     @Operation(summary = "更新品牌")
     public CommonResult<Boolean> updateBrand(@PathVariable Integer id, @RequestBody Brand brand) {
         try {
-            log.info("更新品牌: id={}, brand={}", id, brand);
+            log.debug("更新品牌: id={}, brand={}", id, brand);
 
             brand.setBrandId(id);
             boolean result = brandService.updateBrand(brand);
             if (result) {
-                log.info("更新品牌成功: id={}", id);
+                log.debug("更新品牌成功: id={}", id);
                 return CommonResult.success(true, "更新品牌成功");
             } else {
                 log.warn("更新品牌失败: id={}", id);
@@ -191,11 +191,11 @@ public class AdminBrandController {
     @Operation(summary = "删除品牌")
     public CommonResult<Boolean> deleteBrand(@PathVariable Integer id) {
         try {
-            log.info("删除品牌: id={}", id);
+            log.debug("删除品牌: id={}", id);
 
             boolean result = brandService.deleteBrand(id);
             if (result) {
-                log.info("删除品牌成功: id={}", id);
+                log.debug("删除品牌成功: id={}", id);
                 return CommonResult.success(true, "删除品牌成功");
             } else {
                 log.warn("删除品牌失败: id={}", id);

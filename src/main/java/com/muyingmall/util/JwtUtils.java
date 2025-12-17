@@ -35,11 +35,11 @@ public class JwtUtils {
 
     @PostConstruct
     public void init() {
-        log.info("Initializing JwtUtils...");
-        log.info("JWT Secret from config (first 10 chars): {}",
+        log.debug("Initializing JwtUtils...");
+        log.debug("JWT Secret from config (first 10 chars): {}",
                 (secretString != null && secretString.length() > 10) ? secretString.substring(0, 10) + "..."
                         : secretString);
-        log.info("JWT Secret length from config: {}", secretString != null ? secretString.length() : "null");
+        log.debug("JWT Secret length from config: {}", secretString != null ? secretString.length() : "null");
 
         if (secretString == null || secretString.isEmpty()
                 || "DefaultSecretKeyMustBeConfiguredAndLongEnoughForHS512IfNotBase64Encoded".equals(secretString)) {
@@ -56,7 +56,7 @@ public class JwtUtils {
                 log.warn(
                         "Generated a dynamic JWT signing key due to missing secret. Tokens will invalidate on app restart.");
             } else {
-                log.info("Using the configured long example secret key. Ensure this is changed for production.");
+                log.debug("Using the configured long example secret key. Ensure this is changed for production.");
                 byte[] keyBytes = secretString.getBytes(StandardCharsets.UTF_8);
                 if (keyBytes.length < 64) {
                     log.warn(
@@ -64,7 +64,7 @@ public class JwtUtils {
                             keyBytes.length);
                 }
                 this.signingKey = Keys.hmacShaKeyFor(keyBytes);
-                log.info("Successfully initialized JWT signing key from configured (long example) secret string.");
+                log.debug("Successfully initialized JWT signing key from configured (long example) secret string.");
             }
         } else {
             byte[] keyBytes = secretString.getBytes(StandardCharsets.UTF_8);
@@ -74,10 +74,10 @@ public class JwtUtils {
                         keyBytes.length);
             }
             this.signingKey = Keys.hmacShaKeyFor(keyBytes);
-            log.info("Successfully initialized JWT signing key from configured custom secret string.");
+            log.debug("Successfully initialized JWT signing key from configured custom secret string.");
         }
         // if (this.signingKey != null) {
-        // log.info("Initialized signingKey (Base64): {}",
+        // log.debug("Initialized signingKey (Base64): {}",
         // Base64.getEncoder().encodeToString(this.signingKey.getEncoded()));
         // } else {
         // log.error("SigningKey is NULL after init!");
@@ -113,7 +113,7 @@ public class JwtUtils {
             // secretString); // Keep this if it was part of the original fix for a null key
             throw new IllegalStateException("JWT signing key is not initialized. Check configuration and logs.");
         }
-        // log.info("createToken using signingKey (Base64): {}",
+        // log.debug("createToken using signingKey (Base64): {}",
         // Base64.getEncoder().encodeToString(this.signingKey.getEncoded()));
         return Jwts.builder()
                 .setClaims(claims)
@@ -137,7 +137,7 @@ public class JwtUtils {
             // a null key
             throw new IllegalStateException("JWT signing key is not initialized. Check configuration and logs.");
         }
-        // log.info("getClaimsFromToken using signingKey (Base64): {}",
+        // log.debug("getClaimsFromToken using signingKey (Base64): {}",
         // Base64.getEncoder().encodeToString(this.signingKey.getEncoded()));
         return Jwts.parser()
                 .setSigningKey(this.signingKey)

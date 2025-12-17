@@ -65,14 +65,14 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         Long skuId = cartAddDTO.getSkuId();
         String skuName = cartAddDTO.getSkuName();
         
-        log.info("【购物车添加】开始处理，productId={}, skuId={}, skuName={}", 
+        // 优化：热点路径使用debug级别日志
+        log.debug("【购物车添加】开始处理，productId={}, skuId={}, skuName={}", 
                 cartAddDTO.getProductId(), skuId, skuName);
         
         // 优先使用SKU ID作为唯一标识
         if (skuId != null && skuId > 0) {
             // 使用SKU ID作为唯一标识，确保不同SKU有不同的specsHash
             specsHash = "sku_" + skuId;
-            log.info("【购物车添加】使用SKU ID作为唯一标识: skuId={}, specsHash={}", skuId, specsHash);
         } else {
             // 兼容旧的规格系统（没有SKU的情况）
             Map<String, String> specs = cartAddDTO.getSpecs();
@@ -80,19 +80,13 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
                 try {
                     specsJson = objectMapper.writeValueAsString(specs);
                     specsHash = org.springframework.util.DigestUtils.md5DigestAsHex(specsJson.getBytes());
-                    log.info("【购物车添加】使用规格信息作为唯一标识: specs={}, specsHash={}", specsJson, specsHash);
                 } catch (JsonProcessingException e) {
                     log.error("规格信息转换失败", e);
                     throw new BusinessException("规格信息格式错误");
                 }
-            } else {
-                // 没有SKU也没有规格，specsHash保持为null
-                log.info("【购物车添加】无SKU和规格信息，specsHash设为null");
             }
+            // 没有SKU也没有规格，specsHash保持为null
         }
-        
-        // 最终确认specsHash的值
-        log.info("【购物车添加】最终specsHash值: {}", specsHash);
 
         // 查询购物车是否已存在相同商品规格
         LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
@@ -133,31 +127,16 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             cart.setSkuId(skuId);
             cart.setSkuName(skuName);
             
-            // 调试：打印传入的价格
-            log.info("【购物车添加】传入的价格参数: cartAddDTO.getPrice()={}", cartAddDTO.getPrice());
-            
             // 记录价格快照：优先使用传入的SKU价格，否则使用商品主表价格
             if (cartAddDTO.getPrice() != null) {
                 cart.setPriceSnapshot(cartAddDTO.getPrice());
-                log.info("【购物车添加】使用传入的SKU价格: {}", cartAddDTO.getPrice());
             } else {
                 cart.setPriceSnapshot(product.getPriceNew());
-                log.info("【购物车添加】使用商品主表价格: {}", product.getPriceNew());
             }
             cart.setStatus(1); // 有效
             
-            // 调试：打印最终设置的价格快照
-            log.info("【购物车添加】最终价格快照: {}", cart.getPriceSnapshot());
-            
-            // 插入前打印完整的 cart 对象，确认所有字段值
-            log.info("【购物车添加】准备插入，userId={}, productId={}, skuId={}, specsHash={}, skuName={}", 
-                    cart.getUserId(), cart.getProductId(), cart.getSkuId(), cart.getSpecsHash(), cart.getSkuName());
-            
-            // 使用 baseMapper 直接插入，确保字段值正确传递
-            int rows = baseMapper.insert(cart);
-            
-            log.info("【购物车添加】插入完成，影响行数={}, cartId={}, 实际specsHash={}", 
-                    rows, cart.getCartId(), cart.getSpecsHash());
+            // 使用 baseMapper 直接插入
+            baseMapper.insert(cart);
             
             // 清除购物车缓存
             clearCartCache(userId);
@@ -206,9 +185,8 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             log.debug("用户购物车为空，缓存空列表: userId={}, 缓存时间=60秒", userId);
         }
         
-        long totalTime = System.currentTimeMillis() - startTime;
-        log.info("购物车查询完成: userId={}, 总耗时={}ms, 数据库耗时={}ms, 缓存命中=false", 
-                userId, totalTime, dbTime);
+        // 优化：热点路径使用debug级别日志
+        log.debug("购物车查询完成: userId={}, 数据库耗时={}ms", userId, dbTime);
         
         return cartList;
     }
@@ -465,7 +443,7 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             return 0;
         }
 
-        log.info("批量删除购物车项: userId={}, cartIds={}", userId, cartIds);
+        log.debug("批量删除购物车项: userId={}, cartIds={}", userId, cartIds);
 
         // 构建删除条件
         LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
@@ -481,7 +459,7 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             String selectedCacheKey = CacheConstants.CART_SELECTED_KEY + userId;
             redisUtil.del(cacheKey);
             redisUtil.del(selectedCacheKey);
-            log.info("批量删除购物车项成功并清除缓存: userId={}, deletedCount={}", userId, deletedCount);
+            log.debug("批量删除购物车项成功: userId={}, deletedCount={}", userId, deletedCount);
         }
 
         return deletedCount;
