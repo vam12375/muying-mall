@@ -39,5 +39,11 @@ build/
 # IDE and editor files
 .cunzhi-memory/
 
+# 临时文件和备份
+*.bkp
+*.tmp
+*.tmp.*
+*.swp
+
 # JMeter 测试报告依赖
 **/bower_components/
