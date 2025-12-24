@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * 用户控制器
  */
+@Slf4j
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class UserController {
     private final JwtUtils jwtUtils;
     private final LoginRateLimiter loginRateLimiter;
     private final LoginCacheService loginCacheService;
+    private final com.muyingmall.util.RedisUtil redisUtil;
 
     /**
      * 用户注册
@@ -128,16 +131,17 @@ public class UserController {
     }
 
     /**
-     * 获取当前登录用户信息 (基于JWT)
+     * 获取当前登录用户信息 (基于JWT) - 优化：只返回基本信息，不包含统计数据
      */
     @GetMapping("/info")
-    @Operation(summary = "获取当前登录用户信息", description = "通过JWT令牌获取当前登录用户的详细信息", tags = { "用户管理" })
+    @Operation(summary = "获取当前登录用户信息", description = "通过JWT令牌获取当前登录用户的详细信息（不包含统计数据，统计数据请使用/user/stats接口）", tags = { "用户管理" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "获取成功", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class))),
             @ApiResponse(responseCode = "401", description = "用户未认证"),
             @ApiResponse(responseCode = "404", description = "用户不存在")
     })
     public Result<User> getUserInfo() {
+        // 优化：添加Token验证，避免JWT解析错误
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
@@ -145,9 +149,18 @@ public class UserController {
         }
 
         String username = authentication.getName();
+        
+        // 优化：验证用户名不为空
+        if (username == null || username.trim().isEmpty()) {
+            log.warn("用户名为空，认证信息异常");
+            return Result.error(401, "认证信息异常");
+        }
+        
+        // 优化：使用缓存查询，减少数据库压力
         User user = userService.findByUsername(username);
 
         if (user == null) {
+            log.warn("用户不存在: username={}", username);
             return Result.error(404, "用户不存在");
         }
 
@@ -286,10 +299,10 @@ public class UserController {
     }
 
     /**
-     * 获取用户统计数据
+     * 获取用户统计数据 - 优化：增加缓存，减少数据库查询
      */
     @GetMapping("/stats")
-    @Operation(summary = "获取用户统计数据", description = "获取当前用户的订单、收藏、评价等统计信息", tags = { "用户管理" })
+    @Operation(summary = "获取用户统计数据", description = "获取当前用户的订单、收藏、评价等统计信息（已缓存5分钟）", tags = { "用户管理" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "获取成功"),
             @ApiResponse(responseCode = "401", description = "用户未认证")
@@ -307,7 +320,22 @@ public class UserController {
             return Result.error(404, "用户不存在");
         }
 
+        // 优化：使用缓存，TTL从60秒提升到300秒（5分钟）
+        String cacheKey = "user:stats:" + user.getUserId();
+        Object cached = redisUtil.get(cacheKey);
+        if (cached instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> stats = (Map<String, Object>) cached;
+            log.debug("从缓存获取用户统计数据: userId={}", user.getUserId());
+            return Result.success(stats);
+        }
+
         Map<String, Object> stats = userService.getUserStats(user.getUserId());
+        
+        // 缓存5分钟
+        redisUtil.set(cacheKey, stats, 300);
+        log.debug("缓存用户统计数据: userId={}, ttl=300秒", user.getUserId());
+        
         return Result.success(stats);
     }
 

@@ -33,9 +33,11 @@ public class PointsController {
     private final PointsService pointsService;
     private final PointsExchangeService pointsExchangeService;
     private final UserService userService;
+    private final com.muyingmall.util.ControllerCacheUtil controllerCacheUtil;
 
     /**
      * 获取用户积分信息
+     * 性能优化：Controller层缓存
      */
     @GetMapping("/info")
     @Operation(summary = "获取用户积分信息")
@@ -51,8 +53,12 @@ public class PointsController {
             return Result.error(404, "用户不存在");
         }
 
-        Map<String, Object> pointsInfo = pointsService.getSignInStatus(user.getUserId());
-        return Result.success(pointsInfo);
+        String cacheKey = "points:info:" + user.getUserId();
+        
+        return controllerCacheUtil.getWithCache(cacheKey, 60L, () -> {
+            Map<String, Object> pointsInfo = pointsService.getSignInStatus(user.getUserId());
+            return Result.success(pointsInfo);
+        });
     }
 
     /**
