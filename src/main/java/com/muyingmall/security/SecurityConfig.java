@@ -31,9 +31,65 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // ⚠️ 测试模式：允许所有请求通过（生产环境请勿使用）
+        // 配置请求授权
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                .anyRequest().permitAll());
+                // 允许预检请求
+                .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
+                // 允许访问 Knife4j 和 API 文档
+                .requestMatchers("/doc.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**", "/swagger-resources/**").permitAll()
+                // 允许访问用户注册和登录接口
+                .requestMatchers("/user/register", "/user/login").permitAll()
+                // 允许访问密码重置相关接口（忘记密码功能）
+                .requestMatchers("/user/captcha", "/user/password/reset/**").permitAll()
+                // 允许访问管理员登录接口
+                .requestMatchers("/admin/login").permitAll()
+                // 允许访问商品、分类和品牌相关接口
+                .requestMatchers("/products/**", "/categories/**", "/brands/**").permitAll()
+                // 允许访问搜索相关接口
+                .requestMatchers("/search/**").permitAll()
+                // 允许访问测试连接接口
+                .requestMatchers("/test/connection", "/test/jwt-demo", "/test/**").permitAll()
+                // 允许访问WebSocket端点（WebSocket握手请求）
+                .requestMatchers("/ws/**").permitAll()
+                // 允许访问支付配置接口（获取启用的支付方式）
+                .requestMatchers("/payment/config/**").permitAll()
+                // 允许访问支付回调接口
+                .requestMatchers("/payment/alipay/notify", "/payment/wechat/notify").permitAll()
+                .requestMatchers("/payment/alipay/return").permitAll() // 支付宝同步回调通常也需放行
+                .requestMatchers("/payment/wallet/manual-complete").permitAll() // 允许访问手动完成充值接口（仅用于测试）
+                .requestMatchers("/payment/wallet/query-recharge").permitAll() // 允许访问查询充值记录接口（仅用于测试）
+                .requestMatchers("/payment/wallet/query-account").permitAll() // 允许访问查询账户接口（仅用于测试）
+                .requestMatchers("/payment/wallet/check-status").permitAll() // 允许访问检查状态接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/manual-complete").permitAll() // 允许访问手动完成充值接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/query-recharge").permitAll() // 允许访问查询充值记录接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/query-account").permitAll() // 允许访问查询账户接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/check-status").permitAll() // 允许访问检查状态接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/create-test-recharge").permitAll() // 允许访问创建测试充值记录接口（仅用于测试）
+                .requestMatchers("/api/payment/wallet/**").permitAll() // 允许访问钱包支付相关接口
+                .requestMatchers("/api/payment/alipay/refund/notify").permitAll() // 支付宝退款异步通知
+                // 允许访问静态资源
+                .requestMatchers("/upload/**", "/static/**").permitAll()
+                // 允许访问公开可用的优惠券列表
+                .requestMatchers("/coupons/available").permitAll()
+                // 允许访问所有退款相关接口，确保格式正确，移除前导斜杠
+                .requestMatchers("refund/**").permitAll()
+                // 临时允许访问管理员退款相关接口，用于调试，移除前导斜杠
+                .requestMatchers("admin/refund/**").permitAll() // 使用通配符匹配所有admin/refund路径
+                // 管理员接口需要admin权限（排除已经允许的登录接口和上面配置的路径）
+                .requestMatchers(request -> request.getRequestURI().startsWith("/api/admin/") &&
+                        !request.getRequestURI().equals("/api/admin/login") &&
+                        !request.getRequestURI().startsWith("/api/admin/refund/"))
+                .hasAuthority("admin")
+                // 钱包相关接口需要登录（明确配置）
+                .requestMatchers("/user/wallet/**").authenticated()
+                // 用户相关接口需要登录
+                .requestMatchers("/user/**").authenticated()
+                // 订单相关接口需要登录
+                .requestMatchers("/order/**").authenticated()
+                .requestMatchers("/points/**").authenticated()
+                .requestMatchers("/coupons/{couponId}/receive").authenticated()
+                // 其他所有请求都需要认证
+                .anyRequest().authenticated());
 
         // 启用CORS
         http.cors(cors -> cors.configure(http));

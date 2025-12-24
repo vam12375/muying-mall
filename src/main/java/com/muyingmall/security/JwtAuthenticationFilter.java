@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,6 +24,7 @@ import java.util.Map;
 /**
  * JWT认证过滤器
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 @Order(1)
@@ -54,9 +56,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             userId = claims.get("userId", Integer.class);
-            System.out.println("JwtAuthenticationFilter: 从token中提取到userId: " + userId);
+            log.debug("JwtAuthenticationFilter: 从token中提取到userId: " + userId);
         } catch (Exception e) {
-            System.out.println("JwtAuthenticationFilter: 无法从token提取userId: " + e.getMessage());
+            log.debug("JwtAuthenticationFilter: 无法从token提取userId: " + e.getMessage());
         }
 
         if (username != null && role != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -72,8 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             authentication.setDetails(details);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            System.out.println("JwtAuthenticationFilter: 已设置认证信息，username=" + username +
+            log.debug("JwtAuthenticationFilter: 已设置认证信息，username=" + username +
                     ", role=" + role + ", userId=" + userId);
         }
 
