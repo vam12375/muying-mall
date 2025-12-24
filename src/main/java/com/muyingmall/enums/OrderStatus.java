@@ -11,6 +11,11 @@ import lombok.Getter;
 public enum OrderStatus {
 
     /**
+     * 待确认（TCC事务Try阶段，资源已预留）
+     */
+    PENDING_CONFIRMATION("pending_confirmation", "待确认"),
+
+    /**
      * 待支付
      */
     PENDING_PAYMENT("pending_payment", "待支付"),
@@ -85,6 +90,9 @@ public enum OrderStatus {
      */
     public boolean canTransitionTo(OrderStatus target) {
         switch (this) {
+            case PENDING_CONFIRMATION:
+                // TCC待确认状态可转为待支付（Confirm）或取消（Cancel）
+                return target == PENDING_PAYMENT || target == CANCELLED;
             case PENDING_PAYMENT:
                 return target == PENDING_SHIPMENT || target == CANCELLED;
             case PENDING_SHIPMENT:

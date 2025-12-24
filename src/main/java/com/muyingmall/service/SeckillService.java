@@ -44,4 +44,11 @@ public interface SeckillService {
      * @param skuId SKU ID
      */
     void syncStockToRedis(Long skuId);
+    
+    /**
+     * 同步Redis库存到数据库
+     * 
+     * @return 同步的商品数量
+     */
+    int syncRedisStockToDatabase();
 }

@@ -107,8 +107,11 @@ public class MessageProducerService {
             return;
         }
 
-        log.debug("开始发送订单消息: orderId={}, eventType={}, userId={}", 
+        log.info("=== MessageProducerService.sendOrderMessage 被调用 ===");
+        log.info("订单消息: orderId={}, eventType={}, userId={}", 
                 message.getOrderId(), message.getEventType(), message.getUserId());
+        log.info("RabbitMQ配置: enabled={}, fallbackToSync={}", 
+                rabbitMQProperties.isEnabled(), rabbitMQProperties.isFallbackToSync());
 
         boolean rabbitmqSuccess = false;
         boolean shouldUseRabbitMQ = isRabbitMQAvailable();
@@ -197,11 +200,14 @@ public class MessageProducerService {
         Exception lastException = null;
         int maxRetryCount = rabbitMQProperties.getErrorHandling().getMaxRetryAttempts();
 
+        log.info("=== 准备发送消息到RabbitMQ ===");
+        log.info("最大重试次数: {}", maxRetryCount);
+
         while (retryCount < maxRetryCount) {
             try {
                 String routingKey = generateOrderRoutingKey(message);
                 
-                log.debug("发送订单消息到RabbitMQ: exchange={}, routingKey={}, orderId={}", 
+                log.info("🚀 发送订单消息到RabbitMQ: exchange={}, routingKey={}, orderId={}", 
                         RabbitMQConstants.ORDER_EXCHANGE, routingKey, message.getOrderId());
 
                 rabbitTemplate.convertAndSend(
@@ -210,17 +216,16 @@ public class MessageProducerService {
                         message
                 );
 
-
-
-                log.debug("订单消息RabbitMQ发送成功: orderId={}, routingKey={}", 
+                log.info("✅ 订单消息RabbitMQ发送成功: orderId={}, routingKey={}", 
                         message.getOrderId(), routingKey);
                 return true;
 
             } catch (AmqpException e) {
                 lastException = e;
                 retryCount++;
-                log.warn("订单消息RabbitMQ发送失败，第{}次重试: orderId={}, error={}", 
-                        retryCount, message.getOrderId(), e.getMessage());
+                // 打印完整的异常堆栈信息以便定位问题
+                log.error("订单消息RabbitMQ发送失败，第{}次重试: orderId={}, error={}", 
+                        retryCount, message.getOrderId(), e.getMessage(), e);
 
                 if (retryCount < maxRetryCount) {
                     try {
@@ -402,6 +407,8 @@ public class MessageProducerService {
         String eventType = message.getEventType();
         
         switch (eventType) {
+            case "REQUEST":
+                return RabbitMQConstants.PAYMENT_REQUEST_KEY;
             case "SUCCESS":
                 return RabbitMQConstants.PAYMENT_SUCCESS_KEY;
             case "FAILED":
@@ -506,8 +513,50 @@ public class MessageProducerService {
     }
 
     /**
+     * 发送订单超时延迟消息
+     * 消息将在延迟队列中等待30分钟后被转发到超时处理队列
+     * 实现论文中描述的"TTL + DLX死信队列"订单超时取消机制
+     *
+     * @param orderId 订单ID
+     * @param orderNo 订单号
+     */
+    public void sendOrderTimeoutDelayMessage(Integer orderId, String orderNo) {
+        if (orderId == null || orderNo == null) {
+            log.warn("订单超时延迟消息参数无效，跳过发送: orderId={}, orderNo={}", orderId, orderNo);
+            return;
+        }
+
+        if (!isRabbitMQAvailable()) {
+            log.debug("RabbitMQ不可用，跳过发送订单超时延迟消息: orderId={}", orderId);
+            return;
+        }
+
+        try {
+            // 构建延迟消息内容
+            java.util.Map<String, Object> message = new java.util.HashMap<>();
+            message.put("orderId", orderId);
+            message.put("orderNo", orderNo);
+            message.put("createTime", LocalDateTime.now().toString());
+
+            // 发送到延迟队列（消息将在队列中等待30分钟TTL后转发到死信队列）
+            rabbitTemplate.convertAndSend(
+                    "order.delay.exchange",
+                    "order.delay",
+                    message
+            );
+
+            log.info("订单超时延迟消息发送成功: orderId={}, orderNo={}, TTL=30分钟", orderId, orderNo);
+
+        } catch (Exception e) {
+            // 延迟消息发送失败不影响主流程，系统仍有定时任务兜底
+            log.error("订单超时延迟消息发送失败: orderId={}, orderNo={}, error={}",
+                    orderId, orderNo, e.getMessage());
+        }
+    }
+
+    /**
      * 获取服务状态信息
-     * 
+     *
      * @return 服务状态
      */
     public java.util.Map<String, Object> getServiceStatus() {

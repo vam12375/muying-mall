@@ -22,6 +22,24 @@ public class OrderCreateDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * 用户ID（TCC事务使用）
+     */
+    @Schema(description = "用户ID", hidden = true)
+    private Integer userId;
+
+    /**
+     * TCC事务ID（内部使用）
+     */
+    @Schema(description = "TCC事务ID", hidden = true)
+    private String tccTransactionId;
+
+    /**
+     * 预创建的订单ID（TCC事务使用）
+     */
+    @Schema(description = "预创建的订单ID", hidden = true)
+    private Integer preOrderId;
+
+    /**
      * 收货地址ID
      */
     @Schema(description = "收货地址ID", example = "1", required = true)

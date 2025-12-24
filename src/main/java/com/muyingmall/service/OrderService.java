@@ -191,4 +191,12 @@ public interface OrderService extends IService<Order> {
      * @return 是否成功
      */
     boolean updateOrderCommentStatus(Integer orderId, Integer isCommented);
+
+    /**
+     * 清除用户订单列表缓存
+     * 用于订单状态变更后，确保用户能看到最新的订单数据
+     * 
+     * @param userId 用户ID
+     */
+    void clearUserOrderListCache(Integer userId);
 }
