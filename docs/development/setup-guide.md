@@ -188,9 +188,9 @@ maxmemory-policy allkeys-lru
 #### 安装Elasticsearch 8.11
 ```bash
 # 下载并安装Elasticsearch
-wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.11.0-linux-x86_64.tar.gz
-tar -xzf elasticsearch-8.11.0-linux-x86_64.tar.gz
-sudo mv elasticsearch-8.11.0 /opt/elasticsearch
+wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-9.2.1-linux-x86_64.tar.gz
+tar -xzf elasticsearch-9.2.1-linux-x86_64.tar.gz
+sudo mv elasticsearch-9.2.1 /opt/elasticsearch
 
 # 创建elasticsearch用户
 sudo useradd elasticsearch

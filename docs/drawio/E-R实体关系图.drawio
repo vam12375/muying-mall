@@ -1,0 +1,542 @@
+<mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1600" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    
+    <!-- 标题 -->
+    <mxCell id="title" value="母婴商城 E-R 实体关系图" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="700" y="20" width="400" height="40" as="geometry" />
+    </mxCell>
+    
+    <!-- User 用户表 -->
+    <mxCell id="user-entity" value="User (用户)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="40" y="100" width="200" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="user-pk" value="🔑 user_id : INT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-entity">
+      <mxGeometry y="26" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="user-f1" value="username : VARCHAR(50)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-entity">
+      <mxGeometry y="48" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="user-f2" value="password : VARCHAR(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-entity">
+      <mxGeometry y="70" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="user-f3" value="nickname : VARCHAR(50)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-entity">
+      <mxGeometry y="92" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="user-f4" value="phone : VARCHAR(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-entity">
+      <mxGeometry y="114" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="user-f5" value="email : VARCHAR(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-entity">
+      <mxGeometry y="136" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="user-f6" value="avatar : VARCHAR(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-entity">
+      <mxGeometry y="158" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="user-f7" value="status : TINYINT (0/1)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-entity">
+      <mxGeometry y="180" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="user-f8" value="role : VARCHAR(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-entity">
+      <mxGeometry y="202" width="200" height="18" as="geometry" />
+    </mxCell>
+    
+    <!-- UserAccount 用户账户表 -->
+    <mxCell id="account-entity" value="UserAccount (用户账户)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="40" y="360" width="200" height="130" as="geometry" />
+    </mxCell>
+    <mxCell id="account-pk" value="🔑 account_id : INT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="account-entity">
+      <mxGeometry y="26" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="account-fk" value="🔗 user_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="account-entity">
+      <mxGeometry y="48" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="account-f1" value="balance : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="account-entity">
+      <mxGeometry y="70" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="account-f2" value="status : TINYINT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="account-entity">
+      <mxGeometry y="92" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="account-f3" value="create_time : DATETIME" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="account-entity">
+      <mxGeometry y="114" width="200" height="16" as="geometry" />
+    </mxCell>
+    
+    <!-- UserAddress 收货地址表 -->
+    <mxCell id="address-entity" value="UserAddress (收货地址)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="40" y="520" width="200" height="180" as="geometry" />
+    </mxCell>
+    <mxCell id="address-pk" value="🔑 address_id : INT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="address-entity">
+      <mxGeometry y="26" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="address-fk" value="🔗 user_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="address-entity">
+      <mxGeometry y="48" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="address-f1" value="receiver_name : VARCHAR(50)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="address-entity">
+      <mxGeometry y="70" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="address-f2" value="receiver_phone : VARCHAR(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="address-entity">
+      <mxGeometry y="92" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="address-f3" value="province/city/district : VARCHAR" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="address-entity">
+      <mxGeometry y="114" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="address-f4" value="detail_address : VARCHAR(200)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="address-entity">
+      <mxGeometry y="136" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="address-f5" value="is_default : TINYINT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="address-entity">
+      <mxGeometry y="158" width="200" height="22" as="geometry" />
+    </mxCell>
+    
+    <!-- Product 商品表 -->
+    <mxCell id="product-entity" value="Product (商品)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="320" y="100" width="220" height="290" as="geometry" />
+    </mxCell>
+    <mxCell id="product-pk" value="🔑 product_id : INT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="26" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-fk1" value="🔗 category_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="48" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-fk2" value="🔗 brand_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="70" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-f1" value="product_name : VARCHAR(200)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="92" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-f2" value="product_img : VARCHAR(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="114" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-f3" value="price_new : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="136" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-f4" value="price_old : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="158" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-f5" value="stock : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="180" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-f6" value="sales : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="202" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-f7" value="product_status : VARCHAR(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="224" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-f8" value="has_sku : TINYINT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="246" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="product-f9" value="is_hot/is_new/is_recommend : TINYINT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="product-entity">
+      <mxGeometry y="268" width="220" height="22" as="geometry" />
+    </mxCell>
+    
+    <!-- Category 分类表 -->
+    <mxCell id="category-entity" value="Category (分类)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="320" y="420" width="200" height="130" as="geometry" />
+    </mxCell>
+    <mxCell id="category-pk" value="🔑 category_id : INT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="category-entity">
+      <mxGeometry y="26" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="category-f1" value="category_name : VARCHAR(50)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="category-entity">
+      <mxGeometry y="48" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="category-f2" value="parent_id : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="category-entity">
+      <mxGeometry y="70" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="category-f3" value="level : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="category-entity">
+      <mxGeometry y="92" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="category-f4" value="sort_order : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="category-entity">
+      <mxGeometry y="114" width="200" height="16" as="geometry" />
+    </mxCell>
+    
+    <!-- Brand 品牌表 -->
+    <mxCell id="brand-entity" value="Brand (品牌)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="320" y="580" width="200" height="110" as="geometry" />
+    </mxCell>
+    <mxCell id="brand-pk" value="🔑 brand_id : INT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="brand-entity">
+      <mxGeometry y="26" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="brand-f1" value="brand_name : VARCHAR(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="brand-entity">
+      <mxGeometry y="48" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="brand-f2" value="brand_logo : VARCHAR(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="brand-entity">
+      <mxGeometry y="70" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="brand-f3" value="description : TEXT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="brand-entity">
+      <mxGeometry y="92" width="200" height="18" as="geometry" />
+    </mxCell>
+    
+    <!-- ProductSku SKU表 -->
+    <mxCell id="sku-entity" value="ProductSku (商品SKU)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="600" y="100" width="200" height="160" as="geometry" />
+    </mxCell>
+    <mxCell id="sku-pk" value="🔑 sku_id : BIGINT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="sku-entity">
+      <mxGeometry y="26" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="sku-fk" value="🔗 product_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="sku-entity">
+      <mxGeometry y="48" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="sku-f1" value="sku_name : VARCHAR(200)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="sku-entity">
+      <mxGeometry y="70" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="sku-f2" value="specs_json : JSON" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="sku-entity">
+      <mxGeometry y="92" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="sku-f3" value="price : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="sku-entity">
+      <mxGeometry y="114" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="sku-f4" value="stock : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="sku-entity">
+      <mxGeometry y="136" width="200" height="24" as="geometry" />
+    </mxCell>
+    
+    <!-- Order 订单表 -->
+    <mxCell id="order-entity" value="Order (订单)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="880" y="100" width="220" height="310" as="geometry" />
+    </mxCell>
+    <mxCell id="order-pk" value="🔑 order_id : INT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="26" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-f0" value="order_no : VARCHAR(50)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="48" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-fk1" value="🔗 user_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="70" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-fk2" value="🔗 address_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="92" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-fk3" value="🔗 coupon_id : BIGINT (FK, nullable)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="114" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-f1" value="total_amount : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="136" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-f2" value="actual_amount : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="158" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-f3" value="status : ENUM" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="180" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-f4" value="payment_method : VARCHAR(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="202" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-f5" value="shipping_fee : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="224" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-f6" value="points_used : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="246" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-f7" value="tracking_no : VARCHAR(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="268" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="order-f8" value="is_deleted : TINYINT (@TableLogic)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-entity">
+      <mxGeometry y="290" width="220" height="20" as="geometry" />
+    </mxCell>
+    
+    <!-- OrderProduct 订单商品表 -->
+    <mxCell id="order-product-entity" value="OrderProduct (订单商品)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="880" y="440" width="220" height="160" as="geometry" />
+    </mxCell>
+    <mxCell id="op-pk" value="🔑 id : INT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-product-entity">
+      <mxGeometry y="26" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="op-fk1" value="🔗 order_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-product-entity">
+      <mxGeometry y="48" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="op-fk2" value="🔗 product_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-product-entity">
+      <mxGeometry y="70" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="op-fk3" value="🔗 sku_id : BIGINT (FK, nullable)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-product-entity">
+      <mxGeometry y="92" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="op-f1" value="quantity : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-product-entity">
+      <mxGeometry y="114" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="op-f2" value="price : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="order-product-entity">
+      <mxGeometry y="136" width="220" height="24" as="geometry" />
+    </mxCell>
+    
+    <!-- Payment 支付表 -->
+    <mxCell id="payment-entity" value="Payment (支付)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="1160" y="100" width="220" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="payment-pk" value="🔑 id : BIGINT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="payment-entity">
+      <mxGeometry y="26" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="payment-f0" value="payment_no : VARCHAR(50)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="payment-entity">
+      <mxGeometry y="48" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="payment-fk1" value="🔗 order_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="payment-entity">
+      <mxGeometry y="70" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="payment-fk2" value="🔗 user_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="payment-entity">
+      <mxGeometry y="92" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="payment-f1" value="amount : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="payment-entity">
+      <mxGeometry y="114" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="payment-f2" value="payment_method : VARCHAR(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="payment-entity">
+      <mxGeometry y="136" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="payment-f3" value="status : INT (0-4)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="payment-entity">
+      <mxGeometry y="158" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="payment-f4" value="transaction_id : VARCHAR(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="payment-entity">
+      <mxGeometry y="180" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="payment-f5" value="pay_time : DATETIME" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="payment-entity">
+      <mxGeometry y="202" width="220" height="18" as="geometry" />
+    </mxCell>
+    
+    <!-- Cart 购物车表 -->
+    <mxCell id="cart-entity" value="Cart (购物车)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="600" y="300" width="200" height="180" as="geometry" />
+    </mxCell>
+    <mxCell id="cart-pk" value="🔑 cart_id : INT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="cart-entity">
+      <mxGeometry y="26" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="cart-fk1" value="🔗 user_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="cart-entity">
+      <mxGeometry y="48" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="cart-fk2" value="🔗 product_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="cart-entity">
+      <mxGeometry y="70" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="cart-fk3" value="🔗 sku_id : BIGINT (FK, nullable)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="cart-entity">
+      <mxGeometry y="92" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="cart-f1" value="quantity : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="cart-entity">
+      <mxGeometry y="114" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="cart-f2" value="selected : TINYINT (0/1)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="cart-entity">
+      <mxGeometry y="136" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="cart-f3" value="price_snapshot : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="cart-entity">
+      <mxGeometry y="158" width="200" height="22" as="geometry" />
+    </mxCell>
+    
+    <!-- Coupon 优惠券表 -->
+    <mxCell id="coupon-entity" value="Coupon (优惠券)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="1160" y="360" width="200" height="200" as="geometry" />
+    </mxCell>
+    <mxCell id="coupon-pk" value="🔑 id : BIGINT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="coupon-entity">
+      <mxGeometry y="26" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="coupon-f1" value="name : VARCHAR(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="coupon-entity">
+      <mxGeometry y="48" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="coupon-f2" value="type : VARCHAR(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="coupon-entity">
+      <mxGeometry y="70" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="coupon-f3" value="value : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="coupon-entity">
+      <mxGeometry y="92" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="coupon-f4" value="min_spend : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="coupon-entity">
+      <mxGeometry y="114" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="coupon-f5" value="total_quantity : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="coupon-entity">
+      <mxGeometry y="136" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="coupon-f6" value="start_time : DATETIME" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="coupon-entity">
+      <mxGeometry y="158" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="coupon-f7" value="end_time : DATETIME" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="coupon-entity">
+      <mxGeometry y="180" width="200" height="20" as="geometry" />
+    </mxCell>
+    
+    <!-- UserCoupon 用户优惠券表 -->
+    <mxCell id="user-coupon-entity" value="UserCoupon (用户优惠券)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="1160" y="590" width="200" height="130" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-pk" value="🔑 id : BIGINT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-coupon-entity">
+      <mxGeometry y="26" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-fk1" value="🔗 user_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-coupon-entity">
+      <mxGeometry y="48" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-fk2" value="🔗 coupon_id : BIGINT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-coupon-entity">
+      <mxGeometry y="70" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-f1" value="status : VARCHAR(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-coupon-entity">
+      <mxGeometry y="92" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-f2" value="used_time : DATETIME" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="user-coupon-entity">
+      <mxGeometry y="114" width="200" height="16" as="geometry" />
+    </mxCell>
+    
+    <!-- PointsHistory 积分历史表 -->
+    <mxCell id="points-entity" value="PointsHistory (积分历史)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="600" y="520" width="200" height="160" as="geometry" />
+    </mxCell>
+    <mxCell id="points-pk" value="🔑 id : BIGINT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="points-entity">
+      <mxGeometry y="26" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="points-fk" value="🔗 user_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="points-entity">
+      <mxGeometry y="48" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="points-f1" value="points : INT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="points-entity">
+      <mxGeometry y="70" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="points-f2" value="type : VARCHAR(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="points-entity">
+      <mxGeometry y="92" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="points-f3" value="source : VARCHAR(50)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="points-entity">
+      <mxGeometry y="114" width="200" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="points-f4" value="description : VARCHAR(200)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="points-entity">
+      <mxGeometry y="136" width="200" height="24" as="geometry" />
+    </mxCell>
+    
+    <!-- Refund 退款表 -->
+    <mxCell id="refund-entity" value="Refund (退款)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="880" y="630" width="220" height="180" as="geometry" />
+    </mxCell>
+    <mxCell id="refund-pk" value="🔑 id : BIGINT (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="refund-entity">
+      <mxGeometry y="26" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="refund-fk1" value="🔗 order_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="refund-entity">
+      <mxGeometry y="48" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="refund-fk2" value="🔗 user_id : INT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="refund-entity">
+      <mxGeometry y="70" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="refund-fk3" value="🔗 payment_id : BIGINT (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="refund-entity">
+      <mxGeometry y="92" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="refund-f1" value="amount : DECIMAL(10,2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="refund-entity">
+      <mxGeometry y="114" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="refund-f2" value="status : ENUM" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="refund-entity">
+      <mxGeometry y="136" width="220" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="refund-f3" value="refund_reason : VARCHAR(500)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="refund-entity">
+      <mxGeometry y="158" width="220" height="22" as="geometry" />
+    </mxCell>
+    
+    <!-- 关系线 User -> UserAccount (1:1) -->
+    <mxCell id="rel-user-account" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#6c8ebf;endArrow=ERone;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="user-entity" target="account-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-account-label" value="1:1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-user-account">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 关系线 User -> UserAddress (1:N) -->
+    <mxCell id="rel-user-address" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#6c8ebf;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="account-entity" target="address-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-address-label" value="1:N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-user-address">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 关系线 Product -> Category (N:1) -->
+    <mxCell id="rel-product-category" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#82b366;endArrow=ERone;endFill=0;startArrow=ERmany;startFill=0;" edge="1" parent="1" source="product-entity" target="category-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-product-category-label" value="N:1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-product-category">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 关系线 Product -> Brand (N:1) -->
+    <mxCell id="rel-product-brand" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#82b366;endArrow=ERone;endFill=0;startArrow=ERmany;startFill=0;entryX=0.5;entryY=0;" edge="1" parent="1" source="category-entity" target="brand-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- 关系线 Product -> ProductSku (1:N) -->
+    <mxCell id="rel-product-sku" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#82b366;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="product-entity" target="sku-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-product-sku-label" value="1:N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-product-sku">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 关系线 User -> Order (1:N) -->
+    <mxCell id="rel-user-order" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d79b00;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.5;entryX=0;entryY=0.3;" edge="1" parent="1" source="user-entity" target="order-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-order-label" value="1:N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-user-order">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 关系线 Order -> OrderProduct (1:N) -->
+    <mxCell id="rel-order-op" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d79b00;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="order-entity" target="order-product-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-order-op-label" value="1:N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-order-op">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 关系线 Order -> Payment (1:1) -->
+    <mxCell id="rel-order-payment" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#b85450;endArrow=ERone;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="order-entity" target="payment-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-order-payment-label" value="1:1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-order-payment">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 关系线 User -> Cart (1:N) -->
+    <mxCell id="rel-user-cart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d6b656;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.7;entryX=0;entryY=0.3;" edge="1" parent="1" source="user-entity" target="cart-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-cart-label" value="1:N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-user-cart">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 关系线 User -> PointsHistory (1:N) -->
+    <mxCell id="rel-user-points" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d6b656;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.9;entryX=0;entryY=0.5;" edge="1" parent="1" source="address-entity" target="points-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-points-label" value="1:N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-user-points">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 关系线 Order -> Refund (1:N) -->
+    <mxCell id="rel-order-refund" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#b85450;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="order-product-entity" target="refund-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-order-refund-label" value="1:N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-order-refund">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 关系线 User -> UserCoupon (1:N) -->
+    <mxCell id="rel-user-uc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#9673a6;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="coupon-entity" target="user-coupon-entity">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-uc-label" value="1:N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" vertex="1" connectable="0" parent="rel-user-uc">
+      <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+    
+    <!-- 图例 -->
+    <mxCell id="legend" value="图例" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="1420" y="100" width="180" height="200" as="geometry" />
+    </mxCell>
+    <mxCell id="legend-1" value="🔑 主键 (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="legend">
+      <mxGeometry y="26" width="180" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="legend-2" value="🔗 外键 (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="legend">
+      <mxGeometry y="48" width="180" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="legend-3" value="━━━ 1:1 一对一关系" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="legend">
+      <mxGeometry y="70" width="180" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="legend-4" value="━━&lt; 1:N 一对多关系" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="legend">
+      <mxGeometry y="92" width="180" height="22" as="geometry" />
+    </mxCell>
+    <mxCell id="legend-color1" value="用户相关实体" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="legend">
+      <mxGeometry x="10" y="120" width="80" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="legend-color2" value="商品相关实体" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="legend">
+      <mxGeometry x="95" y="120" width="80" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="legend-color3" value="订单相关实体" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="legend">
+      <mxGeometry x="10" y="150" width="80" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="legend-color4" value="支付/退款实体" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="legend">
+      <mxGeometry x="95" y="150" width="80" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="legend-color5" value="优惠券实体" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="legend">
+      <mxGeometry x="10" y="175" width="80" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="legend-color6" value="购物车/积分" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="legend">
+      <mxGeometry x="95" y="175" width="80" height="25" as="geometry" />
+    </mxCell>
+    
+  </root>
+</mxGraphModel>

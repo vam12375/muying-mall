@@ -1,0 +1,267 @@
+<mxfile host="embed.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" version="29.2.9">
+  <diagram id="0v6QVKQ8NCUTUrZ0xU65" name="第 1 页">
+    <mxGraphModel dx="1052" dy="698" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#333333;" value="母婴商城系统部署图 (Deployment Diagram)" vertex="1">
+          <mxGeometry height="40" width="400" x="550" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="node-client" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=10;" value="&lt;&lt;device&gt;&gt;&#xa;客户端设备" vertex="1">
+          <mxGeometry height="200" width="200" x="40" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="client-browser" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="Web浏览器&#xa;(Chrome/Firefox/Safari)" vertex="1">
+          <mxGeometry height="40" width="160" x="60" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="client-mobile" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="移动App&#xa;(iOS/Android)" vertex="1">
+          <mxGeometry height="40" width="160" x="60" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="node-nginx" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=10;" value="&lt;&lt;execution environment&gt;&gt;&#xa;Nginx 负载均衡器" vertex="1">
+          <mxGeometry height="200" width="200" x="320" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="nginx-proxy" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;" value="反向代理" vertex="1">
+          <mxGeometry height="35" width="80" x="340" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="nginx-lb" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;" value="负载均衡" vertex="1">
+          <mxGeometry height="35" width="80" x="430" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="nginx-static" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;" value="静态资源" vertex="1">
+          <mxGeometry height="35" width="80" x="340" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="nginx-ssl" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;" value="SSL终结" vertex="1">
+          <mxGeometry height="35" width="80" x="430" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="node-app-cluster" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=10;" value="&lt;&lt;execution environment&gt;&gt;&#xa;应用服务器集群" vertex="1">
+          <mxGeometry height="280" width="380" x="600" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="app-server-1" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;verticalAlign=top;spacingTop=5;" value="&lt;&lt;node&gt;&gt;&#xa;应用服务器 #1" vertex="1">
+          <mxGeometry height="180" width="160" x="620" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="app1-jdk" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" value="JDK 21" vertex="1">
+          <mxGeometry height="25" width="55" x="635" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="app1-tomcat" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" value="Tomcat" vertex="1">
+          <mxGeometry height="25" width="55" x="700" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="app1-spring" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;fontStyle=1;" value="Spring Boot 3.2.0&#xa;母婴商城应用" vertex="1">
+          <mxGeometry height="45" width="130" x="635" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="app1-es-client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=8;" value="ES Client" vertex="1">
+          <mxGeometry height="25" width="60" x="635" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="app1-redis-client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=8;" value="Redis Client" vertex="1">
+          <mxGeometry height="25" width="60" x="705" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="app-server-2" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;verticalAlign=top;spacingTop=5;" value="&lt;&lt;node&gt;&gt;&#xa;应用服务器 #2" vertex="1">
+          <mxGeometry height="180" width="160" x="800" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="app2-jdk" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" value="JDK 21" vertex="1">
+          <mxGeometry height="25" width="55" x="815" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="app2-tomcat" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" value="Tomcat" vertex="1">
+          <mxGeometry height="25" width="55" x="880" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="app2-spring" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;fontStyle=1;" value="Spring Boot 3.2.0&#xa;母婴商城应用" vertex="1">
+          <mxGeometry height="45" width="130" x="815" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="app2-es-client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=8;" value="ES Client" vertex="1">
+          <mxGeometry height="25" width="60" x="815" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="app2-redis-client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=8;" value="Redis Client" vertex="1">
+          <mxGeometry height="25" width="60" x="885" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="node-db" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=10;" value="&lt;&lt;device&gt;&gt;&#xa;数据库服务器" vertex="1">
+          <mxGeometry height="200" width="200" x="40" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="mysql-icon" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="MySQL 8.0&#xa;关系数据库" vertex="1">
+          <mxGeometry height="70" width="80" x="70" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="mysql-tables" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontStyle=2;" value="68+表&#xa;用户/订单/商品..." vertex="1">
+          <mxGeometry height="30" width="110" x="55" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="node-cache" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=10;" value="&lt;&lt;device&gt;&gt;&#xa;缓存服务器" vertex="1">
+          <mxGeometry height="200" width="200" x="280" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="redis-icon" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" value="Redis&#xa;缓存/Session" vertex="1">
+          <mxGeometry height="70" width="80" x="350" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="redis-info" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontStyle=2;" value="Lettuce客户端&#xa;100连接池" vertex="1">
+          <mxGeometry height="30" width="110" x="335" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="node-search" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=10;" value="&lt;&lt;device&gt;&gt;&#xa;搜索服务器" vertex="1">
+          <mxGeometry height="200" width="200" x="520" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="es-icon" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" value="Elasticsearch 9.x&#xa;全文搜索" vertex="1">
+          <mxGeometry height="70" width="90" x="590" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="es-info" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontStyle=2;" value="商品索引 3分片&#xa;IK中文分词" vertex="1">
+          <mxGeometry height="30" width="120" x="580" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="node-mq" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=10;" value="&lt;&lt;device&gt;&gt;&#xa;消息队列服务器" vertex="1">
+          <mxGeometry height="200" width="200" x="760" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="rabbit-icon" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="RabbitMQ&#xa;消息队列" vertex="1">
+          <mxGeometry height="70" width="80" x="830" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="rabbit-info" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontStyle=2;" value="订单/支付消息&#xa;8+队列" vertex="1">
+          <mxGeometry height="30" width="110" x="815" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="node-external" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=10;" value="&lt;&lt;external system&gt;&gt;&#xa;第三方服务" vertex="1">
+          <mxGeometry height="260" width="200" x="1060" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="alipay-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="支付宝&#xa;Alipay SDK" vertex="1">
+          <mxGeometry height="50" width="80" x="1085" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="wechat-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="微信支付&#xa;WeChat SDK" vertex="1">
+          <mxGeometry height="50" width="80" x="1175" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="sms-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="短信服务&#xa;SMS API" vertex="1">
+          <mxGeometry height="50" width="80" x="1085" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="logistics-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" value="物流查询&#xa;快递API" vertex="1">
+          <mxGeometry height="50" width="80" x="1175" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="oss-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" value="对象存储&#xa;(图片/文件)" vertex="1">
+          <mxGeometry height="50" width="80" x="1130" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="node-storage" parent="1" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=10;" value="&lt;&lt;device&gt;&gt;&#xa;文件存储服务器" vertex="1">
+          <mxGeometry height="150" width="180" x="1000" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-icon" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="NFS/OSS&#xa;商品图片&#xa;用户头像" vertex="1">
+          <mxGeometry height="70" width="90" x="1060" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="conn-client-nginx" edge="1" parent="1" source="node-client" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#333333;endArrow=block;endFill=1;" target="node-nginx">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label-http" connectable="0" parent="conn-client-nginx" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontStyle=1;" value="HTTPS" vertex="1">
+          <mxGeometry relative="1" x="-0.2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-nginx-app" edge="1" parent="1" source="node-nginx" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#333333;endArrow=block;endFill=1;" target="node-app-cluster">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label-http2" connectable="0" parent="conn-nginx-app" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontStyle=1;" value="HTTP/80" vertex="1">
+          <mxGeometry relative="1" x="-0.2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-app-mysql" edge="1" parent="1" source="node-app-cluster" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#6c8ebf;endArrow=block;endFill=1;exitX=0;exitY=1;exitDx=60;exitDy=0;exitPerimeter=0;" target="node-db">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="380" />
+              <mxPoint x="200" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-jdbc" connectable="0" parent="conn-app-mysql" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontStyle=1;" value="JDBC:3306" vertex="1">
+          <mxGeometry relative="1" x="-0.2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-app-redis" edge="1" parent="1" source="node-app-cluster" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#b85450;endArrow=block;endFill=1;exitX=0;exitY=1;exitDx=130;exitDy=0;exitPerimeter=0;" target="node-cache">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="730" y="380" />
+              <mxPoint x="380" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-redis-port" connectable="0" parent="conn-app-redis" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontStyle=1;" value="Redis:6379" vertex="1">
+          <mxGeometry relative="1" x="-0.2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-app-es" edge="1" parent="1" source="node-app-cluster" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#9673a6;endArrow=block;endFill=1;exitX=0;exitY=1;exitDx=200;exitDy=0;exitPerimeter=0;" target="node-search">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="380" />
+              <mxPoint x="620" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-es-port" connectable="0" parent="conn-app-es" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontStyle=1;" value="ES:9200" vertex="1">
+          <mxGeometry relative="1" x="-0.2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-app-mq" edge="1" parent="1" source="node-app-cluster" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d6b656;endArrow=block;endFill=1;exitX=0;exitY=1;exitDx=270;exitDy=0;exitPerimeter=0;" target="node-mq">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="870" y="380" />
+              <mxPoint x="860" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-amqp" connectable="0" parent="conn-app-mq" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontStyle=1;" value="AMQP:5672" vertex="1">
+          <mxGeometry relative="1" x="-0.2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-app-external" edge="1" parent="1" source="node-app-cluster" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#666666;endArrow=block;endFill=1;dashed=1;" target="node-external">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label-api" connectable="0" parent="conn-app-external" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontStyle=1;" value="REST API" vertex="1">
+          <mxGeometry relative="1" x="-0.2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-app-storage" edge="1" parent="1" source="node-app-cluster" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#82b366;endArrow=block;endFill=1;exitX=1;exitY=1;exitDx=0;exitDy=-120;exitPerimeter=0;" target="node-storage">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1000" y="240" />
+              <mxPoint x="1000" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-nfs" connectable="0" parent="conn-app-storage" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontStyle=1;" value="NFS/HTTP" vertex="1">
+          <mxGeometry relative="1" x="-0.2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="图例" vertex="1">
+          <mxGeometry height="190" width="200" x="1200" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-1" parent="legend" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" value="客户端/数据库" vertex="1">
+          <mxGeometry height="22" width="100" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-2" parent="legend" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" value="负载均衡/存储" vertex="1">
+          <mxGeometry height="22" width="100" x="100" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-3" parent="legend" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=9;" value="应用集群" vertex="1">
+          <mxGeometry height="22" width="100" y="48" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-4" parent="legend" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;" value="应用服务器" vertex="1">
+          <mxGeometry height="22" width="100" x="100" y="48" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-5" parent="legend" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" value="消息队列" vertex="1">
+          <mxGeometry height="22" width="100" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-6" parent="legend" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" value="搜索服务" vertex="1">
+          <mxGeometry height="22" width="100" x="100" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-7" parent="legend" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=10;fontStyle=1;" value="技术栈:" vertex="1">
+          <mxGeometry height="18" width="200" y="92" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-8" parent="legend" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=9;fontStyle=2;" value="Spring Boot 3.2.0 + Java 21" vertex="1">
+          <mxGeometry height="16" width="200" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-9" parent="legend" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=9;fontStyle=2;" value="MyBatis-Plus 3.5.9" vertex="1">
+          <mxGeometry height="16" width="200" y="126" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-10" parent="legend" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=9;fontStyle=2;" value="Tomcat (800线程, 20000连接)" vertex="1">
+          <mxGeometry height="16" width="200" y="142" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-11" parent="legend" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=9;fontStyle=2;" value="HikariCP (150连接池)" vertex="1">
+          <mxGeometry height="16" width="200" y="158" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-12" parent="legend" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=9;fontStyle=2;" value="Redis Lettuce (100连接)" vertex="1">
+          <mxGeometry height="16" width="200" y="174" as="geometry" />
+        </mxCell>
+        <mxCell id="2" edge="1" parent="1" source="redis-info" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="redis-info">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

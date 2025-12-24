@@ -51,7 +51,7 @@ graph TB
 | Java | 21 | 运行环境 |
 | MySQL | 8.0+ | 主数据库 |
 | Redis | 7.4.0 | 缓存和会话存储 |
-| Elasticsearch | 8.11.0 | 全文搜索引擎 |
+| Elasticsearch | 9.2.1 | 全文搜索引擎 |
 | MyBatis-Plus | 3.5.9 | ORM框架 |
 | Spring Security | 6.x | 安全框架 |
 | JWT | 0.11.5 | 令牌认证 |

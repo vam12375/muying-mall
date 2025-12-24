@@ -1,0 +1,195 @@
+<mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    
+    <!-- 标题 -->
+    <mxCell id="title" value="TCC分布式事务时序图 - 订单创建" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="400" y="20" width="500" height="40" as="geometry"/>
+    </mxCell>
+    
+    <!-- 参与者 -->
+    <mxCell id="client" value="客户端" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;size=40;" vertex="1" parent="1">
+      <mxGeometry x="80" y="80" width="100" height="850" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="orderService" value="OrderTccService&#xa;订单TCC服务" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#d5e8d4;strokeColor=#82b366;size=40;" vertex="1" parent="1">
+      <mxGeometry x="240" y="80" width="120" height="850" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="tccManager" value="TccTransaction&#xa;Manager&#xa;事务管理器" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffe6cc;strokeColor=#d79b00;size=40;" vertex="1" parent="1">
+      <mxGeometry x="420" y="80" width="120" height="850" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="redis" value="Redis&#xa;缓存/锁" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;size=40;" vertex="1" parent="1">
+      <mxGeometry x="600" y="80" width="100" height="850" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="stockService" value="SeckillService&#xa;库存服务" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#e1d5e7;strokeColor=#9673a6;size=40;" vertex="1" parent="1">
+      <mxGeometry x="760" y="80" width="100" height="850" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="orderDb" value="Order DB&#xa;订单数据库" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#f5f5f5;strokeColor=#666666;size=40;" vertex="1" parent="1">
+      <mxGeometry x="920" y="80" width="100" height="850" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="stockDb" value="Product DB&#xa;商品数据库" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#f5f5f5;strokeColor=#666666;size=40;" vertex="1" parent="1">
+      <mxGeometry x="1080" y="80" width="100" height="850" as="geometry"/>
+    </mxCell>
+    
+    <!-- 阶段分隔 -->
+    <mxCell id="phase1" value="Try 阶段 - 资源预留" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=14;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="150" width="180" height="30" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="phase2" value="Confirm 阶段 - 确认提交" style="text;html=1;strokeColor=#6c8ebf;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=14;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="480" width="180" height="30" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="phase3" value="Cancel 阶段 - 回滚（失败时）" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=14;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="720" width="180" height="30" as="geometry"/>
+    </mxCell>
+    
+    <!-- Try阶段消息 -->
+    <mxCell id="m1" value="1. createOrderWithTcc()" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="130" y="190" as="sourcePoint"/>
+        <mxPoint x="300" y="190" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m2" value="2. begin(transactionId)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="220" as="sourcePoint"/>
+        <mxPoint x="480" y="220" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m3" value="3. 保存事务状态(TRYING)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="480" y="250" as="sourcePoint"/>
+        <mxPoint x="650" y="250" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m4" value="4. tryAction() - 获取分布式锁" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="290" as="sourcePoint"/>
+        <mxPoint x="650" y="290" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m5" value="5. preDeductStock() - Redis预扣库存" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="330" as="sourcePoint"/>
+        <mxPoint x="810" y="330" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m6" value="6. DECR seckill:stock:{skuId}" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="810" y="360" as="sourcePoint"/>
+        <mxPoint x="650" y="360" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m7" value="7. INSERT Order(PENDING_CONFIRMATION)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="400" as="sourcePoint"/>
+        <mxPoint x="970" y="400" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m8" value="8. 返回预创建订单" style="html=1;verticalAlign=bottom;endArrow=open;rounded=0;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="970" y="430" as="sourcePoint"/>
+        <mxPoint x="300" y="430" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- Confirm阶段消息 -->
+    <mxCell id="m9" value="9. confirmAction()" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;strokeColor=#0066CC;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="520" as="sourcePoint"/>
+        <mxPoint x="480" y="520" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m10" value="10. 更新事务状态(CONFIRMING)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;dashed=1;strokeColor=#0066CC;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="480" y="550" as="sourcePoint"/>
+        <mxPoint x="650" y="550" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m11" value="11. UPDATE stock = stock - quantity" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;strokeColor=#0066CC;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="590" as="sourcePoint"/>
+        <mxPoint x="1130" y="590" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m12" value="12. UPDATE Order SET status=PENDING_PAYMENT" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;strokeColor=#0066CC;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="630" as="sourcePoint"/>
+        <mxPoint x="970" y="630" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m13" value="13. 事务状态(CONFIRMED)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;dashed=1;strokeColor=#0066CC;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="480" y="660" as="sourcePoint"/>
+        <mxPoint x="650" y="660" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m14" value="14. 订单创建成功" style="html=1;verticalAlign=bottom;endArrow=open;rounded=0;strokeWidth=2;dashed=1;strokeColor=#0066CC;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="690" as="sourcePoint"/>
+        <mxPoint x="130" y="690" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- Cancel阶段消息（虚线表示失败分支） -->
+    <mxCell id="m15" value="cancelAction() [失败时]" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;strokeColor=#CC0000;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="760" as="sourcePoint"/>
+        <mxPoint x="480" y="760" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m16" value="restoreRedisStock() - 恢复库存" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;strokeColor=#CC0000;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="800" as="sourcePoint"/>
+        <mxPoint x="810" y="800" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m17" value="INCR seckill:stock:{skuId}" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;strokeColor=#CC0000;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="810" y="830" as="sourcePoint"/>
+        <mxPoint x="650" y="830" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m18" value="DELETE Order" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;strokeColor=#CC0000;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="860" as="sourcePoint"/>
+        <mxPoint x="970" y="860" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="m19" value="事务状态(CANCELLED)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;strokeWidth=2;strokeColor=#CC0000;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="480" y="890" as="sourcePoint"/>
+        <mxPoint x="650" y="890" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 说明框 -->
+    <mxCell id="note" value="TCC事务特点：&#xa;• Try：预留资源，可回滚&#xa;• Confirm：确认提交，幂等性&#xa;• Cancel：回滚释放，幂等性&#xa;• 分布式锁保证并发安全" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=11;spacingLeft=5;spacingTop=5;" vertex="1" parent="1">
+      <mxGeometry x="1160" y="200" width="160" height="120" as="geometry"/>
+    </mxCell>
+    
+  </root>
+</mxGraphModel>

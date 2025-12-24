@@ -1,0 +1,445 @@
+<mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1400" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    
+    <!-- 标题 -->
+    <mxCell id="title" value="用户下单时序图 (Order Creation Sequence Diagram)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="500" y="20" width="500" height="40" as="geometry" />
+    </mxCell>
+    
+    <!-- 参与者 (Actors/Participants) -->
+    <!-- 用户 -->
+    <mxCell id="actor-user" value="用户&#xa;(Client)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="60" y="80" width="40" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lifeline-user" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="80" y="1300" as="sourcePoint" />
+        <mxPoint x="80" y="140" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- OrderController -->
+    <mxCell id="participant-oc" value="OrderController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="160" y="80" width="120" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lifeline-oc" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="220" y="1300" as="sourcePoint" />
+        <mxPoint x="220" y="120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- OrderService -->
+    <mxCell id="participant-os" value="OrderService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="320" y="80" width="120" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lifeline-os" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="380" y="1300" as="sourcePoint" />
+        <mxPoint x="380" y="120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- CartService -->
+    <mxCell id="participant-cs" value="CartService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="480" y="80" width="100" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lifeline-cs" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="530" y="1300" as="sourcePoint" />
+        <mxPoint x="530" y="120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- ProductService -->
+    <mxCell id="participant-ps" value="ProductService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="620" y="80" width="110" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lifeline-ps" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="675" y="1300" as="sourcePoint" />
+        <mxPoint x="675" y="120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- CouponService -->
+    <mxCell id="participant-coup" value="CouponService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="770" y="80" width="110" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lifeline-coup" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="825" y="1300" as="sourcePoint" />
+        <mxPoint x="825" y="120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- PointsService -->
+    <mxCell id="participant-pts" value="PointsService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="920" y="80" width="100" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lifeline-pts" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="970" y="1300" as="sourcePoint" />
+        <mxPoint x="970" y="120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- PaymentService -->
+    <mxCell id="participant-pay" value="PaymentService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1060" y="80" width="110" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lifeline-pay" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="1115" y="1300" as="sourcePoint" />
+        <mxPoint x="1115" y="120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- MessageProducer -->
+    <mxCell id="participant-mq" value="MessageProducer&#xa;(RabbitMQ)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1210" y="80" width="110" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lifeline-mq" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="1265" y="1300" as="sourcePoint" />
+        <mxPoint x="1265" y="120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- Database -->
+    <mxCell id="participant-db" value="Database&#xa;(MySQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1360" y="70" width="80" height="55" as="geometry" />
+    </mxCell>
+    <mxCell id="lifeline-db" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="1400" y="1300" as="sourcePoint" />
+        <mxPoint x="1400" y="125" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活条 (Activation bars) -->
+    <mxCell id="act-oc-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="215" y="170" width="10" height="1100" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="act-os-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="375" y="200" width="10" height="1020" as="geometry" />
+    </mxCell>
+    
+    <!-- 消息 1: 用户发起创建订单请求 -->
+    <mxCell id="msg1" value="1. createOrder(OrderCreateDTO)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="80" y="170" as="sourcePoint" />
+        <mxPoint x="215" y="170" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息 2: Controller调用Service -->
+    <mxCell id="msg2" value="2. createOrder(userId, addressId, cartIds...)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="225" y="200" as="sourcePoint" />
+        <mxPoint x="375" y="200" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活条 CartService -->
+    <mxCell id="act-cs-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="525" y="250" width="10" height="80" as="geometry" />
+    </mxCell>
+    
+    <!-- 消息 3: 获取购物车商品 -->
+    <mxCell id="msg3" value="3. getCartItems(userId, cartIds)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="385" y="250" as="sourcePoint" />
+        <mxPoint x="525" y="250" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息 3.1: 查询数据库 -->
+    <mxCell id="msg3-1" value="3.1 SELECT * FROM cart" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#666666;fillColor=#333333;fontSize=9;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="535" y="275" as="sourcePoint" />
+        <mxPoint x="1395" y="275" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 返回购物车数据 -->
+    <mxCell id="msg3-ret" value="List&lt;Cart&gt;" style="endArrow=open;html=1;strokeWidth=1;strokeColor=#666666;dashed=1;fontSize=9;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="1395" y="295" as="sourcePoint" />
+        <mxPoint x="535" y="295" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 返回给OrderService -->
+    <mxCell id="msg3-ret2" value="cartItems" style="endArrow=open;html=1;strokeWidth=2;strokeColor=#333333;dashed=1;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="525" y="320" as="sourcePoint" />
+        <mxPoint x="385" y="320" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活条 ProductService -->
+    <mxCell id="act-ps-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="670" y="360" width="10" height="120" as="geometry" />
+    </mxCell>
+    
+    <!-- 消息 4: 验证商品库存 -->
+    <mxCell id="msg4" value="4. validateStock(productIds, quantities)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="385" y="360" as="sourcePoint" />
+        <mxPoint x="670" y="360" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- Loop框 - 验证库存 -->
+    <mxCell id="loop1" value="loop [for each product]" style="shape=umlFrame;whiteSpace=wrap;html=1;width=140;height=20;boundedLbl=1;verticalAlign=top;align=left;spacingTop=0;spacingLeft=5;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=2;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="395" y="380" width="330" height="90" as="geometry" />
+    </mxCell>
+    
+    <!-- 消息 4.1: 查询库存 -->
+    <mxCell id="msg4-1" value="4.1 SELECT stock FROM product" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#666666;fillColor=#333333;fontSize=9;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="680" y="410" as="sourcePoint" />
+        <mxPoint x="1395" y="410" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 返回库存 -->
+    <mxCell id="msg4-1-ret" value="stock" style="endArrow=open;html=1;strokeWidth=1;strokeColor=#666666;dashed=1;fontSize=9;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="1395" y="435" as="sourcePoint" />
+        <mxPoint x="680" y="435" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 返回验证结果 -->
+    <mxCell id="msg4-ret" value="stockValid=true" style="endArrow=open;html=1;strokeWidth=2;strokeColor=#333333;dashed=1;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="670" y="470" as="sourcePoint" />
+        <mxPoint x="385" y="470" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活条 CouponService -->
+    <mxCell id="act-coup-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="820" y="510" width="10" height="100" as="geometry" />
+    </mxCell>
+    
+    <!-- Alt框 - 优惠券 -->
+    <mxCell id="alt1" value="alt [couponId != null]" style="shape=umlFrame;whiteSpace=wrap;html=1;width=120;height=20;boundedLbl=1;verticalAlign=top;align=left;spacingTop=0;spacingLeft=5;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=2;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="395" y="500" width="470" height="120" as="geometry" />
+    </mxCell>
+    
+    <!-- 消息 5: 验证优惠券 -->
+    <mxCell id="msg5" value="5. validateAndUseCoupon(userId, couponId, amount)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="385" y="530" as="sourcePoint" />
+        <mxPoint x="820" y="530" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息 5.1: 更新优惠券状态 -->
+    <mxCell id="msg5-1" value="5.1 UPDATE user_coupon SET status='USED'" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#666666;fillColor=#333333;fontSize=9;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="830" y="560" as="sourcePoint" />
+        <mxPoint x="1395" y="560" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 返回折扣金额 -->
+    <mxCell id="msg5-ret" value="couponDiscount=50.00" style="endArrow=open;html=1;strokeWidth=2;strokeColor=#333333;dashed=1;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="820" y="600" as="sourcePoint" />
+        <mxPoint x="385" y="600" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活条 PointsService -->
+    <mxCell id="act-pts-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="965" y="660" width="10" height="100" as="geometry" />
+    </mxCell>
+    
+    <!-- Alt框 - 积分 -->
+    <mxCell id="alt2" value="alt [pointsUsed > 0]" style="shape=umlFrame;whiteSpace=wrap;html=1;width=120;height=20;boundedLbl=1;verticalAlign=top;align=left;spacingTop=0;spacingLeft=5;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=2;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="395" y="650" width="620" height="120" as="geometry" />
+    </mxCell>
+    
+    <!-- 消息 6: 扣减积分 -->
+    <mxCell id="msg6" value="6. deductPoints(userId, pointsUsed)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="385" y="680" as="sourcePoint" />
+        <mxPoint x="965" y="680" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息 6.1: 更新积分 -->
+    <mxCell id="msg6-1" value="6.1 UPDATE user_points, INSERT points_history" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#666666;fillColor=#333333;fontSize=9;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="975" y="710" as="sourcePoint" />
+        <mxPoint x="1395" y="710" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 返回积分折扣 -->
+    <mxCell id="msg6-ret" value="pointsDiscount=10.00" style="endArrow=open;html=1;strokeWidth=2;strokeColor=#333333;dashed=1;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="965" y="750" as="sourcePoint" />
+        <mxPoint x="385" y="750" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息 7: 创建订单记录 -->
+    <mxCell id="msg7" value="7. INSERT INTO orders (...)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="385" y="800" as="sourcePoint" />
+        <mxPoint x="1395" y="800" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 返回订单ID -->
+    <mxCell id="msg7-ret" value="orderId=12345" style="endArrow=open;html=1;strokeWidth=1;strokeColor=#666666;dashed=1;fontSize=9;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="1395" y="825" as="sourcePoint" />
+        <mxPoint x="385" y="825" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息 8: 创建订单商品 -->
+    <mxCell id="msg8" value="8. INSERT INTO order_product (...)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="385" y="850" as="sourcePoint" />
+        <mxPoint x="1395" y="850" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活条 ProductService - 扣减库存 -->
+    <mxCell id="act-ps-2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="670" y="890" width="10" height="80" as="geometry" />
+    </mxCell>
+    
+    <!-- 消息 9: 扣减库存 -->
+    <mxCell id="msg9" value="9. deductStock(productId, skuId, quantity)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="385" y="900" as="sourcePoint" />
+        <mxPoint x="670" y="900" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息 9.1: 更新库存 -->
+    <mxCell id="msg9-1" value="9.1 UPDATE product SET stock=stock-?, INSERT stock_log" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#666666;fillColor=#333333;fontSize=9;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="680" y="930" as="sourcePoint" />
+        <mxPoint x="1395" y="930" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 返回扣减结果 -->
+    <mxCell id="msg9-ret" value="success" style="endArrow=open;html=1;strokeWidth=2;strokeColor=#333333;dashed=1;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="670" y="960" as="sourcePoint" />
+        <mxPoint x="385" y="960" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活条 PaymentService -->
+    <mxCell id="act-pay-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="1110" y="1000" width="10" height="80" as="geometry" />
+    </mxCell>
+    
+    <!-- 消息 10: 创建支付单 -->
+    <mxCell id="msg10" value="10. createPayment(orderId, amount, method)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="385" y="1010" as="sourcePoint" />
+        <mxPoint x="1110" y="1010" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息 10.1: 插入支付记录 -->
+    <mxCell id="msg10-1" value="10.1 INSERT INTO payment (...)" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#666666;fillColor=#333333;fontSize=9;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="1120" y="1040" as="sourcePoint" />
+        <mxPoint x="1395" y="1040" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 返回支付信息 -->
+    <mxCell id="msg10-ret" value="Payment{paymentNo, paymentUrl}" style="endArrow=open;html=1;strokeWidth=2;strokeColor=#333333;dashed=1;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="1110" y="1070" as="sourcePoint" />
+        <mxPoint x="385" y="1070" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活条 CartService - 清空购物车 -->
+    <mxCell id="act-cs-2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="525" y="1100" width="10" height="50" as="geometry" />
+    </mxCell>
+    
+    <!-- 消息 11: 清空购物车 -->
+    <mxCell id="msg11" value="11. deleteCartItems(userId, cartIds)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="385" y="1110" as="sourcePoint" />
+        <mxPoint x="525" y="1110" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息 11.1: 删除购物车 -->
+    <mxCell id="msg11-1" value="11.1 DELETE FROM cart WHERE..." style="endArrow=block;html=1;strokeWidth=1;strokeColor=#666666;fillColor=#333333;fontSize=9;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="535" y="1130" as="sourcePoint" />
+        <mxPoint x="1395" y="1130" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活条 MessageProducer -->
+    <mxCell id="act-mq-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="1260" y="1170" width="10" height="50" as="geometry" />
+    </mxCell>
+    
+    <!-- 消息 12: 发送消息 -->
+    <mxCell id="msg12" value="12. sendOrderMessage(ORDER_CREATE)" style="endArrow=block;html=1;strokeWidth=2;strokeColor=#333333;fillColor=#333333;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="385" y="1180" as="sourcePoint" />
+        <mxPoint x="1260" y="1180" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 异步消息 -->
+    <mxCell id="msg12-async" value="async" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontStyle=2;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="800" y="1160" width="40" height="20" as="geometry" />
+    </mxCell>
+    
+    <!-- 返回订单结果 -->
+    <mxCell id="msg-final-ret" value="Order{orderId, orderNo, actualAmount, paymentInfo}" style="endArrow=open;html=1;strokeWidth=2;strokeColor=#333333;dashed=1;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="375" y="1240" as="sourcePoint" />
+        <mxPoint x="225" y="1240" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 返回给用户 -->
+    <mxCell id="msg-user-ret" value="Result&lt;Order&gt;" style="endArrow=open;html=1;strokeWidth=2;strokeColor=#333333;dashed=1;fontSize=10;" edge="1" parent="1">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="215" y="1280" as="sourcePoint" />
+        <mxPoint x="80" y="1280" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 注释框 -->
+    <mxCell id="note1" value="@Transactional&#xa;整个创建订单流程&#xa;在事务中执行" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" vertex="1" parent="1">
+      <mxGeometry x="1450" y="200" width="130" height="70" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="note2" value="库存扣减使用&#xa;乐观锁(@Version)&#xa;防止超卖" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" vertex="1" parent="1">
+      <mxGeometry x="1450" y="890" width="130" height="60" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="note3" value="RabbitMQ异步&#xa;发送订单创建消息&#xa;用于后续处理" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" vertex="1" parent="1">
+      <mxGeometry x="1450" y="1160" width="130" height="60" as="geometry" />
+    </mxCell>
+    
+  </root>
+</mxGraphModel>
