@@ -43,6 +43,10 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Cart addCart(Integer userId, CartAddDTO cartAddDTO) {
+        log.info("🛒🛒🛒 添加购物车 - userId={}, productId={}, skuId={}, quantity={}, selected={}", 
+                userId, cartAddDTO.getProductId(), cartAddDTO.getSkuId(), 
+                cartAddDTO.getQuantity(), cartAddDTO.getSelected());
+        
         // 查询商品是否存在
         Product product = productService.getById(cartAddDTO.getProductId());
         if (product == null) {
@@ -111,6 +115,9 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             existCart.setSelected(cartAddDTO.getSelected());
             updateById(existCart);
             
+            log.info("✅ 购物车商品数量已更新 - cartId={}, 新数量={}, selected={}", 
+                    existCart.getCartId(), existCart.getQuantity(), existCart.getSelected());
+            
             // 清除购物车缓存
             clearCartCache(userId);
             
@@ -137,6 +144,9 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             
             // 使用 baseMapper 直接插入
             baseMapper.insert(cart);
+            
+            log.info("✅ 新购物车项已创建 - cartId={}, userId={}, productId={}, selected={}", 
+                    cart.getCartId(), userId, cart.getProductId(), cart.getSelected());
             
             // 清除购物车缓存
             clearCartCache(userId);

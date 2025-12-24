@@ -1407,39 +1407,51 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
         // 统计总兑换次数
         stats.put("totalCount", allExchanges.size());
 
-        // 统计总消耗积分
-        Integer totalPoints = allExchanges.stream()
-                .filter(e -> !"cancelled".equals(e.getStatus()))
-                .mapToInt(e -> (e.getPoints() != null ? e.getPoints() : 0) * (e.getQuantity() != null ? e.getQuantity() : 1))
-                .sum();
-        stats.put("totalPoints", totalPoints);
-
-        // 统计各状态的订单数
-        long pendingCount = allExchanges.stream().filter(e -> "pending".equals(e.getStatus())).count();
-        long processingCount = allExchanges.stream().filter(e -> "processing".equals(e.getStatus())).count();
-        long shippedCount = allExchanges.stream().filter(e -> "shipped".equals(e.getStatus())).count();
-        long completedCount = allExchanges.stream().filter(e -> "completed".equals(e.getStatus())).count();
-        long cancelledCount = allExchanges.stream().filter(e -> "cancelled".equals(e.getStatus())).count();
-
-        stats.put("pendingCount", pendingCount);
-        stats.put("processingCount", processingCount);
-        stats.put("shippedCount", shippedCount);
-        stats.put("completedCount", completedCount);
-        stats.put("cancelledCount", cancelledCount);
-
-        // 统计今日兑换数据
+        // 性能优化：使用单次遍历完成所有统计，避免多次stream遍历
+        // Source: 性能优化 - 将O(5n)的多次过滤优化为O(n)的单次遍历
         LocalDate today = LocalDate.now();
-        long todayCount = allExchanges.stream()
-                .filter(e -> e.getCreateTime() != null && e.getCreateTime().toLocalDate().equals(today))
-                .count();
+        
+        // 使用单次遍历完成所有统计
+        Map<String, Long> statusCountMap = new HashMap<>();
+        int totalPoints = 0;
+        long todayCount = 0;
+        int todayPoints = 0;
+        
+        for (PointsExchange exchange : allExchanges) {
+            // 统计各状态的订单数
+            String status = exchange.getStatus();
+            statusCountMap.put(status, statusCountMap.getOrDefault(status, 0L) + 1);
+            
+            // 统计总消耗积分（排除已取消）
+            if (!"cancelled".equals(status)) {
+                int points = (exchange.getPoints() != null ? exchange.getPoints() : 0);
+                int quantity = (exchange.getQuantity() != null ? exchange.getQuantity() : 1);
+                totalPoints += points * quantity;
+            }
+            
+            // 统计今日数据
+            if (exchange.getCreateTime() != null && exchange.getCreateTime().toLocalDate().equals(today)) {
+                todayCount++;
+                if (!"cancelled".equals(status)) {
+                    int points = (exchange.getPoints() != null ? exchange.getPoints() : 0);
+                    int quantity = (exchange.getQuantity() != null ? exchange.getQuantity() : 1);
+                    todayPoints += points * quantity;
+                }
+            }
+        }
+        
+        // 设置统计结果
+        stats.put("totalPoints", totalPoints);
+        stats.put("pendingCount", statusCountMap.getOrDefault("pending", 0L));
+        stats.put("processingCount", statusCountMap.getOrDefault("processing", 0L));
+        stats.put("shippedCount", statusCountMap.getOrDefault("shipped", 0L));
+        stats.put("completedCount", statusCountMap.getOrDefault("completed", 0L));
+        stats.put("cancelledCount", statusCountMap.getOrDefault("cancelled", 0L));
         stats.put("todayCount", todayCount);
-
-        Integer todayPoints = allExchanges.stream()
-                .filter(e -> e.getCreateTime() != null && e.getCreateTime().toLocalDate().equals(today))
-                .filter(e -> !"cancelled".equals(e.getStatus()))
-                .mapToInt(e -> (e.getPoints() != null ? e.getPoints() : 0) * (e.getQuantity() != null ? e.getQuantity() : 1))
-                .sum();
         stats.put("todayPoints", todayPoints);
+        
+        log.debug("积分兑换统计完成: 总记录数={}, 总消耗积分={}, 今日兑换数={}", 
+                allExchanges.size(), totalPoints, todayCount);
 
         // 统计热门兑换商品 (Top 5)
         Map<Integer, Long> productCountMap = allExchanges.stream()

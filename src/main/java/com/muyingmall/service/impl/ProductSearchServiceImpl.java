@@ -69,12 +69,12 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     @Value("${elasticsearch.bulk.concurrent-requests:3}")
     private int bulkConcurrentRequests;
 
-    // 搜索结果缓存时间（秒）
-    @Value("${elasticsearch.search.cache-ttl:300}")
+    // 搜索结果缓存时间（秒）- 优化：提升至10分钟
+    @Value("${elasticsearch.search.cache-ttl:600}")
     private int searchCacheTtl;
 
-    // 热门查询缓存时间（秒）- 更长的缓存时间
-    private static final int HOT_QUERY_CACHE_TTL = 600;
+    // 热门查询缓存时间（秒）- 优化：提升至30分钟
+    private static final int HOT_QUERY_CACHE_TTL = 1800;
     
     // 搜索建议缓存时间（秒）
     private static final int SUGGESTION_CACHE_TTL = 300;
@@ -189,11 +189,12 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             Pageable pageable = PageRequest.of(page, size);
             Page<ProductDocument> result = new PageImpl<>(products, pageable, totalCount);
 
-            // 缓存热门查询结果（优化：只缓存第一页且有结果的查询）
-            if (totalCount > 0 && page == 0) {
+            // 优化：缓存所有页的搜索结果（不只是第一页）
+            if (totalCount > 0) {
                 // 热门查询使用更长的缓存时间
                 int cacheTtl = isHotQuery(keyword) ? HOT_QUERY_CACHE_TTL : searchCacheTtl;
                 cacheSearchResult(cacheKey, result, cacheTtl);
+                log.debug("缓存搜索结果: keyword={}, page={}, ttl={}秒", keyword, page, cacheTtl);
             }
 
             return result;

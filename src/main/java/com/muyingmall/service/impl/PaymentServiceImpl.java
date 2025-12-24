@@ -91,18 +91,23 @@ public class PaymentServiceImpl extends ServiceImpl<PaymentMapper, Payment> impl
 
             if (updated) {
                 // 发送退款消息到RabbitMQ
+                log.info("=== 准备发送退款消息 ===");
+                log.info("messageProducerService 实例: {}", messageProducerService != null ? "已注入" : "NULL");
+                
                 if (messageProducerService != null) {
                     try {
                         PaymentMessage refundMessage = PaymentMessage.createRefundMessage(payment, refundAmount);
                         refundMessage.setExtra(reason);
+                        log.info("退款消息对象创建成功: paymentNo={}, refundAmount={}", paymentNo, refundAmount);
+                        
                         messageProducerService.sendPaymentMessage(refundMessage);
-                        log.debug("退款消息发送成功: paymentNo={}, refundAmount={}", paymentNo, refundAmount);
+                        log.info("✅ 退款消息发送成功: paymentNo={}, refundAmount={}", paymentNo, refundAmount);
                     } catch (Exception e) {
-                        log.error("退款消息发送失败: paymentNo={}, error={}", paymentNo, e.getMessage(), e);
+                        log.error("❌ 退款消息发送失败: paymentNo={}, error={}", paymentNo, e.getMessage(), e);
                         // 消息发送失败不影响退款流程
                     }
                 } else {
-                    log.warn("MessageProducerService未注入，跳过退款消息发送");
+                    log.warn("⚠️ MessageProducerService未注入，跳过退款消息发送");
                 }
 
                 log.debug("退款处理成功: paymentNo={}, refundAmount={}, reason={}", paymentNo, refundAmount, reason);

@@ -16,7 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 收藏服务实现类
@@ -36,14 +39,17 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite> i
         String cacheKey = CacheConstants.USER_FAVORITE_LIST_KEY + userId + ":p" + page + "_s" + pageSize;
         
         // 尝试从缓存获取
+        long startTime = System.currentTimeMillis();
         Object cached = redisUtil.get(cacheKey);
         if (cached != null) {
-            log.debug("从缓存获取用户收藏列表: userId={}, page={}", userId, page);
+            long cacheTime = System.currentTimeMillis() - startTime;
+            log.debug("从缓存获取用户收藏列表: userId={}, page={}, 耗时={}ms", userId, page, cacheTime);
             return (Page<Favorite>) cached;
         }
         
         // 缓存未命中，从数据库查询
         log.debug("缓存未命中，从数据库查询用户收藏列表: userId={}, page={}", userId, page);
+        long dbStartTime = System.currentTimeMillis();
         Page<Favorite> pageCond = new Page<>(page, pageSize);
 
         // 分页查询收藏记录
@@ -52,17 +58,54 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite> i
                 .orderByDesc(Favorite::getCreateTime)
                 .page(pageCond);
 
-        // 设置商品信息
-        favoritePage.getRecords().forEach(favorite -> {
-            Product product = productService.getById(favorite.getProductId());
-            favorite.setProduct(product);
-        });
+        long favoriteQueryTime = System.currentTimeMillis() - dbStartTime;
+        log.debug("查询到收藏记录数: {}, 收藏查询耗时={}ms", favoritePage.getRecords().size(), favoriteQueryTime);
 
-        // 缓存结果
-        if (favoritePage.getRecords() != null) {
-            redisUtil.set(cacheKey, favoritePage, CacheConstants.FAVORITE_EXPIRE_TIME);
-            log.debug("将用户收藏列表缓存到Redis: userId={}, page={}, 过期时间={}秒", userId, page, CacheConstants.FAVORITE_EXPIRE_TIME);
+        // 性能优化：批量查询商品信息，避免N+1查询问题
+        // Source: N+1查询优化 - 使用IN查询批量获取商品
+        List<Favorite> favorites = favoritePage.getRecords();
+        if (!favorites.isEmpty()) {
+            long productStartTime = System.currentTimeMillis();
+            
+            // 收集所有商品ID
+            List<Integer> productIds = favorites.stream()
+                    .map(Favorite::getProductId)
+                    .distinct()
+                    .collect(java.util.stream.Collectors.toList());
+            
+            log.debug("开始批量查询商品，商品数量: {}, 商品ID: {}", productIds.size(), productIds);
+            
+            // 批量查询所有商品
+            List<Product> products = productService.listByIds(productIds);
+            
+            // 转换为Map，方便快速查找
+            java.util.Map<Integer, Product> productMap = products.stream()
+                    .collect(java.util.stream.Collectors.toMap(Product::getProductId, p -> p));
+            
+            long productQueryTime = System.currentTimeMillis() - productStartTime;
+            log.debug("批量查询到 {} 个商品, 耗时={}ms", products.size(), productQueryTime);
+            
+            // 为每个收藏设置商品信息
+            favorites.forEach(favorite -> {
+                Product product = productMap.get(favorite.getProductId());
+                if (product == null) {
+                    log.warn("收藏ID {} 关联的商品ID {} 不存在", favorite.getFavoriteId(), favorite.getProductId());
+                }
+                favorite.setProduct(product);
+            });
         }
+
+        // 缓存结果 - 优化：延长缓存时间到5分钟（300秒）
+        long cacheStartTime = System.currentTimeMillis();
+        if (favoritePage.getRecords() != null) {
+            redisUtil.set(cacheKey, favoritePage, 300L);
+            long cacheWriteTime = System.currentTimeMillis() - cacheStartTime;
+            log.debug("将用户收藏列表缓存到Redis: userId={}, page={}, 缓存时间=300秒, 缓存写入耗时={}ms", 
+                    userId, page, cacheWriteTime);
+        }
+
+        long totalTime = System.currentTimeMillis() - startTime;
+        log.debug("收藏列表查询完成: userId={}, 总耗时={}ms, 缓存命中=false", userId, totalTime);
 
         return favoritePage;
     }
