@@ -7,9 +7,9 @@ spring:
   # 数据源配置优化 - 针对5000-10000并发用户场景调优
   datasource:
     hikari:
-      # 连接池大小 - 恢复到较高值，确保MySQL max_connections已调整
-      minimum-idle: 100
-      maximum-pool-size: 400
+      # 连接池大小 - 优化：进一步提升以支持更高并发，避免连接池耗尽导致的登录失败
+      minimum-idle: 150
+      maximum-pool-size: 600
       # 连接超时 - 高并发下适当延长，避免获取连接超时
       connection-timeout: 90000
       # 空闲超时 - 10分钟，及时释放空闲连接
@@ -164,3 +164,32 @@ performance:
     enabled: true
     # 每秒最大请求数
     requests-per-second: 2000
+
+# RabbitMQ自定义配置 - 性能优化模式
+rabbitmq:
+  enabled: true  # 显式启用RabbitMQ功能
+  fallback-to-sync: true  # RabbitMQ不可用时回退到同步处理
+  # 错误处理配置
+  error-handling:
+    max-retry-attempts: 3  # 最大重试次数
+    retry-interval: 1000  # 重试间隔（毫秒）
+    dead-letter-enabled: true  # 是否启用死信队列
+    alert-enabled: true  # 是否启用告警
+    connection-timeout: 15000  # 连接超时时间（毫秒）
+    send-timeout: 5000  # 消息发送超时时间（毫秒）
+  # 监控配置
+  monitoring:
+    enabled: true  # 是否启用监控
+    health-check-interval: 30000  # 健康检查间隔（毫秒）
+    metrics-collection-enabled: true  # 是否启用指标收集
+    stats-retention-days: 7  # 统计数据保留天数
+    connection-status-enabled: true  # 是否启用连接状态监控
+    queue-length-alert-threshold: 1000  # 队列长度告警阈值
+  # 性能配置
+  performance:
+    concurrent-consumers: 5  # 消费者并发数
+    max-concurrent-consumers: 10  # 最大消费者并发数
+    prefetch-count: 1  # 预取数量
+    batch-size: 100  # 批量大小
+    batch-processing-enabled: false  # 是否启用批量处理
+    batch-timeout: 1000  # 批量处理超时时间（毫秒）

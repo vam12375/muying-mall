@@ -1,95 +1,71 @@
 package com.muyingmall.config;
 
-import com.muyingmall.entity.ProductSku;
-import com.muyingmall.mapper.ProductSkuMapper;
-import com.muyingmall.service.SeckillService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.muyingmall.entity.SeckillActivity;
+import com.muyingmall.mapper.SeckillActivityMapper;
+import com.muyingmall.service.SeckillActivityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 秒杀库存初始化器
- * 应用启动时将所有商品库存同步到Redis
+ * 秒杀系统初始化器
+ * 应用启动时自动初始化进行中的秒杀活动库存到Redis
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SeckillInitializer implements ApplicationRunner {
-
-    private final SeckillService seckillService;
-    private final ProductSkuMapper productSkuMapper;
-
+    
+    private final SeckillActivityMapper seckillActivityMapper;
+    private final SeckillActivityService seckillActivityService;
+    
     @Override
     public void run(ApplicationArguments args) {
         try {
-            log.debug("========================================");
-            log.debug("开始初始化秒杀库存到Redis...");
-            log.debug("========================================");
+            log.info("开始初始化秒杀活动库存...");
             
-            // 查询所有启用状态的SKU
-            List<ProductSku> skuList = productSkuMapper.selectList(null);
+            // 查询进行中或即将开始的秒杀活动（未来24小时内）
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime future = now.plusHours(24);
             
-            int totalCount = 0;
+            LambdaQueryWrapper<SeckillActivity> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(SeckillActivity::getStatus, 1)
+                   .le(SeckillActivity::getStartTime, future)  // 开始时间在未来24小时内
+                   .ge(SeckillActivity::getEndTime, now);      // 结束时间在当前时间之后
+            
+            List<SeckillActivity> activities = seckillActivityMapper.selectList(wrapper);
+            
+            if (activities.isEmpty()) {
+                log.info("当前没有进行中或即将开始的秒杀活动");
+                return;
+            }
+            
+            log.info("找到{}个需要初始化的秒杀活动", activities.size());
+            
+            // 初始化每个活动的库存
             int successCount = 0;
-            int skippedCount = 0;
-            
-            for (ProductSku sku : skuList) {
-                totalCount++;
-                
-                if (sku.getStatus() != 1) {
-                    log.debug("跳过禁用的SKU: skuId={}, status={}", sku.getSkuId(), sku.getStatus());
-                    skippedCount++;
-                    continue;
-                }
-                
-                if (sku.getStock() == null || sku.getStock() <= 0) {
-                    log.debug("跳过零库存SKU: skuId={}, stock={}", sku.getSkuId(), sku.getStock());
-                    skippedCount++;
-                    continue;
-                }
-                
+            for (SeckillActivity activity : activities) {
                 try {
-                    seckillService.initSeckillStock(sku.getSkuId(), sku.getStock());
-                    log.debug("✓ 初始化SKU库存: skuId={}, skuCode={}, stock={}", 
-                             sku.getSkuId(), sku.getSkuCode(), sku.getStock());
+                    seckillActivityService.initActivityStock(activity.getId());
                     successCount++;
+                    log.info("秒杀活动库存初始化成功: activityId={}, activityName={}, startTime={}", 
+                            activity.getId(), activity.getName(), activity.getStartTime());
                 } catch (Exception e) {
-                    log.error("✗ 初始化SKU库存失败: skuId={}, error={}", 
-                              sku.getSkuId(), e.getMessage());
+                    log.error("秒杀活动库存初始化失败: activityId={}, activityName={}", 
+                            activity.getId(), activity.getName(), e);
                 }
             }
             
-            log.debug("========================================");
-            log.debug("秒杀库存初始化完成:");
-            log.debug("  总SKU数量: {}", totalCount);
-            log.debug("  成功初始化: {}", successCount);
-            log.debug("  跳过数量: {}", skippedCount);
-            log.debug("  失败数量: {}", totalCount - successCount - skippedCount);
-            log.debug("========================================");
-            
-            // 验证Redis中的数据
-            if (successCount > 0) {
-                log.debug("验证Redis库存数据...");
-                for (ProductSku sku : skuList) {
-                    if (sku.getStatus() == 1 && sku.getStock() != null && sku.getStock() > 0) {
-                        Integer redisStock = seckillService.getRedisStock(sku.getSkuId());
-                        if (redisStock != null) {
-                            log.debug("Redis库存验证: skuId={}, dbStock={}, redisStock={}", 
-                                     sku.getSkuId(), sku.getStock(), redisStock);
-                        } else {
-                            log.warn("Redis库存验证失败: skuId={} 在Redis中不存在", sku.getSkuId());
-                        }
-                        break; // 只验证第一个，避免日志过多
-                    }
-                }
-            }
+            log.info("秒杀活动库存初始化完成，成功初始化{}/{}个活动", successCount, activities.size());
             
         } catch (Exception e) {
-            log.error("秒杀库存初始化失败", e);
+            log.error("秒杀系统初始化失败", e);
         }
     }
 }

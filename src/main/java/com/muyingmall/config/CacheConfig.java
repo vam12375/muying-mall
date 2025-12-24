@@ -113,32 +113,52 @@ public class CacheConfig {
 
     /**
      * 预热推荐商品缓存
+     * 性能优化：预热多种推荐类型，提高缓存命中率
      */
     private void warmUpRecommendProducts() {
         try {
-            // 检查缓存是否已存在
-            if (redisUtil.hasKey(CacheConstants.PRODUCT_RECOMMEND_KEY)) {
-                log.debug("推荐商品缓存已存在，跳过预热");
-                return;
+            long startTime = System.currentTimeMillis();
+            int warmupCount = 0;
+
+            // 预热"本店推荐"类型（shop）- 最常用的推荐类型
+            String shopCacheKey = CacheConstants.PRODUCT_RECOMMEND_KEY + "_shop_10";
+            if (!redisUtil.hasKey(shopCacheKey)) {
+                List<Product> shopRecommend = productService.getRecommendedProducts(null, null, 10, "shop");
+                if (shopRecommend != null && !shopRecommend.isEmpty()) {
+                    redisUtil.set(shopCacheKey, shopRecommend, 300L);
+                    warmupCount += shopRecommend.size();
+                    log.debug("预热本店推荐商品缓存成功，共{}个商品", shopRecommend.size());
+                }
             }
 
-            // 获取推荐商品
-            List<Product> recommendProducts = productService.getRecommendProducts(20);
+            // 预热"猜你喜欢"类型（view）- 第二常用的推荐类型
+            String viewCacheKey = CacheConstants.PRODUCT_RECOMMEND_KEY + "_view_10";
+            if (!redisUtil.hasKey(viewCacheKey)) {
+                List<Product> viewRecommend = productService.getRecommendedProducts(null, null, 10, "view");
+                if (viewRecommend != null && !viewRecommend.isEmpty()) {
+                    redisUtil.set(viewCacheKey, viewRecommend, 300L);
+                    warmupCount += viewRecommend.size();
+                    log.debug("预热猜你喜欢商品缓存成功，共{}个商品", viewRecommend.size());
+                }
+            }
 
-            // 缓存推荐商品
-            if (recommendProducts != null && !recommendProducts.isEmpty()) {
-                redisUtil.set(CacheConstants.PRODUCT_RECOMMEND_KEY, recommendProducts,
-                        CacheConstants.PRODUCT_HOT_EXPIRE_TIME);
-                log.debug("预热推荐商品缓存成功，共{}个商品", recommendProducts.size());
-
-                // 同时缓存每个推荐商品的详情
-                for (Product product : recommendProducts) {
-                    String cacheKey = CacheConstants.PRODUCT_DETAIL_KEY + product.getProductId();
-                    if (!redisUtil.hasKey(cacheKey)) {
-                        redisUtil.set(cacheKey, product, CacheConstants.PRODUCT_EXPIRE_TIME);
+            // 预热热门商品（作为推荐的后备数据源）
+            if (redisUtil.hasKey(CacheConstants.PRODUCT_HOT_KEY)) {
+                List<Product> hotProducts = (List<Product>) redisUtil.get(CacheConstants.PRODUCT_HOT_KEY);
+                if (hotProducts != null && !hotProducts.isEmpty()) {
+                    // 缓存每个热门商品的详情，提高详情页访问速度
+                    for (Product product : hotProducts) {
+                        String cacheKey = CacheConstants.PRODUCT_DETAIL_KEY + product.getProductId();
+                        if (!redisUtil.hasKey(cacheKey)) {
+                            redisUtil.set(cacheKey, product, CacheConstants.PRODUCT_EXPIRE_TIME);
+                        }
                     }
                 }
             }
+
+            long duration = System.currentTimeMillis() - startTime;
+            log.debug("推荐商品缓存预热完成，共预热{}个商品，耗时{}ms", warmupCount, duration);
+
         } catch (Exception e) {
             log.error("预热推荐商品缓存失败: {}", e.getMessage(), e);
         }

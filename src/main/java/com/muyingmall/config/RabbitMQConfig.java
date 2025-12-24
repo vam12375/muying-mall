@@ -80,10 +80,28 @@ public class RabbitMQConfig {
 
     /**
      * 配置消息转换器，使用JSON格式
+     * 支持Java 8时间类型（LocalDateTime等）的序列化
      */
     @Bean
     public Jackson2JsonMessageConverter messageConverter() {
-        return new Jackson2JsonMessageConverter();
+        // 配置ObjectMapper以支持Java 8时间类型
+        com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        
+        // 注册Java 8时间模块
+        objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        
+        // 禁用将日期写为时间戳的功能，使用ISO-8601格式
+        objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        
+        // 设置时区为系统默认时区
+        objectMapper.setTimeZone(java.util.TimeZone.getDefault());
+        
+        // 使用配置好的ObjectMapper创建转换器
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(objectMapper);
+        
+        log.debug("RabbitMQ消息转换器配置完成 - 已启用Java 8时间类型支持");
+        
+        return converter;
     }
 
     /**
@@ -133,8 +151,8 @@ public class RabbitMQConfig {
         // 配置重试机制
         factory.setRetryTemplate(retryTemplate());
         
-        // 关键配置：禁用自动启动，防止启动时一直重试连接
-        factory.setAutoStartup(false);
+        // 启用自动启动，允许消费者正常工作
+        factory.setAutoStartup(true);
         
         // 设置队列不存在时不抛出致命异常
         factory.setMissingQueuesFatal(false);
@@ -142,7 +160,7 @@ public class RabbitMQConfig {
         // 设置恢复间隔
         factory.setRecoveryInterval(30000L);
         
-        log.debug("RabbitMQ监听器容器工厂配置完成 - 并发消费者: {}, 最大并发: {}, 预取数量: {}, 自动启动: false", 
+        log.info("RabbitMQ监听器容器工厂配置完成 - 并发消费者: {}, 最大并发: {}, 预取数量: {}, 自动启动: true", 
                 performance.getConcurrentConsumers(), 
                 performance.getMaxConcurrentConsumers(), 
                 performance.getPrefetchCount());
@@ -420,51 +438,80 @@ public class RabbitMQConfig {
 
     // ==================== 高级配置 ====================
 
-    // 注意: 延迟队列需要安装 rabbitmq_delayed_message_exchange 插件
-    // 如果没有安装插件，请注释掉以下配置或安装插件后再启用
+    // ==================== 订单延迟队列配置（用于超时取消） ====================
 
-    /*
     /**
-     * 延迟队列交换机（用于延迟消息处理）
-     * 需要安装 rabbitmq_delayed_message_exchange 插件
+     * 订单延迟交换机
+     * 使用TTL+DLX方式实现延迟消息，无需安装插件
      */
-    /*
     @Bean
-    public TopicExchange delayExchange() {
+    public DirectExchange orderDelayExchange() {
         return ExchangeBuilder
-                .topicExchange("delay.exchange")
+                .directExchange("order.delay.exchange")
                 .durable(true)
-                .delayed()
                 .build();
     }
 
     /**
-     * 延迟队列（用于订单超时处理等场景）
+     * 订单延迟队列
+     * 消息在此队列等待30分钟后过期，转发到死信交换机
+     * TTL = 30分钟 = 1800000ms
      */
-    /*
     @Bean
-    public Queue delayQueue() {
+    public Queue orderDelayQueue() {
         return QueueBuilder
-                .durable("delay.queue")
-                .ttl(30 * 60 * 1000) // 30分钟TTL
-                .maxLength(5000)
-                .deadLetterExchange(RabbitMQConstants.DLX_EXCHANGE)
-                .deadLetterRoutingKey(RabbitMQConstants.DLX_ROUTING_KEY)
+                .durable("order.delay.queue")
+                .ttl(30 * 60 * 1000) // 30分钟TTL，与论文一致
+                .maxLength(10000L)
+                .deadLetterExchange("order.timeout.exchange") // 超时后转发到超时处理交换机
+                .deadLetterRoutingKey("order.timeout")
                 .build();
     }
 
     /**
-     * 延迟队列绑定
+     * 订单超时处理交换机（死信交换机）
      */
-    /*
     @Bean
-    public Binding delayBinding() {
-        return BindingBuilder
-                .bind(delayQueue())
-                .to(delayExchange())
-                .with("delay.#");
+    public DirectExchange orderTimeoutExchange() {
+        return ExchangeBuilder
+                .directExchange("order.timeout.exchange")
+                .durable(true)
+                .build();
     }
-    */
+
+    /**
+     * 订单超时处理队列
+     * 监听此队列以处理超时订单
+     */
+    @Bean
+    public Queue orderTimeoutQueue() {
+        return QueueBuilder
+                .durable("order.timeout.queue")
+                .maxLength(10000L)
+                .build();
+    }
+
+    /**
+     * 订单延迟队列绑定
+     */
+    @Bean
+    public Binding orderDelayBinding() {
+        return BindingBuilder
+                .bind(orderDelayQueue())
+                .to(orderDelayExchange())
+                .with("order.delay");
+    }
+
+    /**
+     * 订单超时队列绑定到超时交换机
+     */
+    @Bean
+    public Binding orderTimeoutBinding() {
+        return BindingBuilder
+                .bind(orderTimeoutQueue())
+                .to(orderTimeoutExchange())
+                .with("order.timeout");
+    }
 
     /**
      * 配置初始化日志

@@ -7,10 +7,10 @@ server:
     relaxed-query-chars: '[,],{,},|'
     relaxed-path-chars: '[,],{,},|'
     max-http-form-post-size: 20MB
-    # 线程池配置
+    # 线程池配置（优化：突破8600 TPS瓶颈）
     threads:
-      max: 500              # 最大工作线程数，从默认200提升到500
-      min-spare: 100        # 最小空闲线程数，从默认10提升到100
+      max: 800              # 最大工作线程数，从500提升到800以支持更高并发
+      min-spare: 200        # 最小空闲线程数，从100提升到200，保持足够的可用线程
     # 连接配置
     max-connections: 20000  # 最大连接数，从默认8192提升到20000
     accept-count: 1000      # 等待队列大小，从默认100提升到1000
@@ -40,10 +40,10 @@ spring:
     # 密码已移至application-private.yml
     # HikariCP连接池优化配置 - 针对高并发场景调优
     hikari:
-      # 连接池最大连接数，从60提升到80以支持更高并发
-      maximum-pool-size: 80
-      # 最小空闲连接数，从10提升到20，减少连接创建开销
-      minimum-idle: 20
+      # 连接池最大连接数，从80提升到150以支持更高并发（优化：突破8600 TPS瓶颈）
+      maximum-pool-size: 150
+      # 最小空闲连接数，从20提升到50，减少连接创建开销（优化：保持足够的空闲连接）
+      minimum-idle: 50
       # 连接超时时间（毫秒）
       connection-timeout: 30000
       # 空闲连接最大存活时间（10分钟）
@@ -68,12 +68,12 @@ spring:
       port: 6379
       # 密码已移至application-private.yml
       database: 0
-      # Redis连接池配置 - 优化：扩大连接池以支持高并发场景
+      # Redis连接池配置 - 优化：扩大连接池以支持高并发场景（优化：突破8600 TPS瓶颈）
       lettuce:
         pool:
-          max-active: 64       # 最大连接数，从16提升到64以支持高并发
-          max-idle: 32         # 最大空闲连接数，从8提升到32
-          min-idle: 16         # 最小空闲连接数，从4提升到16，保持足够的可用连接
+          max-active: 100      # 最大连接数，从64提升到100以支持更高并发
+          max-idle: 50         # 最大空闲连接数，从32提升到50
+          min-idle: 25         # 最小空闲连接数，从16提升到25，保持足够的可用连接
           max-wait: 3000ms     # 连接池最大阻塞等待时间，从1000ms提升到3000ms
           time-between-eviction-runs: 60000ms # 空闲连接检测周期
       timeout: 5000ms          # 连接超时时间，从3000ms提升到5000ms
@@ -99,7 +99,9 @@ spring:
     password: guest
     virtual-host: /
     connection-timeout: 15000
-    publisher-confirm-type: correlated
+    # 性能优化：使用simple异步确认模式，避免同步阻塞
+    # publisher-confirm-type: correlated
+    publisher-confirm-type: simple
     publisher-returns: true
     template:
       mandatory: true
@@ -111,12 +113,12 @@ spring:
         multiplier: 2
     listener:
       simple:
-        acknowledge-mode: manual
-        concurrency: 5
-        max-concurrency: 10
-        prefetch: 1
-        # 限制连接重试，防止日志刷屏
-        auto-startup: false  # 禁用自动启动监听器，需要手动启动
+        acknowledge-mode: auto  # 优化：改为自动确认，减少手动ACK开销
+        concurrency: 10  # 优化：提升并发消费者数量到10（2000并发场景）
+        max-concurrency: 20  # 优化：最大并发提升到20
+        prefetch: 20  # 优化：预取20条消息，减少网络往返次数
+        # 启用自动启动监听器，支持RabbitMQ消息消费
+        auto-startup: true
         missing-queues-fatal: false  # 队列不存在时不抛出致命异常
         retry:
           enabled: true
@@ -147,7 +149,7 @@ elasticsearch:
     concurrent-requests: 3    # 并发请求数
   # 搜索配置
   search:
-    cache-ttl: 300            # 搜索结果缓存时间(秒) - 优化：从60秒提升到5分钟
+    cache-ttl: 600            # 搜索结果缓存时间(秒) - 优化：从300秒提升到10分钟
     max-result-window: 10000  # 最大结果窗口
     default-size: 20          # 默认返回数量
   # 缓存预热配置
@@ -365,11 +367,11 @@ rabbitmq:
     stats-retention-days: 7  # 统计数据保留天数
     connection-status-enabled: true  # 是否启用连接状态监控
     queue-length-alert-threshold: 1000  # 队列长度告警阈值
-  # 性能配置
+  # 性能配置（优化：针对2000并发场景调整）
   performance:
-    concurrent-consumers: 5  # 消费者并发数
-    max-concurrent-consumers: 10  # 最大消费者并发数
-    prefetch-count: 1  # 预取数量
+    concurrent-consumers: 10  # 消费者并发数（优化：从5提升到10）
+    max-concurrent-consumers: 20  # 最大消费者并发数（优化：从10提升到20）
+    prefetch-count: 20  # 预取数量（优化：从1提升到20，减少网络往返）
     batch-size: 100  # 批量大小
     batch-processing-enabled: false  # 是否启用批量处理
     batch-timeout: 1000  # 批量处理超时时间（毫秒）

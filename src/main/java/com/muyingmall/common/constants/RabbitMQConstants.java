@@ -97,6 +97,11 @@ public class RabbitMQConstants {
     public static final String PAYMENT_FAILED_KEY = "payment.failed";
 
     /**
+     * 支付请求路由键
+     */
+    public static final String PAYMENT_REQUEST_KEY = "payment.request";
+
+    /**
      * 退款处理路由键
      */
     public static final String PAYMENT_REFUND_KEY = "payment.refund";
