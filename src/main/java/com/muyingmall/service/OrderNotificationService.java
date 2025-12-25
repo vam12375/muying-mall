@@ -178,7 +178,7 @@ public class OrderNotificationService {
                 } catch (Exception e) {
                     log.error("发送延迟同步通知失败: orderId={}, error={}", orderId, e.getMessage());
                 }
-            }).start();
+            });
             
             log.debug("实时状态同步通知发送成功: channel={}", channel);
             
