@@ -14,11 +14,22 @@ import java.util.concurrent.ThreadPoolExecutor;
 /**
  * 异步任务线程池配置
  *
+ * 注意：项目已启用虚拟线程 (spring.threads.virtual.enabled=true)
+ * 
+ * 虚拟线程与传统线程池的协作：
+ * 1. Tomcat Web请求：自动使用虚拟线程处理（无需配置）
+ * 2. @Async异步任务：仍使用本配置的线程池（可选择性迁移到虚拟线程）
+ * 3. 自定义线程池：保留用于特定场景的精细控制
+ * 
  * 性能优化：
  * 1. 根据CPU核心数动态计算线程池大小
  * 2. 配置合理的拒绝策略
  * 3. 添加线程池监控日志
  * 4. 分离不同类型任务的线程池
+ * 
+ * 未来优化方向：
+ * - 可考虑将 @Async 任务迁移到虚拟线程执行器
+ * - 使用 Executors.newVirtualThreadPerTaskExecutor() 替代传统线程池
  */
 @Slf4j
 @Configuration

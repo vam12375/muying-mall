@@ -117,25 +117,51 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         // 状态筛选 - 不在查询时过滤，而是在结果中动态计算后过滤
         // 这样可以确保显示的状态是实时的
         
-        wrapper.orderByDesc(SeckillActivity::getCreateTime);
+        // 移除默认排序，改为在后面按状态排序
+        // wrapper.orderByDesc(SeckillActivity::getCreateTime);
         
-        IPage<SeckillActivity> result = this.page(page, wrapper);
+        // 查询所有符合条件的记录（不分页）
+        List<SeckillActivity> allRecords = this.list(wrapper);
         
         // 动态计算每个活动的实际状态
         LocalDateTime now = LocalDateTime.now();
-        for (SeckillActivity activity : result.getRecords()) {
+        for (SeckillActivity activity : allRecords) {
             int actualStatus = calculateActivityStatus(activity, now);
             activity.setStatus(actualStatus);
         }
         
         // 如果指定了状态筛选，需要在结果中过滤
         if (status != null) {
-            List<SeckillActivity> filteredRecords = result.getRecords().stream()
+            allRecords = allRecords.stream()
                     .filter(activity -> activity.getStatus().equals(status))
                     .toList();
-            result.setRecords(filteredRecords);
-            result.setTotal(filteredRecords.size());
         }
+        
+        // 按状态排序：进行中(1) > 未开始(0) > 已结束(2)
+        // 同状态内按创建时间倒序排列
+        allRecords.sort((a, b) -> {
+            // 定义状态优先级：进行中=0, 未开始=1, 已结束=2
+            int priorityA = a.getStatus() == 1 ? 0 : (a.getStatus() == 0 ? 1 : 2);
+            int priorityB = b.getStatus() == 1 ? 0 : (b.getStatus() == 0 ? 1 : 2);
+            
+            if (priorityA != priorityB) {
+                return priorityA - priorityB;
+            }
+            // 同状态按创建时间倒序
+            return b.getCreateTime().compareTo(a.getCreateTime());
+        });
+        
+        // 手动分页
+        int total = allRecords.size();
+        int start = (int) ((page.getCurrent() - 1) * page.getSize());
+        int end = Math.min(start + (int) page.getSize(), total);
+        
+        List<SeckillActivity> pagedRecords = start < total ? 
+                allRecords.subList(start, end) : List.of();
+        
+        // 构建分页结果
+        Page<SeckillActivity> result = new Page<>(page.getCurrent(), page.getSize(), total);
+        result.setRecords(pagedRecords);
         
         return result;
     }
