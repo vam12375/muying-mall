@@ -159,8 +159,8 @@ public class CacheProtectionUtil {
                 // 6. 未获取到锁，等待并重试查询缓存
                 for (int i = 0; i < LOCK_RETRY_TIMES; i++) {
                     try {
-                        // 等待一小段时间，让持锁线程完成缓存写入
-                        Thread.sleep(LOCK_RETRY_INTERVAL);
+                        // 虚拟线程友好的睡眠方式（自动让出CPU）
+                        TimeUnit.MILLISECONDS.sleep(LOCK_RETRY_INTERVAL);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         log.warn("等待缓存重建被中断: key={}", cacheKey);

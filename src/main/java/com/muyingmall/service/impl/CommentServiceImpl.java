@@ -18,6 +18,8 @@ import com.muyingmall.mapper.CommentTagMapper;
 import com.muyingmall.mapper.CommentTagRelationMapper;
 import com.muyingmall.mapper.OrderMapper;
 import com.muyingmall.mapper.OrderProductMapper;
+
+import java.util.concurrent.TimeUnit;
 import com.muyingmall.mapper.ProductMapper;
 import com.muyingmall.mapper.UserMapper;
 import com.muyingmall.service.CommentService;
@@ -977,7 +979,8 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
                 // 等待一段时间后重试
                 try {
-                    Thread.sleep(100 * retryCount);
+                    // 虚拟线程友好的睡眠方式（自动让出CPU）
+                    TimeUnit.MILLISECONDS.sleep(100L * retryCount);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     break;

@@ -90,8 +90,8 @@ public class RedisLockUtil {
         // 重试指定次数
         for (int i = 0; i < retryTimes; i++) {
             try {
-                // 等待一段时间再重试
-                Thread.sleep(retryIntervalMillis);
+                // 虚拟线程友好的睡眠方式（自动让出CPU）
+                TimeUnit.MILLISECONDS.sleep(retryIntervalMillis);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return false;

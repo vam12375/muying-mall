@@ -2,11 +2,14 @@ package com.muyingmall.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 订单通知服务
@@ -18,6 +21,10 @@ import java.util.Map;
 public class OrderNotificationService {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    
+    // 注入虚拟线程执行器，用于异步延迟任务
+    @Qualifier("taskExecutor")
+    private final Executor taskExecutor;
 
     /**
      * 通知订单状态变更
@@ -149,10 +156,11 @@ public class OrderNotificationService {
             String channel = "sync_notifications:" + userId;
             redisTemplate.convertAndSend(channel, notification);
             
-            // 延迟发送第二次通知，确保数据同步
-            new Thread(() -> {
+            // 延迟发送第二次通知，确保数据同步（使用虚拟线程执行器）
+            taskExecutor.execute(() -> {
                 try {
-                    Thread.sleep(2000); // 延迟2秒
+                    // 虚拟线程友好的睡眠方式（自动让出CPU）
+                    TimeUnit.SECONDS.sleep(2); // 延迟2秒
                     
                     Map<String, Object> delayedNotification = new HashMap<>();
                     delayedNotification.put("type", "DELAYED_SYNC");

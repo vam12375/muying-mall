@@ -18,6 +18,8 @@ import com.muyingmall.mapper.RefundMapper;
 import com.muyingmall.service.AlipayRefundService;
 import com.muyingmall.service.OrderService;
 import com.muyingmall.service.PaymentService;
+
+import java.util.concurrent.TimeUnit;
 import com.muyingmall.service.RefundService;
 import com.muyingmall.service.RefundStateService;
 import com.muyingmall.statemachine.RefundEvent;
@@ -132,7 +134,8 @@ public class AlipayRefundServiceImpl implements AlipayRefundService {
                     // 如果不是最后一次尝试，则等待一段时间后重试
                     if (i < maxRetryCount) {
                         try {
-                            Thread.sleep(retryInterval);
+                            // 虚拟线程友好的睡眠方式（自动让出CPU）
+                            TimeUnit.MILLISECONDS.sleep(retryInterval);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                             throw new AlipayApiException("退款过程被中断", e);
@@ -165,7 +168,8 @@ public class AlipayRefundServiceImpl implements AlipayRefundService {
                             refund.getRefundNo(), i + 1, maxRetryCount + 1, e.getMessage());
 
                     try {
-                        Thread.sleep(retryInterval);
+                        // 虚拟线程友好的睡眠方式（自动让出CPU）
+                        TimeUnit.MILLISECONDS.sleep(retryInterval);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         throw new AlipayApiException("退款过程被中断", ie);
@@ -229,7 +233,8 @@ public class AlipayRefundServiceImpl implements AlipayRefundService {
                     // 如果不是最后一次尝试，则等待一段时间后重试
                     if (i < maxRetryCount) {
                         try {
-                            Thread.sleep(retryInterval);
+                            // 虚拟线程友好的睡眠方式（自动让出CPU）
+                            TimeUnit.MILLISECONDS.sleep(retryInterval);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                             throw new AlipayApiException("查询过程被中断", e);
@@ -249,7 +254,8 @@ public class AlipayRefundServiceImpl implements AlipayRefundService {
                             refundNo, i + 1, maxRetryCount + 1, e.getMessage());
 
                     try {
-                        Thread.sleep(retryInterval);
+                        // 虚拟线程友好的睡眠方式（自动让出CPU）
+                        TimeUnit.MILLISECONDS.sleep(retryInterval);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         throw new AlipayApiException("查询过程被中断", ie);

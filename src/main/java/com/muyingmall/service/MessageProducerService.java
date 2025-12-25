@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -230,7 +231,8 @@ public class MessageProducerService {
                 if (retryCount < maxRetryCount) {
                     try {
                         long retryInterval = rabbitMQProperties.getErrorHandling().getRetryInterval();
-                        Thread.sleep(retryInterval * retryCount); // 指数退避
+                        // 虚拟线程友好的睡眠方式（自动让出CPU）
+                        TimeUnit.MILLISECONDS.sleep(retryInterval * retryCount); // 指数退避
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         log.warn("重试等待被中断: orderId={}", message.getOrderId());
@@ -289,7 +291,8 @@ public class MessageProducerService {
                 if (retryCount < maxRetryCount) {
                     try {
                         long retryInterval = rabbitMQProperties.getErrorHandling().getRetryInterval();
-                        Thread.sleep(retryInterval * retryCount); // 指数退避
+                        // 虚拟线程友好的睡眠方式（自动让出CPU）
+                        TimeUnit.MILLISECONDS.sleep(retryInterval * retryCount); // 指数退避
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         log.warn("重试等待被中断: paymentId={}", message.getPaymentId());
