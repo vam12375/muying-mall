@@ -172,13 +172,15 @@ elasticsearch:
     refresh-interval: 30s     # 刷新间隔 - 优化：从1s提升到30s，减少刷新开销
     max-result-window: 10000  # 最大结果窗口
 
-# 异步任务线程池配置
-async:
-  executor:
-    core-pool-size: 0         # 0表示自动根据CPU核心数计算
-    max-pool-size: 0          # 0表示自动根据CPU核心数计算
-    queue-capacity: 500       # 队列容量
-    keep-alive-seconds: 60    # 空闲线程存活时间
+# 异步任务线程池配置（虚拟线程模式下已废弃）
+# 注意：项目已迁移到虚拟线程，以下配置不再使用
+# 虚拟线程自动管理，无需手动配置线程池参数
+# async:
+#   executor:
+#     core-pool-size: 0         # 已废弃
+#     max-pool-size: 0          # 已废弃
+#     queue-capacity: 500       # 已废弃
+#     keep-alive-seconds: 60    # 已废弃
 
 # 健康检查配置
 management:
