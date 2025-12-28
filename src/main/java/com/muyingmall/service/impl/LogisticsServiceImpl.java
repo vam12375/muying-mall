@@ -6,13 +6,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.entity.Logistics;
 import com.muyingmall.entity.LogisticsCompany;
 import com.muyingmall.entity.LogisticsTrack;
-import com.muyingmall.entity.Order;
 import com.muyingmall.enums.LogisticsStatus;
 import com.muyingmall.mapper.LogisticsMapper;
 import com.muyingmall.service.LogisticsCompanyService;
 import com.muyingmall.service.LogisticsService;
 import com.muyingmall.service.LogisticsTrackService;
-import com.muyingmall.service.OrderService;
+import com.muyingmall.service.AMapService;
+import com.muyingmall.dto.amap.DrivingRouteResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,7 +37,7 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
 
     private final LogisticsCompanyService logisticsCompanyService;
     private final LogisticsTrackService logisticsTrackService;
-    private final OrderService orderService;
+    private final AMapService amapService;
     private final Random random = new Random();
 
     /**
@@ -107,9 +107,8 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
             // 填充物流轨迹信息
             logistics.setTracks(logisticsTrackService.getTracksByLogisticsId(id));
 
-            // 填充订单信息
-            Order order = orderService.getById(logistics.getOrderId());
-            logistics.setOrder(order);
+            // 注意：订单信息由前端或调用方单独查询，避免循环依赖
+            // 如需订单信息，请使用 OrderService.getById(logistics.getOrderId())
         }
         return logistics;
     }
@@ -527,5 +526,135 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
         track.setDetailsJson(detailsJson);
 
         return track;
+    }
+
+    /**
+     * 【场景3：物流轨迹可视化】根据真实路径规划生成物流轨迹
+     * 调用高德地图API获取驾车路线，生成带坐标的轨迹点
+     *
+     * @param logisticsId 物流ID
+     * @param destLng     目标经度
+     * @param destLat     目标纬度
+     * @return 是否生成成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean generateRouteBasedTracks(Long logisticsId, Double destLng, Double destLat) {
+        log.info("开始生成基于真实路径的物流轨迹: logisticsId={}, destLng={}, destLat={}", 
+                logisticsId, destLng, destLat);
+
+        try {
+            // 1. 获取物流信息
+            Logistics logistics = getLogisticsById(logisticsId);
+            if (logistics == null) {
+                log.error("物流记录不存在: logisticsId={}", logisticsId);
+                return false;
+            }
+
+            // 2. 调用高德地图API获取驾车路径规划
+            DrivingRouteResponse routeResponse = amapService.drivingRoute(destLng, destLat);
+            if (routeResponse == null || routeResponse.getRoute() == null 
+                    || routeResponse.getRoute().getPaths() == null 
+                    || routeResponse.getRoute().getPaths().isEmpty()) {
+                log.error("驾车路径规划失败或返回空结果: logisticsId={}", logisticsId);
+                return false;
+            }
+
+            // 3. 获取第一个路径方案（最优方案）
+            DrivingRouteResponse.Path path = routeResponse.getRoute().getPaths().get(0);
+            List<DrivingRouteResponse.Step> steps = path.getSteps();
+            
+            if (steps == null || steps.isEmpty()) {
+                log.error("路径规划步骤为空: logisticsId={}", logisticsId);
+                return false;
+            }
+
+            log.info("路径规划成功: 总距离={}米, 预计时长={}秒, 步骤数={}", 
+                    path.getDistance(), path.getDuration(), steps.size());
+
+            // 4. 根据steps生成物流轨迹点
+            List<LogisticsTrack> tracks = new ArrayList<>();
+            LocalDateTime baseTime = logistics.getShippingTime() != null 
+                    ? logistics.getShippingTime() 
+                    : LocalDateTime.now();
+
+            // 计算每个step的预计到达时间（根据总时长平均分配）
+            int totalDuration = Integer.parseInt(path.getDuration());
+            int stepCount = steps.size();
+            int avgDurationPerStep = totalDuration / stepCount;
+
+            for (int i = 0; i < steps.size(); i++) {
+                DrivingRouteResponse.Step step = steps.get(i);
+                
+                // 解析polyline获取第一个坐标点作为该段的位置
+                String polyline = step.getPolyline();
+                if (polyline == null || polyline.trim().isEmpty()) {
+                    continue;
+                }
+
+                // polyline格式：经度,纬度;经度,纬度;...
+                String[] coords = polyline.split(";");
+                if (coords.length == 0) {
+                    continue;
+                }
+
+                // 取第一个坐标点
+                String[] lonLat = coords[0].split(",");
+                if (lonLat.length != 2) {
+                    continue;
+                }
+
+                try {
+                    Double longitude = Double.parseDouble(lonLat[0]);
+                    Double latitude = Double.parseDouble(lonLat[1]);
+
+                    // 创建轨迹点
+                    LogisticsTrack track = new LogisticsTrack();
+                    track.setLogisticsId(logisticsId);
+                    track.setTrackingTime(baseTime.plusSeconds((long) i * avgDurationPerStep));
+                    track.setStatus("SHIPPING");
+                    track.setContent(step.getInstruction()); // 使用高德返回的行驶指示
+                    track.setLocation(step.getRoad() != null ? step.getRoad() : "运输途中");
+                    track.setOperator("系统自动生成");
+                    track.setLongitude(longitude);
+                    track.setLatitude(latitude);
+                    track.setLocationName(step.getRoad());
+
+                    // 设置扩展信息
+                    Map<String, Object> detailsJson = new HashMap<>();
+                    detailsJson.put("type", "route_based");
+                    detailsJson.put("systemGenerated", true);
+                    detailsJson.put("stepIndex", i);
+                    detailsJson.put("stepDistance", step.getDistance());
+                    detailsJson.put("stepDuration", step.getDuration());
+                    detailsJson.put("action", step.getAction());
+                    detailsJson.put("orientation", step.getOrientation());
+                    track.setDetailsJson(detailsJson);
+
+                    tracks.add(track);
+                } catch (NumberFormatException e) {
+                    log.warn("解析坐标失败: polyline={}", coords[0], e);
+                }
+            }
+
+            if (tracks.isEmpty()) {
+                log.error("未能生成任何轨迹点: logisticsId={}", logisticsId);
+                return false;
+            }
+
+            // 5. 批量保存轨迹点
+            boolean result = logisticsTrackService.batchAddTracks(logisticsId, tracks);
+            
+            if (result) {
+                log.info("成功生成{}个基于真实路径的物流轨迹点: logisticsId={}", tracks.size(), logisticsId);
+            } else {
+                log.error("批量保存轨迹点失败: logisticsId={}", logisticsId);
+            }
+
+            return result;
+        } catch (Exception e) {
+            log.error("生成基于真实路径的物流轨迹异常: logisticsId={}", logisticsId, e);
+            return false;
+        }
     }
 }

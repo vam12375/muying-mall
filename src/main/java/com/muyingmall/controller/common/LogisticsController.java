@@ -98,4 +98,64 @@ public class LogisticsController {
             return CommonResult.failed("获取物流轨迹失败: " + e.getMessage());
         }
     }
+
+    /**
+     * 重新生成物流轨迹（管理员接口）
+     * 用于修复坐标为空或需要更新的物流轨迹
+     *
+     * @param logisticsId 物流ID
+     * @return 操作结果
+     */
+    @PostMapping("/admin/{logisticsId}/regenerate-tracks")
+    @Operation(summary = "重新生成物流轨迹", description = "删除旧轨迹并基于真实路径重新生成")
+    public CommonResult<String> regenerateTracks(@PathVariable("logisticsId") Long logisticsId) {
+        try {
+            log.info("【管理员操作】开始重新生成物流轨迹: logisticsId={}", logisticsId);
+            
+            // 1. 获取物流信息
+            Logistics logistics = logisticsService.getLogisticsById(logisticsId);
+            if (logistics == null) {
+                return CommonResult.failed("物流记录不存在");
+            }
+            
+            // 2. 检查收货地坐标
+            if (logistics.getReceiverLongitude() == null || logistics.getReceiverLatitude() == null) {
+                return CommonResult.failed("收货地坐标为空，无法生成轨迹");
+            }
+            
+            // 3. 删除旧轨迹（保留初始轨迹）
+            List<LogisticsTrack> oldTracks = logisticsTrackService.getTracksByLogisticsId(logisticsId);
+            if (oldTracks != null && oldTracks.size() > 1) {
+                // 只保留第一条（初始轨迹），删除其他
+                for (int i = 1; i < oldTracks.size(); i++) {
+                    logisticsTrackService.removeById(oldTracks.get(i).getId());
+                }
+                log.info("已删除旧轨迹: logisticsId={}, 删除数量={}", logisticsId, oldTracks.size() - 1);
+            }
+            
+            // 4. 重新生成基于真实路径的轨迹
+            boolean success = logisticsService.generateRouteBasedTracks(
+                    logisticsId,
+                    logistics.getReceiverLongitude(),
+                    logistics.getReceiverLatitude()
+            );
+            
+            if (success) {
+                log.info("【管理员操作】物流轨迹重新生成成功: logisticsId={}", logisticsId);
+                return CommonResult.success("物流轨迹重新生成成功");
+            } else {
+                log.warn("【管理员操作】路径规划失败，使用标准轨迹: logisticsId={}", logisticsId);
+                // 降级方案：使用标准轨迹
+                boolean fallbackSuccess = logisticsService.generateStandardTracks(logisticsId, "管理员");
+                if (fallbackSuccess) {
+                    return CommonResult.success("路径规划失败，已使用标准轨迹");
+                } else {
+                    return CommonResult.failed("轨迹生成失败");
+                }
+            }
+        } catch (Exception e) {
+            log.error("【管理员操作】重新生成物流轨迹失败: logisticsId={}", logisticsId, e);
+            return CommonResult.failed("重新生成物流轨迹失败: " + e.getMessage());
+        }
+    }
 }

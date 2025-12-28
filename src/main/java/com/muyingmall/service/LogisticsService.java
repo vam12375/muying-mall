@@ -78,4 +78,15 @@ public interface LogisticsService extends IService<Logistics> {
      * @return 是否生成成功
      */
     boolean generateStandardTracks(Long logisticsId, String operator);
+
+    /**
+     * 【场景3：物流轨迹可视化】根据真实路径规划生成物流轨迹
+     * 调用高德地图API获取驾车路线，生成带坐标的轨迹点
+     *
+     * @param logisticsId 物流ID
+     * @param destLng     目标经度
+     * @param destLat     目标纬度
+     * @return 是否生成成功
+     */
+    boolean generateRouteBasedTracks(Long logisticsId, Double destLng, Double destLat);
 }

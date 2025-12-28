@@ -60,6 +60,16 @@ public class Logistics implements Serializable {
     private String senderAddress;
 
     /**
+     * 发货地经度（高德地图坐标）
+     */
+    private Double senderLongitude;
+
+    /**
+     * 发货地纬度（高德地图坐标）
+     */
+    private Double senderLatitude;
+
+    /**
      * 收件人姓名
      */
     private String receiverName;
@@ -73,6 +83,16 @@ public class Logistics implements Serializable {
      * 收件地址
      */
     private String receiverAddress;
+
+    /**
+     * 收货地经度（高德地图坐标）
+     */
+    private Double receiverLongitude;
+
+    /**
+     * 收货地纬度（高德地图坐标）
+     */
+    private Double receiverLatitude;
 
     /**
      * 发货时间

@@ -55,6 +55,21 @@ public class LogisticsTrack implements Serializable {
     private String operator;
 
     /**
+     * 经度（高德地图）
+     */
+    private Double longitude;
+
+    /**
+     * 纬度（高德地图）
+     */
+    private Double latitude;
+
+    /**
+     * 位置名称
+     */
+    private String locationName;
+
+    /**
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)
