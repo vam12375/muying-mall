@@ -1,6 +1,7 @@
 package com.muyingmall.controller.user;
 
-import com.muyingmall.common.result.Result;
+import com.muyingmall.common.api.Result;
+import com.muyingmall.common.result.ResultCode;
 import com.muyingmall.service.ShippingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
