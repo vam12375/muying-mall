@@ -69,6 +69,26 @@ public class Address implements Serializable {
     private Integer isDefault;
 
     /**
+     * 经度（高德地图）
+     */
+    private Double longitude;
+
+    /**
+     * 纬度（高德地图）
+     */
+    private Double latitude;
+
+    /**
+     * 标准化地址（高德返回）
+     */
+    private String formattedAddress;
+
+    /**
+     * 区域编码（高德行政区划代码）
+     */
+    private String adcode;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

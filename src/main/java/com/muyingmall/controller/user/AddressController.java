@@ -54,7 +54,7 @@ public class AddressController {
         }
 
         String cacheKey = "user:addresses:" + userId;
-        
+
         // 优化：缓存时间从300秒提升到600秒（10分钟）
         return controllerCacheUtil.getWithCache(cacheKey, 600L, () -> {
             List<Address> addresses = addressService.getUserAddresses(userId);
