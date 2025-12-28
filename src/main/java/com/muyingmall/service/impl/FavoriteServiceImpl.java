@@ -193,16 +193,17 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean clearFavorites(Integer userId) {
-        boolean result = lambdaUpdate()
+        // 执行删除操作
+        lambdaUpdate()
                 .eq(Favorite::getUserId, userId)
                 .remove();
         
         // 清除用户所有收藏相关缓存
-        if (result) {
-            clearUserFavoriteCache(userId);
-        }
+        clearUserFavoriteCache(userId);
         
-        return result;
+        // 清空操作应该是幂等的，无论是否有记录被删除都返回成功
+        // 符合REST幂等性原则：多次清空的结果应该一致
+        return true;
     }
     
     /**

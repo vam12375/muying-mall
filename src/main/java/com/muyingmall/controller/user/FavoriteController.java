@@ -9,6 +9,7 @@ import com.muyingmall.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/user/favorites")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "收藏管理", description = "用户收藏商品的相关接口")
 public class FavoriteController {
 
@@ -54,6 +56,7 @@ public class FavoriteController {
     /**
      * 添加收藏
      * 性能优化：使用UserContext直接获取userId
+     * 缓存一致性：添加收藏后清除Controller层缓存
      */
     @PostMapping
     @Operation(summary = "添加收藏")
@@ -65,6 +68,10 @@ public class FavoriteController {
 
         try {
             Favorite favorite = favoriteService.addFavorite(userId, productId);
+            
+            // 清除Controller层收藏列表缓存，确保前端能立即看到最新数据
+            clearUserFavoriteControllerCache(userId);
+            
             return Result.success(favorite, "收藏成功");
         } catch (Exception e) {
             return Result.error(e.getMessage());
@@ -74,6 +81,7 @@ public class FavoriteController {
     /**
      * 移除收藏
      * 性能优化：使用UserContext直接获取userId
+     * 缓存一致性：移除收藏后清除Controller层缓存
      */
     @DeleteMapping("/{favoriteId}")
     @Operation(summary = "移除收藏")
@@ -86,6 +94,9 @@ public class FavoriteController {
         try {
             boolean success = favoriteService.removeFavorite(favoriteId);
             if (success) {
+                // 清除Controller层收藏列表缓存
+                clearUserFavoriteControllerCache(userId);
+                
                 return Result.success(null, "移除成功");
             } else {
                 return Result.error("移除失败");
@@ -98,6 +109,8 @@ public class FavoriteController {
     /**
      * 清空收藏夹
      * 性能优化：使用UserContext直接获取userId
+     * 缓存一致性：清空收藏后清除Controller层缓存
+     * 幂等性：无论是否有记录，都返回成功
      */
     @DeleteMapping("/clear")
     @Operation(summary = "清空收藏夹")
@@ -108,14 +121,32 @@ public class FavoriteController {
         }
 
         try {
-            boolean success = favoriteService.clearFavorites(userId);
-            if (success) {
-                return Result.success(null, "清空成功");
-            } else {
-                return Result.error("清空失败");
-            }
+            // clearFavorites现在始终返回true（幂等操作）
+            favoriteService.clearFavorites(userId);
+            
+            // 清除Controller层收藏列表缓存
+            clearUserFavoriteControllerCache(userId);
+            
+            return Result.success(null, "清空成功");
         } catch (Exception e) {
-            return Result.error(e.getMessage());
+            log.error("清空收藏失败: userId={}", userId, e);
+            return Result.error("清空失败：" + e.getMessage());
         }
+    }
+
+    /**
+     * 清除用户收藏列表的Controller层缓存
+     * 使用模式匹配清除所有分页缓存
+     * 
+     * @param userId 用户ID
+     */
+    private void clearUserFavoriteControllerCache(Integer userId) {
+        if (userId == null) {
+            return;
+        }
+        
+        // 使用模式匹配清除所有分页缓存
+        String pattern = "user:favorites:" + userId + ":*";
+        controllerCacheUtil.clearCacheByPattern(pattern);
     }
 }

@@ -123,8 +123,10 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
         queryWrapper.eq(UserMessage::getUserId, userId);
         queryWrapper.eq(UserMessage::getStatus, 1); // 只查询正常状态的消息
 
-        // 过滤系统管理员消息（userId = -1的消息只在管理员后台显示）
-        queryWrapper.ne(UserMessage::getUserId, -1); // 不等于-1的消息
+        // 普通用户不显示催发货提醒消息（这是管理员专用消息）
+        // 注意：催发货消息的userId是-1（管理员），所以这里不会查到
+        // 但为了安全起见，还是加上过滤条件
+        queryWrapper.ne(UserMessage::getType, MessageType.SHIPPING_REMINDER.getCode());
 
         // 根据类型筛选
         if (StringUtils.hasText(type)) {
@@ -143,12 +145,10 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
         Page<UserMessage> messagePage = new Page<>(page, size);
         IPage<UserMessage> result = page(messagePage, queryWrapper);
 
-        // 缓存结果
-        if (result != null && result.getRecords() != null && !result.getRecords().isEmpty()) {
-            redisUtil.set(cacheKey, result, CacheConstants.MESSAGE_LIST_EXPIRE_TIME);
-            log.debug("将用户消息列表缓存到Redis: userId={}, type={}, isRead={}, 缓存键={}, 过期时间={}秒",
-                    userId, type, isRead, cacheKey, CacheConstants.MESSAGE_LIST_EXPIRE_TIME);
-        }
+        // 缓存结果（无论是否有数据都缓存，避免缓存穿透）
+        redisUtil.set(cacheKey, result, CacheConstants.MESSAGE_LIST_EXPIRE_TIME);
+        log.debug("将用户消息列表缓存到Redis: userId={}, type={}, isRead={}, 记录数={}, 缓存键={}, 过期时间={}秒",
+                userId, type, isRead, result.getRecords().size(), cacheKey, CacheConstants.MESSAGE_LIST_EXPIRE_TIME);
 
         return result;
     }

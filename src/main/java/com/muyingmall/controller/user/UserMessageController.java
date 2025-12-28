@@ -68,20 +68,8 @@ public class UserMessageController {
             return Result.error("用户未登录");
         }
 
-        // 检查用户角色，普通用户不应接收催发货提醒消息
-        boolean isAdmin = false;
-        if (user.getRole() != null) {
-            isAdmin = "admin".equals(user.getRole());
-        }
-
-        // 查询消息列表
+        // 查询消息列表（Service层已经过滤了催发货消息）
         IPage<UserMessage> messagePage = userMessageService.getUserMessages(user.getUserId(), type, isRead, page, size);
-
-        // 普通用户过滤掉催发货类型的消息
-        if (!isAdmin && messagePage.getRecords() != null) {
-            messagePage.getRecords()
-                    .removeIf(message -> MessageType.SHIPPING_REMINDER.getCode().equals(message.getType()));
-        }
 
         // 转换为DTO
         IPage<UserMessageDTO> dtoPage = messagePage.convert(message -> {
