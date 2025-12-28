@@ -38,6 +38,7 @@ build/
 
 # IDE and editor files
 .cunzhi-memory/
+.sanshu-memory/
 
 # 临时文件和备份
 *.bkp
