@@ -77,6 +77,24 @@ public class ControllerCacheUtil {
     }
 
     /**
+     * 使用模式匹配清除缓存
+     * 用于清除带有通配符的缓存键（如分页缓存）
+     * 
+     * @param pattern 缓存键模式（支持*通配符）
+     */
+    public void clearCacheByPattern(String pattern) {
+        if (pattern == null || pattern.isEmpty()) {
+            return;
+        }
+        
+        java.util.Set<String> keys = redisUtil.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            redisUtil.del(keys);
+            log.debug("Controller缓存已清除（模式匹配）: pattern={}, 清除数量={}", pattern, keys.size());
+        }
+    }
+
+    /**
      * 清除用户相关的所有缓存
      * 
      * @param userId 用户ID

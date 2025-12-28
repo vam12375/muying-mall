@@ -1270,17 +1270,18 @@ public class RedisUtil {
     // ============================== 高级功能 ==============================
 
     /**
-     * 执行Redis Lua脚本
+     * 执行Redis Lua脚本（返回Long类型）
      *
      * @param script Lua脚本
      * @param keys   键列表
      * @param args   参数列表
      * @return 执行结果
      */
-    public Object executeLuaScript(String script, List<String> keys, Object... args) {
+    public Long executeLuaScript(String script, List<String> keys, Object... args) {
         try {
-            DefaultRedisScript<Object> redisScript = new DefaultRedisScript<>();
+            DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
             redisScript.setScriptText(script);
+            redisScript.setResultType(Long.class);
             return redisTemplate.execute(redisScript, keys, args);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1299,7 +1300,7 @@ public class RedisUtil {
     public boolean getLock(String lockKey, String requestId, int expireTime) {
         try {
             String script = "if redis.call('set', KEYS[1], ARGV[1], 'NX', 'EX', ARGV[2]) then return 1 else return 0 end";
-            Long result = (Long) executeLuaScript(script, Collections.singletonList(lockKey), requestId, expireTime);
+            Long result = executeLuaScript(script, Collections.singletonList(lockKey), requestId, expireTime);
             return result != null && result == 1;
         } catch (Exception e) {
             e.printStackTrace();
@@ -1317,12 +1318,67 @@ public class RedisUtil {
     public boolean releaseLock(String lockKey, String requestId) {
         try {
             String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
-            Long result = (Long) executeLuaScript(script, Collections.singletonList(lockKey), requestId);
+            Long result = executeLuaScript(script, Collections.singletonList(lockKey), requestId);
             return result != null && result == 1;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * 尝试获取分布式锁（支持超时等待）
+     * 
+     * @param lockKey      锁键
+     * @param requestId    请求标识
+     * @param waitTime     等待时间
+     * @param leaseTime    锁过期时间
+     * @param timeUnit     时间单位
+     * @return true成功 false失败
+     */
+    public boolean tryLock(String lockKey, String requestId, long waitTime, long leaseTime, TimeUnit timeUnit) {
+        try {
+            long waitTimeMillis = timeUnit.toMillis(waitTime);
+            long leaseTimeSeconds = timeUnit.toSeconds(leaseTime);
+            long startTime = System.currentTimeMillis();
+            
+            // 循环尝试获取锁
+            while (System.currentTimeMillis() - startTime < waitTimeMillis) {
+                // 尝试获取锁
+                Boolean success = redisTemplate.opsForValue().setIfAbsent(
+                    lockKey, 
+                    requestId, 
+                    leaseTimeSeconds, 
+                    TimeUnit.SECONDS
+                );
+                
+                if (Boolean.TRUE.equals(success)) {
+                    return true;
+                }
+                
+                // 短暂休眠后重试
+                Thread.sleep(50);
+            }
+            
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 释放分布式锁（别名方法，与tryLock配对使用）
+     * 
+     * @param lockKey   锁键
+     * @param requestId 请求标识
+     * @return true成功 false失败
+     */
+    public boolean unlock(String lockKey, String requestId) {
+        return releaseLock(lockKey, requestId);
     }
 
     /**
