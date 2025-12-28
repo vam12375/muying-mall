@@ -10,10 +10,10 @@
         <mxCell id="client-layer" value="客户端层 (Client Layer)" style="swimlane;horizontal=1;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=16;" parent="1" vertex="1">
           <mxGeometry x="40" y="80" width="1520" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="web-client" value="Web浏览器&#xa;(Vue.js前端)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" parent="client-layer" vertex="1">
+        <mxCell id="web-client" value="Muying-Web&lt;br&gt;(Vue.js 前端)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" parent="client-layer" vertex="1">
           <mxGeometry x="400" y="40" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="admin-client" value="管理后台&#xa;(Vue Admin)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" parent="client-layer" vertex="1">
+        <mxCell id="admin-client" value="Muying-Admin&lt;br&gt;(Next.js 后台)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" parent="client-layer" vertex="1">
           <mxGeometry x="700" y="40" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="third-party" value="第三方系统&#xa;(支付宝/微信)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;" parent="client-layer" vertex="1">
@@ -23,18 +23,15 @@
           <mxGeometry x="40" y="220" width="1520" height="100" as="geometry" />
         </mxCell>
         <mxCell id="nginx" value="Nginx&#xa;(反向代理/负载均衡)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" parent="gateway-layer" vertex="1">
-          <mxGeometry x="420" y="40" width="160" height="50" as="geometry" />
+          <mxGeometry x="380" y="40" width="160" height="50" as="geometry" />
         </mxCell>
         <mxCell id="cors" value="CORS配置&#xa;(跨域处理)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" parent="gateway-layer" vertex="1">
-          <mxGeometry x="620" y="40" width="120" height="50" as="geometry" />
+          <mxGeometry x="700" y="40" width="120" height="50" as="geometry" />
         </mxCell>
         <mxCell id="jwt-filter" value="JWT认证过滤器&#xa;(Token验证)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" parent="gateway-layer" vertex="1">
-          <mxGeometry x="780" y="40" width="140" height="50" as="geometry" />
+          <mxGeometry x="990" y="40" width="140" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="rate-limiter" value="限流器&#xa;(Guava RateLimiter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" parent="gateway-layer" vertex="1">
-          <mxGeometry x="960" y="40" width="140" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="app-layer" value="应用层 (Spring Boot 3.2.0 + Java 21)" style="swimlane;horizontal=1;startSize=30;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=16;" parent="1" vertex="1">
+        <mxCell id="app-layer" value="应用层 (Spring Boot 3.2.0 + Java 21) muying-mall" style="swimlane;horizontal=1;startSize=30;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=16;" parent="1" vertex="1">
           <mxGeometry x="40" y="340" width="1520" height="280" as="geometry" />
         </mxCell>
         <mxCell id="controller-group" value="Controller层" style="swimlane;horizontal=1;startSize=25;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=16;" parent="app-layer" vertex="1">
@@ -148,16 +145,16 @@
         <mxCell id="storage-layer" value="数据存储层 (Storage Layer)" style="swimlane;horizontal=1;startSize=30;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=16;" parent="1" vertex="1">
           <mxGeometry x="40" y="760" width="1520" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="mysql" value="MySQL 8.0&#xa;关系数据库&#xa;(68+表)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" parent="storage-layer" vertex="1">
+        <mxCell id="mysql" value="MySQL 8.0&lt;br&gt;关系数据库" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" parent="storage-layer" vertex="1">
           <mxGeometry x="290" y="40" width="120" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="redis" value="Redis&#xa;缓存/Session&#xa;(Lettuce)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;" parent="storage-layer" vertex="1">
+        <mxCell id="redis" value="Redis&lt;br&gt;缓存/Session" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;" parent="storage-layer" vertex="1">
           <mxGeometry x="490" y="40" width="120" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="elasticsearch" value="Elasticsearch 9.x&#xa;全文搜索&#xa;(商品索引)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;" parent="storage-layer" vertex="1">
+        <mxCell id="elasticsearch" value="Elasticsearch&lt;br&gt;全文搜索" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;" parent="storage-layer" vertex="1">
           <mxGeometry x="690" y="40" width="140" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="rabbitmq" value="RabbitMQ&#xa;消息队列&#xa;(订单/支付消息)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;" parent="storage-layer" vertex="1">
+        <mxCell id="rabbitmq" value="RabbitMQ&lt;br&gt;消息队列" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;" parent="storage-layer" vertex="1">
           <mxGeometry x="910" y="40" width="140" height="70" as="geometry" />
         </mxCell>
         <mxCell id="file-storage" value="文件存储&#xa;(图片/附件)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" parent="storage-layer" vertex="1">
