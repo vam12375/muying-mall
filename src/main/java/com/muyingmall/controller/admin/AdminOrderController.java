@@ -5,9 +5,11 @@ import com.muyingmall.common.api.CommonResult;
 import com.muyingmall.entity.Order;
 import com.muyingmall.entity.Logistics;
 import com.muyingmall.entity.LogisticsCompany;
+import com.muyingmall.entity.Address;
 import com.muyingmall.service.OrderService;
 import com.muyingmall.service.LogisticsService;
 import com.muyingmall.service.LogisticsCompanyService;
+import com.muyingmall.service.AddressService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,6 +37,7 @@ public class AdminOrderController {
     private final OrderService orderService;
     private final LogisticsService logisticsService;
     private final LogisticsCompanyService logisticsCompanyService;
+    private final AddressService addressService;
 
     /**
      * 分页获取订单列表
@@ -204,11 +207,65 @@ public class AdminOrderController {
             logistics.setReceiverName(finalReceiverName);
             logistics.setReceiverPhone(finalReceiverPhone);
             logistics.setReceiverAddress(finalReceiverAddress);
+            
+            // 【修复】设置发货地坐标（从配置文件读取杭州主仓库坐标）
+            logistics.setSenderName("母婴商城");
+            logistics.setSenderPhone("400-123-4567");
+            logistics.setSenderAddress("浙江省杭州市西湖区");
+            logistics.setSenderLongitude(120.153576);  // 杭州经度
+            logistics.setSenderLatitude(30.287459);    // 杭州纬度
+            
+            // 【修复】设置收货地坐标（从订单关联的用户地址获取）
+            if (order.getAddressId() != null) {
+                try {
+                    // 通过地址服务获取地址信息
+                    Address address = addressService.getById(order.getAddressId());
+                    if (address != null && address.getLongitude() != null && address.getLatitude() != null) {
+                        logistics.setReceiverLongitude(address.getLongitude());
+                        logistics.setReceiverLatitude(address.getLatitude());
+                        log.info("【管理员发货】成功获取收货地坐标: orderId={}, addressId={}, lng={}, lat={}", 
+                                id, order.getAddressId(), address.getLongitude(), address.getLatitude());
+                    } else {
+                        log.warn("【管理员发货】地址缺少坐标信息: orderId={}, addressId={}", id, order.getAddressId());
+                    }
+                } catch (Exception e) {
+                    log.error("【管理员发货】获取地址坐标失败: orderId={}, addressId={}, error={}", 
+                            id, order.getAddressId(), e.getMessage());
+                }
+            }
 
             // 保存物流记录
             boolean logisticsResult = logisticsService.createLogistics(logistics);
             if (!logisticsResult) {
                 return CommonResult.failed("创建物流记录失败");
+            }
+
+            // 【场景3：物流轨迹可视化】发货后立即生成物流轨迹
+            // 优先使用基于真实路径的轨迹生成，失败则降级为标准轨迹
+            if (logistics.getReceiverLongitude() != null && logistics.getReceiverLatitude() != null) {
+                log.info("【管理员发货】开始生成基于真实路径的物流轨迹: orderId={}, logisticsId={}", 
+                        id, logistics.getId());
+                
+                boolean trackGenerated = logisticsService.generateRouteBasedTracks(
+                        logistics.getId(),
+                        logistics.getReceiverLongitude(),
+                        logistics.getReceiverLatitude()
+                );
+                
+                if (trackGenerated) {
+                    log.info("【管理员发货】物流轨迹生成成功（真实路径）: orderId={}, logisticsId={}", 
+                            id, logistics.getId());
+                } else {
+                    log.warn("【管理员发货】真实路径规划失败，使用标准轨迹: orderId={}, logisticsId={}", 
+                            id, logistics.getId());
+                    // 降级方案：使用标准轨迹
+                    logisticsService.generateStandardTracks(logistics.getId(), "系统");
+                }
+            } else {
+                log.warn("【管理员发货】收货地坐标为空，使用标准轨迹: orderId={}, logisticsId={}", 
+                        id, logistics.getId());
+                // 降级方案：使用标准轨迹
+                logisticsService.generateStandardTracks(logistics.getId(), "系统");
             }
 
             // 更新订单发货信息

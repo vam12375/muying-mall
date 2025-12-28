@@ -21,6 +21,7 @@ import com.muyingmall.enums.OrderStatus;
 import com.muyingmall.enums.PaymentStatus;
 import com.muyingmall.event.OrderCompletedEvent;
 import com.muyingmall.event.OrderStatusChangedEvent;
+import com.muyingmall.event.OrderPaidEvent;
 import com.muyingmall.mapper.CartMapper;
 import com.muyingmall.mapper.OrderMapper;
 import com.muyingmall.mapper.OrderProductMapper;
@@ -36,7 +37,11 @@ import com.muyingmall.service.UserCouponService;
 import com.muyingmall.service.MessageProducerService;
 import com.muyingmall.service.ProductSkuService;
 import com.muyingmall.service.BatchQueryService;
+import com.muyingmall.service.AddressService;
 import com.muyingmall.entity.ProductSku;
+import com.muyingmall.entity.Address;
+import com.muyingmall.entity.Logistics;
+import com.muyingmall.enums.LogisticsStatus;
 import com.muyingmall.dto.OrderMessage;
 import com.muyingmall.dto.SkuStockDTO;
 import com.muyingmall.util.EnumUtil;
@@ -89,6 +94,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private final ProductSkuService productSkuService;
     private final BatchQueryService batchQueryService;
     private final SeckillOrderMapper seckillOrderMapper;
+    private final AddressService addressService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -1014,9 +1020,41 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
             // 发送订单状态变更消息通知
             sendOrderStatusChangeNotification(order, oldStatus, ORDER_STATUS_SHIPPED);
+
+            // 【场景3：物流轨迹可视化】创建物流记录并生成基于真实路径的轨迹
+            try {
+                createLogisticsWithRouteTracks(order);
+            } catch (Exception e) {
+                log.error("创建物流轨迹失败，但不影响发货流程: orderId={}", orderId, e);
+            }
         }
 
         return result;
+    }
+
+    /**
+     * 【场景3：物流轨迹可视化】创建物流记录并生成基于真实路径的轨迹
+     *
+     * @param order 订单信息
+     */
+    private void createLogisticsWithRouteTracks(Order order) {
+        try {
+            // 1. 获取收货地址信息
+            Address address = addressService.getById(order.getAddressId());
+            if (address == null) {
+                log.error("收货地址不存在，无法创建物流: orderId={}, addressId={}", 
+                        order.getOrderId(), order.getAddressId());
+                return;
+            }
+
+            // 2. 发布订单支付事件，由事件监听器异步处理物流创建（包括坐标补全）
+            log.info("发布订单支付事件，触发物流创建: orderId={}, hasCoords={}", 
+                    order.getOrderId(), address.getLongitude() != null);
+            eventPublisher.publishEvent(new OrderPaidEvent(this, order, address));
+
+        } catch (Exception e) {
+            log.error("发布订单支付事件失败: orderId={}", order.getOrderId(), e);
+        }
     }
 
     @Override

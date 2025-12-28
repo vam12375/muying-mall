@@ -56,6 +56,7 @@ public class OrderStatusChangedEvent extends MessageEvent {
 
     /**
      * 生成消息标题
+     * 优化：支持大写和小写下划线格式的状态码
      *
      * @param newStatus 新状态
      * @param orderNo   订单号
@@ -64,8 +65,12 @@ public class OrderStatusChangedEvent extends MessageEvent {
     private static String generateTitle(String newStatus, String orderNo) {
         String shortOrderNo = orderNo.substring(Math.max(0, orderNo.length() - 8));
 
-        switch (newStatus) {
+        // 统一转换为大写进行匹配
+        String upperNewStatus = newStatus != null ? newStatus.toUpperCase() : "";
+        
+        switch (upperNewStatus) {
             case "PAID":
+            case "PENDING_SHIPMENT":
                 return "订单支付成功，等待发货 - " + shortOrderNo;
             case "SHIPPED":
                 return "订单已发货 - " + shortOrderNo;
@@ -86,6 +91,7 @@ public class OrderStatusChangedEvent extends MessageEvent {
 
     /**
      * 生成消息内容
+     * 优化：提供更友好的状态变更描述
      *
      * @param oldStatus 原状态
      * @param newStatus 新状态
@@ -96,8 +102,12 @@ public class OrderStatusChangedEvent extends MessageEvent {
         StringBuilder content = new StringBuilder();
         content.append("您的订单 ").append(orderNo).append(" ");
 
-        switch (newStatus) {
+        // 统一转换为大写进行匹配
+        String upperNewStatus = newStatus != null ? newStatus.toUpperCase() : "";
+        
+        switch (upperNewStatus) {
             case "PAID":
+            case "PENDING_SHIPMENT":
                 content.append("已支付成功，商家正在处理您的订单，请耐心等待发货。");
                 break;
             case "SHIPPED":
@@ -119,8 +129,9 @@ public class OrderStatusChangedEvent extends MessageEvent {
                 content.append("已退款，退款金额将原路返回，请注意查收。");
                 break;
             default:
-                content.append("状态已从 [").append(getStatusDesc(oldStatus))
-                        .append("] 更新为 [").append(getStatusDesc(newStatus)).append("]。");
+                // 使用友好的中文描述替代英文状态码
+                content.append("状态已从【").append(getStatusDesc(oldStatus))
+                        .append("】更新为【").append(getStatusDesc(newStatus)).append("】。");
         }
 
         return content.toString();
@@ -128,16 +139,26 @@ public class OrderStatusChangedEvent extends MessageEvent {
 
     /**
      * 获取状态的中文描述
+     * 支持大写格式（PAID）和小写下划线格式（pending_payment）
      *
      * @param status 状态代码
      * @return 状态描述
      */
     private static String getStatusDesc(String status) {
-        switch (status) {
+        if (status == null) {
+            return "未知状态";
+        }
+        
+        // 转换为大写以统一处理
+        String upperStatus = status.toUpperCase();
+        
+        switch (upperStatus) {
             case "CREATED":
-                return "已创建";
+            case "PENDING_PAYMENT":
+                return "待支付";
             case "PAID":
-                return "已支付";
+            case "PENDING_SHIPMENT":
+                return "待发货";
             case "SHIPPED":
                 return "已发货";
             case "DELIVERED":
