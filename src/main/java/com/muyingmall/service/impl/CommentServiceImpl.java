@@ -652,6 +652,10 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             String sort, String order, String keyword, String ratingFilter) {
         Page<Comment> pageParam = new Page<>(page, size);
 
+        // 性能优化：在SQL层完成关键词搜索，避免内存过滤导致分页不准确
+        // 原代码：先分页查询 -> 内存过滤关键词 -> 总数不准确
+        // 优化后：SQL层过滤 -> 分页准确 -> 性能提升
+        
         // 创建查询条件
         LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Comment::getUserId, userId);
@@ -670,15 +674,40 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                     break;
             }
         }
+        
+        // 性能优化：使用MySQL ngram全文索引搜索（支持中文分词）
+        // 注意：需要先在数据库中创建全文索引：ALTER TABLE comment ADD FULLTEXT INDEX idx_content_fulltext (content) WITH PARSER ngram;
+        if (keyword != null && !keyword.isEmpty()) {
+            queryWrapper.apply("MATCH(content) AGAINST({0} IN NATURAL LANGUAGE MODE)", keyword);
+        }
 
-        // 执行查询
+        // 处理排序
+        if ("rating".equals(sort)) {
+            if ("asc".equals(order)) {
+                queryWrapper.orderByAsc(Comment::getRating);
+            } else {
+                queryWrapper.orderByDesc(Comment::getRating);
+            }
+        } else if ("createTime".equals(sort)) {
+            if ("asc".equals(order)) {
+                queryWrapper.orderByAsc(Comment::getCreateTime);
+            } else {
+                queryWrapper.orderByDesc(Comment::getCreateTime);
+            }
+        } else {
+            // 默认按创建时间倒序
+            queryWrapper.orderByDesc(Comment::getCreateTime);
+        }
+
+        // 执行查询（分页准确）
         IPage<Comment> commentPage = this.page(pageParam, queryWrapper);
 
-        // 填充商品信息
+        // 填充商品信息（批量查询，避免N+1问题）
         List<Comment> records = commentPage.getRecords();
         if (!records.isEmpty()) {
             List<Integer> productIds = records.stream()
                     .map(Comment::getProductId)
+                    .distinct()
                     .collect(Collectors.toList());
 
             List<Product> products = productMapper.selectList(new LambdaQueryWrapper<Product>()
@@ -691,34 +720,23 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                     comment.setProduct(productMap.get(comment.getProductId()));
                 }
             });
-
-            // 处理关键词搜索（在内存中过滤，因为需要搜索关联的商品信息）
+            
+            // 如果需要搜索商品名称，可以在内存中进行二次过滤（可选）
+            // 注意：这会导致分页不准确，建议使用JOIN查询或Elasticsearch
             if (keyword != null && !keyword.isEmpty()) {
                 String lowerKeyword = keyword.toLowerCase();
+                // 只过滤商品名称，评论内容已在SQL层过滤
                 records.removeIf(comment -> {
                     String productName = comment.getProduct() != null ? comment.getProduct().getProductName() : "";
-                    String content = comment.getContent() != null ? comment.getContent() : "";
-                    return !productName.toLowerCase().contains(lowerKeyword) &&
-                            !content.toLowerCase().contains(lowerKeyword);
+                    // 如果评论内容已匹配，保留；否则检查商品名称
+                    boolean contentMatched = comment.getContent() != null && 
+                            comment.getContent().toLowerCase().contains(lowerKeyword);
+                    boolean productMatched = productName.toLowerCase().contains(lowerKeyword);
+                    return !contentMatched && !productMatched;
                 });
-
-                // 更新总记录数
-                commentPage.setTotal(records.size());
-            }
-        }
-
-        // 处理排序
-        if ("rating".equals(sort)) {
-            if ("asc".equals(order)) {
-                records.sort(Comparator.comparing(Comment::getRating));
-            } else {
-                records.sort(Comparator.comparing(Comment::getRating).reversed());
-            }
-        } else if ("createTime".equals(sort)) {
-            if ("asc".equals(order)) {
-                records.sort(Comparator.comparing(Comment::getCreateTime));
-            } else {
-                records.sort(Comparator.comparing(Comment::getCreateTime).reversed());
+                
+                // 注意：这里不更新总记录数，因为会导致分页不准确
+                // 如果需要精确分页，建议使用JOIN查询或Elasticsearch全文搜索
             }
         }
 

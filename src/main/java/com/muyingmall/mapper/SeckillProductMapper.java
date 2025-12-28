@@ -21,33 +21,45 @@ public interface SeckillProductMapper extends BaseMapper<SeckillProduct> {
     
     /**
      * 查询秒杀商品列表（含商品信息）
+     * 修复：添加soldCount统计，支持进度条显示
      */
     @Select("SELECT sp.id, sp.activity_id, sa.name as activity_name, " +
             "sp.product_id, p.product_name, p.product_img as product_image, " +
             "sp.sku_id, ps.sku_name, ps.price as original_price, " +
             "sp.seckill_price, sp.seckill_stock, sp.limit_per_user, " +
-            "sa.start_time, sa.end_time, sa.status as activity_status " +
+            "sa.start_time, sa.end_time, sa.status as activity_status, " +
+            "COALESCE(SUM(so.quantity), 0) as sold_count " +
             "FROM seckill_product sp " +
             "JOIN seckill_activity sa ON sp.activity_id = sa.id " +
             "JOIN product p ON sp.product_id = p.product_id " +
             "JOIN product_sku ps ON sp.sku_id = ps.sku_id " +
+            "LEFT JOIN seckill_order so ON sp.id = so.seckill_product_id AND so.status = 1 " +
             "WHERE sa.id = #{activityId} " +
+            "GROUP BY sp.id, sp.activity_id, sa.name, sp.product_id, p.product_name, p.product_img, " +
+            "sp.sku_id, ps.sku_name, ps.price, sp.seckill_price, sp.seckill_stock, sp.limit_per_user, " +
+            "sa.start_time, sa.end_time, sa.status " +
             "ORDER BY sp.sort_order ASC, sp.id DESC")
     List<SeckillProductDTO> selectSeckillProductsByActivity(@Param("activityId") Long activityId);
     
     /**
      * 查询秒杀商品详情
+     * 修复：添加soldCount统计，支持进度条显示
      */
     @Select("SELECT sp.id, sp.activity_id, sa.name as activity_name, " +
             "sp.product_id, p.product_name, p.product_img as product_image, " +
             "sp.sku_id, ps.sku_name, ps.price as original_price, " +
             "sp.seckill_price, sp.seckill_stock, sp.limit_per_user, " +
-            "sa.start_time, sa.end_time, sa.status as activity_status " +
+            "sa.start_time, sa.end_time, sa.status as activity_status, " +
+            "COALESCE(SUM(so.quantity), 0) as sold_count " +
             "FROM seckill_product sp " +
             "JOIN seckill_activity sa ON sp.activity_id = sa.id " +
             "JOIN product p ON sp.product_id = p.product_id " +
             "JOIN product_sku ps ON sp.sku_id = ps.sku_id " +
-            "WHERE sp.id = #{id}")
+            "LEFT JOIN seckill_order so ON sp.id = so.seckill_product_id AND so.status = 1 " +
+            "WHERE sp.id = #{id} " +
+            "GROUP BY sp.id, sp.activity_id, sa.name, sp.product_id, p.product_name, p.product_img, " +
+            "sp.sku_id, ps.sku_name, ps.price, sp.seckill_price, sp.seckill_stock, sp.limit_per_user, " +
+            "sa.start_time, sa.end_time, sa.status")
     SeckillProductDTO selectSeckillProductDetail(@Param("id") Long id);
     
     /**

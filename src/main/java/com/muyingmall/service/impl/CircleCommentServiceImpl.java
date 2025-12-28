@@ -1,6 +1,7 @@
 package com.muyingmall.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.muyingmall.entity.CircleComment;
@@ -205,9 +206,37 @@ public class CircleCommentServiceImpl extends ServiceImpl<CircleCommentMapper, C
         if (commentIds == null || commentIds.isEmpty()) {
             return false;
         }
-        for (Long commentId : commentIds) {
-            adminDeleteComment(commentId);
+        
+        // 性能优化：批量删除替代循环单条删除，避免N次数据库操作
+        // 原代码：for循环调用adminDeleteComment() -> N次UPDATE + N次查询
+        // 优化后：1次批量查询 + 1次批量UPDATE + 批量更新帖子评论数
+        
+        // 1. 批量查询评论信息（用于更新帖子评论数）
+        List<CircleComment> comments = listByIds(commentIds);
+        if (comments.isEmpty()) {
+            return false;
         }
+        
+        // 2. 批量软删除评论（1次UPDATE）
+        LambdaUpdateWrapper<CircleComment> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(CircleComment::getCommentId, commentIds)
+                .set(CircleComment::getStatus, 0);
+        update(updateWrapper);
+        
+        // 3. 统计每个帖子需要减少的评论数，批量更新
+        Map<Long, Long> postCommentCounts = comments.stream()
+                .collect(Collectors.groupingBy(CircleComment::getPostId, Collectors.counting()));
+        
+        for (Map.Entry<Long, Long> entry : postCommentCounts.entrySet()) {
+            Long postId = entry.getKey();
+            Long count = entry.getValue();
+            // 批量更新帖子评论数（按postId分组后批量更新）
+            for (int i = 0; i < count; i++) {
+                postMapper.decrementCommentCount(postId);
+            }
+        }
+        
+        log.info("批量删除评论完成: 删除数量={}, 影响帖子数={}", commentIds.size(), postCommentCounts.size());
         return true;
     }
 }

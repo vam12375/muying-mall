@@ -15,6 +15,7 @@ import com.muyingmall.mapper.ProductImageMapper;
 import com.muyingmall.mapper.ProductMapper;
 import com.muyingmall.mapper.ProductSkuMapper;
 import com.muyingmall.mapper.ProductSpecsMapper;
+import com.muyingmall.service.BatchQueryService;
 import com.muyingmall.service.ProductService;
 import com.muyingmall.util.CacheProtectionUtil;
 import com.muyingmall.util.RedisUtil;
@@ -54,6 +55,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     private final ProductMapper productMapper;
     private final CategoryMapper categoryMapper;
     private final CacheProtectionUtil cacheProtectionUtil;
+    private final BatchQueryService batchQueryService;
 
     @Override
     public Page<Product> getProductPage(int page, int size, Integer categoryId, Integer brandId, Boolean isHot, Boolean isNew,
@@ -504,14 +506,15 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     /**
      * 清除商品相关缓存
+     * 性能优化：使用SCAN替代KEYS命令，避免阻塞Redis
+     * KEYS命令会阻塞Redis单线程，生产环境可能导致性能问题
      */
     private void cleanProductCache() {
-        // 清除商品列表缓存
-        Set<String> keys = redisUtil.keys(CacheConstants.PRODUCT_KEY_PREFIX + "*");
-        if (keys != null && !keys.isEmpty()) {
-            redisUtil.del(keys.toArray(new String[0]));
-            log.debug("清除所有商品相关缓存，共{}个键", keys.size());
-        }
+        // 性能优化：使用SCAN命令替代KEYS命令，避免阻塞Redis
+        // 原代码：keys() -> 阻塞Redis直到扫描完所有键
+        // 优化后：scan() -> 游标迭代，不阻塞Redis
+        long deletedCount = redisUtil.deleteByScan(CacheConstants.PRODUCT_KEY_PREFIX + "*");
+        log.debug("清除所有商品相关缓存，共{}个键", deletedCount);
     }
 
     /**
@@ -538,8 +541,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             String productSpecsKey = "product:specs:" + productId;
             redisUtil.del(productSpecsKey);
 
+            // 性能优化：使用SCAN替代KEYS，避免阻塞Redis
             // 获取所有可能与该商品相关的缓存键
-            Set<String> keys = redisUtil.keys(CacheConstants.PRODUCT_LIST_KEY + "*");
+            Set<String> keys = redisUtil.scan(CacheConstants.PRODUCT_LIST_KEY + "*");
             if (keys != null && !keys.isEmpty()) {
                 for (String key : keys) {
                     // 检查该缓存键对应的缓存中是否包含该商品
@@ -550,8 +554,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 }
             }
 
+            // 性能优化：使用SCAN替代KEYS，避免阻塞Redis
             // 获取管理后台商品列表相关的缓存键
-            Set<String> adminKeys = redisUtil.keys(CacheConstants.PRODUCT_ADMIN_LIST_KEY + "*");
+            Set<String> adminKeys = redisUtil.scan(CacheConstants.PRODUCT_ADMIN_LIST_KEY + "*");
             if (adminKeys != null && !adminKeys.isEmpty()) {
                 for (String key : adminKeys) {
                     // 删除管理后台商品列表缓存
@@ -616,11 +621,20 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 // 从有序集合中获取排名前limit的商品ID
                 Set<Object> topProductIds = redisUtil.zReverseRange(hotProductsRankKey, 0, limit - 1);
                 if (topProductIds != null && !topProductIds.isEmpty()) {
-                    // 根据ID批量获取商品详情
+                    // 性能优化：批量查询商品详情，避免N次单独查询
+                    // 原代码：for循环调用getProductDetail() -> N次查询
+                    // 优化后：批量查询 -> 1次查询
+                    List<Integer> productIds = topProductIds.stream()
+                            .map(id -> Integer.valueOf(id.toString()))
+                            .collect(Collectors.toList());
+                    
+                    Map<Integer, Product> productMap = batchQueryService.batchGetProducts(productIds);
+                    
+                    // 按原有序集合的顺序构建结果列表
                     List<Product> hotProducts = new ArrayList<>();
                     for (Object idObj : topProductIds) {
                         Integer productId = Integer.valueOf(idObj.toString());
-                        Product product = getProductDetail(productId);
+                        Product product = productMap.get(productId);
                         if (product != null && "上架".equals(product.getProductStatus())) {
                             hotProducts.add(product);
                         }
@@ -629,6 +643,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                     // 缓存结果
                     if (!hotProducts.isEmpty()) {
                         redisUtil.set(cacheKey, hotProducts, CacheConstants.PRODUCT_HOT_EXPIRE_TIME);
+                        log.debug("热门商品批量查询完成: 查询数量={}, 结果数量={}", productIds.size(), hotProducts.size());
                         return hotProducts;
                     }
                 }
@@ -701,11 +716,18 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 // 从有序集合中获取排名前limit的商品ID
                 Set<Object> topProductIds = redisUtil.zReverseRange(newProductsRankKey, 0, limit - 1);
                 if (topProductIds != null && !topProductIds.isEmpty()) {
-                    // 根据ID批量获取商品详情
+                    // 性能优化：批量查询商品详情，避免N次单独查询
+                    List<Integer> productIds = topProductIds.stream()
+                            .map(id -> Integer.valueOf(id.toString()))
+                            .collect(Collectors.toList());
+                    
+                    Map<Integer, Product> productMap = batchQueryService.batchGetProducts(productIds);
+                    
+                    // 按原有序集合的顺序构建结果列表
                     List<Product> newProducts = new ArrayList<>();
                     for (Object idObj : topProductIds) {
                         Integer productId = Integer.valueOf(idObj.toString());
-                        Product product = getProductDetail(productId);
+                        Product product = productMap.get(productId);
                         if (product != null && "上架".equals(product.getProductStatus())) {
                             newProducts.add(product);
                         }
@@ -714,6 +736,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                     // 缓存结果
                     if (!newProducts.isEmpty()) {
                         redisUtil.set(cacheKey, newProducts, CacheConstants.MEDIUM_EXPIRE_TIME);
+                        log.debug("新品商品批量查询完成: 查询数量={}, 结果数量={}", productIds.size(), newProducts.size());
                         return newProducts;
                     }
                 }

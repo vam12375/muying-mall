@@ -58,16 +58,13 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     public List<SeckillProductDTO> getActivityProducts(Long activityId) {
         List<SeckillProductDTO> products = seckillProductMapper.selectSeckillProductsByActivity(activityId);
         
-        // 从Redis获取实时库存
+        // 从Redis获取实时库存（只更新库存，soldCount已由SQL统计得出）
         for (SeckillProductDTO product : products) {
             Integer redisStock = seckillService.getRedisStock(product.getSkuId());
             if (redisStock != null) {
                 product.setSeckillStock(redisStock);
             }
-            // 计算已售数量
-            Integer soldCount = product.getSeckillStock() != null ? 
-                    (product.getSeckillStock() - (redisStock != null ? redisStock : 0)) : 0;
-            product.setSoldCount(soldCount);
+            // soldCount已由SQL查询统计（LEFT JOIN seckill_order），无需重新计算
         }
         
         return products;
