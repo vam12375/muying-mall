@@ -129,13 +129,23 @@ public class RabbitMQConfig {
     }
 
     /**
-     * 配置监听器容器工厂
+     * 配置监听器容器工厂 - 虚拟线程版本
+     * 
+     * 虚拟线程优化：
+     * 1. 使用虚拟线程执行器处理消息消费任务
+     * 2. 支持更高并发，IO阻塞时自动让出CPU
+     * 3. 简化并发配置，由虚拟线程自动管理
      */
     @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory,
+            java.util.concurrent.Executor rabbitListenerExecutor) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(messageConverter());
+        
+        // 配置虚拟线程执行器
+        factory.setTaskExecutor(rabbitListenerExecutor);
         
         // 从配置属性中获取并发设置
         RabbitMQProperties.Performance performance = rabbitMQProperties.getPerformance();
@@ -160,12 +170,39 @@ public class RabbitMQConfig {
         // 设置恢复间隔
         factory.setRecoveryInterval(30000L);
         
-        log.info("RabbitMQ监听器容器工厂配置完成 - 并发消费者: {}, 最大并发: {}, 预取数量: {}, 自动启动: true", 
+        log.info("RabbitMQ监听器容器工厂配置完成 (虚拟线程模式) - 并发消费者: {}, 最大并发: {}, 预取数量: {}, 自动启动: true", 
                 performance.getConcurrentConsumers(), 
                 performance.getMaxConcurrentConsumers(), 
                 performance.getPrefetchCount());
         
         return factory;
+    }
+    
+    /**
+     * RabbitMQ监听器专用虚拟线程执行器
+     * 用于处理消息消费任务
+     */
+    @Bean(name = "rabbitListenerExecutor")
+    public java.util.concurrent.Executor rabbitListenerExecutor() {
+        java.util.concurrent.ThreadFactory factory = createVirtualThreadFactory("rabbitmq-listener-");
+        java.util.concurrent.Executor executor = java.util.concurrent.Executors.newThreadPerTaskExecutor(factory);
+        
+        log.info("RabbitMQ监听器执行器初始化完成 (虚拟线程模式): threadPrefix=rabbitmq-listener-");
+        
+        return executor;
+    }
+    
+    /**
+     * 创建虚拟线程工厂，支持自定义线程名称前缀
+     * 
+     * @param prefix 线程名称前缀
+     * @return 虚拟线程工厂
+     */
+    private java.util.concurrent.ThreadFactory createVirtualThreadFactory(String prefix) {
+        java.util.concurrent.atomic.AtomicInteger counter = new java.util.concurrent.atomic.AtomicInteger(0);
+        return task -> Thread.ofVirtual()
+                .name(prefix + counter.incrementAndGet())
+                .unstarted(task);
     }
 
     /**
@@ -534,7 +571,7 @@ public class RabbitMQConfig {
                 rabbitMQProperties.getMonitoring().isEnabled(),
                 rabbitMQProperties.getMonitoring().getHealthCheckInterval(),
                 rabbitMQProperties.getMonitoring().isMetricsCollectionEnabled());
-        log.debug("性能配置: 并发消费者={}, 最大并发={}, 预取数量={}", 
+        log.debug("性能配置: 并发消费者={}, 最大并发={}, 预取数量={}, 虚拟线程执行器=已启用", 
                 rabbitMQProperties.getPerformance().getConcurrentConsumers(),
                 rabbitMQProperties.getPerformance().getMaxConcurrentConsumers(),
                 rabbitMQProperties.getPerformance().getPrefetchCount());
