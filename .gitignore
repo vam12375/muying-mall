@@ -37,9 +37,8 @@ build/
 **/application-private.yml
 
 # IDE and editor files
-.cunzhi-memory/
+
 .sanshu-memory/
-.sanshu/
 
 # 临时文件和备份
 *.bkp
