@@ -1,0 +1,264 @@
+<mxGraphModel>
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    
+    <!-- 标题 -->
+    <mxCell id="title" value="用户下单业务流程时序图" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="220" y="10" width="300" height="30" as="geometry"/>
+    </mxCell>
+    
+    <!-- 参与者 -->
+    <mxCell id="user-head" value="👤 用户" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="55" y="50" width="30" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="user-line" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="70" y="110" as="sourcePoint"/>
+        <mxPoint x="70" y="580" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="frontend-box" value="前端" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="120" y="60" width="60" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="frontend-line" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="150" y="100" as="sourcePoint"/>
+        <mxPoint x="150" y="580" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="order-box" value="OrderController" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="200" y="60" width="100" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="order-line" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="250" y="100" as="sourcePoint"/>
+        <mxPoint x="250" y="580" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="service-box" value="OrderService" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="320" y="60" width="90" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="service-line" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="365" y="100" as="sourcePoint"/>
+        <mxPoint x="365" y="580" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="product-box" value="ProductService" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="430" y="60" width="100" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="product-line" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="480" y="100" as="sourcePoint"/>
+        <mxPoint x="480" y="580" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="lock-box" value="分布式锁" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="550" y="60" width="70" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="lock-line" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="585" y="100" as="sourcePoint"/>
+        <mxPoint x="585" y="580" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="db-box" value="Database" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="640" y="50" width="60" height="45" as="geometry"/>
+    </mxCell>
+    <mxCell id="db-line" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="670" y="105" as="sourcePoint"/>
+        <mxPoint x="670" y="580" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="mq-box" value="RabbitMQ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b0e3e6;strokeColor=#0e8088;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="720" y="60" width="70" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="mq-line" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="755" y="100" as="sourcePoint"/>
+        <mxPoint x="755" y="580" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息1: 用户点击结算 -->
+    <mxCell id="msg1" value="1. 点击结算" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#1976D2;strokeWidth=2;fillColor=#BBDEFB;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="70" y="130" as="sourcePoint"/>
+        <mxPoint x="150" y="130" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息2: 提交订单 -->
+    <mxCell id="msg2" value="2. POST /api/orders" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#1976D2;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="150" y="155" as="sourcePoint"/>
+        <mxPoint x="250" y="155" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息3: 调用创建订单 -->
+    <mxCell id="msg3" value="3. createOrder()" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#388E3C;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="250" y="180" as="sourcePoint"/>
+        <mxPoint x="365" y="180" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息4: 获取分布式锁 -->
+    <mxCell id="msg4" value="4. 获取分布式锁" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#7B1FA2;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="365" y="205" as="sourcePoint"/>
+        <mxPoint x="585" y="205" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息5: 锁获取成功 -->
+    <mxCell id="msg5" value="5. 锁获取成功" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#7B1FA2;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="585" y="230" as="sourcePoint"/>
+        <mxPoint x="365" y="230" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息6: 检查库存 -->
+    <mxCell id="msg6" value="6. checkStock()" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#D32F2F;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="365" y="255" as="sourcePoint"/>
+        <mxPoint x="480" y="255" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息7: 查询数据库 -->
+    <mxCell id="msg7" value="7. SELECT stock" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#666666;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="480" y="280" as="sourcePoint"/>
+        <mxPoint x="670" y="280" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息8: 返回库存 -->
+    <mxCell id="msg8" value="8. 库存数据" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#666666;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="670" y="305" as="sourcePoint"/>
+        <mxPoint x="480" y="305" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息9: 库存充足 -->
+    <mxCell id="msg9" value="9. 库存充足" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#D32F2F;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="480" y="330" as="sourcePoint"/>
+        <mxPoint x="365" y="330" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息10: 锁定库存 -->
+    <mxCell id="msg10" value="10. lockStock()" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#D32F2F;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="365" y="355" as="sourcePoint"/>
+        <mxPoint x="480" y="355" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息11: UPDATE库存 -->
+    <mxCell id="msg11" value="11. UPDATE stock" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#666666;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="480" y="380" as="sourcePoint"/>
+        <mxPoint x="670" y="380" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息12: 更新成功 -->
+    <mxCell id="msg12" value="12. OK" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#666666;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="670" y="405" as="sourcePoint"/>
+        <mxPoint x="480" y="405" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息13: 保存订单 -->
+    <mxCell id="msg13" value="13. INSERT order" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#666666;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="365" y="430" as="sourcePoint"/>
+        <mxPoint x="670" y="430" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息14: 订单ID -->
+    <mxCell id="msg14" value="14. orderId" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#666666;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="670" y="455" as="sourcePoint"/>
+        <mxPoint x="365" y="455" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息15: 发送超时消息 -->
+    <mxCell id="msg15" value="15. 发送延迟消息(30min)" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#00838F;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="365" y="480" as="sourcePoint"/>
+        <mxPoint x="755" y="480" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息16: 释放锁 -->
+    <mxCell id="msg16" value="16. 释放锁" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#7B1FA2;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="365" y="505" as="sourcePoint"/>
+        <mxPoint x="585" y="505" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息17: 返回订单信息 -->
+    <mxCell id="msg17" value="17. 订单信息" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#388E3C;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="365" y="530" as="sourcePoint"/>
+        <mxPoint x="250" y="530" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息18: 返回Response -->
+    <mxCell id="msg18" value="18. ApiResponse" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#1976D2;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="250" y="555" as="sourcePoint"/>
+        <mxPoint x="150" y="555" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息19: 跳转支付 -->
+    <mxCell id="msg19" value="19. 跳转支付页" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#1976D2;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="150" y="580" as="sourcePoint"/>
+        <mxPoint x="70" y="580" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活框 -->
+    <mxCell id="act1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="245" y="155" width="10" height="385" as="geometry"/>
+    </mxCell>
+    <mxCell id="act2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="360" y="180" width="10" height="355" as="geometry"/>
+    </mxCell>
+    <mxCell id="act3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="475" y="255" width="10" height="160" as="geometry"/>
+    </mxCell>
+    
+    <!-- 注释框 -->
+    <mxCell id="note1" value="TCC事务保证&#xa;库存与订单一致性" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#FFF9C4;strokeColor=#FBC02D;fontSize=10;align=left;spacingLeft=5;" vertex="1" parent="1">
+      <mxGeometry x="600" y="340" width="120" height="45" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="note2" value="30分钟延迟消息&#xa;用于订单超时取消" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#E3F2FD;strokeColor=#1976D2;fontSize=10;align=left;spacingLeft=5;" vertex="1" parent="1">
+      <mxGeometry x="600" y="485" width="120" height="40" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

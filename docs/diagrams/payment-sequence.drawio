@@ -1,0 +1,244 @@
+<mxGraphModel>
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    
+    <!-- 标题 -->
+    <mxCell id="title" value="支付流程时序图" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="280" y="10" width="200" height="30" as="geometry"/>
+    </mxCell>
+    
+    <!-- 参与者 -->
+    <mxCell id="user-head" value="👤 用户" style=" shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="45" y="50" width="30" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="user-line" value="" style=" endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="60" y="110" as="sourcePoint"/>
+        <mxPoint x="60" y="570" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="pay-ctrl-box" value="PayController" style=" rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="110" y="60" width="90" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="pay-ctrl-line" value="" style=" endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="155" y="100" as="sourcePoint"/>
+        <mxPoint x="155" y="570" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="pay-svc-box" value="PaymentService" style=" rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="220" y="60" width="100" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="pay-svc-line" value="" style=" endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="100" as="sourcePoint"/>
+        <mxPoint x="270" y="570" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="order-svc-box" value="OrderService" style=" rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="340" y="60" width="90" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="order-svc-line" value="" style=" endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="385" y="100" as="sourcePoint"/>
+        <mxPoint x="385" y="570" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="alipay-box" value="支付宝API" style=" rounded=1;whiteSpace=wrap;html=1;fillColor=#1E88E5;strokeColor=#1565C0;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+      <mxGeometry x="450" y="60" width="80" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="alipay-line" value="" style=" endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="490" y="100" as="sourcePoint"/>
+        <mxPoint x="490" y="570" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="db-box" value="Database" style=" shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="555" y="50" width="60" height="45" as="geometry"/>
+    </mxCell>
+    <mxCell id="db-line" value="" style=" endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="585" y="105" as="sourcePoint"/>
+        <mxPoint x="585" y="570" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="mq-box" value="RabbitMQ" style=" rounded=1;whiteSpace=wrap;html=1;fillColor=#b0e3e6;strokeColor=#0e8088;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="640" y="60" width="70" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="mq-line" value="" style=" endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="675" y="100" as="sourcePoint"/>
+        <mxPoint x="675" y="570" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="notify-box" value="通知服务" style=" rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="730" y="60" width="60" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="notify-line" value="" style=" endArrow=none;dashed=1;html=1;strokeColor=#999999;strokeWidth=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="760" y="100" as="sourcePoint"/>
+        <mxPoint x="760" y="570" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 消息流 -->
+    <mxCell id="msg1" value="1. 选择支付方式" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#1976D2;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="60" y="125" as="sourcePoint"/>
+        <mxPoint x="155" y="125" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg2" value="2. createPayment(orderId)" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#388E3C;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="155" y="150" as="sourcePoint"/>
+        <mxPoint x="270" y="150" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg3" value="3. 验证订单状态" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#D32F2F;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="175" as="sourcePoint"/>
+        <mxPoint x="385" y="175" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg4" value="4. 订单有效" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#D32F2F;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="385" y="200" as="sourcePoint"/>
+        <mxPoint x="270" y="200" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg5" value="5. 调用支付宝预下单" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#1565C0;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="225" as="sourcePoint"/>
+        <mxPoint x="490" y="225" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg6" value="6. 返回支付参数" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#1565C0;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="490" y="250" as="sourcePoint"/>
+        <mxPoint x="270" y="250" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg7" value="7. INSERT payment" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#666666;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="275" as="sourcePoint"/>
+        <mxPoint x="585" y="275" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg8" value="8. 返回支付表单" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#1976D2;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="155" y="300" as="sourcePoint"/>
+        <mxPoint x="60" y="300" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg9" value="9. 跳转支付宝支付" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#1565C0;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="60" y="325" as="sourcePoint"/>
+        <mxPoint x="490" y="325" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg10" value="10. 用户完成支付" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#1565C0;strokeWidth=2;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="490" y="350" as="sourcePoint"/>
+        <mxPoint x="60" y="350" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 异步回调部分 -->
+    <mxCell id="async-box" value="" style=" rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#4CAF50;strokeWidth=2;dashed=1;" vertex="1" parent="1">
+      <mxGeometry x="100" y="370" width="680" height="190" as="geometry"/>
+    </mxCell>
+    <mxCell id="async-label" value="异步回调处理" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#4CAF50;" vertex="1" parent="1">
+      <mxGeometry x="110" y="375" width="100" height="20" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="msg11" value="11. 异步通知(notify_url)" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#4CAF50;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="490" y="400" as="sourcePoint"/>
+        <mxPoint x="270" y="400" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg12" value="12. 验签 &amp; 处理" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#388E3C;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="425" as="sourcePoint"/>
+        <mxPoint x="270" y="440" as="targetPoint"/>
+        <Array as="points">
+          <mxPoint x="300" y="425"/>
+          <mxPoint x="300" y="440"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg13" value="13. UPDATE payment SET status='PAID'" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#666666;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="450" as="sourcePoint"/>
+        <mxPoint x="585" y="450" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg14" value="14. 更新订单状态" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#D32F2F;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="475" as="sourcePoint"/>
+        <mxPoint x="385" y="475" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg15" value="15. 发送支付成功消息" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#00838F;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="500" as="sourcePoint"/>
+        <mxPoint x="675" y="500" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg16" value="16. 消费消息" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#00838F;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="675" y="525" as="sourcePoint"/>
+        <mxPoint x="760" y="525" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="msg17" value="17. 发送支付成功通知" style=" html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;strokeColor=#9673a6;strokeWidth=2;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="760" y="550" as="sourcePoint"/>
+        <mxPoint x="60" y="550" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- 激活框 -->
+    <mxCell id="act1" value="" style=" rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="150" y="125" width="10" height="185" as="geometry"/>
+    </mxCell>
+    <mxCell id="act2" value="" style=" rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="265" y="150" width="10" height="135" as="geometry"/>
+    </mxCell>
+    <mxCell id="act3" value="" style=" rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="265" y="395" width="10" height="115" as="geometry"/>
+    </mxCell>
+    
+    <!-- 注释 -->
+    <mxCell id="note1" value="支付宝SDK&#xa;RSA2签名验证" style=" shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#E3F2FD;strokeColor=#1976D2;fontSize=10;align=left;spacingLeft=5;" vertex="1" parent="1">
+      <mxGeometry x="500" y="195" width="90" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="note2" value="状态机驱动&#xa;订单状态转换" style=" shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#FFEBEE;strokeColor=#D32F2F;fontSize=10;align=left;spacingLeft=5;" vertex="1" parent="1">
+      <mxGeometry x="395" y="455" width="90" height="40" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

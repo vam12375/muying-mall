@@ -564,8 +564,16 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 }
             }
 
-            // 删除热门商品缓存
+            // 删除热门商品缓存（包括新的top缓存）
             redisUtil.del(CacheConstants.PRODUCT_HOT_KEY);
+            // 清除所有热门商品top缓存（不同limit的缓存）
+            Set<String> hotTopKeys = redisUtil.scan(CacheConstants.PRODUCT_HOT_KEY + "_top_*");
+            if (hotTopKeys != null && !hotTopKeys.isEmpty()) {
+                for (String key : hotTopKeys) {
+                    redisUtil.del(key);
+                }
+                log.debug("已清除{}个热门商品top缓存", hotTopKeys.size());
+            }
 
             // 删除新品商品缓存
             redisUtil.del(CacheConstants.PRODUCT_NEW_KEY);
@@ -996,5 +1004,69 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
 
         return result;
+    }
+
+    /**
+     * 清除热门商品相关缓存
+     * 当商品销量更新时调用，确保仪表盘显示最新数据
+     */
+    public void clearTopProductsCache() {
+        try {
+            // 清除所有热门商品top缓存（不同limit的缓存）
+            Set<String> hotTopKeys = redisUtil.scan(CacheConstants.PRODUCT_HOT_KEY + "_top_*");
+            if (hotTopKeys != null && !hotTopKeys.isEmpty()) {
+                for (String key : hotTopKeys) {
+                    redisUtil.del(key);
+                }
+                log.debug("已清除{}个热门商品top缓存", hotTopKeys.size());
+            }
+            
+            // 同时清除旧的热门商品缓存
+            redisUtil.del(CacheConstants.PRODUCT_HOT_KEY);
+        } catch (Exception e) {
+            log.error("清除热门商品缓存失败: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 获取热门商品列表（按销量排序）
+     * 用于仪表盘展示，直接按销量降序返回商品
+     * 优化：添加Redis缓存，减少数据库查询压力
+     * 
+     * @param limit 数量限制
+     * @return 按销量降序排序的商品列表
+     */
+    @Override
+    public List<Product> getTopProductsBySales(int limit) {
+        // 构建缓存键
+        String cacheKey = CacheConstants.PRODUCT_HOT_KEY + "_top_" + limit;
+        
+        try {
+            // 1. 尝试从缓存获取
+            Object cacheResult = redisUtil.get(cacheKey);
+            if (cacheResult != null) {
+                log.debug("从缓存获取热门商品: key={}", cacheKey);
+                return (List<Product>) cacheResult;
+            }
+
+            // 2. 缓存未命中，查询数据库
+            LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Product::getProductStatus, "上架")
+                    .orderByDesc(Product::getSales)
+                    .last("LIMIT " + limit);
+
+            List<Product> topProducts = list(queryWrapper);
+            
+            // 3. 将结果写入缓存（30分钟过期）
+            if (topProducts != null && !topProducts.isEmpty()) {
+                redisUtil.set(cacheKey, topProducts, CacheConstants.PRODUCT_HOT_EXPIRE_TIME);
+                log.debug("热门商品已缓存: key={}, count={}", cacheKey, topProducts.size());
+            }
+            
+            return topProducts != null ? topProducts : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("获取热门商品失败: {}", e.getMessage(), e);
+            return Collections.emptyList();
+        }
     }
 }

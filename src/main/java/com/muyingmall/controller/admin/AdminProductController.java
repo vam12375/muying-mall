@@ -159,4 +159,25 @@ public class AdminProductController {
             return CommonResult.failed("更新商品状态失败: " + e.getMessage());
         }
     }
+
+    /**
+     * 获取热门商品列表（按销量排序）
+     * 用于仪表盘展示
+     *
+     * @param limit 返回数量，默认5条
+     * @return 热门商品列表
+     */
+    @GetMapping("/top")
+    @Operation(summary = "获取热门商品列表", description = "按销量降序返回热门商品，用于仪表盘展示")
+    public CommonResult<List<Product>> getTopProducts(
+            @RequestParam(value = "limit", defaultValue = "5") int limit) {
+        try {
+            // 限制最大返回数量
+            limit = Math.min(Math.max(1, limit), 20);
+            List<Product> topProducts = productService.getTopProductsBySales(limit);
+            return CommonResult.success(topProducts);
+        } catch (Exception e) {
+            return CommonResult.failed("获取热门商品失败: " + e.getMessage());
+        }
+    }
 }

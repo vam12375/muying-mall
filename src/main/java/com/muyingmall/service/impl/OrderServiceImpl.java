@@ -1636,6 +1636,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                                 .eq(Product::getProductId, productId)
                                 .setSql("stock = stock - " + quantity)
                                 .setSql("sales = sales + " + quantity));
+                
+                // 销量更新后，清除热门商品缓存
+                if (productService instanceof ProductServiceImpl) {
+                    ((ProductServiceImpl) productService).clearTopProductsCache();
+                    log.debug("订单 {} 商品销量更新，已清除热门商品缓存", order.getOrderNo());
+                }
             }
 
             // 创建支付记录 - 如果有支付服务

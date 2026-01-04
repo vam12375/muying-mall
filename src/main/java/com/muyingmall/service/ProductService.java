@@ -142,4 +142,13 @@ public interface ProductService extends IService<Product> {
          * @return 推荐商品列表
          */
         List<Product> getRecommendProducts(int limit);
+
+        /**
+         * 获取热门商品列表（按销量排序）
+         * 用于仪表盘展示
+         * 
+         * @param limit 数量限制
+         * @return 按销量降序排序的商品列表
+         */
+        List<Product> getTopProductsBySales(int limit);
 }
