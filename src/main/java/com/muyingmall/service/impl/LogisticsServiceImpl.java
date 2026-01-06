@@ -572,17 +572,13 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
             log.info("路径规划成功: 总距离={}米, 预计时长={}秒, 步骤数={}", 
                     path.getDistance(), path.getDuration(), steps.size());
 
-            // 4. 根据steps生成物流轨迹点
+            // 4. 根据steps生成物流轨迹点（每2小时一个点）
             List<LogisticsTrack> tracks = new ArrayList<>();
             LocalDateTime baseTime = logistics.getShippingTime() != null 
                     ? logistics.getShippingTime() 
                     : LocalDateTime.now();
 
-            // 计算每个step的预计到达时间（根据总时长平均分配）
-            int totalDuration = Integer.parseInt(path.getDuration());
-            int stepCount = steps.size();
-            int avgDurationPerStep = totalDuration / stepCount;
-
+            // 为每个step生成一个轨迹点
             for (int i = 0; i < steps.size(); i++) {
                 DrivingRouteResponse.Step step = steps.get(i);
                 
@@ -608,10 +604,10 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
                     Double longitude = Double.parseDouble(lonLat[0]);
                     Double latitude = Double.parseDouble(lonLat[1]);
 
-                    // 创建轨迹点
+                    // 创建轨迹点（每2小时一个）
                     LogisticsTrack track = new LogisticsTrack();
                     track.setLogisticsId(logisticsId);
-                    track.setTrackingTime(baseTime.plusSeconds((long) i * avgDurationPerStep));
+                    track.setTrackingTime(baseTime.plusHours(i * 2L)); // 每2小时一个点
                     track.setStatus("SHIPPING");
                     track.setContent(step.getInstruction()); // 使用高德返回的行驶指示
                     track.setLocation(step.getRoad() != null ? step.getRoad() : "运输途中");
@@ -624,7 +620,7 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
                     Map<String, Object> detailsJson = new HashMap<>();
                     detailsJson.put("type", "route_based");
                     detailsJson.put("systemGenerated", true);
-                    detailsJson.put("stepIndex", i);
+                    detailsJson.put("stepIndex", i); // 轨迹点索引
                     detailsJson.put("stepDistance", step.getDistance());
                     detailsJson.put("stepDuration", step.getDuration());
                     detailsJson.put("action", step.getAction());
@@ -656,5 +652,24 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
             log.error("生成基于真实路径的物流轨迹异常: logisticsId={}", logisticsId, e);
             return false;
         }
+    }
+
+    /**
+     * 根据状态统计物流数量
+     * 修复：实现统计方法
+     *
+     * @param status 物流状态
+     * @return 数量
+     */
+    @Override
+    public long countByStatus(String status) {
+        if (!StringUtils.hasText(status)) {
+            return 0;
+        }
+        
+        LambdaQueryWrapper<Logistics> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Logistics::getStatus, status);
+        
+        return count(queryWrapper);
     }
 }

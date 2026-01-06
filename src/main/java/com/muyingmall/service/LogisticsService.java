@@ -89,4 +89,13 @@ public interface LogisticsService extends IService<Logistics> {
      * @return 是否生成成功
      */
     boolean generateRouteBasedTracks(Long logisticsId, Double destLng, Double destLat);
+
+    /**
+     * 根据状态统计物流数量
+     * 修复：添加统计方法
+     *
+     * @param status 物流状态
+     * @return 数量
+     */
+    long countByStatus(String status);
 }

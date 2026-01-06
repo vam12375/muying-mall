@@ -30,7 +30,8 @@ public class LogisticsScheduledTask {
      * 【场景3：物流轨迹可视化】模拟物流进度推进
      * 每2分钟执行一次，更新运输中的物流状态
      */
-    @Scheduled(cron = "0 */2 * * * ?") // 每2分钟执行一次
+    //@Scheduled(cron = "0 */2 * * * ?") // 每2分钟执行一次
+    @Scheduled(cron = "0 0 */6 * * *")
     public void updateLogisticsProgress() {
         log.info("开始执行物流进度推进定时任务");
 
