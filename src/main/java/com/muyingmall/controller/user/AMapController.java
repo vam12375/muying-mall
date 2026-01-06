@@ -67,4 +67,18 @@ public class AMapController {
         config.put("warehouseName", amapConfig.getWarehouse().getName());
         return Result.success(config);
     }
+
+    /**
+     * IP定位：根据IP地址获取城市信息
+     */
+    @Operation(summary = "IP定位", description = "根据IP地址获取城市信息，不传IP则自动使用请求来源IP")
+    @GetMapping("/ip")
+    public Result<Map<String, Object>> getLocationByIP(
+            @RequestParam(required = false) String ip) {
+        Map<String, Object> location = amapService.getLocationByIP(ip);
+        if (location == null) {
+            return Result.error("IP定位失败");
+        }
+        return Result.success(location);
+    }
 }

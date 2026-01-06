@@ -14,6 +14,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 /**
  * 高德地图API服务
@@ -31,6 +32,7 @@ public class AMapService {
     private static final String REGEO_CODE_URL = "https://restapi.amap.com/v3/geocode/regeo";
     private static final String DISTANCE_URL = "https://restapi.amap.com/v3/distance";
     private static final String DRIVING_ROUTE_URL = "https://restapi.amap.com/v3/direction/driving";
+    private static final String IP_LOCATION_URL = "https://restapi.amap.com/v3/ip";
 
     /**
      * 地理编码：将地址转换为经纬度
@@ -210,6 +212,48 @@ public class AMapService {
             return result;
         } catch (Exception e) {
             log.error("驾车路径规划异常: destLng={}, destLat={}", destLng, destLat, e);
+            return null;
+        }
+    }
+
+    /**
+     * IP定位：根据IP地址获取城市信息
+     * 若不传入IP，则自动使用请求来源IP
+     *
+     * @param ip IP地址（可选，不传则使用请求IP）
+     * @return IP定位结果（包含省份、城市、adcode等）
+     */
+    public Map<String, Object> getLocationByIP(String ip) {
+        try {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(IP_LOCATION_URL)
+                    .queryParam("key", amapConfig.getWebKey());
+            
+            // 如果传入了IP，则添加IP参数
+            if (ip != null && !ip.isEmpty()) {
+                builder.queryParam("ip", ip);
+            }
+            
+            String url = builder.build().toUriString();
+
+            log.info("【高德API】调用IP定位API: ip={}", ip != null ? ip : "自动检测");
+            String response = restTemplate.getForObject(url, String.class);
+            log.debug("【高德API】IP定位原始响应: {}", response);
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> result = objectMapper.readValue(response, Map.class);
+
+            if (!"1".equals(result.get("status").toString())) {
+                log.error("【高德API】IP定位失败: status={}, info={}", 
+                        result.get("status"), result.get("info"));
+                return null;
+            }
+
+            log.info("【高德API】IP定位成功: province={}, city={}, adcode={}", 
+                    result.get("province"), result.get("city"), result.get("adcode"));
+            
+            return result;
+        } catch (Exception e) {
+            log.error("【高德API】IP定位异常: ip={}, error={}", ip, e.getMessage(), e);
             return null;
         }
     }
