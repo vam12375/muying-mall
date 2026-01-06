@@ -173,10 +173,12 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus,rabbitmq # 暴露健康检查和监控端点
-  metrics:
-    export:
-      prometheus:
+  # Prometheus 指标导出配置（Spring Boot 3.3.0 新配置路径）
+  prometheus:
+    metrics:
+      export:
         enabled: true # 启用Prometheus指标导出
+  metrics:
     tags:
       application: muying-mall # 添加应用标签
       
