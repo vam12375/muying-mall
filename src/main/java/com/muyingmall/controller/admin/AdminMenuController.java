@@ -78,6 +78,7 @@ public class AdminMenuController {
      */
     @PostMapping
     @Operation(summary = "新增菜单", description = "创建新的菜单项")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "新增菜单", module = "菜单管理", operationType = "CREATE", targetType = "menu")
     public Result<Boolean> addMenu(@RequestBody SysMenu menu) {
         try {
             boolean success = menuService.addMenu(menu);
@@ -93,6 +94,7 @@ public class AdminMenuController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "更新菜单", description = "更新指定菜单信息")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新菜单", module = "菜单管理", operationType = "UPDATE", targetType = "menu")
     public Result<Boolean> updateMenu(@PathVariable Integer id, @RequestBody SysMenu menu) {
         try {
             menu.setId(id);
@@ -109,6 +111,7 @@ public class AdminMenuController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除菜单", description = "删除指定菜单及其子菜单")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "删除菜单", module = "菜单管理", operationType = "DELETE", targetType = "menu")
     public Result<Boolean> deleteMenu(@PathVariable Integer id) {
         try {
             boolean success = menuService.deleteMenu(id);
@@ -124,6 +127,7 @@ public class AdminMenuController {
      */
     @PutMapping("/{id}/visible")
     @Operation(summary = "切换可见性", description = "切换菜单的显示/隐藏状态")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "切换菜单可见性", module = "菜单管理", operationType = "UPDATE", targetType = "menu")
     public Result<Boolean> toggleVisible(@PathVariable Integer id) {
         try {
             boolean success = menuService.toggleVisible(id);
@@ -139,6 +143,7 @@ public class AdminMenuController {
      */
     @PutMapping("/{id}/sort")
     @Operation(summary = "更新排序", description = "更新菜单的排序值")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新菜单排序", module = "菜单管理", operationType = "UPDATE", targetType = "menu")
     public Result<Boolean> updateSort(@PathVariable Integer id, @RequestBody Map<String, Integer> body) {
         try {
             Integer sort = body.get("sort");
@@ -158,6 +163,7 @@ public class AdminMenuController {
      */
     @PutMapping("/batch-sort")
     @Operation(summary = "批量更新排序", description = "批量更新菜单的排序值和父级")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "批量更新菜单排序", module = "菜单管理", operationType = "UPDATE", targetType = "menu")
     public Result<Boolean> batchUpdateSort(@RequestBody List<Map<String, Integer>> sortList) {
         try {
             boolean success = menuService.batchUpdateSort(sortList);

@@ -20,7 +20,7 @@ import java.util.Map;
  * 管理后台物流管理控制器
  */
 @RestController
-@RequestMapping("/api/admin/logistics")
+@RequestMapping("/admin/logistics")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "管理后台物流管理", description = "管理后台物流查询、管理相关接口")
@@ -230,6 +230,46 @@ public class AdminLogisticsController {
         } catch (Exception e) {
             log.error("生成物流单号失败", e);
             return CommonResult.failed("生成物流单号失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取物流统计信息
+     * 修复：添加统计接口，返回各状态的物流数量
+     *
+     * @return 统计信息
+     */
+    @GetMapping("/statistics")
+    @Operation(summary = "获取物流统计信息")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "查看物流统计", module = "物流管理", operationType = "READ")
+    public CommonResult<Map<String, Object>> getLogisticsStatistics() {
+        try {
+            log.debug("获取物流统计信息");
+            
+            Map<String, Object> statistics = new HashMap<>();
+            
+            // 获取总数
+            long total = logisticsService.count();
+            statistics.put("total", total);
+            
+            // 获取各状态数量
+            long shipping = logisticsService.countByStatus("SHIPPING");
+            long delivered = logisticsService.countByStatus("DELIVERED");
+            long exception = logisticsService.countByStatus("EXCEPTION");
+            long pending = logisticsService.countByStatus("PENDING");
+            
+            statistics.put("shipping", shipping);
+            statistics.put("delivered", delivered);
+            statistics.put("exception", exception);
+            statistics.put("pending", pending);
+            
+            log.debug("物流统计信息: 总数={}, 运输中={}, 已送达={}, 异常={}, 待发货={}", 
+                    total, shipping, delivered, exception, pending);
+            
+            return CommonResult.success(statistics);
+        } catch (Exception e) {
+            log.error("获取物流统计信息失败", e);
+            return CommonResult.failed("获取物流统计信息失败: " + e.getMessage());
         }
     }
 }

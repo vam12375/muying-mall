@@ -67,6 +67,7 @@ public class AdminController {
      * 管理员登录
      */
     @PostMapping("/login")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "管理员登录", module = "系统管理", operationType = "LOGIN", targetType = "admin", description = "管理员登录系统")
     public CommonResult login(@RequestBody AdminLoginDTO loginParam, HttpServletRequest request) {
         // 验证图形验证码
         if (loginParam.getCaptcha_key() != null && loginParam.getCaptcha_code() != null) {
@@ -249,6 +250,7 @@ public class AdminController {
      */
     @PostMapping("/avatar/upload")
     @PreAuthorize("hasAuthority('admin')")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "上传头像", module = "个人中心", operationType = "UPDATE", targetType = "admin", description = "管理员上传头像")
     public CommonResult<Map<String, String>> uploadAvatar(
             @RequestParam("file") MultipartFile file,
             @RequestHeader("Authorization") String authHeader) {
@@ -288,6 +290,7 @@ public class AdminController {
      */
     @PutMapping("/update")
     @PreAuthorize("hasAuthority('admin')")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新个人信息", module = "个人中心", operationType = "UPDATE", targetType = "admin", description = "管理员更新个人信息")
     public CommonResult<Map<String, Object>> updateAdminInfo(
             @RequestBody User adminInfo,
             @RequestHeader("Authorization") String authHeader) {
@@ -350,6 +353,7 @@ public class AdminController {
      */
     @PutMapping("/password")
     @PreAuthorize("hasAuthority('admin')")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "修改密码", module = "个人中心", operationType = "UPDATE", targetType = "admin", description = "管理员修改密码")
     public CommonResult updatePassword(
             @RequestBody Map<String, String> passwordMap,
             @RequestHeader("Authorization") String authHeader) {
@@ -904,29 +908,52 @@ public class AdminController {
     /**
      * 清空指定天数之前的日志
      * Source: 新增功能，遵循KISS/YAGNI/SOLID原则
+     * 修复：增强错误处理和日志记录
      */
     @DeleteMapping("/system/logs/clear")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "清空历史日志", module = "系统管理", operationType = "DELETE")
     public CommonResult<Void> clearOldSystemLogs(@RequestParam Integer days) {
         try {
+            // 参数验证
             if (days == null || days < 1) {
-                return CommonResult.failed("天数参数无效");
+                log.warn("清空日志参数无效: days={}", days);
+                return CommonResult.failed("天数参数无效，必须大于0");
             }
             
+            // 计算截止时间
             java.time.LocalDateTime beforeTime = java.time.LocalDateTime.now().minusDays(days);
-            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.muyingmall.entity.AdminOperationLog> queryWrapper = 
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
-            queryWrapper.lt(com.muyingmall.entity.AdminOperationLog::getCreateTime, beforeTime);
+            log.info("开始清空{}天前的日志，截止时间: {}", days, beforeTime);
             
-            boolean success = operationLogService.remove(queryWrapper);
+            // 先查询要删除的记录数
+            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.muyingmall.entity.AdminOperationLog> countWrapper = 
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+            countWrapper.lt(com.muyingmall.entity.AdminOperationLog::getCreateTime, beforeTime);
+            long count = operationLogService.count(countWrapper);
+            
+            if (count == 0) {
+                log.info("没有需要清空的日志记录");
+                return CommonResult.success(null, "没有需要清空的日志");
+            }
+            
+            log.info("准备删除{}条日志记录", count);
+            
+            // 执行删除
+            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.muyingmall.entity.AdminOperationLog> deleteWrapper = 
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+            deleteWrapper.lt(com.muyingmall.entity.AdminOperationLog::getCreateTime, beforeTime);
+            
+            boolean success = operationLogService.remove(deleteWrapper);
+            
             if (success) {
-                return CommonResult.success(null, "清空成功");
+                log.info("成功清空{}条历史日志", count);
+                return CommonResult.success(null, "成功清空" + count + "条历史日志");
             } else {
-                return CommonResult.failed("清空失败");
+                log.error("清空日志失败，但未抛出异常");
+                return CommonResult.failed("清空失败，请检查数据库连接");
             }
         } catch (Exception e) {
-            log.error("清空历史日志失败", e);
+            log.error("清空历史日志异常: days={}, error={}", days, e.getMessage(), e);
             return CommonResult.failed("清空历史日志失败：" + e.getMessage());
         }
     }

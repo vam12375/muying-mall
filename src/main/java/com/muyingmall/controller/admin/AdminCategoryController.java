@@ -82,6 +82,7 @@ public class AdminCategoryController {
      */
     @PostMapping
     @Operation(summary = "创建分类")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "创建分类", module = "分类管理", operationType = "CREATE", targetType = "category")
     public CommonResult<Boolean> createCategory(@RequestBody Category category) {
         try {
             boolean result = categoryService.save(category);
@@ -104,6 +105,7 @@ public class AdminCategoryController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "更新分类")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新分类", module = "分类管理", operationType = "UPDATE", targetType = "category")
     public CommonResult<Boolean> updateCategory(@PathVariable Integer id, @RequestBody Category category) {
         try {
             category.setCategoryId(id);
@@ -126,6 +128,7 @@ public class AdminCategoryController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除分类")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "删除分类", module = "分类管理", operationType = "DELETE", targetType = "category")
     public CommonResult<Boolean> deleteCategory(@PathVariable Integer id) {
         try {
             // 检查是否有子分类
@@ -158,6 +161,7 @@ public class AdminCategoryController {
      */
     @PutMapping("/{id}/status")
     @Operation(summary = "更新分类状态")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新分类状态", module = "分类管理", operationType = "UPDATE", targetType = "category")
     public CommonResult<Boolean> updateCategoryStatus(@PathVariable Integer id, @RequestParam Integer status) {
         try {
             // 检查状态值是否合法

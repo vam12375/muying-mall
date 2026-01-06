@@ -61,6 +61,7 @@ public class AdminCouponController {
      */
     @PostMapping
     @Operation(summary = "创建优惠券")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "创建优惠券", module = "优惠券管理", operationType = "CREATE", targetType = "coupon")
     public Result<Coupon> createCoupon(@RequestBody Coupon coupon) {
         boolean success = couponService.saveCoupon(coupon);
         if (!success) {
@@ -74,6 +75,7 @@ public class AdminCouponController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "更新优惠券")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新优惠券", module = "优惠券管理", operationType = "UPDATE", targetType = "coupon")
     public Result<Void> updateCoupon(@PathVariable Long id, @RequestBody Coupon coupon) {
         coupon.setId(id);
         boolean success = couponService.updateCoupon(coupon);
@@ -88,6 +90,7 @@ public class AdminCouponController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除优惠券")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "删除优惠券", module = "优惠券管理", operationType = "DELETE", targetType = "coupon")
     public Result<Void> deleteCoupon(@PathVariable Long id) {
         boolean success = couponService.deleteCoupon(id);
         if (!success) {
@@ -101,6 +104,7 @@ public class AdminCouponController {
      */
     @PutMapping("/{id}/status")
     @Operation(summary = "更新优惠券状态")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新优惠券状态", module = "优惠券管理", operationType = "UPDATE", targetType = "coupon")
     public Result<Void> updateCouponStatus(
             @PathVariable Long id,
             @RequestParam String status) {
@@ -130,6 +134,7 @@ public class AdminCouponController {
      */
     @PostMapping("/batch")
     @Operation(summary = "创建优惠券批次")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "创建优惠券批次", module = "优惠券管理", operationType = "CREATE", targetType = "coupon_batch")
     public Result<CouponBatch> createCouponBatch(@RequestBody CouponBatch batch) {
         boolean success = couponService.saveCouponBatch(batch);
         if (!success) {
@@ -170,6 +175,7 @@ public class AdminCouponController {
      */
     @PostMapping("/rule")
     @Operation(summary = "创建优惠券规则")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "创建优惠券规则", module = "优惠券管理", operationType = "CREATE", targetType = "coupon_rule")
     public Result<CouponRule> createCouponRule(@RequestBody CouponRule rule) {
         boolean success = couponService.saveCouponRule(rule);
         if (!success) {
@@ -183,6 +189,7 @@ public class AdminCouponController {
      */
     @PutMapping("/rule/{ruleId}")
     @Operation(summary = "更新优惠券规则")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新优惠券规则", module = "优惠券管理", operationType = "UPDATE", targetType = "coupon_rule")
     public Result<Void> updateCouponRule(@PathVariable Integer ruleId, @RequestBody CouponRule rule) {
         rule.setRuleId(ruleId);
         boolean success = couponService.updateCouponRule(rule);

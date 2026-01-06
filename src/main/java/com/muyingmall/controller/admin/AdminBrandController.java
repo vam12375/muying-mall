@@ -135,6 +135,7 @@ public class AdminBrandController {
      */
     @PostMapping
     @Operation(summary = "创建品牌")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "创建品牌", module = "品牌管理", operationType = "CREATE", targetType = "brand")
     public CommonResult<Boolean> createBrand(@RequestBody Brand brand) {
         try {
             log.debug("创建品牌: {}", brand);
@@ -162,6 +163,7 @@ public class AdminBrandController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "更新品牌")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新品牌", module = "品牌管理", operationType = "UPDATE", targetType = "brand")
     public CommonResult<Boolean> updateBrand(@PathVariable Integer id, @RequestBody Brand brand) {
         try {
             log.debug("更新品牌: id={}, brand={}", id, brand);
@@ -189,6 +191,7 @@ public class AdminBrandController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除品牌")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "删除品牌", module = "品牌管理", operationType = "DELETE", targetType = "brand")
     public CommonResult<Boolean> deleteBrand(@PathVariable Integer id) {
         try {
             log.debug("删除品牌: id={}", id);

@@ -6,10 +6,12 @@ import com.muyingmall.entity.Order;
 import com.muyingmall.entity.Logistics;
 import com.muyingmall.entity.LogisticsCompany;
 import com.muyingmall.entity.Address;
+import com.muyingmall.enums.OrderStatus;
 import com.muyingmall.service.OrderService;
 import com.muyingmall.service.LogisticsService;
 import com.muyingmall.service.LogisticsCompanyService;
 import com.muyingmall.service.AddressService;
+import com.muyingmall.config.AMapConfig;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,7 +30,7 @@ import java.util.Map;
  * 管理后台订单管理控制器
  */
 @RestController
-@RequestMapping("/api/admin/orders")
+@RequestMapping("/admin/orders")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "管理后台订单管理", description = "管理后台订单查询、管理相关接口")
@@ -38,6 +40,7 @@ public class AdminOrderController {
     private final LogisticsService logisticsService;
     private final LogisticsCompanyService logisticsCompanyService;
     private final AddressService addressService;
+    private final AMapConfig amapConfig;
 
     /**
      * 分页获取订单列表
@@ -126,6 +129,7 @@ public class AdminOrderController {
      */
     @PutMapping("/{id}/status")
     @Operation(summary = "更新订单状态")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新订单状态", module = "订单管理", operationType = "UPDATE", targetType = "order")
     public CommonResult<Boolean> updateOrderStatus(
             @PathVariable("id") Integer id,
             @RequestParam("status") String status,
@@ -156,6 +160,7 @@ public class AdminOrderController {
      */
     @PutMapping("/{id}/ship")
     @Operation(summary = "订单发货")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "订单发货", module = "订单管理", operationType = "UPDATE", targetType = "order", description = "管理员发货操作")
     public CommonResult<Boolean> shipOrder(
             @PathVariable("id") Integer id,
             @RequestParam("companyId") Integer companyId,
@@ -174,6 +179,22 @@ public class AdminOrderController {
             Order order = orderService.getById(id);
             if (order == null) {
                 return CommonResult.failed("订单不存在");
+            }
+
+            // 【幂等性检查】防止重复发货
+            // 订单状态必须是 PENDING_SHIPMENT（待发货）才能发货
+            if (order.getStatus() != OrderStatus.PENDING_SHIPMENT) {
+                log.warn("【管理员发货】订单状态不正确: orderId={}, currentStatus={}", 
+                        id, order.getStatus());
+                return CommonResult.failed("订单状态不正确，只有待发货的订单才能发货");
+            }
+
+            // 检查是否已存在物流记录（防止重复发货）
+            Logistics existingLogistics = logisticsService.getLogisticsByOrderId(id);
+            if (existingLogistics != null) {
+                log.warn("【管理员发货】订单已存在物流记录，拒绝重复发货: orderId={}, logisticsId={}", 
+                        id, existingLogistics.getId());
+                return CommonResult.failed("订单已发货，请勿重复操作");
             }
 
             // 如果未提供物流单号，自动生成
@@ -208,12 +229,12 @@ public class AdminOrderController {
             logistics.setReceiverPhone(finalReceiverPhone);
             logistics.setReceiverAddress(finalReceiverAddress);
             
-            // 【修复】设置发货地坐标（从配置文件读取杭州主仓库坐标）
-            logistics.setSenderName("母婴商城");
+            // 【修复】设置发货地坐标（从配置文件读取仓库坐标）
+            logistics.setSenderName(amapConfig.getWarehouse().getName());
             logistics.setSenderPhone("400-123-4567");
             logistics.setSenderAddress("浙江省杭州市西湖区");
-            logistics.setSenderLongitude(120.153576);  // 杭州经度
-            logistics.setSenderLatitude(30.287459);    // 杭州纬度
+            logistics.setSenderLongitude(amapConfig.getWarehouse().getLongitude());
+            logistics.setSenderLatitude(amapConfig.getWarehouse().getLatitude());
             
             // 【修复】设置收货地坐标（从订单关联的用户地址获取）
             if (order.getAddressId() != null) {
@@ -291,6 +312,7 @@ public class AdminOrderController {
      */
     @GetMapping("/export")
     @Operation(summary = "导出订单数据")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "导出订单数据", module = "订单管理", operationType = "EXPORT")
     public void exportOrders(
             HttpServletResponse response,
             @RequestParam(value = "status", required = false) String status,

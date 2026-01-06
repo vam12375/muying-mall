@@ -78,6 +78,7 @@ public class AdminProductController {
      */
     @PostMapping
     @Operation(summary = "创建商品")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "创建商品", module = "商品管理", operationType = "CREATE", targetType = "product")
     public CommonResult<Boolean> createProduct(@RequestBody Product product) {
         try {
             boolean result = productService.createProduct(product);
@@ -100,6 +101,7 @@ public class AdminProductController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "更新商品")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新商品", module = "商品管理", operationType = "UPDATE", targetType = "product")
     public CommonResult<Boolean> updateProduct(@PathVariable Integer id, @RequestBody Product product) {
         try {
             product.setProductId(id);
@@ -122,6 +124,7 @@ public class AdminProductController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除商品")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "删除商品", module = "商品管理", operationType = "DELETE", targetType = "product")
     public CommonResult<Boolean> deleteProduct(@PathVariable Integer id) {
         try {
             boolean result = productService.deleteById(id);
@@ -144,6 +147,7 @@ public class AdminProductController {
      */
     @PutMapping("/{id}/status")
     @Operation(summary = "更新商品状态")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新商品状态", module = "商品管理", operationType = "UPDATE", targetType = "product")
     public CommonResult<Boolean> updateProductStatus(
             @PathVariable Integer id,
             @RequestParam("status") Integer status) {

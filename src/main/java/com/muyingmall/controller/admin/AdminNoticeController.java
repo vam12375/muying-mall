@@ -93,6 +93,7 @@ public class AdminNoticeController {
      */
     @PostMapping
     @Operation(summary = "发布公告", description = "创建并发布新公告")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "发布公告", module = "公告管理", operationType = "CREATE", targetType = "notice")
     public Result<Boolean> publishNotice(@RequestBody SysNotice notice) {
         try {
             boolean success = noticeService.publishNotice(notice);
@@ -108,6 +109,7 @@ public class AdminNoticeController {
      */
     @PostMapping("/draft")
     @Operation(summary = "保存草稿", description = "保存公告为草稿状态")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "保存公告草稿", module = "公告管理", operationType = "CREATE", targetType = "notice")
     public Result<Boolean> saveDraft(@RequestBody SysNotice notice) {
         try {
             notice.setStatus("draft");
@@ -124,6 +126,7 @@ public class AdminNoticeController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "更新公告", description = "更新指定公告信息")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新公告", module = "公告管理", operationType = "UPDATE", targetType = "notice")
     public Result<Boolean> updateNotice(@PathVariable Integer id, @RequestBody SysNotice notice) {
         try {
             notice.setId(id);
@@ -140,6 +143,7 @@ public class AdminNoticeController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除公告", description = "删除指定公告")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "删除公告", module = "公告管理", operationType = "DELETE", targetType = "notice")
     public Result<Boolean> deleteNotice(@PathVariable Integer id) {
         try {
             boolean success = noticeService.removeById(id);
@@ -155,6 +159,7 @@ public class AdminNoticeController {
      */
     @PutMapping("/{id}/withdraw")
     @Operation(summary = "撤回公告", description = "将已发布的公告撤回为草稿状态")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "撤回公告", module = "公告管理", operationType = "UPDATE", targetType = "notice")
     public Result<Boolean> withdrawNotice(@PathVariable Integer id) {
         try {
             boolean success = noticeService.withdrawNotice(id);
@@ -170,6 +175,7 @@ public class AdminNoticeController {
      */
     @PutMapping("/{id}/pinned")
     @Operation(summary = "切换置顶", description = "切换公告的置顶状态")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "切换公告置顶", module = "公告管理", operationType = "UPDATE", targetType = "notice")
     public Result<Boolean> togglePinned(@PathVariable Integer id) {
         try {
             boolean success = noticeService.togglePinned(id);

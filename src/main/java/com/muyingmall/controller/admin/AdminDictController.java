@@ -67,6 +67,7 @@ public class AdminDictController {
      */
     @PostMapping("/types")
     @Operation(summary = "新增字典类型", description = "创建新的字典类型")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "新增字典类型", module = "字典管理", operationType = "CREATE", targetType = "dict_type")
     public Result<Boolean> addDictType(@RequestBody SysDictType dictType) {
         try {
             boolean success = dictTypeService.addDictType(dictType);
@@ -84,6 +85,7 @@ public class AdminDictController {
      */
     @PutMapping("/types/{id}")
     @Operation(summary = "更新字典类型", description = "更新指定字典类型信息")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新字典类型", module = "字典管理", operationType = "UPDATE", targetType = "dict_type")
     public Result<Boolean> updateDictType(@PathVariable Integer id, @RequestBody SysDictType dictType) {
         try {
             dictType.setId(id);
@@ -102,6 +104,7 @@ public class AdminDictController {
      */
     @DeleteMapping("/types/{id}")
     @Operation(summary = "删除字典类型", description = "删除指定字典类型及其所有字典项")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "删除字典类型", module = "字典管理", operationType = "DELETE", targetType = "dict_type")
     public Result<Boolean> deleteDictType(@PathVariable Integer id) {
         try {
             boolean success = dictTypeService.deleteDictType(id);
@@ -117,6 +120,7 @@ public class AdminDictController {
      */
     @PutMapping("/types/{id}/status")
     @Operation(summary = "切换字典类型状态", description = "切换字典类型的启用/禁用状态")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "切换字典类型状态", module = "字典管理", operationType = "UPDATE", targetType = "dict_type")
     public Result<Boolean> toggleDictTypeStatus(@PathVariable Integer id) {
         try {
             boolean success = dictTypeService.toggleStatus(id);
@@ -167,6 +171,7 @@ public class AdminDictController {
      */
     @PostMapping("/items")
     @Operation(summary = "新增字典项", description = "创建新的字典项")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "新增字典项", module = "字典管理", operationType = "CREATE", targetType = "dict_item")
     public Result<Boolean> addDictItem(@RequestBody SysDictItem dictItem) {
         try {
             boolean success = dictItemService.addDictItem(dictItem);
@@ -184,6 +189,7 @@ public class AdminDictController {
      */
     @PutMapping("/items/{id}")
     @Operation(summary = "更新字典项", description = "更新指定字典项信息")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "更新字典项", module = "字典管理", operationType = "UPDATE", targetType = "dict_item")
     public Result<Boolean> updateDictItem(@PathVariable Integer id, @RequestBody SysDictItem dictItem) {
         try {
             dictItem.setId(id);
@@ -202,6 +208,7 @@ public class AdminDictController {
      */
     @DeleteMapping("/items/{id}")
     @Operation(summary = "删除字典项", description = "删除指定字典项")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "删除字典项", module = "字典管理", operationType = "DELETE", targetType = "dict_item")
     public Result<Boolean> deleteDictItem(@PathVariable Integer id) {
         try {
             boolean success = dictItemService.deleteDictItem(id);
@@ -217,6 +224,7 @@ public class AdminDictController {
      */
     @PutMapping("/items/{id}/status")
     @Operation(summary = "切换字典项状态", description = "切换字典项的启用/禁用状态")
+    @com.muyingmall.annotation.AdminOperationLog(operation = "切换字典项状态", module = "字典管理", operationType = "UPDATE", targetType = "dict_item")
     public Result<Boolean> toggleDictItemStatus(@PathVariable Integer id) {
         try {
             boolean success = dictItemService.toggleStatus(id);
