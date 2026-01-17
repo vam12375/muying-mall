@@ -5,7 +5,7 @@ import java.lang.annotation.*;
 /**
  * 自定义缓存注解
  * 用于标记需要缓存的方法
- * Source: 性能优化 - Redis缓存增强
+ * 来源：性能优化 - Redis缓存增强
  * 
  */
 @Target(ElementType.METHOD)
