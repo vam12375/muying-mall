@@ -98,12 +98,11 @@ public class JwtFilter extends OncePerRequestFilter {
                     }
                 } else {
                     // log.warn("[JwtFilter] Token validation failed for token: {}...",
-                    // (token.length() > 10) ? token.substring(0,10) : token); // This log can be
-                    // useful
+                    // (token.length() > 10) ? token.substring(0,10) : token); // 这条日志可能很有用
                 }
             } catch (Exception e) {
                 // 记录错误，但允许请求继续
-                log.error("[JwtFilter] Error processing JWT: {}", e.getMessage(), e); // Keep this error log
+                log.error("[JwtFilter] Error processing JWT: {}", e.getMessage(), e); // 保留此错误日志
             }
         }
 
@@ -132,12 +131,12 @@ public class JwtFilter extends OncePerRequestFilter {
                 session.setAttribute("user", user);
                 // 更新同步时间戳
                 session.setAttribute("lastSessionSync", System.currentTimeMillis());
-                log.debug("User {} synced to session successfully.", username); // This can be a useful debug log
+                log.debug("User {} synced to session successfully.", username); // 这可能是一条有用的调试日志
             } else {
-                log.warn("Could not find user '{}' in DB for session sync.", username); // Keep this warning
+                log.warn("无法在数据库中找到用于会话同步的用户 '{}'。", username); // 保留此警告
             }
         } catch (Exception e) {
-            log.error("Error syncing user to session: {}", e.getMessage(), e); // Keep this error log
+            log.error("Error syncing user to session: {}", e.getMessage(), e); // 保留此错误日志
         }
     }
 }

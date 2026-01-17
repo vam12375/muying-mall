@@ -54,9 +54,7 @@ public class SecurityConfig {
 
     // ⚠️ 测试模式：允许所有请求通过（生产环境请勿使用）*
 
-    http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-
-                        .anyRequest().permitAll());
+    http.authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest().permitAll());
 
     // 启用CORS*
 
