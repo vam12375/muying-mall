@@ -1408,7 +1408,7 @@ public class PointsServiceImpl extends ServiceImpl<UserPointsMapper, UserPoints>
         stats.put("totalCount", allExchanges.size());
 
         // 性能优化：使用单次遍历完成所有统计，避免多次stream遍历
-        // Source: 性能优化 - 将O(5n)的多次过滤优化为O(n)的单次遍历
+        // 来源：性能优化 - 将O(5n)的多次过滤优化为O(n)的单次遍历
         LocalDate today = LocalDate.now();
         
         // 使用单次遍历完成所有统计

@@ -376,7 +376,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 }
             } catch (Exception e) {
                 log.error("[UserServiceImpl] Error parsing claims or fetching user after token validation: {}",
-                        e.getMessage(), e); // Keep this error log
+                        e.getMessage(), e); // 保留此错误日志
                 return null;
             }
         } else {

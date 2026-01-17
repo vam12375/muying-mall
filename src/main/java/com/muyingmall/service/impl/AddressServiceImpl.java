@@ -163,6 +163,7 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address> impl
     
     /**
      * 清除用户地址缓存
+     * 同时清除Service层和Controller层的缓存，确保数据一致性
      *
      * @param userId 用户ID
      */
@@ -170,9 +171,15 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address> impl
         if (userId == null) {
             return;
         }
-        String cacheKey = CacheConstants.USER_ADDRESS_LIST_KEY + userId;
-        redisUtil.del(cacheKey);
-        log.debug("清除用户地址列表缓存: userId={}", userId);
+        // 清除Service层缓存
+        String serviceCacheKey = CacheConstants.USER_ADDRESS_LIST_KEY + userId;
+        redisUtil.del(serviceCacheKey);
+        
+        // 清除Controller层缓存
+        String controllerCacheKey = "user:addresses:" + userId;
+        redisUtil.del(controllerCacheKey);
+        
+        log.debug("清除用户地址缓存（Service层+Controller层）: userId={}", userId);
     }
 
     /**

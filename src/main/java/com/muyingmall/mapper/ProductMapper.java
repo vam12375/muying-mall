@@ -74,7 +74,7 @@ public interface ProductMapper extends BaseMapper<Product> {
         /**
          * 批量查询分类商品数量
          * 性能优化：一次SQL查询所有分类的商品数量，避免N+1查询
-         * Source: N+1查询优化 - 批量统计分类商品数量
+         * 来源：N+1查询优化 - 批量统计分类商品数量
          *
          * @param categoryIds 分类ID列表
          * @return 分类ID与商品数量的映射列表

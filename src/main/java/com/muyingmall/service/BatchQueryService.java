@@ -12,7 +12,7 @@ import java.util.Map;
  * 批量查询服务接口
  * 用于优化N+1查询问题
  * 
- * Source: 性能优化 - 批量查询
+ * 来源：性能优化 - 批量查询
  * 
  */
 public interface BatchQueryService {

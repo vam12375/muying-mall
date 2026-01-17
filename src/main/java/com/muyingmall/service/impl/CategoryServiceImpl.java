@@ -416,7 +416,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
             }
 
             // 性能优化：一次性批量查询所有分类的商品数量，避免N+1查询
-            // Source: N+1查询优化 - 使用SQL聚合替代循环单条查询
+            // 来源：N+1查询优化 - 使用SQL聚合替代循环单条查询
             List<Integer> allCategoryIds = categories.stream()
                     .map(Category::getCategoryId)
                     .collect(Collectors.toList());
@@ -462,7 +462,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     /**
      * 批量查询分类商品数量
      * 性能优化：一次SQL查询所有分类的商品数量，避免N+1查询
-     * Source: N+1查询优化
+     * 来源：N+1查询优化
      *
      * @param categoryIds 分类ID列表
      * @return 分类ID -> 商品数量的映射

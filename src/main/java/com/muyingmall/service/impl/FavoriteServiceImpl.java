@@ -62,7 +62,7 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite> i
         log.debug("查询到收藏记录数: {}, 收藏查询耗时={}ms", favoritePage.getRecords().size(), favoriteQueryTime);
 
         // 性能优化：批量查询商品信息，避免N+1查询问题
-        // Source: N+1查询优化 - 使用IN查询批量获取商品
+        // 来源：N+1查询优化 - 使用IN查询批量获取商品
         List<Favorite> favorites = favoritePage.getRecords();
         if (!favorites.isEmpty()) {
             long productStartTime = System.currentTimeMillis();

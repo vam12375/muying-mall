@@ -181,7 +181,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         List<SkuStockDTO> skuStockList = new ArrayList<>();
 
         // 性能优化：批量查询所有商品，避免N+1查询问题
-        // Source: N+1查询优化 - 使用BatchQueryService批量获取商品
+        // 来源：N+1查询优化 - 使用BatchQueryService批量获取商品
         List<Integer> productIds = cartList.stream()
                 .map(Cart::getProductId)
                 .distinct()
@@ -404,7 +404,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
 
         // 性能优化：批量清空购物车中已购买的商品，避免N次DELETE
-        // Source: N+1查询优化 - 使用批量删除替代循环单条删除
+        // 来源：N+1查询优化 - 使用批量删除替代循环单条删除
         List<Integer> cartIdsToDelete = cartList.stream()
                 .map(Cart::getCartId)
                 .collect(Collectors.toList());
@@ -833,7 +833,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         log.info("管理员查询订单完成: 总数={}, 订单查询耗时={}ms", orderPage.getTotal(), orderQueryTime);
 
         // 性能优化：批量查询订单商品，避免N+1查询问题
-        // Source: N+1查询优化 - 使用IN查询批量获取订单商品，并使用Map分组提升性能
+        // 来源：N+1查询优化 - 使用IN查询批量获取订单商品，并使用Map分组提升性能
         List<Order> orders = orderPage.getRecords();
         if (!orders.isEmpty()) {
             long productStartTime = System.currentTimeMillis();

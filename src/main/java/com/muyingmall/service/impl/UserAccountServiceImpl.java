@@ -94,7 +94,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         // 构建缓存键
         String cacheKey = CacheConstants.USER_ACCOUNT_DETAIL_KEY + userId;
-        
+
         // 尝试从缓存获取
         Object cached = redisUtil.get(cacheKey);
         if (cached != null) {
@@ -110,7 +110,7 @@ public class UserAccountServiceImpl implements UserAccountService {
             log.debug("用户账户不存在，自动创建: userId={}", userId);
             userAccount = createUserAccount(userId);
         }
-        
+
         // 缓存结果
         if (userAccount != null) {
             redisUtil.set(cacheKey, userAccount, CacheConstants.USER_ACCOUNT_EXPIRE_TIME);
@@ -177,7 +177,7 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new BusinessException("支付方式不能为空");
         }
 
-        System.out.println("开始充值操作: userId=" + userId + ", amount=" + amount);
+        log.info("开始充值操作: userId={}, amount={}", userId, amount);
 
         // 查询用户账户
         UserAccount userAccount = userAccountMapper.getUserAccountByUserId(userId);
@@ -185,8 +185,8 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new BusinessException("用户账户不存在");
         }
 
-        System.out.println("充值操作 - 获取到用户账户: id=" + userAccount.getId() + ", userId=" + userAccount.getUserId()
-                + ", 当前余额=" + userAccount.getBalance());
+        log.debug("充值操作 - 获取到用户账户: id={}, userId={}, 当前余额={}",
+                userAccount.getId(), userAccount.getUserId(), userAccount.getBalance());
 
         // 获取当前管理员信息
         Integer adminId = SecurityUtil.getCurrentUserId();
@@ -201,15 +201,15 @@ public class UserAccountServiceImpl implements UserAccountService {
         userAccount.setUpdateTime(new Date());
         userAccountMapper.updateById(userAccount);
 
-        System.out.println("充值操作 - 更新账户余额: beforeBalance=" + beforeBalance + ", afterBalance=" + afterBalance);
+        log.debug("充值操作 - 更新账户余额: beforeBalance={}, afterBalance={}", beforeBalance, afterBalance);
 
         // 创建交易记录
         AccountTransaction transaction = new AccountTransaction();
-        System.out.println("充值操作 - 创建交易记录对象: " + transaction);
+        log.debug("充值操作 - 创建交易记录对象");
 
         transaction.setUserId(userId);
         Integer accountId = userAccount.getId();
-        System.out.println("充值操作 - 设置accountId，值为：" + accountId + "，来自userAccount.getId()");
+        log.debug("充值操作 - 设置accountId: {}", accountId);
         transaction.setAccountId(accountId);
         transaction.setType(1); // 1-充值
         transaction.setAmount(amount);
@@ -226,14 +226,14 @@ public class UserAccountServiceImpl implements UserAccountService {
         transaction.setCreateTime(new Date());
         transaction.setUpdateTime(new Date());
 
-        System.out.println("充值操作 - 交易记录设置完成，准备插入，accountId=" + transaction.getAccountId());
+        log.debug("充值操作 - 交易记录设置完成，准备插入，accountId={}", transaction.getAccountId());
 
         accountTransactionMapper.secureInsert(transaction);
 
         // 清除用户账户缓存
         clearUserAccountCache(userId);
 
-        System.out.println("充值操作完成: 交易ID=" + transaction.getId());
+        log.info("充值操作完成: 交易ID={}", transaction.getId());
     }
 
     @Override
@@ -249,7 +249,7 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new BusinessException("调整原因不能为空");
         }
 
-        System.out.println("开始余额调整操作: userId=" + userId + ", amount=" + amount);
+        log.info("开始余额调整操作: userId={}, amount={}", userId, amount);
 
         // 查询用户账户
         UserAccount userAccount = userAccountMapper.getUserAccountByUserId(userId);
@@ -257,8 +257,8 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new BusinessException("用户账户不存在");
         }
 
-        System.out.println("余额调整 - 获取到用户账户: id=" + userAccount.getId() + ", userId=" + userAccount.getUserId()
-                + ", 当前余额=" + userAccount.getBalance());
+        log.debug("余额调整 - 获取到用户账户: id={}, userId={}, 当前余额={}",
+                userAccount.getId(), userAccount.getUserId(), userAccount.getBalance());
 
         // 获取当前管理员信息
         Integer adminId = SecurityUtil.getCurrentUserId();
@@ -277,15 +277,15 @@ public class UserAccountServiceImpl implements UserAccountService {
         userAccount.setUpdateTime(new Date());
         userAccountMapper.updateById(userAccount);
 
-        System.out.println("余额调整 - 更新账户余额: beforeBalance=" + beforeBalance + ", afterBalance=" + afterBalance);
+        log.debug("余额调整 - 更新账户余额: beforeBalance={}, afterBalance={}", beforeBalance, afterBalance);
 
         // 创建交易记录
         AccountTransaction transaction = new AccountTransaction();
-        System.out.println("余额调整 - 创建交易记录对象: " + transaction);
+        log.debug("余额调整 - 创建交易记录对象");
 
         transaction.setUserId(userId);
         Integer accountId = userAccount.getId();
-        System.out.println("余额调整 - 设置accountId，值为：" + accountId + "，来自userAccount.getId()");
+        log.debug("余额调整 - 设置accountId: {}", accountId);
         transaction.setAccountId(accountId);
         transaction.setType(4); // 4-管理员调整
         transaction.setAmount(amount);
@@ -302,14 +302,14 @@ public class UserAccountServiceImpl implements UserAccountService {
         transaction.setCreateTime(new Date());
         transaction.setUpdateTime(new Date());
 
-        System.out.println("余额调整 - 交易记录设置完成，准备插入，accountId=" + transaction.getAccountId());
+        log.debug("余额调整 - 交易记录设置完成，准备插入，accountId={}", transaction.getAccountId());
 
         accountTransactionMapper.secureInsert(transaction);
 
         // 清除用户账户缓存
         clearUserAccountCache(userId);
 
-        System.out.println("余额调整操作完成: 交易ID=" + transaction.getId());
+        log.info("余额调整操作完成: 交易ID={}", transaction.getId());
     }
 
     @Override
@@ -437,8 +437,7 @@ public class UserAccountServiceImpl implements UserAccountService {
                 throw new BusinessException("支付方式不能为空");
             }
 
-            System.out
-                    .println("开始创建充值订单: userId=" + userId + ", amount=" + amount + ", paymentMethod=" + paymentMethod);
+            log.info("开始创建充值订单: userId={}, amount={}, paymentMethod={}", userId, amount, paymentMethod);
 
             // 生成充值订单号
             String rechargeOrderNo = generateRechargeOrderNo();
@@ -446,7 +445,7 @@ public class UserAccountServiceImpl implements UserAccountService {
             result.put("amount", amount);
             result.put("paymentMethod", paymentMethod);
 
-            System.out.println("生成充值订单号: " + rechargeOrderNo);
+            log.debug("生成充值订单号: {}", rechargeOrderNo);
 
             // 创建充值订单记录
             AccountTransaction transaction = new AccountTransaction();
@@ -471,12 +470,12 @@ public class UserAccountServiceImpl implements UserAccountService {
             transaction.setUpdateTime(new Date());
 
             try {
-                System.out.println("保存充值交易记录: userId=" + userId + ", accountId=" + transaction.getAccountId()
-                        + ", amount=" + amount);
+                log.debug("保存充值交易记录: userId={}, accountId={}, amount={}",
+                        userId, transaction.getAccountId(), amount);
                 accountTransactionMapper.insert(transaction);
-                System.out.println("保存充值交易记录成功: id=" + transaction.getId());
+                log.info("保存充值交易记录成功: id={}", transaction.getId());
             } catch (Exception e) {
-                System.err.println("保存充值交易记录失败: " + e.getMessage());
+                log.error("保存充值交易记录失败: {}", e.getMessage());
                 throw new BusinessException("保存充值交易记录失败: " + e.getMessage());
             }
 
@@ -516,16 +515,15 @@ public class UserAccountServiceImpl implements UserAccountService {
 
                     // 返回支付表单HTML
                     result.put("formHtml", formHtml);
-                    System.out.println("生成支付宝支付表单成功");
+                    log.info("生成支付宝支付表单成功");
 
                 } catch (Exception e) {
-                    System.err.println("生成支付宝支付表单失败: " + e.getMessage());
-                    e.printStackTrace();
+                    log.error("生成支付宝支付表单失败: {}", e.getMessage(), e);
                     throw new BusinessException("生成支付宝支付表单失败: " + e.getMessage());
                 }
             } else if ("wechat".equals(paymentMethod)) {
                 // 调用微信支付接口，生成支付二维码
-                System.out.println("生成微信支付链接: orderNo=" + rechargeOrderNo);
+                log.info("生成微信支付链接: orderNo={}", rechargeOrderNo);
                 result.put("redirectUrl", "/payment/wallet/wechat?orderNo=" + rechargeOrderNo);
                 result.put("qrCode",
                         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAABlBMVEX///8AAABVwtN+AAAA");
@@ -537,14 +535,13 @@ public class UserAccountServiceImpl implements UserAccountService {
                 throw new BusinessException("不支持的支付方式: " + paymentMethod);
             }
 
-            System.out.println("创建充值订单成功: orderNo=" + rechargeOrderNo);
+            log.info("创建充值订单成功: orderNo={}", rechargeOrderNo);
             return result;
         } catch (BusinessException be) {
-            System.err.println("创建充值订单业务异常: " + be.getMessage());
+            log.error("创建充值订单业务异常: {}", be.getMessage());
             throw be;
         } catch (Exception e) {
-            System.err.println("创建充值订单系统异常: " + e.getMessage());
-            e.printStackTrace();
+            log.error("创建充值订单系统异常: {}", e.getMessage(), e);
             throw new BusinessException("创建充值订单失败: " + e.getMessage());
         }
     }
@@ -560,14 +557,14 @@ public class UserAccountServiceImpl implements UserAccountService {
                     Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
                     Object userId = details.get("userId");
                     if (userId instanceof Integer) {
-                        System.out.println("从认证对象的details中获取到userId: " + userId);
+                        log.debug("从认证对象的details中获取到userId: {}", userId);
                         return (Integer) userId;
                     } else if (userId instanceof String) {
-                        System.out.println("从认证对象的details中获取到userId（字符串）: " + userId);
+                        log.debug("从认证对象的details中获取到userId（字符串）: {}", userId);
                         return Integer.parseInt((String) userId);
                     }
                 } catch (Exception e) {
-                    System.out.println("从认证对象的details中获取userId失败: " + e.getMessage());
+                    log.debug("从认证对象的details中获取userId失败: {}", e.getMessage());
                 }
             }
 
@@ -576,34 +573,34 @@ public class UserAccountServiceImpl implements UserAccountService {
             if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
                 // 从UserDetails中获取用户名，然后通过用户名查询用户ID
                 String username = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
-                System.out.println("从UserDetails中获取到用户名: " + username);
+                log.debug("从UserDetails中获取到用户名: {}", username);
                 // 通过用户名从数据库查询用户ID
                 User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
                 if (user != null) {
-                    System.out.println("根据用户名查询到用户ID: " + user.getUserId());
+                    log.debug("根据用户名查询到用户ID: {}", user.getUserId());
                     return user.getUserId();
                 } else {
-                    System.out.println("根据用户名未找到用户: " + username);
+                    log.warn("根据用户名未找到用户: {}", username);
                     throw new BusinessException("用户不存在");
                 }
             } else if (principal instanceof String) {
                 // 如果principal是字符串（通常是用户名）
                 String username = (String) principal;
-                System.out.println("从String类型的principal中获取到用户名: " + username);
+                log.debug("从String类型的principal中获取到用户名: {}", username);
                 // 通过用户名从数据库查询用户ID
                 User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
                 if (user != null) {
-                    System.out.println("根据用户名查询到用户ID: " + user.getUserId());
+                    log.debug("根据用户名查询到用户ID: {}", user.getUserId());
                     return user.getUserId();
                 } else {
-                    System.out.println("根据用户名未找到用户: " + username);
+                    log.warn("根据用户名未找到用户: {}", username);
                     throw new BusinessException("用户不存在");
                 }
             }
         }
 
         // 如果无法获取用户ID，抛出异常而不是返回null
-        System.out.println("无法获取当前用户ID，用户可能未登录");
+        log.warn("无法获取当前用户ID，用户可能未登录");
         throw new BusinessException("用户未登录或登录状态已失效");
     }
 
@@ -758,50 +755,50 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         log.debug("钱包退款完成: userId={}, amount={}, 交易ID={}", userId, amount, transaction.getId());
     }
-    
+
     @Override
     public Map<String, Object> getGlobalUserStats() {
         Map<String, Object> stats = new HashMap<>();
-        
+
         // 1. 总用户数
         Long totalUsers = userMapper.selectCount(null);
         stats.put("totalUsers", totalUsers != null ? totalUsers : 0L);
-        
+
         // 2. 活跃用户数（状态为1的用户）
         LambdaQueryWrapper<User> activeWrapper = new LambdaQueryWrapper<>();
         activeWrapper.eq(User::getStatus, 1);
         Long activeUsers = userMapper.selectCount(activeWrapper);
         stats.put("activeUsers", activeUsers != null ? activeUsers : 0L);
-        
+
         // 3. 冻结用户数（状态为0的用户）
         LambdaQueryWrapper<User> frozenWrapper = new LambdaQueryWrapper<>();
         frozenWrapper.eq(User::getStatus, 0);
         Long frozenUsers = userMapper.selectCount(frozenWrapper);
         stats.put("frozenUsers", frozenUsers != null ? frozenUsers : 0L);
-        
+
         // 4. 今日新增用户数
         LambdaQueryWrapper<User> todayWrapper = new LambdaQueryWrapper<>();
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
         todayWrapper.ge(User::getCreateTime, todayStart);
         Long newUsersToday = userMapper.selectCount(todayWrapper);
         stats.put("newUsersToday", newUsersToday != null ? newUsersToday : 0L);
-        
+
         // 5. 总余额（所有用户账户余额之和）
         BigDecimal totalBalance = userAccountMapper.sumAllBalance();
         stats.put("totalBalance", totalBalance != null ? totalBalance : BigDecimal.ZERO);
-        
+
         // 6. 总充值（所有充值交易之和，type=1且status=1）
         BigDecimal totalRecharge = accountTransactionMapper.sumByTypeAndStatus(1, 1);
         stats.put("totalRecharge", totalRecharge != null ? totalRecharge : BigDecimal.ZERO);
-        
+
         // 7. 总消费（所有消费交易之和，type=2且status=1）
         BigDecimal totalConsumption = accountTransactionMapper.sumByTypeAndStatus(2, 1);
         stats.put("totalConsumption", totalConsumption != null ? totalConsumption.abs() : BigDecimal.ZERO);
-        
+
         log.debug("获取全局用户统计: {}", stats);
         return stats;
     }
-    
+
     /**
      * 清除用户账户缓存
      *
