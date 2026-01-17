@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * 系统日志统计数据DTO
- * Source: 自定义实现
+ * 来源：自定义实现
  */
 @Data
 public class SystemLogStatisticsDTO {

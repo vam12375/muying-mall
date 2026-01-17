@@ -47,7 +47,7 @@ public class RechargeRequestDTO {
     @Schema(description = "备注")
     private String remark;
 
-    // Getters and Setters
+    // Getter和Setter方法
     public Integer getUserId() {
         return userId;
     }

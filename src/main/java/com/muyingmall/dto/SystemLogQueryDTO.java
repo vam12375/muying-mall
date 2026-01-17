@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 /**
  * 系统日志查询参数DTO
- * Source: 自定义实现
+ * 来源：自定义实现
  */
 @Data
 public class SystemLogQueryDTO {

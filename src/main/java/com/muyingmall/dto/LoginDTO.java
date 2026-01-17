@@ -29,4 +29,14 @@ public class LoginDTO implements Serializable {
      * 记住我
      */
     private Boolean rememberMe = false;
+
+    /**
+     * 验证码Key
+     */
+    private String captchaKey;
+
+    /**
+     * 验证码
+     */
+    private String captchaCode;
 }
