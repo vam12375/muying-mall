@@ -30,7 +30,7 @@ public class Knife4jConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("母婴商城 API 文档")
-                        .description("母婴商城系统 RESTful API 文档，基于 Spring Boot 3.2.0 构建")
+                        .description("母婴商城系统 RESTful API 文档，基于 Spring Boot 3.3.0 构建")
                         .version("v1.2.0")
                         .contact(new Contact()
                                 .name("青柠檬")

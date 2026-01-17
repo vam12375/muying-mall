@@ -76,7 +76,7 @@ public class RabbitMQErrorHandler implements ErrorHandler {
         private String errorClass;
         private String timestamp;
 
-        // Getters and Setters
+        // Getter和Setter方法
         public String getQueueName() { return queueName; }
         public void setQueueName(String queueName) { this.queueName = queueName; }
         

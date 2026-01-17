@@ -11,6 +11,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
@@ -21,6 +24,7 @@ import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +36,7 @@ import java.util.concurrent.TimeUnit;
  * 1. 配置连接池参数，支持高并发场景
  * 2. 优化IO线程数和超时设置
  * 3. 启用连接保活机制
+ * 4. 支持HTTPS和Basic认证
  */
 @Slf4j
 @Configuration
@@ -73,7 +78,12 @@ public class ElasticsearchConfig {
     @Bean
     public ElasticsearchClient elasticsearchClient() {
         try {
-            // 解析URL
+            // 解析URL和协议
+            String scheme = "http";
+            if (elasticsearchUrl.contains("https://")) {
+                scheme = "https";
+            }
+            
             String[] urlParts = elasticsearchUrl.replace("http://", "").replace("https://", "").split(":");
             String host = urlParts[0];
             int port = urlParts.length > 1 ? Integer.parseInt(urlParts[1]) : 9200;
@@ -105,14 +115,28 @@ public class ElasticsearchConfig {
                     .setResponseTimeout(Timeout.ofMilliseconds(socketTimeout))
                     .build();
 
+            // 配置认证信息
+            final BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+            if (StringUtils.hasText(username) && StringUtils.hasText(password)) {
+                credentialsProvider.setCredentials(new AuthScope(host, port),
+                        new UsernamePasswordCredentials(username, password.toCharArray()));
+            }
+
             // 创建 Rest5Client - 带连接池和性能优化配置
-            Rest5Client restClient = Rest5Client.builder(new HttpHost("http", host, port))
-                    .setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder
-                            .setIOReactorConfig(ioReactorConfig)
-                            .setConnectionManager(connectionManager)
-                            .setDefaultRequestConfig(requestConfig)
-                            .evictExpiredConnections()  // 自动清除过期连接
-                            .evictIdleConnections(TimeValue.ofMinutes(1)))  // 清除空闲超过1分钟的连接
+            Rest5Client restClient = Rest5Client.builder(new HttpHost(scheme, host, port))
+                    .setHttpClientConfigCallback(httpClientBuilder -> {
+                        httpClientBuilder
+                                .setIOReactorConfig(ioReactorConfig)
+                                .setConnectionManager(connectionManager)
+                                .setDefaultRequestConfig(requestConfig)
+                                .evictExpiredConnections()  // 自动清除过期连接
+                                .evictIdleConnections(TimeValue.ofMinutes(1)); // 清除空闲超过1分钟的连接
+                        
+                        // 添加认证
+                        if (StringUtils.hasText(username) && StringUtils.hasText(password)) {
+                            httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                        }
+                    })
                     .build();
 
             // 创建支持Java 8日期时间的ObjectMapper
