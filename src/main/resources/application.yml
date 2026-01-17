@@ -266,7 +266,7 @@ knife4j:
 
 # CORS配置
 cors:
-  allowed-origins: http://localhost:5173,http://localhost:3000,http://localhost:8081,http://localhost:4000,https://muying-admin.netlify.app
+  allowed-origins: http://localhost:5173,http://localhost:3000,http://localhost:8081,http://localhost:4000,https://muying-admin.netlify.app,https://muying-web.pages.dev,https://api.pig1.de5.net
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
   allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,X-CSRF-Token
   allow-credentials: true
@@ -278,12 +278,14 @@ alipay:
   # private-key已移至application-private.yml
   # public-key已移至application-private.yml
   gateway-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do  # 沙箱环境网关，正式环境需修改
-  return-url: http://localhost:8080/api/payment/alipay/return #钱包充值成功后的跳转地址
-  notify-url: http://localhost:8080/api/payment/alipay/notify #钱包充值异步回调地址
-  refund-notify-url: http://localhost:8080/api/payment/alipay/refund/notify #退款异步回调地址
+  # 回调URL配置 - 支持环境变量覆盖，本地开发默认localhost，线上部署使用实际域名
+  # 线上环境设置环境变量：ALIPAY_RETURN_URL=https://api.pig1.de5.net/api/payment/alipay/return
+  return-url: ${ALIPAY_RETURN_URL:http://localhost:8080/api/payment/alipay/return} # 同步返回地址
+  notify-url: ${ALIPAY_NOTIFY_URL:http://localhost:8080/api/payment/alipay/notify} # 异步通知地址
+  refund-notify-url: ${ALIPAY_REFUND_NOTIFY_URL:http://localhost:8080/api/payment/alipay/refund/notify} # 退款异步通知地址
   # 订单支付回调地址（如果需要区分）
-  wellet-return-url: http://localhost:8080/api/payment/alipay/return #订单支付成功后的跳转地址
-  wellet-notify-url: http://localhost:8080/api/payment/alipay/notify #订单支付异步回调地址
+  wellet-return-url: ${ALIPAY_RETURN_URL:http://localhost:8080/api/payment/alipay/return} # 钱包充值同步返回地址
+  wellet-notify-url: ${ALIPAY_NOTIFY_URL:http://localhost:8080/api/payment/alipay/notify} # 钱包充值异步通知地址
 
 # 微信支付配置 - 敏感信息已移至application-private.yml
 wechat:
@@ -364,3 +366,17 @@ rabbitmq:
     batch-size: 100  # 批量大小
     batch-processing-enabled: false  # 是否启用批量处理
     batch-timeout: 1000  # 批量处理超时时间（毫秒）
+
+# 阿里云号码认证服务配置
+aliyun:
+  phone-auth:
+    # AccessKey ID - 从阿里云RAM访问控制获取
+    access-key-id: ${ALIYUN_PHONE_AUTH_ACCESS_KEY_ID:}
+    # AccessKey Secret - 从阿里云RAM访问控制获取
+    access-key-secret: ${ALIYUN_PHONE_AUTH_ACCESS_KEY_SECRET:}
+    # 场景ID - 从号码认证服务控制台获取
+    scene-id: ${ALIYUN_PHONE_AUTH_SCENE_ID:}
+    # 区域ID
+    region-id: cn-hangzhou
+    # API端点
+    endpoint: dypnsapi.aliyuncs.com
