@@ -4,10 +4,12 @@ import java.util.Map;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 安全工具类，用于获取当前登录用户信息
  */
+@Slf4j
 public class SecurityUtil {
 
     /**
@@ -31,7 +33,7 @@ public class SecurityUtil {
                 } catch (NumberFormatException e) {
                     // 如果用户名不是数字，可以通过用户名查询用户ID
                     // 此处可以添加数据库查询逻辑
-                    System.out.println("无法从UserDetails中直接获取用户ID，用户名: " + username);
+                    log.debug("无法从UserDetails中直接获取用户ID，用户名: {}", username);
                 }
             }
             // 如果principal是字符串类型（通常是用户名）
@@ -40,7 +42,7 @@ public class SecurityUtil {
                 try {
                     return Integer.parseInt(username);
                 } catch (NumberFormatException e) {
-                    System.out.println("无法从principal(String)中获取用户ID，用户名: " + username);
+                    log.debug("无法从principal(String)中获取用户ID，用户名: {}", username);
                 }
             }
 
@@ -55,7 +57,7 @@ public class SecurityUtil {
                         return Integer.parseInt((String) userId);
                     }
                 } catch (Exception e) {
-                    System.out.println("从Authentication details中获取用户ID失败: " + e.getMessage());
+                    log.debug("从Authentication details中获取用户ID失败: {}", e.getMessage());
                 }
             }
 
@@ -64,15 +66,15 @@ public class SecurityUtil {
             try {
                 return Integer.parseInt(name);
             } catch (NumberFormatException e) {
-                System.out.println("无法从authentication.getName()获取用户ID: " + name);
+                log.debug("无法从authentication.getName()获取用户ID: {}", name);
             }
 
             // 输出警告
-            System.out.println("警告: 无法确定当前用户ID。Principal类型: " +
+            log.warn("无法确定当前用户ID。Principal类型: {}",
                     (principal != null ? principal.getClass().getName() : "null"));
 
             // 生产环境应该返回null或抛出异常
-            System.out.println("无法获取当前用户ID，返回null");
+            log.debug("无法获取当前用户ID，返回null");
             return null;
         }
         return null;

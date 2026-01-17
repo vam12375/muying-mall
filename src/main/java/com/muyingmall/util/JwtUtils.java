@@ -109,8 +109,8 @@ public class JwtUtils {
     private String createToken(Map<String, Object> claims) {
         if (this.signingKey == null) {
             log.error("Signing key is not initialized! JWT cannot be created.");
-            // log.error("Current secretString at createToken when signingKey is null: {}",
-            // secretString); // Keep this if it was part of the original fix for a null key
+            // log.error("当signingKey为null时createToken处的当前secretString: {}",
+            // secretString); // 如果这是针对空密钥的原始修复的一部分，请保留此项
             throw new IllegalStateException("JWT signing key is not initialized. Check configuration and logs.");
         }
         // log.debug("createToken using signingKey (Base64): {}",
@@ -157,10 +157,8 @@ public class JwtUtils {
             return false;
         }
         try {
-            // Claims claims = getClaimsFromToken(token); // getClaimsFromToken already logs
-            // if needed
-            // For cleaner code, call the parsing directly here if not reusing the claims
-            // object elsewhere in this method
+            // Claims claims = getClaimsFromToken(token); // 如果需要，getClaimsFromToken已经记录了日志
+            // 为了代码更简洁，如果不在此方法的其他地方复用claims对象，直接在这里调用解析
             Claims claims = Jwts.parser().setSigningKey(this.signingKey).parseClaimsJws(token).getBody();
             boolean tokenExpired = claims.getExpiration().before(new Date());
             if (tokenExpired) {
@@ -201,7 +199,7 @@ public class JwtUtils {
         }
     }
 
-    // Removed temporary getter for debugging
+    // 已移除用于调试的临时getter
     // public String getSigningKeyBase64ForDebug() {
     // if (this.signingKey != null) {
     // return Base64.getEncoder().encodeToString(this.signingKey.getEncoded());
