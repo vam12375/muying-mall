@@ -1,6 +1,8 @@
 package com.muyingmall.controller.user;
 
+import com.google.code.kaptcha.impl.DefaultKaptcha;
 import com.muyingmall.common.api.Result;
+import com.muyingmall.dto.CaptchaDTO;
 import com.muyingmall.dto.LoginDTO;
 import com.muyingmall.dto.LoginResponseDTO;
 import com.muyingmall.dto.UserDTO;
@@ -11,8 +13,13 @@ import com.muyingmall.util.IpUtil;
 import com.muyingmall.util.JwtUtils;
 import com.muyingmall.util.LoginRateLimiter;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import java.util.Map;
+import java.util.UUID;
 import jakarta.servlet.http.HttpServletRequest;
+import javax.imageio.ImageIO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -47,6 +54,41 @@ public class UserController {
     private final LoginRateLimiter loginRateLimiter;
     private final LoginCacheService loginCacheService;
     private final com.muyingmall.util.RedisUtil redisUtil;
+    private final DefaultKaptcha captchaProducer;
+    private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+
+    private static final String CAPTCHA_KEY_PREFIX = "captcha:";
+    private static final int CAPTCHA_EXPIRE_MINUTES = 5;
+
+    /**
+     * 获取图形验证码
+     */
+    @GetMapping("/login/captcha")
+    @Operation(summary = "获取登录验证码", description = "生成图形验证码，返回Base64编码的图片和验证码Key")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取成功")
+    })
+    public Result<CaptchaDTO> getCaptcha() {
+        try {
+            String captchaText = captchaProducer.createText();
+            BufferedImage image = captchaProducer.createImage(captchaText);
+            String captchaKey = UUID.randomUUID().toString().replace("-", "");
+
+            redisTemplate.opsForValue().set(
+                    CAPTCHA_KEY_PREFIX + captchaKey,
+                    captchaText.toUpperCase(),
+                    java.time.Duration.ofMinutes(CAPTCHA_EXPIRE_MINUTES));
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", baos);
+            String base64Image = Base64.getEncoder().encodeToString(baos.toByteArray());
+
+            return Result.success(new CaptchaDTO(captchaKey, "data:image/png;base64," + base64Image));
+        } catch (Exception e) {
+            log.error("生成验证码失败", e);
+            return Result.error("验证码生成失败");
+        }
+    }
 
     /**
      * 用户注册
@@ -77,12 +119,29 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "账户已被禁用"),
             @ApiResponse(responseCode = "429", description = "请求过于频繁")
     })
-    public Result<LoginResponseDTO> login(@RequestBody @Valid LoginDTO loginDTO, 
+    public Result<LoginResponseDTO> login(@RequestBody @Valid LoginDTO loginDTO,
                                          HttpSession session,
                                          HttpServletRequest request) {
+        // 验证图形验证码（必需）
+        if (loginDTO.getCaptchaKey() == null || loginDTO.getCaptchaKey().trim().isEmpty()) {
+            return Result.error(400, "请输入验证码");
+        }
+        if (loginDTO.getCaptchaCode() == null || loginDTO.getCaptchaCode().trim().isEmpty()) {
+            return Result.error(400, "请输入验证码");
+        }
+        
+        String storedCaptcha = redisTemplate.opsForValue().get(CAPTCHA_KEY_PREFIX + loginDTO.getCaptchaKey());
+        if (storedCaptcha == null) {
+            return Result.error(400, "验证码已过期，请重新获取");
+        }
+        if (!storedCaptcha.equalsIgnoreCase(loginDTO.getCaptchaCode())) {
+            return Result.error(400, "验证码错误");
+        }
+        redisTemplate.delete(CAPTCHA_KEY_PREFIX + loginDTO.getCaptchaKey());
+
         // 获取客户端IP
         String clientIp = IpUtil.getIpAddr(request);
-        
+
         // 限流检查 - 防止暴力破解
         if (!loginRateLimiter.tryAcquire(clientIp, loginDTO.getUsername())) {
             return Result.error(429, "登录请求过于频繁，请稍后再试");
@@ -134,7 +193,8 @@ public class UserController {
      * 获取当前登录用户信息 (基于JWT) - 优化：只返回基本信息，不包含统计数据
      */
     @GetMapping("/info")
-    @Operation(summary = "获取当前登录用户信息", description = "通过JWT令牌获取当前登录用户的详细信息（不包含统计数据，统计数据请使用/user/stats接口）", tags = { "用户管理" })
+    @Operation(summary = "获取当前登录用户信息", description = "通过JWT令牌获取当前登录用户的详细信息（不包含统计数据，统计数据请使用/user/stats接口）", tags = {
+            "用户管理" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "获取成功", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class))),
             @ApiResponse(responseCode = "401", description = "用户未认证"),
@@ -149,13 +209,13 @@ public class UserController {
         }
 
         String username = authentication.getName();
-        
+
         // 优化：验证用户名不为空
         if (username == null || username.trim().isEmpty()) {
             log.warn("用户名为空，认证信息异常");
             return Result.error(401, "认证信息异常");
         }
-        
+
         // 优化：使用缓存查询，减少数据库压力
         User user = userService.findByUsername(username);
 
@@ -331,11 +391,11 @@ public class UserController {
         }
 
         Map<String, Object> stats = userService.getUserStats(user.getUserId());
-        
+
         // 缓存5分钟
         redisUtil.set(cacheKey, stats, 300);
         log.debug("缓存用户统计数据: userId={}, ttl=300秒", user.getUserId());
-        
+
         return Result.success(stats);
     }
 

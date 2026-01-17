@@ -54,7 +54,7 @@ public class CouponController {
     /**
      * 获取用户优惠券列表
      * 性能优化：Controller层缓存
-     * Source: 性能优化 - 缓存优惠券列表响应，延迟从256ms降低到10ms
+     * 来源：性能优化 - 缓存优惠券列表响应，延迟从256ms降低到10ms
      */
     @GetMapping("/user/coupons")
     @Operation(summary = "获取用户优惠券列表")
@@ -102,6 +102,10 @@ public class CouponController {
         if (!success) {
             return Result.error("领取失败");
         }
+        
+        // 领取成功后清除优惠券缓存
+        clearUserCouponCache(user.getUserId());
+        
         return Result.success(null, "领取成功");
     }
 
@@ -161,6 +165,10 @@ public class CouponController {
         if (!success) {
             return Result.error("优惠码无效或已被使用");
         }
+        
+        // 兑换成功后清除优惠券缓存
+        clearUserCouponCache(user.getUserId());
+        
         return Result.success(null, "兑换成功");
     }
 
@@ -197,5 +205,21 @@ public class CouponController {
 
         Map<String, Object> stats = couponService.getUserCouponStats(user.getUserId());
         return Result.success(stats);
+    }
+
+    /**
+     * 清除用户优惠券缓存
+     * 使用模式匹配清除所有状态的缓存
+     * 
+     * @param userId 用户ID
+     */
+    private void clearUserCouponCache(Integer userId) {
+        if (userId == null) {
+            return;
+        }
+        
+        // 使用模式匹配清除所有状态的优惠券缓存
+        String pattern = "user:coupons:" + userId + ":*";
+        controllerCacheUtil.clearCacheByPattern(pattern);
     }
 }

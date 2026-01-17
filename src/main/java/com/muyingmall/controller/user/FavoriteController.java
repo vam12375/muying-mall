@@ -32,7 +32,7 @@ public class FavoriteController {
     /**
      * 获取收藏列表
      * 性能优化：使用UserContext直接获取userId + Controller层缓存
-     * Source: 性能优化 - 缓存收藏列表响应，延迟从275ms降低到10ms
+     * 来源：性能优化 - 缓存收藏列表响应，延迟从275ms降低到10ms
      */
     @GetMapping
     @Operation(summary = "获取收藏列表")

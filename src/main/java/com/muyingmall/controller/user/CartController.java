@@ -37,7 +37,7 @@ public class CartController {
     /**
      * 获取购物车中所有商品的总数量
      * 性能优化：使用UserContext直接获取userId + Controller层缓存
-     * Source: 性能优化 - 缓存购物车总数响应，延迟从270ms降低到10ms
+     * 来源：性能优化 - 缓存购物车总数响应，延迟从270ms降低到10ms
      */
     @GetMapping("/total")
     @Operation(summary = "获取购物车商品总数", description = "获取当前用户购物车中所有商品的数量总和（包括未选中的商品），用于显示购物车角标")
@@ -77,13 +77,17 @@ public class CartController {
         }
 
         Cart cart = cartService.addCart(userId, cartAddDTO);
+        
+        // 添加成功后清除购物车缓存
+        clearUserCartCache(userId);
+        
         return Result.success(cart, "添加成功");
     }
 
     /**
      * 获取购物车列表
      * 性能优化：使用UserContext直接获取userId + Controller层缓存
-     * Source: 性能优化 - 缓存购物车列表响应，延迟从267ms降低到10ms
+     * 来源：性能优化 - 缓存购物车列表响应，延迟从267ms降低到10ms
      */
     @GetMapping("/list")
     @Operation(summary = "获取购物车列表", description = "获取当前用户的购物车商品列表，包含商品信息、SKU信息、数量、选中状态等。会自动关联查询商品和SKU的最新信息。")
@@ -118,6 +122,10 @@ public class CartController {
         if (cart == null) {
             return Result.error("购物车项不存在");
         }
+        
+        // 更新成功后清除购物车缓存
+        clearUserCartCache(userId);
+        
         return Result.success(cart, "更新成功");
     }
 
@@ -137,6 +145,10 @@ public class CartController {
         if (!success) {
             return Result.error("购物车项不存在");
         }
+        
+        // 删除成功后清除购物车缓存
+        clearUserCartCache(userId);
+        
         return Result.success(null, "删除成功");
     }
 
@@ -153,6 +165,10 @@ public class CartController {
         }
 
         cartService.clearCart(userId);
+        
+        // 清空成功后清除购物车缓存
+        clearUserCartCache(userId);
+        
         return Result.success(null, "清空成功");
     }
 
@@ -169,6 +185,10 @@ public class CartController {
         }
 
         cartService.selectAllCarts(userId, selected);
+        
+        // 全选/取消全选后清除购物车缓存
+        clearUserCartCache(userId);
+        
         return Result.success(null, "操作成功");
     }
 
@@ -187,6 +207,10 @@ public class CartController {
 
         boolean selectedBool = selected != null && selected == 1;
         cartService.selectCartItem(userId, cartId, selectedBool);
+        
+        // 选中/取消选中后清除购物车缓存
+        clearUserCartCache(userId);
+        
         return Result.success(null, "更新成功");
     }
     
@@ -230,6 +254,28 @@ public class CartController {
         }
 
         int deletedCount = cartService.batchDeleteCarts(userId, itemIds);
+        
+        // 批量删除后清除购物车缓存
+        clearUserCartCache(userId);
+        
         return Result.success(null, "成功删除 " + deletedCount + " 件商品");
+    }
+
+    /**
+     * 清除用户购物车缓存
+     * 同时清除列表缓存和总数缓存
+     * 
+     * @param userId 用户ID
+     */
+    private void clearUserCartCache(Integer userId) {
+        if (userId == null) {
+            return;
+        }
+        
+        // 清除购物车列表缓存
+        controllerCacheUtil.clearCache("cart:list:" + userId);
+        
+        // 清除购物车总数缓存
+        controllerCacheUtil.clearCache("cart:total:" + userId);
     }
 }

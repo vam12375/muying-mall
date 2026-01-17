@@ -38,7 +38,7 @@ public class AddressController {
     /**
      * 获取用户地址列表
      * 性能优化：使用UserContext直接获取userId + Controller层缓存
-     * Source: 性能优化 - 缓存地址列表响应，延迟从260ms降低到10ms
+     * 来源：性能优化 - 缓存地址列表响应，延迟从260ms降低到10ms
      */
     @GetMapping
     @Operation(summary = "获取用户地址列表", description = "获取当前登录用户的所有收货地址，按创建时间倒序排列，默认地址排在最前面")
@@ -87,7 +87,13 @@ public class AddressController {
         }
 
         address.setUserId(user.getUserId());
-        addressService.addAddress(address);
+        boolean success = addressService.addAddress(address);
+        
+        // 添加成功后清除Controller层缓存
+        if (success) {
+            controllerCacheUtil.clearCache("user:addresses:" + user.getUserId());
+        }
+        
         return Result.success(address, "添加成功");
     }
 
@@ -125,7 +131,13 @@ public class AddressController {
 
         address.setAddressId(addressId);
         address.setUserId(user.getUserId());
-        addressService.updateAddress(address);
+        boolean success = addressService.updateAddress(address);
+        
+        // 修改成功后清除Controller层缓存
+        if (success) {
+            controllerCacheUtil.clearCache("user:addresses:" + user.getUserId());
+        }
+        
         return Result.success(address, "修改成功");
     }
 
@@ -159,7 +171,13 @@ public class AddressController {
             return Result.error("地址不存在或不属于当前用户");
         }
 
-        addressService.removeById(addressId);
+        boolean success = addressService.removeById(addressId);
+        
+        // 删除成功后清除缓存
+        if (success) {
+            controllerCacheUtil.clearCache("user:addresses:" + user.getUserId());
+        }
+        
         return Result.success(null, "删除成功");
     }
 
@@ -193,7 +211,13 @@ public class AddressController {
             return Result.error("地址不存在或不属于当前用户");
         }
 
-        addressService.setDefaultAddress(user.getUserId(), addressId);
+        boolean success = addressService.setDefaultAddress(user.getUserId(), addressId);
+        
+        // 设置成功后清除Controller层缓存
+        if (success) {
+            controllerCacheUtil.clearCache("user:addresses:" + user.getUserId());
+        }
+        
         return Result.success(null, "设置成功");
     }
 

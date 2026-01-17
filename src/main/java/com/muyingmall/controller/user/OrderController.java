@@ -129,6 +129,10 @@ public class OrderController {
                     orderCreateDTO.getShippingFee(),
                     pointsUsed);
 
+            // 创建订单后清除订单相关缓存
+            controllerCacheUtil.clearCacheByPattern("order:list:" + userId + ":*");
+            controllerCacheUtil.clearCache("order:stats:" + userId);
+
             return Result.success(orderInfo, "创建成功");
         } catch (Exception e) {
             e.printStackTrace();
@@ -158,12 +162,12 @@ public class OrderController {
         }
 
         // 性能优化：使用Controller层缓存，减少数据库查询
-        // Source: 性能优化 - 缓存订单列表响应，延迟从288ms降低到10ms
+        // 来源：性能优化 - 缓存订单列表响应，延迟从288ms降低到10ms
         String statusKey = (status != null) ? status : "all";
         String cacheKey = "order:list:" + user.getUserId() + ":p" + page + "_s" + pageSize + "_st" + statusKey;
         
-        // 优化：缓存时间从60秒提升到180秒（3分钟）
-        return controllerCacheUtil.getWithCache(cacheKey, 180L, () -> {
+        // 优化：缓存时间调整为60秒（1分钟），确保订单数据及时更新
+        return controllerCacheUtil.getWithCache(cacheKey, 60L, () -> {
             Page<Order> orderPage = orderService.getUserOrders(user.getUserId(), page, pageSize, status);
             
             // 将Page对象转换为前端需要的格式
@@ -226,6 +230,11 @@ public class OrderController {
         if (!success) {
             return Result.error("取消失败");
         }
+        
+        // 取消订单后清除订单相关缓存
+        controllerCacheUtil.clearCacheByPattern("order:list:" + user.getUserId() + ":*");
+        controllerCacheUtil.clearCache("order:stats:" + user.getUserId());
+        
         return Result.success(null, "取消成功");
     }
 
@@ -251,6 +260,11 @@ public class OrderController {
         if (!success) {
             return Result.error("确认收货失败");
         }
+        
+        // 确认收货后清除订单相关缓存
+        controllerCacheUtil.clearCacheByPattern("order:list:" + user.getUserId() + ":*");
+        controllerCacheUtil.clearCache("order:stats:" + user.getUserId());
+        
         return Result.success(null, "确认收货成功");
     }
 
@@ -276,6 +290,11 @@ public class OrderController {
         if (!success) {
             return Result.error("删除失败");
         }
+        
+        // 删除订单后清除订单相关缓存
+        controllerCacheUtil.clearCacheByPattern("order:list:" + user.getUserId() + ":*");
+        controllerCacheUtil.clearCache("order:stats:" + user.getUserId());
+        
         return Result.success(null, "删除成功");
     }
 
@@ -301,6 +320,11 @@ public class OrderController {
 
         try {
             Map<String, Object> paymentInfo = orderService.payOrder(user.getUserId(), orderId, paymentMethod);
+            
+            // 支付成功后清除订单相关缓存
+            controllerCacheUtil.clearCacheByPattern("order:list:" + user.getUserId() + ":*");
+            controllerCacheUtil.clearCache("order:stats:" + user.getUserId());
+            
             return Result.success(paymentInfo, "支付处理中");
         } catch (Exception e) {
             return Result.error("支付失败: " + e.getMessage());
@@ -326,11 +350,11 @@ public class OrderController {
         }
 
         // 性能优化：使用Controller层缓存，减少数据库查询
-        // Source: 性能优化 - 缓存订单统计响应，延迟从275ms降低到10ms
+        // 来源：性能优化 - 缓存订单统计响应，延迟从275ms降低到10ms
         String cacheKey = "order:stats:" + user.getUserId();
         
-        // 优化：缓存时间从60秒提升到300秒（5分钟）
-        return controllerCacheUtil.getWithCache(cacheKey, 300L, () -> {
+        // 优化：缓存时间调整为120秒（2分钟），确保统计数据及时更新
+        return controllerCacheUtil.getWithCache(cacheKey, 120L, () -> {
             try {
                 Map<String, Object> statistics = orderService.getOrderStatistics(user.getUserId());
                 
@@ -623,6 +647,10 @@ public class OrderController {
                     purchaseDTO.getCouponId(),
                     purchaseDTO.getShippingFee(),
                     purchaseDTO.getPointsUsed());
+
+            // 创建订单后清除订单相关缓存
+            controllerCacheUtil.clearCacheByPattern("order:list:" + user.getUserId() + ":*");
+            controllerCacheUtil.clearCache("order:stats:" + user.getUserId());
 
             return Result.success(orderInfo, "创建成功");
         } catch (Exception e) {

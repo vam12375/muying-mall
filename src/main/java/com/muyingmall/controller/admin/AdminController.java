@@ -882,7 +882,7 @@ public class AdminController {
 
     /**
      * 批量删除系统日志
-     * Source: 新增功能，遵循KISS/YAGNI/SOLID原则
+     * 来源：新增功能，遵循KISS/YAGNI/SOLID原则
      */
     @DeleteMapping("/system/logs/batch")
     @PreAuthorize("hasAuthority('admin')")
@@ -907,7 +907,7 @@ public class AdminController {
 
     /**
      * 清空指定天数之前的日志
-     * Source: 新增功能，遵循KISS/YAGNI/SOLID原则
+     * 来源：新增功能，遵循KISS/YAGNI/SOLID原则
      * 修复：增强错误处理和日志记录
      */
     @DeleteMapping("/system/logs/clear")

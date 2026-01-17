@@ -141,6 +141,10 @@ public class PointsController {
         }
 
         Map<String, Object> signinResult = pointsService.userSignin(user.getUserId());
+        
+        // 签到成功后清除积分信息缓存
+        clearUserPointsCache(user.getUserId());
+        
         return Result.success(signinResult, "签到成功");
     }
 
@@ -189,6 +193,10 @@ public class PointsController {
             
             // 调用兑换服务
             pointsExchangeService.createExchange(exchange);
+            
+            // 兑换成功后清除积分信息缓存
+            clearUserPointsCache(user.getUserId());
+            
             return Result.success(null, "兑换成功");
         } catch (Exception e) {
             return Result.error("兑换失败：" + e.getMessage());
@@ -330,6 +338,10 @@ public class PointsController {
 
         try {
             pointsExchangeService.cancelExchange(id, user.getUserId());
+            
+            // 取消兑换后清除积分信息缓存
+            clearUserPointsCache(user.getUserId());
+            
             return Result.success(null, "取消兑换成功，积分已退回");
         } catch (Exception e) {
             return Result.error("取消兑换失败：" + e.getMessage());
@@ -360,5 +372,19 @@ public class PointsController {
         } catch (Exception e) {
             return Result.error("确认收货失败：" + e.getMessage());
         }
+    }
+
+    /**
+     * 清除用户积分信息缓存
+     * 
+     * @param userId 用户ID
+     */
+    private void clearUserPointsCache(Integer userId) {
+        if (userId == null) {
+            return;
+        }
+        
+        // 清除积分信息缓存
+        controllerCacheUtil.clearCache("points:info:" + userId);
     }
 }

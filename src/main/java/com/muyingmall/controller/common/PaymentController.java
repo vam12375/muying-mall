@@ -246,11 +246,11 @@ public class PaymentController {
             payment.setCreateTime(LocalDateTime.now());
             payment.setUpdateTime(LocalDateTime.now());
             payment.setExpireTime(LocalDateTime.now().plusHours(2)); // 假设2小时过期
-            // For sandbox, notifyUrl and returnUrl might not be strictly necessary if
-            // success is simulated immediately
-            // or handled by polling from frontend.
+            // 对于沙箱环境，notifyUrl和returnUrl可能不是严格必须的，如果
+            // 成功被立即模拟
+            // 或者由前端轮询处理。
             // payment.setReturnUrl(frontendUrl + "/payment/result?paymentId=" +
-            // payment.getId()); // Example
+            // payment.getId()); // 示例
 
             paymentService.createPayment(payment);
 
@@ -273,19 +273,18 @@ public class PaymentController {
             // --- 模拟微信沙箱支付成功 ---
             String mockTransactionId = "WX" + UUID.randomUUID().toString().replace("-", "");
             // 直接更新支付和订单状态为成功
-            // The existing updatePaymentAndOrderStatus method updates payment status to
+            // 现有的updatePaymentAndOrderStatus方法将支付状态更新为
             // SUCCESS
-            // and then calls updateOrderStatusAfterPayment.
+            // 然后调用updateOrderStatusAfterPayment。
             updatePaymentAndOrderStatus(payment.getId(), mockTransactionId);
-            // payment object itself is not updated here with status SUCCESS yet by
-            // updatePaymentAndOrderStatus,
-            // but database record will be. For response, we can fetch it or assume success.
+            // payment对象本身在这里还没有被updatePaymentAndOrderStatus更新为SUCCESS状态，
+            // 但是数据库记录会被更新。对于响应，我们可以重新获取或者假设成功。
 
             Map<String, Object> result = new HashMap<>();
             result.put("paymentId", payment.getId());
             result.put("paymentNo", payment.getPaymentNo());
             result.put("message", "微信沙箱支付模拟成功");
-            result.put("status", PaymentStatus.SUCCESS.getCode()); // Reflecting immediate success
+            result.put("status", PaymentStatus.SUCCESS.getCode()); // 反映立即成功
 
             return Result.success(result, "微信沙箱支付创建并模拟成功");
 
@@ -401,7 +400,7 @@ public class PaymentController {
             payment.setTransactionId("WALLET" + UUID.randomUUID().toString().replace("-", ""));
             payment.setCreateTime(LocalDateTime.now());
             payment.setUpdateTime(LocalDateTime.now());
-            // ExpireTime might not be relevant for immediate success
+            // 过期时间对于立即成功的支付可能不相关
             // payment.setExpireTime(LocalDateTime.now().plusHours(2));
 
             log.debug("即将创建支付记录: {}", payment);
@@ -412,7 +411,7 @@ public class PaymentController {
             order.setPaymentId(payment.getId());
             order.setPaymentMethod("wallet");
             order.setUpdateTime(LocalDateTime.now());
-            // Order status will be updated by updatePaymentAndOrderStatus
+            // 订单状态将由updatePaymentAndOrderStatus更新
             orderService.updateById(order);
             log.debug("订单支付信息更新成功: OrderID={}, PaymentID={}", order.getOrderId(), payment.getId());
 
@@ -438,7 +437,7 @@ public class PaymentController {
 
             return Result.success(result, "钱包支付成功");
 
-        } catch (BusinessException e) { // Catch specific business exceptions like Insufficient Balance
+        } catch (BusinessException e) { // 捕获特定业务异常，如余额不足
             log.warn("钱包支付业务异常: {}", e.getMessage());
             return Result.error(400, e.getMessage());
         } catch (Exception e) {

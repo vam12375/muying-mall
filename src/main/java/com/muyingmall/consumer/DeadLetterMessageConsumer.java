@@ -407,7 +407,7 @@ public class DeadLetterMessageConsumer {
         private java.util.Date timestamp;
         private String receiveTime;
 
-        // Getters and Setters
+        // Getter和Setter方法
         public String getMessageId() { return messageId; }
         public void setMessageId(String messageId) { this.messageId = messageId; }
         
