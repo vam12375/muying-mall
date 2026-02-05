@@ -3,9 +3,9 @@
 -- 功能：检查库存并扣减，保证操作的原子性，防止超卖
 --
 -- KEYS[1]: 库存Key，如 seckill:stock:{skuId}
+-- KEYS[2]: 用户购买记录Set Key，如 seckill:users:{seckillProductId}
 -- ARGV[1]: 扣减数量
 -- ARGV[2]: 用户ID（用于防重复购买检查，可选）
--- ARGV[3]: 用户购买记录Key前缀（可选）
 --
 -- 返回值：
 --   1: 扣减成功
@@ -14,9 +14,9 @@
 --  -3: 库存Key不存在
 
 local stockKey = KEYS[1]
+local userSetKey = KEYS[2]
 local deductNum = tonumber(ARGV[1])
 local userId = ARGV[2]
-local userBuyKey = ARGV[3]
 
 -- 检查库存Key是否存在
 if (redis.call('exists', stockKey) == 0) then
@@ -31,14 +31,15 @@ if (currentStock == nil or currentStock < deductNum) then
     return -1
 end
 
--- 可选：检查用户是否已购买（防刷单）
-if (userId ~= nil and userId ~= '' and userBuyKey ~= nil and userBuyKey ~= '') then
-    local userKey = userBuyKey .. userId
-    if (redis.call('exists', userKey) == 1) then
+-- 检查用户是否已购买（使用Redis Set）
+if (userId ~= nil and userId ~= '' and userSetKey ~= nil and userSetKey ~= '') then
+    -- 检查用户是否在Set中
+    if (redis.call('sismember', userSetKey, userId) == 1) then
         return -2
     end
-    -- 标记用户已购买，设置过期时间24小时
-    redis.call('setex', userKey, 86400, '1')
+    -- 将用户ID添加到Set中，并设置过期时间24小时
+    redis.call('sadd', userSetKey, userId)
+    redis.call('expire', userSetKey, 86400)
 end
 
 -- 执行库存扣减

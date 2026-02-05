@@ -98,6 +98,7 @@ public class SeckillActivityStatusTask {
             
         } catch (Exception e) {
             log.error("记录活动统计失败", e);
+
         }
     }
 }

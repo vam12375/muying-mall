@@ -1,0 +1,126 @@
+<mxfile host="app.diagrams.net" modified="2026-01-19T13:07:00.000Z" agent="DrawIO" version="22.1.0">
+  <diagram name="核心UML类图" id="core-uml">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="2339" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- User 类 -->
+        <mxCell id="user-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;User&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- userId: Integer&lt;br/&gt;- username: String&lt;br/&gt;- password: String&lt;br/&gt;- nickname: String&lt;br/&gt;- email: String&lt;br/&gt;- phone: String&lt;br/&gt;- avatar: String&lt;br/&gt;- role: String&lt;br/&gt;- status: Integer&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ getUserId(): Integer&lt;br/&gt;+ getUsername(): String&lt;br/&gt;+ setPassword(String): void&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="280" height="320" as="geometry" />
+        </mxCell>
+        
+        <!-- Product 类 -->
+        <mxCell id="product-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;Product&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- productId: Integer&lt;br/&gt;- productName: String&lt;br/&gt;- categoryId: Integer&lt;br/&gt;- brandId: Integer&lt;br/&gt;- priceNew: BigDecimal&lt;br/&gt;- priceOld: BigDecimal&lt;br/&gt;- stock: Integer&lt;br/&gt;- sales: Integer&lt;br/&gt;- productStatus: String&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ getProductId(): Integer&lt;br/&gt;+ getProductName(): String&lt;br/&gt;+ updateStock(Integer): void&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
+          <mxGeometry x="440" y="80" width="300" height="320" as="geometry" />
+        </mxCell>
+        
+        <!-- Order 类 -->
+        <mxCell id="order-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;Order&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- orderId: Integer&lt;br/&gt;- orderNo: String&lt;br/&gt;- userId: Integer&lt;br/&gt;- totalAmount: BigDecimal&lt;br/&gt;- actualAmount: BigDecimal&lt;br/&gt;- status: OrderStatus&lt;br/&gt;- paymentId: Long&lt;br/&gt;- addressId: Integer&lt;br/&gt;- shippingFee: BigDecimal&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ getOrderId(): Integer&lt;br/&gt;+ getOrderNo(): String&lt;br/&gt;+ getStatusCode(): String&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
+          <mxGeometry x="820" y="80" width="320" height="320" as="geometry" />
+        </mxCell>
+        
+        <!-- Payment 类 -->
+        <mxCell id="payment-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;Payment&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- id: Long&lt;br/&gt;- paymentNo: String&lt;br/&gt;- orderId: Integer&lt;br/&gt;- userId: Integer&lt;br/&gt;- amount: BigDecimal&lt;br/&gt;- paymentMethod: String&lt;br/&gt;- status: PaymentStatus&lt;br/&gt;- transactionId: String&lt;br/&gt;- expireTime: LocalDateTime&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ getId(): Long&lt;br/&gt;+ getPaymentNo(): String&lt;br/&gt;+ updateStatus(PaymentStatus): void&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
+          <mxGeometry x="1200" y="80" width="360" height="320" as="geometry" />
+        </mxCell>
+        
+        <!-- Cart 类 -->
+        <mxCell id="cart-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;Cart&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- cartId: Integer&lt;br/&gt;- userId: Integer&lt;br/&gt;- productId: Integer&lt;br/&gt;- skuId: Long&lt;br/&gt;- quantity: Integer&lt;br/&gt;- selected: Integer&lt;br/&gt;- priceSnapshot: BigDecimal&lt;br/&gt;- status: Integer&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ getCartId(): Integer&lt;br/&gt;+ updateQuantity(Integer): void&lt;br/&gt;+ setSelected(Integer): void&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="480" width="320" height="280" as="geometry" />
+        </mxCell>
+        
+        <!-- OrderService 接口 -->
+        <mxCell id="orderservice-interface" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br/&gt;&lt;b&gt;OrderService&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ createOrder(...): Map&lt;br/&gt;+ directPurchase(...): Map&lt;br/&gt;+ getOrderDetail(Integer, Integer): Order&lt;br/&gt;+ getUserOrders(...): Page&lt;br/&gt;+ cancelOrder(Integer, Integer): boolean&lt;br/&gt;+ payOrder(...): Map&lt;br/&gt;+ confirmReceive(Integer, Integer): boolean&lt;br/&gt;+ shipOrder(...): boolean&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
+          <mxGeometry x="480" y="480" width="400" height="280" as="geometry" />
+        </mxCell>
+        
+        <!-- OrderStateMachine 类 -->
+        <mxCell id="orderstatemachine-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;OrderStateMachine&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- STATE_MACHINE_MAP: Map&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ sendEvent(OrderStatus, OrderEvent, OrderStateContext): OrderStatus&lt;br/&gt;+ canTransit(OrderStatus, OrderStatus): boolean&lt;br/&gt;+ getPossibleNextStates(OrderStatus): OrderStatus[]&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
+          <mxGeometry x="960" y="480" width="560" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- PaymentStateMachine 类 -->
+        <mxCell id="paymentstatemachine-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;PaymentStateMachine&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- STATE_MACHINE_MAP: Map&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ sendEvent(PaymentStatus, PaymentEvent, PaymentStateContext): PaymentStatus&lt;br/&gt;+ canTransit(PaymentStatus, PaymentStatus): boolean&lt;br/&gt;+ getPossibleNextStates(PaymentStatus): PaymentStatus[]&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
+          <mxGeometry x="960" y="720" width="600" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- 关系：User 1 -- * Cart -->
+        <mxCell id="user-cart-relation" value="" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;startArrow=none;startFill=0;endFill=0;" edge="1" parent="1" source="user-class" target="cart-class">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="user-cart-label1" value="1" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="user-cart-relation">
+          <mxGeometry x="-1" relative="1" as="geometry">
+            <mxPoint x="10" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="user-cart-label2" value="*" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="user-cart-relation">
+          <mxGeometry x="1" relative="1" as="geometry">
+            <mxPoint x="-10" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 关系：User 1 -- * Order -->
+        <mxCell id="user-order-relation" value="" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;startArrow=none;startFill=0;endFill=0;" edge="1" parent="1" source="user-class" target="order-class">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="user-order-label1" value="1" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="user-order-relation">
+          <mxGeometry x="-1" relative="1" as="geometry">
+            <mxPoint x="10" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="user-order-label2" value="*" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="user-order-relation">
+          <mxGeometry x="1" relative="1" as="geometry">
+            <mxPoint x="-10" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 关系：Cart * -- 1 Product -->
+        <mxCell id="cart-product-relation" value="" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;startArrow=none;startFill=0;endFill=0;" edge="1" parent="1" source="cart-class" target="product-class">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cart-product-label1" value="*" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="cart-product-relation">
+          <mxGeometry x="-1" relative="1" as="geometry">
+            <mxPoint x="10" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cart-product-label2" value="1" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="cart-product-relation">
+          <mxGeometry x="1" relative="1" as="geometry">
+            <mxPoint x="-10" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 关系：Order 1 -- 1 Payment -->
+        <mxCell id="order-payment-relation" value="" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;startArrow=none;startFill=0;endFill=0;" edge="1" parent="1" source="order-class" target="payment-class">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="order-payment-label1" value="1" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="order-payment-relation">
+          <mxGeometry x="-1" relative="1" as="geometry">
+            <mxPoint x="10" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="order-payment-label2" value="1" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="order-payment-relation">
+          <mxGeometry x="1" relative="1" as="geometry">
+            <mxPoint x="-10" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 关系：OrderService ..> Order (依赖) -->
+        <mxCell id="orderservice-order-relation" value="" style="endArrow=open;html=1;endSize=12;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;" edge="1" parent="1" source="orderservice-interface" target="order-class">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- 关系：OrderStateMachine ..> Order (依赖) -->
+        <mxCell id="statemachine-order-relation" value="" style="endArrow=open;html=1;endSize=12;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;" edge="1" parent="1" source="orderstatemachine-class" target="order-class">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- 关系：PaymentStateMachine ..> Payment (依赖) -->
+        <mxCell id="paymentstatemachine-payment-relation" value="" style="endArrow=open;html=1;endSize=12;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;" edge="1" parent="1" source="paymentstatemachine-class" target="payment-class">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
