@@ -2,7 +2,11 @@ package com.muyingmall.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.muyingmall.dto.logistics.LogisticsMapPointDTO;
 import com.muyingmall.entity.Logistics;
+import com.muyingmall.enums.LogisticsStatus;
+
+import java.util.List;
 
 /**
  * 物流服务接口
@@ -98,4 +102,13 @@ public interface LogisticsService extends IService<Logistics> {
      * @return 数量
      */
     long countByStatus(String status);
+
+    /**
+     * 获取地图大屏点位列表
+     *
+     * @param statuses 物流状态过滤（可空）
+     * @param limit    最大数量
+     * @return 点位列表
+     */
+    List<LogisticsMapPointDTO> getLogisticsMapPoints(List<LogisticsStatus> statuses, int limit);
 }

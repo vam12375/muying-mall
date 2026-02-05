@@ -3,6 +3,7 @@ package com.muyingmall.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.muyingmall.dto.logistics.LogisticsMapPointDTO;
 import com.muyingmall.entity.Logistics;
 import com.muyingmall.entity.LogisticsCompany;
 import com.muyingmall.entity.LogisticsTrack;
@@ -22,10 +23,13 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 物流服务实现类
@@ -540,7 +544,7 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean generateRouteBasedTracks(Long logisticsId, Double destLng, Double destLat) {
-        log.info("开始生成基于真实路径的物流轨迹: logisticsId={}, destLng={}, destLat={}", 
+        log.info("开始生成基于真实路径的物流轨迹: logisticsId={}, destLng={}, destLat={}",
                 logisticsId, destLng, destLat);
 
         try {
@@ -553,8 +557,8 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
 
             // 2. 调用高德地图API获取驾车路径规划
             DrivingRouteResponse routeResponse = amapService.drivingRoute(destLng, destLat);
-            if (routeResponse == null || routeResponse.getRoute() == null 
-                    || routeResponse.getRoute().getPaths() == null 
+            if (routeResponse == null || routeResponse.getRoute() == null
+                    || routeResponse.getRoute().getPaths() == null
                     || routeResponse.getRoute().getPaths().isEmpty()) {
                 log.error("驾车路径规划失败或返回空结果: logisticsId={}", logisticsId);
                 return false;
@@ -563,25 +567,25 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
             // 3. 获取第一个路径方案（最优方案）
             DrivingRouteResponse.Path path = routeResponse.getRoute().getPaths().get(0);
             List<DrivingRouteResponse.Step> steps = path.getSteps();
-            
+
             if (steps == null || steps.isEmpty()) {
                 log.error("路径规划步骤为空: logisticsId={}", logisticsId);
                 return false;
             }
 
-            log.info("路径规划成功: 总距离={}米, 预计时长={}秒, 步骤数={}", 
+            log.info("路径规划成功: 总距离={}米, 预计时长={}秒, 步骤数={}",
                     path.getDistance(), path.getDuration(), steps.size());
 
             // 4. 根据steps生成物流轨迹点（每2小时一个点）
             List<LogisticsTrack> tracks = new ArrayList<>();
-            LocalDateTime baseTime = logistics.getShippingTime() != null 
-                    ? logistics.getShippingTime() 
+            LocalDateTime baseTime = logistics.getShippingTime() != null
+                    ? logistics.getShippingTime()
                     : LocalDateTime.now();
 
             // 为每个step生成一个轨迹点
             for (int i = 0; i < steps.size(); i++) {
                 DrivingRouteResponse.Step step = steps.get(i);
-                
+
                 // 解析polyline获取第一个坐标点作为该段的位置
                 String polyline = step.getPolyline();
                 if (polyline == null || polyline.trim().isEmpty()) {
@@ -640,7 +644,7 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
 
             // 5. 批量保存轨迹点
             boolean result = logisticsTrackService.batchAddTracks(logisticsId, tracks);
-            
+
             if (result) {
                 log.info("成功生成{}个基于真实路径的物流轨迹点: logisticsId={}", tracks.size(), logisticsId);
             } else {
@@ -666,10 +670,118 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
         if (!StringUtils.hasText(status)) {
             return 0;
         }
-        
+
         LambdaQueryWrapper<Logistics> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Logistics::getStatus, status);
-        
+
         return count(queryWrapper);
+    }
+
+    /**
+     * 获取地图大屏点位列表
+     *
+     * @param statuses 物流状态过滤（可空）
+     * @param limit    最大数量
+     * @return 点位列表
+     */
+    @Override
+    public List<LogisticsMapPointDTO> getLogisticsMapPoints(List<LogisticsStatus> statuses, int limit) {
+        if (limit <= 0) {
+            return Collections.emptyList();
+        }
+
+        LambdaQueryWrapper<Logistics> queryWrapper = new LambdaQueryWrapper<>();
+        if (statuses != null && !statuses.isEmpty()) {
+            queryWrapper.in(Logistics::getStatus, statuses);
+        }
+        queryWrapper.orderByDesc(Logistics::getUpdateTime).orderByDesc(Logistics::getCreateTime);
+
+        Page<Logistics> pageParam = new Page<>(1, limit);
+        pageParam.setSearchCount(false);
+        Page<Logistics> logisticsPage = page(pageParam, queryWrapper);
+        List<Logistics> logisticsList = logisticsPage.getRecords();
+
+        if (logisticsList == null || logisticsList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> logisticsIds = logisticsList.stream()
+                .map(Logistics::getId)
+                .filter(id -> id != null && id > 0)
+                .collect(Collectors.toList());
+
+        Map<Long, LogisticsTrack> latestTrackMap = logisticsTrackService.getLatestTracksByLogisticsIds(logisticsIds);
+
+        Set<Integer> companyIds = logisticsList.stream()
+                .map(Logistics::getCompanyId)
+                .filter(id -> id != null && id > 0)
+                .collect(Collectors.toSet());
+
+        Map<Integer, LogisticsCompany> companyMap = companyIds.isEmpty()
+                ? Collections.emptyMap()
+                : logisticsCompanyService.listByIds(companyIds).stream()
+                        .collect(Collectors.toMap(LogisticsCompany::getId, company -> company));
+
+        List<LogisticsMapPointDTO> result = new ArrayList<>();
+
+        for (Logistics logistics : logisticsList) {
+            LogisticsTrack track = latestTrackMap.get(logistics.getId());
+
+            Double lng = null;
+            Double lat = null;
+            LocalDateTime lastUpdate = null;
+
+            if (track != null && track.getLongitude() != null && track.getLatitude() != null) {
+                lng = track.getLongitude();
+                lat = track.getLatitude();
+                lastUpdate = track.getTrackingTime();
+            } else if (logistics.getReceiverLongitude() != null && logistics.getReceiverLatitude() != null) {
+                lng = logistics.getReceiverLongitude();
+                lat = logistics.getReceiverLatitude();
+            } else if (logistics.getSenderLongitude() != null && logistics.getSenderLatitude() != null) {
+                lng = logistics.getSenderLongitude();
+                lat = logistics.getSenderLatitude();
+            }
+
+            if (lng == null || lat == null) {
+                continue;
+            }
+
+            if (lastUpdate == null) {
+                lastUpdate = logistics.getUpdateTime();
+            }
+            if (lastUpdate == null) {
+                lastUpdate = logistics.getShippingTime();
+            }
+            if (lastUpdate == null) {
+                lastUpdate = logistics.getCreateTime();
+            }
+
+            LogisticsMapPointDTO point = new LogisticsMapPointDTO();
+            point.setId(logistics.getId());
+            point.setTrackingNo(logistics.getTrackingNo());
+            point.setStatus(logistics.getStatus() != null ? logistics.getStatus().getCode() : null);
+
+            LogisticsCompany company = companyMap.get(logistics.getCompanyId());
+            point.setCompanyName(company != null ? company.getName() : null);
+
+            point.setReceiverName(logistics.getReceiverName());
+            point.setReceiverPhone(logistics.getReceiverPhone());
+            point.setReceiverAddress(logistics.getReceiverAddress());
+            point.setLastUpdate(lastUpdate);
+            point.setSenderLongitude(logistics.getSenderLongitude());
+            point.setSenderLatitude(logistics.getSenderLatitude());
+            point.setReceiverLongitude(logistics.getReceiverLongitude());
+            point.setReceiverLatitude(logistics.getReceiverLatitude());
+
+            LogisticsMapPointDTO.Position position = new LogisticsMapPointDTO.Position();
+            position.setLng(lng);
+            position.setLat(lat);
+            point.setPosition(position);
+
+            result.add(point);
+        }
+
+        return result;
     }
 }

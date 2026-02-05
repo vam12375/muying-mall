@@ -2,8 +2,10 @@ package com.muyingmall.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.dto.logistics.LogisticsMapPointDTO;
 import com.muyingmall.entity.Logistics;
 import com.muyingmall.entity.LogisticsTrack;
+import com.muyingmall.enums.LogisticsStatus;
 import com.muyingmall.service.LogisticsService;
 import com.muyingmall.service.LogisticsTrackService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,7 +13,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -230,6 +235,56 @@ public class AdminLogisticsController {
         } catch (Exception e) {
             log.error("生成物流单号失败", e);
             return CommonResult.failed("生成物流单号失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 物流地图大屏点位列表
+     *
+     * @param status 物流状态过滤（可选），支持逗号分隔或 ACTIVE
+     * @param limit  最大数量（默认200，最大500）
+     * @return 点位列表
+     */
+    @GetMapping("/map-points")
+    @Operation(summary = "获取物流地图点位列表")
+    public CommonResult<List<LogisticsMapPointDTO>> getLogisticsMapPoints(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "limit", defaultValue = "200") Integer limit
+    ) {
+        try {
+            int safeLimit = Math.max(1, Math.min(limit != null ? limit : 200, 500));
+
+            List<LogisticsStatus> statusList = null;
+            if (StringUtils.hasText(status)) {
+                statusList = new ArrayList<>();
+                String normalized = status.trim().toUpperCase();
+
+                if ("ACTIVE".equals(normalized)) {
+                    statusList.add(LogisticsStatus.SHIPPING);
+                    statusList.add(LogisticsStatus.EXCEPTION);
+                } else {
+                    String[] codes = status.split(",");
+                    for (String code : codes) {
+                        if (!StringUtils.hasText(code)) {
+                            continue;
+                        }
+                        LogisticsStatus logisticsStatus = LogisticsStatus.getByCode(code.trim().toUpperCase());
+                        if (logisticsStatus != null) {
+                            statusList.add(logisticsStatus);
+                        }
+                    }
+                }
+
+                if (statusList.isEmpty()) {
+                    return CommonResult.success(Collections.emptyList());
+                }
+            }
+
+            List<LogisticsMapPointDTO> points = logisticsService.getLogisticsMapPoints(statusList, safeLimit);
+            return CommonResult.success(points);
+        } catch (Exception e) {
+            log.error("获取物流地图点位列表失败", e);
+            return CommonResult.failed("获取物流地图点位列表失败: " + e.getMessage());
         }
     }
 

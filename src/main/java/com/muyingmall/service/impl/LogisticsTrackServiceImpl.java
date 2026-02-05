@@ -227,4 +227,45 @@ public class LogisticsTrackServiceImpl extends ServiceImpl<LogisticsTrackMapper,
         
         return result;
     }
+
+    /**
+     * 批量获取物流最新轨迹点
+     *
+     * @param logisticsIds 物流ID列表
+     * @return 物流ID -> 最新轨迹点
+     */
+    @Override
+    public Map<Long, LogisticsTrack> getLatestTracksByLogisticsIds(List<Long> logisticsIds) {
+        Map<Long, LogisticsTrack> result = new HashMap<>();
+        if (logisticsIds == null || logisticsIds.isEmpty()) {
+            return result;
+        }
+
+        List<LogisticsTrack> tracks = baseMapper.selectLatestTracksByLogisticsIds(logisticsIds);
+        if (tracks == null || tracks.isEmpty()) {
+            return result;
+        }
+
+        for (LogisticsTrack track : tracks) {
+            if (track == null || track.getLogisticsId() == null) {
+                continue;
+            }
+            LogisticsTrack existing = result.get(track.getLogisticsId());
+            if (existing == null) {
+                result.put(track.getLogisticsId(), track);
+                continue;
+            }
+
+            if (track.getTrackingTime() != null && existing.getTrackingTime() != null) {
+                int compare = track.getTrackingTime().compareTo(existing.getTrackingTime());
+                if (compare > 0 || (compare == 0 && track.getId() != null && existing.getId() != null && track.getId() > existing.getId())) {
+                    result.put(track.getLogisticsId(), track);
+                }
+            } else if (track.getId() != null && existing.getId() != null && track.getId() > existing.getId()) {
+                result.put(track.getLogisticsId(), track);
+            }
+        }
+
+        return result;
+    }
 }

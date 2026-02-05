@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.muyingmall.entity.Logistics;
 import com.muyingmall.entity.LogisticsTrack;
 
+import java.util.Map;
 import java.util.List;
 
 /**
@@ -53,4 +54,12 @@ public interface LogisticsTrackService extends IService<LogisticsTrack> {
      * @return 是否添加成功
      */
     boolean batchAddTracks(Long logisticsId, List<LogisticsTrack> tracks);
+
+    /**
+     * 批量获取物流最新轨迹点
+     *
+     * @param logisticsIds 物流ID列表
+     * @return 物流ID -> 最新轨迹点
+     */
+    Map<Long, LogisticsTrack> getLatestTracksByLogisticsIds(List<Long> logisticsIds);
 }
