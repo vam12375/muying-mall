@@ -1,125 +1,168 @@
-<mxfile host="app.diagrams.net" modified="2026-01-19T13:07:00.000Z" agent="DrawIO" version="22.1.0">
-  <diagram name="核心UML类图" id="core-uml">
-    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="2339" math="0" shadow="0">
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.2.2 Chrome/134.0.6998.178 Electron/35.1.2 Safari/537.36" version="26.2.2">
+  <diagram id="JbPovn37d4BBFkfSkjx4" name="第 1 页">
+    <mxGraphModel dx="1202" dy="863" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        
-        <!-- User 类 -->
-        <mxCell id="user-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;User&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- userId: Integer&lt;br/&gt;- username: String&lt;br/&gt;- password: String&lt;br/&gt;- nickname: String&lt;br/&gt;- email: String&lt;br/&gt;- phone: String&lt;br/&gt;- avatar: String&lt;br/&gt;- role: String&lt;br/&gt;- status: Integer&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ getUserId(): Integer&lt;br/&gt;+ getUsername(): String&lt;br/&gt;+ setPassword(String): void&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
-          <mxGeometry x="80" y="80" width="280" height="320" as="geometry" />
+        <mxCell id="User" value="User (用户)&#xa;&#xa;- user_id: Long [PK]&#xa;- username: String&#xa;- password: String&#xa;- nickname: String&#xa;- email: String&#xa;- phone: String&#xa;- avatar: String&#xa;- gender: Enum&#xa;- birthday: Date&#xa;- status: Int&#xa;- role: Enum&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=280;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="40" y="40" width="260" height="280" as="geometry" />
         </mxCell>
-        
-        <!-- Product 类 -->
-        <mxCell id="product-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;Product&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- productId: Integer&lt;br/&gt;- productName: String&lt;br/&gt;- categoryId: Integer&lt;br/&gt;- brandId: Integer&lt;br/&gt;- priceNew: BigDecimal&lt;br/&gt;- priceOld: BigDecimal&lt;br/&gt;- stock: Integer&lt;br/&gt;- sales: Integer&lt;br/&gt;- productStatus: String&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ getProductId(): Integer&lt;br/&gt;+ getProductName(): String&lt;br/&gt;+ updateStock(Integer): void&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
-          <mxGeometry x="440" y="80" width="300" height="320" as="geometry" />
+        <mxCell id="UserAccount" value="UserAccount (账户)&#xa;&#xa;- account_id: Long [PK]&#xa;- user_id: Long [FK]&#xa;- balance: Decimal&#xa;- frozen_balance: Decimal&#xa;- points: Int&#xa;- status: Int&#xa;- pay_password: String&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=220;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="360" y="40" width="260" height="220" as="geometry" />
         </mxCell>
-        
-        <!-- Order 类 -->
-        <mxCell id="order-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;Order&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- orderId: Integer&lt;br/&gt;- orderNo: String&lt;br/&gt;- userId: Integer&lt;br/&gt;- totalAmount: BigDecimal&lt;br/&gt;- actualAmount: BigDecimal&lt;br/&gt;- status: OrderStatus&lt;br/&gt;- paymentId: Long&lt;br/&gt;- addressId: Integer&lt;br/&gt;- shippingFee: BigDecimal&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ getOrderId(): Integer&lt;br/&gt;+ getOrderNo(): String&lt;br/&gt;+ getStatusCode(): String&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
-          <mxGeometry x="820" y="80" width="320" height="320" as="geometry" />
+        <mxCell id="UserAddress" value="UserAddress (地址)&#xa;&#xa;- address_id: Long [PK]&#xa;- user_id: Long [FK]&#xa;- receiver: String&#xa;- phone: String&#xa;- province: String&#xa;- city: String&#xa;- district: String&#xa;- detail: String&#xa;- is_default: Boolean&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=260;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="40" y="360" width="260" height="260" as="geometry" />
         </mxCell>
-        
-        <!-- Payment 类 -->
-        <mxCell id="payment-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;Payment&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- id: Long&lt;br/&gt;- paymentNo: String&lt;br/&gt;- orderId: Integer&lt;br/&gt;- userId: Integer&lt;br/&gt;- amount: BigDecimal&lt;br/&gt;- paymentMethod: String&lt;br/&gt;- status: PaymentStatus&lt;br/&gt;- transactionId: String&lt;br/&gt;- expireTime: LocalDateTime&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ getId(): Long&lt;br/&gt;+ getPaymentNo(): String&lt;br/&gt;+ updateStatus(PaymentStatus): void&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
-          <mxGeometry x="1200" y="80" width="360" height="320" as="geometry" />
+        <mxCell id="Product" value="Product (商品)&#xa;&#xa;- product_id: Long [PK]&#xa;- category_id: Long [FK]&#xa;- brand_id: Long [FK]&#xa;- product_name: String&#xa;- product_img: String&#xa;- price_new: Decimal&#xa;- price_old: Decimal&#xa;- stock: Int&#xa;- sales: Int&#xa;- rating: Decimal&#xa;- status: Enum&#xa;- has_sku: Boolean&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=320;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="680" y="40" width="260" height="320" as="geometry" />
         </mxCell>
-        
-        <!-- Cart 类 -->
-        <mxCell id="cart-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;Cart&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- cartId: Integer&lt;br/&gt;- userId: Integer&lt;br/&gt;- productId: Integer&lt;br/&gt;- skuId: Long&lt;br/&gt;- quantity: Integer&lt;br/&gt;- selected: Integer&lt;br/&gt;- priceSnapshot: BigDecimal&lt;br/&gt;- status: Integer&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ getCartId(): Integer&lt;br/&gt;+ updateQuantity(Integer): void&lt;br/&gt;+ setSelected(Integer): void&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
-          <mxGeometry x="80" y="480" width="320" height="280" as="geometry" />
+        <mxCell id="ProductSku" value="ProductSku (SKU)&#xa;&#xa;- sku_id: Long [PK]&#xa;- product_id: Long [FK]&#xa;- sku_code: String&#xa;- sku_name: String&#xa;- spec_values: JSON&#xa;- price: Decimal&#xa;- stock: Int&#xa;- status: Int&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=240;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="1000" y="40" width="260" height="240" as="geometry" />
         </mxCell>
-        
-        <!-- OrderService 接口 -->
-        <mxCell id="orderservice-interface" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br/&gt;&lt;b&gt;OrderService&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ createOrder(...): Map&lt;br/&gt;+ directPurchase(...): Map&lt;br/&gt;+ getOrderDetail(Integer, Integer): Order&lt;br/&gt;+ getUserOrders(...): Page&lt;br/&gt;+ cancelOrder(Integer, Integer): boolean&lt;br/&gt;+ payOrder(...): Map&lt;br/&gt;+ confirmReceive(Integer, Integer): boolean&lt;br/&gt;+ shipOrder(...): boolean&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
-          <mxGeometry x="480" y="480" width="400" height="280" as="geometry" />
+        <mxCell id="Category" value="Category (分类)&#xa;&#xa;- category_id: Long [PK]&#xa;- parent_id: Long&#xa;- name: String&#xa;- icon: String&#xa;- sort_order: Int&#xa;- status: Int&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=200;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="680" y="400" width="260" height="200" as="geometry" />
         </mxCell>
-        
-        <!-- OrderStateMachine 类 -->
-        <mxCell id="orderstatemachine-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;OrderStateMachine&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- STATE_MACHINE_MAP: Map&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ sendEvent(OrderStatus, OrderEvent, OrderStateContext): OrderStatus&lt;br/&gt;+ canTransit(OrderStatus, OrderStatus): boolean&lt;br/&gt;+ getPossibleNextStates(OrderStatus): OrderStatus[]&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
-          <mxGeometry x="960" y="480" width="560" height="180" as="geometry" />
+        <mxCell id="Brand" value="Brand (品牌)&#xa;&#xa;- brand_id: Long [PK]&#xa;- name: String&#xa;- logo: String&#xa;- description: String&#xa;- status: Int&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=180;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="1000" y="320" width="260" height="180" as="geometry" />
         </mxCell>
-        
-        <!-- PaymentStateMachine 类 -->
-        <mxCell id="paymentstatemachine-class" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;font-size:18px;&quot;&gt;&lt;b&gt;PaymentStateMachine&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;- STATE_MACHINE_MAP: Map&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0px;margin-left:4px;font-size:18px;&quot;&gt;+ sendEvent(PaymentStatus, PaymentEvent, PaymentStateContext): PaymentStatus&lt;br/&gt;+ canTransit(PaymentStatus, PaymentStatus): boolean&lt;br/&gt;+ getPossibleNextStates(PaymentStatus): PaymentStatus[]&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=18;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1" vertex="1" parent="1">
-          <mxGeometry x="960" y="720" width="600" height="180" as="geometry" />
+        <mxCell id="Cart" value="Cart (购物车)&#xa;&#xa;- cart_id: Long [PK]&#xa;- user_id: Long [FK]&#xa;- product_id: Long [FK]&#xa;- sku_id: Long [FK]&#xa;- quantity: Int&#xa;- selected: Boolean&#xa;- specs: JSON&#xa;- status: Int&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=240;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="360" y="320" width="260" height="240" as="geometry" />
         </mxCell>
-        
-        <!-- 关系：User 1 -- * Cart -->
-        <mxCell id="user-cart-relation" value="" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;startArrow=none;startFill=0;endFill=0;" edge="1" parent="1" source="user-class" target="cart-class">
+        <mxCell id="Order" value="Order (订单)&#xa;&#xa;- order_id: Long [PK]&#xa;- order_no: String&#xa;- user_id: Long [FK]&#xa;- total_amount: Decimal&#xa;- actual_amount: Decimal&#xa;- status: String&#xa;- payment_id: Long [FK]&#xa;- address_id: Long [FK]&#xa;- receiver_name: String&#xa;- receiver_phone: String&#xa;- receiver_address: String&#xa;- coupon_id: Long [FK]&#xa;- points_used: Int&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=360;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="40" y="680" width="260" height="360" as="geometry" />
+        </mxCell>
+        <mxCell id="OrderProduct" value="OrderProduct (订单商品)&#xa;&#xa;- id: Long [PK]&#xa;- order_id: Long [FK]&#xa;- product_id: Long [FK]&#xa;- product_name: String&#xa;- product_img: String&#xa;- price: Decimal&#xa;- quantity: Int&#xa;- specs: JSON&#xa;- sku_id: Long&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=260;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="360" y="680" width="260" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="Payment" value="Payment (支付)&#xa;&#xa;- id: Long [PK]&#xa;- payment_no: String&#xa;- order_id: Long [FK]&#xa;- user_id: Long [FK]&#xa;- amount: Decimal&#xa;- payment_method: String&#xa;- status: Int&#xa;- transaction_id: String&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=240;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="40" y="1100" width="260" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="Logistics" value="Logistics (物流)&#xa;&#xa;- id: Long [PK]&#xa;- order_id: Long [FK]&#xa;- tracking_no: String&#xa;- company_id: Long [FK]&#xa;- status: String&#xa;- receiver_name: String&#xa;- receiver_phone: String&#xa;- receiver_address: String&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=240;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="360" y="1000" width="260" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="Coupon" value="Coupon (优惠券)&#xa;&#xa;- id: Long [PK]&#xa;- name: String&#xa;- type: String&#xa;- value: Decimal&#xa;- min_spend: Decimal&#xa;- status: String&#xa;- start_time: DateTime&#xa;- end_time: DateTime&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=240;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="680" y="680" width="260" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="UserCoupon" value="UserCoupon (用户优惠券)&#xa;&#xa;- id: Long [PK]&#xa;- user_id: Long [FK]&#xa;- coupon_id: Long [FK]&#xa;- status: String&#xa;- use_time: DateTime&#xa;- order_id: Long&#xa;- receive_time: DateTime&#xa;- expire_time: DateTime&#xa;&#xa;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=240;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontSize=18;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="680" y="980" width="280" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="edge1" value="" style="endArrow=none;html=1;fontSize=18;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="User" target="UserAccount" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="user-cart-label1" value="1" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="user-cart-relation">
-          <mxGeometry x="-1" relative="1" as="geometry">
-            <mxPoint x="10" y="10" as="offset" />
-          </mxGeometry>
+        <mxCell id="edge1a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="310" y="100" width="30" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="user-cart-label2" value="*" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="user-cart-relation">
-          <mxGeometry x="1" relative="1" as="geometry">
-            <mxPoint x="-10" y="10" as="offset" />
-          </mxGeometry>
+        <mxCell id="edge1b" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="330" y="100" width="30" height="30" as="geometry" />
         </mxCell>
-        
-        <!-- 关系：User 1 -- * Order -->
-        <mxCell id="user-order-relation" value="" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;startArrow=none;startFill=0;endFill=0;" edge="1" parent="1" source="user-class" target="order-class">
+        <mxCell id="edge2" value="" style="endArrow=none;html=1;fontSize=18;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="User" target="UserAddress" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="user-order-label1" value="1" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="user-order-relation">
-          <mxGeometry x="-1" relative="1" as="geometry">
-            <mxPoint x="10" y="10" as="offset" />
-          </mxGeometry>
+        <mxCell id="edge2a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="90" y="330" width="30" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="user-order-label2" value="*" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="user-order-relation">
-          <mxGeometry x="1" relative="1" as="geometry">
-            <mxPoint x="-10" y="10" as="offset" />
-          </mxGeometry>
+        <mxCell id="edge2b" value="0..*" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="90" y="350" width="40" height="30" as="geometry" />
         </mxCell>
-        
-        <!-- 关系：Cart * -- 1 Product -->
-        <mxCell id="cart-product-relation" value="" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;startArrow=none;startFill=0;endFill=0;" edge="1" parent="1" source="cart-class" target="product-class">
+        <mxCell id="edge3" value="" style="endArrow=none;html=1;fontSize=18;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="User" target="Cart" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cart-product-label1" value="*" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="cart-product-relation">
-          <mxGeometry x="-1" relative="1" as="geometry">
-            <mxPoint x="10" y="10" as="offset" />
-          </mxGeometry>
+        <mxCell id="edge3a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="310" y="250" width="30" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="cart-product-label2" value="1" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="cart-product-relation">
-          <mxGeometry x="1" relative="1" as="geometry">
-            <mxPoint x="-10" y="10" as="offset" />
-          </mxGeometry>
+        <mxCell id="edge3b" value="0..*" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="330" y="350" width="40" height="30" as="geometry" />
         </mxCell>
-        
-        <!-- 关系：Order 1 -- 1 Payment -->
-        <mxCell id="order-payment-relation" value="" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;startArrow=none;startFill=0;endFill=0;" edge="1" parent="1" source="order-class" target="payment-class">
+        <mxCell id="edge4" value="" style="endArrow=none;html=1;fontSize=18;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="Product" target="ProductSku" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="order-payment-label1" value="1" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="order-payment-relation">
-          <mxGeometry x="-1" relative="1" as="geometry">
-            <mxPoint x="10" y="10" as="offset" />
-          </mxGeometry>
+        <mxCell id="edge4a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="950" y="120" width="30" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="order-payment-label2" value="1" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;fontSize=18;" connectable="0" vertex="1" parent="order-payment-relation">
-          <mxGeometry x="1" relative="1" as="geometry">
-            <mxPoint x="-10" y="10" as="offset" />
-          </mxGeometry>
+        <mxCell id="edge4b" value="0..*" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="970" y="120" width="40" height="30" as="geometry" />
         </mxCell>
-        
-        <!-- 关系：OrderService ..> Order (依赖) -->
-        <mxCell id="orderservice-order-relation" value="" style="endArrow=open;html=1;endSize=12;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;" edge="1" parent="1" source="orderservice-interface" target="order-class">
+        <mxCell id="edge5" value="" style="endArrow=none;html=1;fontSize=18;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="Category" target="Product" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        
-        <!-- 关系：OrderStateMachine ..> Order (依赖) -->
-        <mxCell id="statemachine-order-relation" value="" style="endArrow=open;html=1;endSize=12;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;" edge="1" parent="1" source="orderstatemachine-class" target="order-class">
+        <mxCell id="edge5a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="820" y="370" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge5b" value="0..*" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="820" y="390" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge6" value="" style="endArrow=none;html=1;fontSize=18;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=1;entryY=0.8;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="Brand" target="Product" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        
-        <!-- 关系：PaymentStateMachine ..> Payment (依赖) -->
-        <mxCell id="paymentstatemachine-payment-relation" value="" style="endArrow=open;html=1;endSize=12;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=18;" edge="1" parent="1" source="paymentstatemachine-class" target="payment-class">
+        <mxCell id="edge6a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="970" y="340" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge6b" value="0..*" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="950" y="280" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge7" value="" style="endArrow=none;html=1;fontSize=18;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.8;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="Cart" target="Product" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        
+        <mxCell id="edge7a" value="*" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="630" y="370" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge7b" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="650" y="290" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge8" value="" style="endArrow=none;html=1;fontSize=18;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="UserAddress" target="Order" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge8a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="10" y="630" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge8b" value="0..*" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="10" y="660" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge9" value="" style="endArrow=none;html=1;fontSize=18;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="Order" target="OrderProduct" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge9a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="310" y="840" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge9b" value="1..*" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="330" y="840" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge10" value="" style="endArrow=none;html=1;fontSize=18;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="Order" target="Payment" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge10a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="90" y="1050" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge10b" value="0..1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="90" y="1080" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge11" value="" style="endArrow=none;html=1;fontSize=18;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="Order" target="Logistics" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge11a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="310" y="1010" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge11b" value="0..1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="330" y="980" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge12" value="" style="endArrow=none;html=1;fontSize=18;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="Coupon" target="UserCoupon" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge12a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="820" y="930" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge12b" value="0..*" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="820" y="960" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge13" value="" style="endArrow=none;html=1;fontSize=18;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.8;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="Cart" target="UserCoupon" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge13a" value="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="630" y="540" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edge13b" value="0..*" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" parent="1" vertex="1">
+          <mxGeometry x="650" y="1150" width="40" height="30" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>

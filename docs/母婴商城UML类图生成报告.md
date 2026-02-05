@@ -1,298 +1,264 @@
-# 母婴商城核心业务UML类图生成报告
+# 母婴商城核心 UML 类图生成报告
 
-**生成日期**：2025-01-16  
-**项目**：母婴商城系统 v3.0.0  
-**技术栈**：Spring Boot 3.3.0 + Java 21 + MyBatis-Plus 3.5.9  
-**生成工具**：draw.io MCP + Kiro AI
+## 概述
 
----
+本文档记录了母婴商城系统核心 UML 类图的生成过程和设计说明。该类图采用标准的三格形式（类名、属性、方法），字体大小为 18px，清晰展示了系统核心实体及其关系。
 
-## 📋 概述
+## 类图文件
 
-本次任务成功生成了母婴商城系统的**5个核心业务模块UML类图**，涵盖30+个核心实体类，完整展示了系统的领域模型和类之间的关联关系。
+- **文件路径**: `muying-mall/docs/diagrams/core-uml-class-diagram.drawio`
+- **生成时间**: 2026-01-19
+- **工具**: DrawIO MCP Server
 
----
+## 核心实体类
 
-## 🎯 生成策略
+### 1. 用户模块 (蓝色/绿色)
 
-### 为什么分模块生成？
+#### User (用户)
+- **主键**: user_id: Long
+- **核心属性**: 
+  - username, password, nickname
+  - email, phone, avatar
+  - gender, birthday
+  - status, role
+- **关系**: 
+  - 1:1 → UserAccount (账户)
+  - 1:n → UserAddress (地址)
+  - 1:n → Cart (购物车)
+  - 1:n → Order (订单)
+  - 1:n → UserCoupon (用户优惠券)
 
-由于母婴商城系统规模较大（包含70+个实体类），单个类图会过于复杂且难以阅读。因此采用**按业务领域分模块**的策略：
+#### UserAccount (用户账户)
+- **主键**: account_id: Long
+- **外键**: user_id: Long
+- **核心属性**: 
+  - balance, frozen_balance (余额管理)
+  - points (积分)
+  - pay_password (支付密码)
+  - status (账户状态)
 
-- ✅ **清晰性**：每个模块职责明确，便于理解
-- ✅ **可维护性**：模块独立，便于后续更新
-- ✅ **可读性**：避免单图过于拥挤
-- ✅ **符合SOLID原则**：单一职责，高内聚低耦合
+#### UserAddress (用户地址)
+- **主键**: address_id: Long
+- **外键**: user_id: Long
+- **核心属性**: 
+  - receiver, phone (收货人信息)
+  - province, city, district, detail (地址信息)
+  - is_default (默认地址标识)
 
----
+### 2. 商品模块 (黄色)
 
-## 📊 模块详情
+#### Product (商品)
+- **主键**: product_id: Long
+- **外键**: category_id, brand_id
+- **核心属性**: 
+  - product_name, product_img
+  - price_new, price_old (价格)
+  - stock, sales (库存和销量)
+  - rating (评分)
+  - status, has_sku (状态和SKU标识)
+- **关系**: 
+  - n:1 → Category (分类)
+  - n:1 → Brand (品牌)
+  - 1:n → ProductSku (SKU)
 
-### 模块1：用户与账户模块
+#### ProductSku (商品SKU)
+- **主键**: sku_id: Long
+- **外键**: product_id: Long
+- **核心属性**: 
+  - sku_code, sku_name
+  - spec_values (规格值JSON)
+  - price, stock
+  - status
 
-**文件名**：`模块1-用户与账户模块.drawio`
+#### Category (分类)
+- **主键**: category_id: Long
+- **核心属性**: 
+  - parent_id (父分类)
+  - name, icon
+  - sort_order, status
 
-#### 包含的类
-| 类名 | 说明 | 核心字段 |
-|------|------|----------|
-| User | 用户基础信息 | userId, username, password, phone, email, role |
-| UserAccount | 用户账户余额 | id, userId, balance, frozenAmount, status |
-| UserAddress | 收货地址 | addressId, userId, receiverName, province, city, address |
-| UserPoints | 用户积分账户 | id, userId, totalPoints, availablePoints, usedPoints |
-| MemberLevel | 会员等级 | id, levelName, minPoints, maxPoints, discount |
-| AccountTransaction | 账户交易记录 | transactionId, accountId, amount, type, status |
+#### Brand (品牌)
+- **主键**: brand_id: Long
+- **核心属性**: 
+  - name, logo
+  - description
+  - status
 
-#### 关系说明
-- User ↔ UserAccount：1:1（一个用户对应一个账户）
-- User ↔ UserAddress：1:N（一个用户可以有多个地址）
-- User ↔ UserPoints：1:1（一个用户对应一个积分账户）
-- UserAccount ↔ AccountTransaction：1:N（一个账户有多条交易记录）
+### 3. 购物车模块 (紫色)
 
-#### 配色方案
-- 🔵 蓝色：用户核心类（User）
-- 🟢 绿色：账户相关类（UserAccount, UserAddress, UserPoints, AccountTransaction）
-- 🟡 黄色：会员等级类（MemberLevel）
+#### Cart (购物车)
+- **主键**: cart_id: Long
+- **外键**: user_id, product_id, sku_id
+- **核心属性**: 
+  - quantity (数量)
+  - selected (是否选中)
+  - specs (规格JSON)
+  - status
+- **关系**: 
+  - n:1 → User (用户)
+  - n:1 → Product (商品)
 
----
+### 4. 订单模块 (红色)
 
-### 模块2：商品模块
+#### Order (订单)
+- **主键**: order_id: Long
+- **外键**: user_id, payment_id, address_id, coupon_id
+- **核心属性**: 
+  - order_no (订单号)
+  - total_amount, actual_amount (金额)
+  - status (订单状态)
+  - receiver_name, receiver_phone, receiver_address (收货信息)
+  - points_used (使用积分)
+- **关系**: 
+  - n:1 → User (用户)
+  - 1:n → OrderProduct (订单商品)
+  - 1:0..1 → Payment (支付)
+  - 1:0..1 → Logistics (物流)
 
-**文件名**：`模块2-商品模块.drawio`
+#### OrderProduct (订单商品)
+- **主键**: id: Long
+- **外键**: order_id, product_id
+- **核心属性**: 
+  - product_name, product_img
+  - price, quantity
+  - specs (规格JSON)
+  - sku_id
 
-#### 包含的类
-| 类名 | 说明 | 核心字段 |
-|------|------|----------|
-| Product | 商品主表 | productId, productName, categoryId, brandId, priceNew, stock, sales |
-| Category | 商品分类 | categoryId, parentId, name, icon, status |
-| Brand | 品牌 | brandId, name, logo, description |
-| ProductSku | 商品SKU | skuId, productId, skuCode, price, stock, specValues |
-| ProductSpecs | 商品规格 | specId, productId, specName, specValues |
-| ProductImage | 商品图片 | imageId, productId, imageUrl, type |
-| ProductParam | 商品参数 | paramId, productId, paramName, paramValue |
+#### Payment (支付)
+- **主键**: id: Long
+- **外键**: order_id, user_id
+- **核心属性**: 
+  - payment_no (支付单号)
+  - amount (金额)
+  - payment_method (支付方式)
+  - status (支付状态)
+  - transaction_id (第三方交易号)
 
-#### 关系说明
-- Category ↔ Product：1:N（一个分类下有多个商品）
-- Brand ↔ Product：1:N（一个品牌下有多个商品）
-- Product ↔ ProductSku：1:N（一个商品有多个SKU）
-- Product ↔ ProductSpecs：1:N（一个商品有多个规格）
-- Product ↔ ProductImage：1:N（一个商品有多张图片）
-- Product ↔ ProductParam：1:N（一个商品有多个参数）
+#### Logistics (物流)
+- **主键**: id: Long
+- **外键**: order_id, company_id
+- **核心属性**: 
+  - tracking_no (物流单号)
+  - status (物流状态)
+  - receiver_name, receiver_phone, receiver_address (收货信息)
 
-#### 配色方案
-- 🟣 紫色：商品核心类（Product）
-- 🟡 黄色：分类品牌类（Category, Brand）
-- 🟢 绿色：SKU规格类（ProductSku, ProductSpecs, ProductImage, ProductParam）
+### 5. 营销模块 (橙色)
 
----
+#### Coupon (优惠券)
+- **主键**: id: Long
+- **核心属性**: 
+  - name, type
+  - value (面值)
+  - min_spend (最低消费)
+  - status
+  - start_time, end_time (有效期)
+- **关系**: 
+  - 1:n → UserCoupon (用户优惠券)
 
-### 模块3：订单与支付模块
+#### UserCoupon (用户优惠券)
+- **主键**: id: Long
+- **外键**: user_id, coupon_id
+- **核心属性**: 
+  - status (使用状态)
+  - use_time (使用时间)
+  - order_id (关联订单)
+  - receive_time, expire_time (领取和过期时间)
 
-**文件名**：`模块3-订单与支付模块.drawio`
+## 关系说明
 
-#### 包含的类
-| 类名 | 说明 | 核心字段 |
-|------|------|----------|
-| Order | 订单主表 | orderId, orderNo, userId, totalAmount, status, paymentId |
-| OrderProduct | 订单商品明细 | id, orderId, productId, productName, price, quantity |
-| Payment | 支付记录 | id, paymentNo, orderId, amount, paymentMethod, status |
-| Refund | 退款申请 | id, refundNo, orderId, paymentId, amount, status |
-| Cart | 购物车 | cartId, userId, productId, quantity, skuId |
+### 一对一关系 (1:1)
+- User ↔ UserAccount: 每个用户有且仅有一个账户
 
-#### 关系说明
-- Order ↔ OrderProduct：1:N（一个订单包含多个商品）
-- Order ↔ Payment：1:1（一个订单对应一个支付记录）
-- Order ↔ Refund：1:0..1（一个订单可能有一个退款申请）
-- Payment ↔ Refund：1:0..1（一个支付可能有一个退款）
-- Cart → Order：购物车创建订单（虚线依赖关系）
+### 一对多关系 (1:n)
+- User → UserAddress: 一个用户可以有多个收货地址
+- User → Cart: 一个用户可以有多个购物车项
+- User → Order: 一个用户可以有多个订单
+- User → UserCoupon: 一个用户可以领取多个优惠券
+- Product → ProductSku: 一个商品可以有多个SKU
+- Category → Product: 一个分类下可以有多个商品
+- Brand → Product: 一个品牌下可以有多个商品
+- Order → OrderProduct: 一个订单包含多个商品
+- Coupon → UserCoupon: 一个优惠券可以被多个用户领取
 
-#### 配色方案
-- 🟠 橙色：订单类（Order, OrderProduct）
-- 🔴 红色：支付退款类（Payment, Refund）
-- 🔵 蓝色：购物车类（Cart）
+### 多对一关系 (n:1)
+- Cart → Product: 多个购物车项可以指向同一个商品
+- Cart → User: 多个购物车项属于同一个用户
 
----
+### 可选关系 (0..1)
+- Order → Payment: 订单可能有支付记录（待付款订单没有）
+- Order → Logistics: 订单可能有物流记录（未发货订单没有）
 
-### 模块4：秒杀模块
+## 设计特点
 
-**文件名**：`模块4-秒杀模块.drawio`
+### 1. 颜色编码
+- **蓝色/绿色**: 用户相关模块
+- **黄色**: 商品相关模块
+- **紫色**: 购物车模块
+- **红色**: 订单相关模块
+- **橙色**: 营销模块
 
-#### 包含的类
-| 类名 | 说明 | 核心字段 |
-|------|------|----------|
-| SeckillActivity | 秒杀活动 | id, name, startTime, endTime, status |
-| SeckillProduct | 秒杀商品 | id, activityId, productId, seckillPrice, seckillStock |
-| SeckillOrder | 秒杀订单 | id, orderId, userId, activityId, seckillPrice, status |
-| Product | 商品（引用） | productId, productName, productImg, priceNew |
-| User | 用户（引用） | userId, username, nickname, phone |
-| Order | 订单（引用） | orderId, orderNo, totalAmount, status |
+### 2. 标准三格形式
+每个类都包含：
+- **第一格**: 类名（中英文）
+- **第二格**: 属性列表（字段名: 类型 [约束]）
+- **第三格**: 方法（实体类通常省略 getter/setter）
 
-#### 关系说明
-- SeckillActivity ↔ SeckillProduct：1:N（一个活动包含多个秒杀商品）
-- SeckillProduct ↔ SeckillOrder：1:N（一个秒杀商品可以被多次购买）
-- SeckillProduct ↔ Product：N:1（秒杀商品关联普通商品）
-- SeckillOrder ↔ User：N:1（多个秒杀订单属于一个用户）
-- SeckillOrder ↔ Order：1:1（秒杀订单关联普通订单）
+### 3. 关系表示
+- 使用 UML 标准关系线
+- 明确标注基数（1, 0..1, 0..*, 1..*）
+- 使用外键（FK）和主键（PK）标注
 
-#### 配色方案
-- 🟡 黄色：秒杀活动类（SeckillActivity）
-- 🟢 绿色：秒杀商品类（SeckillProduct）
-- 🟠 橙色：秒杀订单类（SeckillOrder, Order）
-- 🟣 紫色：商品类（Product）
-- 🔵 蓝色：用户类（User）
+### 4. 字体规范
+- 统一使用 18px 字体大小
+- 确保可读性和专业性
 
----
+## 技术实现
 
-### 模块5：物流与营销模块
+### 数据来源
+- 基于 `muying_mall.sql` 数据库表结构
+- 提取核心业务实体
+- 保留关键字段和关系
 
-**文件名**：`模块5-物流与营销模块.drawio`
+### 生成工具
+- DrawIO MCP Server
+- 自动化生成 XML 格式
+- 支持实时预览和编辑
 
-#### 包含的类
-| 类名 | 说明 | 核心字段 |
-|------|------|----------|
-| Logistics | 物流信息 | id, orderId, companyId, trackingNo, status |
-| LogisticsCompany | 物流公司 | id, code, name, contact, phone |
-| Order | 订单（引用） | orderId, orderNo, trackingNo, shippingCompany |
-| Coupon | 优惠券 | id, name, type, value, minSpend, totalQuantity |
-| UserCoupon | 用户优惠券 | id, userId, couponId, status, useTime |
-| PointsHistory | 积分历史 | id, userId, points, type, source |
-| User | 用户（引用） | userId, username, phone, email |
+## 使用说明
 
-#### 关系说明
-- Logistics ↔ LogisticsCompany：N:1（多个物流记录属于一个物流公司）
-- Logistics ↔ Order：1:1（一个物流记录对应一个订单）
-- Coupon ↔ UserCoupon：1:N（一个优惠券可以被多个用户领取）
-- UserCoupon ↔ User：N:1（多个用户优惠券属于一个用户）
-- User ↔ PointsHistory：1:N（一个用户有多条积分历史）
+### 查看类图
+1. 使用 DrawIO 桌面版或在线版打开 `core-uml-class-diagram.drawio`
+2. 或使用 VSCode 的 DrawIO 插件查看
 
-#### 配色方案
-- 🔴 红色：物流类（Logistics）
-- 🟡 黄色：物流公司类（LogisticsCompany）
-- 🟢 绿色：优惠券类（Coupon, UserCoupon）
-- 🔵 蓝色：积分类（PointsHistory, User）
-- 🟠 橙色：订单类（Order）
+### 编辑类图
+1. 在 DrawIO 中打开文件
+2. 可以调整布局、添加注释
+3. 保存后可继续使用
 
----
+### 导出格式
+- 支持导出为 PNG、SVG、PDF 等格式
+- 适用于文档、演示等场景
 
-## 🎨 设计规范
+## 后续优化建议
 
-### UML类图标准
-- ✅ 符合UML 2.0规范
-- ✅ 使用标准的类图符号（矩形框、关联线、基数标注）
-- ✅ 清晰标注关联关系的多重性（1, *, 0..1）
-- ✅ 使用不同线型区分关联关系（实线）和依赖关系（虚线）
+1. **添加方法层**: 可以为关键类添加业务方法
+2. **细化关系**: 添加关联类的详细说明
+3. **分模块展示**: 可以按业务模块拆分为多个子图
+4. **添加注释**: 为复杂关系添加说明文字
+5. **状态图补充**: 为订单、支付等添加状态机图
 
-### 视觉设计
-- ✅ **字体大小**：统一使用16px，确保清晰可读
-- ✅ **颜色区分**：不同业务域使用不同配色，便于识别
-- ✅ **布局合理**：类之间间距适中，避免重叠
-- ✅ **关系清晰**：关联线避免交叉，标注位置合理
+## 总结
 
-### 内容完整性
-- ✅ **类名**：使用实际的Java类名
-- ✅ **属性**：包含所有核心字段（主键、外键、业务字段）
-- ✅ **类型**：标注字段的Java类型（Integer, String, BigDecimal等）
-- ✅ **关系**：完整展示类之间的关联、聚合、组合关系
+本 UML 类图完整展示了母婴商城系统的核心实体结构，包括：
+- 14 个核心实体类
+- 清晰的关系定义
+- 标准的 UML 表示法
+- 专业的视觉呈现
 
----
-
-## 📈 统计数据
-
-| 指标 | 数量 |
-|------|------|
-| 模块总数 | 5个 |
-| 类总数 | 30+个 |
-| 关联关系 | 40+条 |
-| 平均每个类的属性数 | 10-15个 |
-| 配色方案 | 5种（蓝、绿、黄、紫、红） |
-
----
-
-## 💡 使用建议
-
-### 1. 查看图表
-- 在浏览器中打开draw.io会话，实时查看所有模块
-- 可以缩放、拖动、调整布局
-
-### 2. 导出图表
-```bash
-# 在draw.io中导出为PNG（推荐用于文档）
-文件 → 导出为 → PNG
-分辨率：300dpi
-透明背景：否
-边距：10px
-
-# 导出为SVG（推荐用于网页）
-文件 → 导出为 → SVG
-```
-
-### 3. 保存源文件
-- 点击"文件 → 保存"保存为.drawio格式
-- 便于后续编辑和维护
-
-### 4. 用于文档
-- 将PNG图片插入毕业论文、技术文档
-- 每个模块对应一个章节
-- 配合文字说明，解释类的职责和关系
-
----
-
-## 🔄 后续维护
-
-### 何时需要更新类图？
-1. **新增实体类**：添加新的业务模块时
-2. **修改关系**：实体类之间的关联关系变化时
-3. **重构代码**：大规模重构后同步更新
-4. **版本发布**：每个大版本发布前检查并更新
-
-### 如何更新？
-1. 打开对应模块的.drawio文件
-2. 使用draw.io编辑器修改
-3. 重新导出PNG/SVG
-4. 更新文档中的图片
-
----
-
-## ✅ 质量检查清单
-
-- [x] 所有类名与代码中的实体类名一致
-- [x] 所有核心字段都已包含
-- [x] 字段类型标注正确
-- [x] 关联关系的基数标注正确
-- [x] 配色方案统一且有区分度
-- [x] 字体大小统一为16px
-- [x] 布局整洁，无重叠
-- [x] 符合UML 2.0规范
-- [x] 可用于毕业论文和技术文档
+该类图可作为系统设计文档的重要组成部分，帮助开发团队理解系统架构和数据模型。
 
 ---
 
-## 📚 参考资料
-
-- **UML规范**：[UML 2.0 Class Diagram Specification](https://www.omg.org/spec/UML/)
-- **draw.io文档**：[draw.io User Guide](https://www.diagrams.net/doc/)
-- **项目代码**：`muying-mall/src/main/java/com/muyingmall/entity/`
-
----
-
-## 🎓 适用场景
-
-### 毕业论文
-- 第3章：系统设计 - 领域模型设计
-- 第4章：详细设计 - 数据库设计
-- 附录：系统类图
-
-### 技术文档
-- 系统架构文档
-- 数据库设计文档
-- 开发者手册
-
-### 团队协作
-- 新人培训材料
-- 代码评审参考
-- 需求讨论基础
-
----
-
-**生成完成时间**：2025-01-16  
-**遵循协议**：AURA-X-KYS (KISS/YAGNI/SOLID)  
-**核心原则**：清晰、完整、规范、可维护
+**生成日期**: 2026-01-19  
+**工具版本**: DrawIO MCP Server  
+**文档版本**: v1.0
