@@ -6,6 +6,7 @@ import com.muyingmall.entity.Order;
 import com.muyingmall.entity.Logistics;
 import com.muyingmall.entity.LogisticsCompany;
 import com.muyingmall.entity.Address;
+import com.muyingmall.enums.LogisticsStatus;
 import com.muyingmall.enums.OrderStatus;
 import com.muyingmall.service.OrderService;
 import com.muyingmall.service.LogisticsService;
@@ -184,7 +185,7 @@ public class AdminOrderController {
             // 【幂等性检查】防止重复发货
             // 订单状态必须是 PENDING_SHIPMENT（待发货）才能发货
             if (order.getStatus() != OrderStatus.PENDING_SHIPMENT) {
-                log.warn("【管理员发货】订单状态不正确: orderId={}, currentStatus={}", 
+                log.warn("【管理员发货】订单状态不正确: orderId={}, currentStatus={}",
                         id, order.getStatus());
                 return CommonResult.failed("订单状态不正确，只有待发货的订单才能发货");
             }
@@ -192,7 +193,7 @@ public class AdminOrderController {
             // 检查是否已存在物流记录（防止重复发货）
             Logistics existingLogistics = logisticsService.getLogisticsByOrderId(id);
             if (existingLogistics != null) {
-                log.warn("【管理员发货】订单已存在物流记录，拒绝重复发货: orderId={}, logisticsId={}", 
+                log.warn("【管理员发货】订单已存在物流记录，拒绝重复发货: orderId={}, logisticsId={}",
                         id, existingLogistics.getId());
                 return CommonResult.failed("订单已发货，请勿重复操作");
             }
@@ -225,17 +226,18 @@ public class AdminOrderController {
             logistics.setOrderId(id);
             logistics.setCompanyId(companyId);
             logistics.setTrackingNo(finalTrackingNo);
+            logistics.setStatus(LogisticsStatus.SHIPPING);
             logistics.setReceiverName(finalReceiverName);
             logistics.setReceiverPhone(finalReceiverPhone);
             logistics.setReceiverAddress(finalReceiverAddress);
-            
+
             // 【修复】设置发货地坐标（从配置文件读取仓库坐标）
             logistics.setSenderName(amapConfig.getWarehouse().getName());
             logistics.setSenderPhone("400-123-4567");
             logistics.setSenderAddress("浙江省杭州市西湖区");
             logistics.setSenderLongitude(amapConfig.getWarehouse().getLongitude());
             logistics.setSenderLatitude(amapConfig.getWarehouse().getLatitude());
-            
+
             // 【修复】设置收货地坐标（从订单关联的用户地址获取）
             if (order.getAddressId() != null) {
                 try {
@@ -244,13 +246,13 @@ public class AdminOrderController {
                     if (address != null && address.getLongitude() != null && address.getLatitude() != null) {
                         logistics.setReceiverLongitude(address.getLongitude());
                         logistics.setReceiverLatitude(address.getLatitude());
-                        log.info("【管理员发货】成功获取收货地坐标: orderId={}, addressId={}, lng={}, lat={}", 
+                        log.info("【管理员发货】成功获取收货地坐标: orderId={}, addressId={}, lng={}, lat={}",
                                 id, order.getAddressId(), address.getLongitude(), address.getLatitude());
                     } else {
                         log.warn("【管理员发货】地址缺少坐标信息: orderId={}, addressId={}", id, order.getAddressId());
                     }
                 } catch (Exception e) {
-                    log.error("【管理员发货】获取地址坐标失败: orderId={}, addressId={}, error={}", 
+                    log.error("【管理员发货】获取地址坐标失败: orderId={}, addressId={}, error={}",
                             id, order.getAddressId(), e.getMessage());
                 }
             }
@@ -264,26 +266,25 @@ public class AdminOrderController {
             // 【场景3：物流轨迹可视化】发货后立即生成物流轨迹
             // 优先使用基于真实路径的轨迹生成，失败则降级为标准轨迹
             if (logistics.getReceiverLongitude() != null && logistics.getReceiverLatitude() != null) {
-                log.info("【管理员发货】开始生成基于真实路径的物流轨迹: orderId={}, logisticsId={}", 
+                log.info("【管理员发货】开始生成基于真实路径的物流轨迹: orderId={}, logisticsId={}",
                         id, logistics.getId());
-                
+
                 boolean trackGenerated = logisticsService.generateRouteBasedTracks(
                         logistics.getId(),
                         logistics.getReceiverLongitude(),
-                        logistics.getReceiverLatitude()
-                );
-                
+                        logistics.getReceiverLatitude());
+
                 if (trackGenerated) {
-                    log.info("【管理员发货】物流轨迹生成成功（真实路径）: orderId={}, logisticsId={}", 
+                    log.info("【管理员发货】物流轨迹生成成功（真实路径）: orderId={}, logisticsId={}",
                             id, logistics.getId());
                 } else {
-                    log.warn("【管理员发货】真实路径规划失败，使用标准轨迹: orderId={}, logisticsId={}", 
+                    log.warn("【管理员发货】真实路径规划失败，使用标准轨迹: orderId={}, logisticsId={}",
                             id, logistics.getId());
                     // 降级方案：使用标准轨迹
                     logisticsService.generateStandardTracks(logistics.getId(), "系统");
                 }
             } else {
-                log.warn("【管理员发货】收货地坐标为空，使用标准轨迹: orderId={}, logisticsId={}", 
+                log.warn("【管理员发货】收货地坐标为空，使用标准轨迹: orderId={}, logisticsId={}",
                         id, logistics.getId());
                 // 降级方案：使用标准轨迹
                 logisticsService.generateStandardTracks(logistics.getId(), "系统");
