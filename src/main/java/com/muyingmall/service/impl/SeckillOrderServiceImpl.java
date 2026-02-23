@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.dto.SeckillOrderDTO;
 import com.muyingmall.dto.SeckillRequestDTO;
+import com.muyingmall.entity.SeckillActivity;
 import com.muyingmall.entity.SeckillOrder;
 import com.muyingmall.entity.SeckillProduct;
+import com.muyingmall.mapper.SeckillActivityMapper;
 import com.muyingmall.mapper.SeckillOrderMapper;
 import com.muyingmall.mapper.SeckillProductMapper;
 import com.muyingmall.service.OrderService;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +37,7 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
 
     private final SeckillService seckillService;
     private final SeckillProductMapper seckillProductMapper;
+    private final SeckillActivityMapper seckillActivityMapper;
     private final SeckillOrderMapper seckillOrderMapper;
     private final OrderService orderService;
 
@@ -46,12 +50,22 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
             throw new BusinessException("秒杀商品不存在");
         }
 
-        // 2. 使用Lua脚本原子性扣减库存（包含用户去重校验）
-        int luaResult = ((SeckillServiceImpl) seckillService).deductStockWithLua(
+        // 2. 查询活动信息，计算活动剩余时间用于用户购买记录的过期设置
+        SeckillActivity activity = seckillActivityMapper.selectById(seckillProduct.getActivityId());
+        Long expireSeconds = null;
+        if (activity != null && activity.getEndTime() != null) {
+            long remainingSeconds = Duration.between(LocalDateTime.now(), activity.getEndTime()).getSeconds();
+            // 至少保留60秒，防止边界情况
+            expireSeconds = Math.max(remainingSeconds, 60);
+        }
+
+        // 3. 使用Lua脚本原子性扣减库存（包含用户去重校验）
+        int luaResult = seckillService.deductStockWithLua(
                 request.getSeckillProductId(),
                 seckillProduct.getSkuId(),
                 request.getQuantity(),
-                userId);
+                userId,
+                expireSeconds);
 
         // 处理Lua脚本返回结果
         if (luaResult == -1) {
@@ -72,7 +86,7 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
 
             if (deductResult <= 0) {
                 // 库存扣减失败，恢复Redis库存和用户记录
-                ((SeckillServiceImpl) seckillService).restoreStockWithLua(
+                seckillService.restoreStockWithLua(
                         request.getSeckillProductId(),
                         seckillProduct.getSkuId(),
                         request.getQuantity(),
@@ -118,7 +132,7 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
         } catch (Exception e) {
             // 订单创建失败，恢复Redis库存和用户记录
             log.error("秒杀订单创建失败，恢复库存: userId={}, skuId={}", userId, seckillProduct.getSkuId(), e);
-            ((SeckillServiceImpl) seckillService).restoreStockWithLua(
+            seckillService.restoreStockWithLua(
                     request.getSeckillProductId(),
                     seckillProduct.getSkuId(),
                     request.getQuantity(),

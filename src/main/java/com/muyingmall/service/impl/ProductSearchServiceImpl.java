@@ -11,6 +11,7 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.muyingmall.document.ProductDocument;
 import com.muyingmall.entity.Product;
 
@@ -545,16 +546,59 @@ public class ProductSearchServiceImpl implements ProductSearchService {
         log.warn("Elasticsearch搜索失败，降级到数据库搜索");
 
         try {
-            // 使用ProductService进行数据库搜索
-            com.baomidou.mybatisplus.extension.plugins.pagination.Page<Product> productPage = productService
-                    .getProductPage(
-                            page + 1, // ProductService使用1开始的页码
-                            size,
-                            categoryId,
-                            brandId,
-                            keyword,
-                            1 // 只搜索上架商品
-                    );
+            com.baomidou.mybatisplus.extension.plugins.pagination.Page<Product> pageParam =
+                    new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(page + 1, size);
+            LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Product::getProductStatus, "上架");
+
+            if (categoryId != null) {
+                queryWrapper.eq(Product::getCategoryId, categoryId);
+            }
+
+            if (brandId != null) {
+                queryWrapper.eq(Product::getBrandId, brandId);
+            }
+
+            if (StringUtils.hasText(keyword)) {
+                queryWrapper.and(wrapper -> wrapper
+                        .like(Product::getProductName, keyword)
+                        .or()
+                        .like(Product::getProductDetail, keyword));
+            }
+
+            if (minPrice != null) {
+                queryWrapper.ge(Product::getPriceNew, minPrice);
+            }
+
+            if (maxPrice != null) {
+                queryWrapper.le(Product::getPriceNew, maxPrice);
+            }
+
+            boolean asc = "asc".equalsIgnoreCase(sortOrder);
+            if (StringUtils.hasText(sortBy)) {
+                switch (sortBy) {
+                    case "price":
+                        queryWrapper.orderBy(true, asc, Product::getPriceNew);
+                        break;
+                    case "sales":
+                        queryWrapper.orderBy(true, asc, Product::getSales);
+                        break;
+                    case "rating":
+                        queryWrapper.orderBy(true, asc, Product::getRating);
+                        break;
+                    case "createTime":
+                        queryWrapper.orderBy(true, asc, Product::getCreateTime);
+                        break;
+                    default:
+                        queryWrapper.orderByDesc(Product::getCreateTime);
+                        break;
+                }
+            } else {
+                queryWrapper.orderByDesc(Product::getCreateTime);
+            }
+
+            com.baomidou.mybatisplus.extension.plugins.pagination.Page<Product> productPage =
+                    productService.page(pageParam, queryWrapper);
 
             // 转换Product为ProductDocument
             List<ProductDocument> documents = productPage.getRecords().stream()

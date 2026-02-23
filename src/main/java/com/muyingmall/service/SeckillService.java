@@ -47,8 +47,31 @@ public interface SeckillService {
     
     /**
      * 同步Redis库存到数据库
-     * 
+     *
      * @return 同步的商品数量
      */
     int syncRedisStockToDatabase();
+
+    /**
+     * 使用Lua脚本原子性扣减库存（推荐方式，包含用户防重复购买检查）
+     *
+     * @param seckillProductId 秒杀商品ID
+     * @param skuId            SKU ID
+     * @param quantity         扣减数量
+     * @param userId           用户ID（用于防重复购买，可传null跳过检查）
+     * @param expireSeconds    用户购买记录过期时间（秒），与活动结束时间对齐，传null则不设置过期
+     * @return 扣减结果：1成功，-1库存不足，-2用户已购买，-3库存Key不存在
+     */
+    int deductStockWithLua(Long seckillProductId, Long skuId, Integer quantity, Integer userId, Long expireSeconds);
+
+    /**
+     * 使用Lua脚本原子性恢复库存
+     *
+     * @param seckillProductId 秒杀商品ID
+     * @param skuId            SKU ID
+     * @param quantity         恢复数量
+     * @param userId           用户ID（用于清除购买记录，可传null跳过）
+     * @return 恢复结果：1成功，-1库存Key不存在
+     */
+    int restoreStockWithLua(Long seckillProductId, Long skuId, Integer quantity, Integer userId);
 }
