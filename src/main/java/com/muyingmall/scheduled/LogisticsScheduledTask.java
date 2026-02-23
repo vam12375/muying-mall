@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -28,17 +29,18 @@ public class LogisticsScheduledTask {
 
     /**
      * 【场景3：物流轨迹可视化】模拟物流进度推进
-     * 每2分钟执行一次，更新运输中的物流状态
+     * 说明：轨迹点本身按2小时间隔生成，但发货时间通常带分钟（如16:16）。
+     * 若任务仅在整点每2小时触发，会错过 xx:16 的推进时刻。
+     * 因此改为每分钟检查一次，按 trackingTime <= now 精准推进到当前应到达点。
      */
-    //@Scheduled(cron = "0 */2 * * * ?") // 每2分钟执行一次
-    @Scheduled(cron = "0 0 */6 * * *")
+    @Scheduled(cron = "0 */1 * * * *")
     public void updateLogisticsProgress() {
         log.info("开始执行物流进度推进定时任务");
 
         try {
-            // 1. 查询所有运输中的物流记录
+            // 1. 查询需要推进的物流记录（运输中 + 已创建）
             LambdaQueryWrapper<Logistics> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(Logistics::getStatus, LogisticsStatus.SHIPPING);
+            queryWrapper.in(Logistics::getStatus, LogisticsStatus.SHIPPING, LogisticsStatus.CREATED);
             List<Logistics> shippingLogistics = logisticsService.list(queryWrapper);
 
             if (shippingLogistics.isEmpty()) {
@@ -72,16 +74,47 @@ public class LogisticsScheduledTask {
         // 1. 获取该物流的所有轨迹点
         List<LogisticsTrack> tracks = logisticsTrackService.getTracksByLogisticsId(logistics.getId());
         if (tracks == null || tracks.isEmpty()) {
-            log.warn("物流记录没有轨迹点: logisticsId={}", logistics.getId());
-            return;
+            log.warn("物流记录没有轨迹点，尝试自动补偿生成: logisticsId={}, trackingNo={}",
+                    logistics.getId(), logistics.getTrackingNo());
+
+            boolean generated = false;
+            // 优先尝试真实路径轨迹（有坐标时）
+            if (logistics.getReceiverLongitude() != null && logistics.getReceiverLatitude() != null) {
+                generated = logisticsService.generateRouteBasedTracks(
+                        logistics.getId(),
+                        logistics.getReceiverLongitude(),
+                        logistics.getReceiverLatitude());
+            }
+
+            // 降级：标准轨迹模板（已在服务层补齐插值坐标）
+            if (!generated) {
+                generated = logisticsService.generateStandardTracks(logistics.getId(), "系统定时补偿");
+            }
+
+            if (!generated) {
+                log.warn("物流轨迹自动补偿失败: logisticsId={}", logistics.getId());
+                return;
+            }
+
+            tracks = logisticsTrackService.getTracksByLogisticsId(logistics.getId());
+            if (tracks == null || tracks.isEmpty()) {
+                log.warn("物流轨迹自动补偿后仍为空: logisticsId={}", logistics.getId());
+                return;
+            }
+
+            log.info("物流轨迹自动补偿成功: logisticsId={}, count={}", logistics.getId(), tracks.size());
         }
 
-        // 2. 找出当前时间应该到达的轨迹点
+        // 2. 按时间升序，找出当前时间应该到达的轨迹点
+        tracks.sort(Comparator
+                .comparing(LogisticsTrack::getTrackingTime, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(LogisticsTrack::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+
         LocalDateTime now = LocalDateTime.now();
         LogisticsTrack currentTrack = null;
-        
+
         for (LogisticsTrack track : tracks) {
-            if (track.getTrackingTime() != null && track.getTrackingTime().isBefore(now)) {
+            if (track.getTrackingTime() != null && !track.getTrackingTime().isAfter(now)) {
                 currentTrack = track;
             } else {
                 break; // 找到第一个未来的轨迹点就停止
@@ -93,30 +126,40 @@ public class LogisticsScheduledTask {
             return;
         }
 
+        // 2.1 已创建 -> 运输中（到达首个运输轨迹点时自动推进）
+        if (LogisticsStatus.CREATED.equals(logistics.getStatus())
+                && LogisticsStatus.SHIPPING.getCode().equalsIgnoreCase(currentTrack.getStatus())) {
+            logisticsService.updateLogisticsStatus(
+                    logistics.getId(),
+                    LogisticsStatus.SHIPPING.getCode(),
+                    "系统自动更新：包裹运输中");
+            logistics.setStatus(LogisticsStatus.SHIPPING);
+        }
+
         // 3. 检查是否已经到达最后一个轨迹点
         LogisticsTrack lastTrack = tracks.get(tracks.size() - 1);
-        if (currentTrack.getId().equals(lastTrack.getId()) && 
-                lastTrack.getTrackingTime().isBefore(now)) {
+        if (currentTrack.getId().equals(lastTrack.getId())
+                && lastTrack.getTrackingTime() != null
+                && !lastTrack.getTrackingTime().isAfter(now)) {
             // 【增强】检查是否真正到达目的地（基于坐标距离判断）
             boolean arrivedAtDestination = checkArrivalByCoordinates(logistics, lastTrack);
-            
+
             if (arrivedAtDestination) {
                 // 已到达最后一个轨迹点，更新物流状态为已送达
-                log.info("【物流签收】物流已到达目的地: logisticsId={}, trackingNo={}", 
+                log.info("【物流签收】物流已到达目的地: logisticsId={}, trackingNo={}",
                         logistics.getId(), logistics.getTrackingNo());
-                
+
                 logisticsService.updateLogisticsStatus(
-                        logistics.getId(), 
-                        LogisticsStatus.DELIVERED.getCode(), 
-                        "系统自动更新：已送达"
-                );
+                        logistics.getId(),
+                        LogisticsStatus.DELIVERED.getCode(),
+                        "系统自动更新：已送达");
             } else {
                 log.debug("物流运输中（最后轨迹点未到达目的地）: logisticsId={}", logistics.getId());
             }
         } else {
             // 仍在运输中，记录当前进度
-            log.debug("物流运输中: logisticsId={}, 当前位置={}, 进度={}/{}", 
-                    logistics.getId(), 
+            log.debug("物流运输中: logisticsId={}, 当前位置={}, 进度={}/{}",
+                    logistics.getId(),
                     currentTrack.getLocation(),
                     tracks.indexOf(currentTrack) + 1,
                     tracks.size());
@@ -127,8 +170,8 @@ public class LogisticsScheduledTask {
      * 【场景3：物流轨迹可视化】基于坐标距离判断是否到达目的地
      * 计算最后轨迹点与收货地址的距离，如果在100米内则认为已到达
      *
-     * @param logistics  物流记录
-     * @param lastTrack  最后一个轨迹点
+     * @param logistics 物流记录
+     * @param lastTrack 最后一个轨迹点
      * @return 是否到达目的地
      */
     private boolean checkArrivalByCoordinates(Logistics logistics, LogisticsTrack lastTrack) {
@@ -146,8 +189,7 @@ public class LogisticsScheduledTask {
         // 计算距离（单位：米）
         double distance = calculateDistance(
                 lastTrack.getLongitude(), lastTrack.getLatitude(),
-                logistics.getReceiverLongitude(), logistics.getReceiverLatitude()
-        );
+                logistics.getReceiverLongitude(), logistics.getReceiverLatitude());
 
         log.debug("【物流签收】距离计算: logisticsId={}, 最后轨迹点=({},{}), 目的地=({},{}), 距离={}米",
                 logistics.getId(),
@@ -178,7 +220,7 @@ public class LogisticsScheduledTask {
 
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                        * Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 

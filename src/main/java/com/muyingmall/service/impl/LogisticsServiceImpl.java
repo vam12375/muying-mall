@@ -14,6 +14,7 @@ import com.muyingmall.service.LogisticsService;
 import com.muyingmall.service.LogisticsTrackService;
 import com.muyingmall.service.AMapService;
 import com.muyingmall.dto.amap.DrivingRouteResponse;
+import com.muyingmall.dto.amap.GeoCodeResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -329,6 +330,9 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
                 return false;
             }
 
+            // 尝试补全收货坐标，提升标准轨迹地图可视化命中率
+            ensureReceiverCoordinates(logistics);
+
             // 生成标准轨迹模板
             List<LogisticsTrack> standardTracks = generateStandardTrackTemplates(logistics, company, operator);
 
@@ -336,6 +340,9 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
                 log.warn("未生成任何标准轨迹: logisticsId={}", logisticsId);
                 return false;
             }
+
+            // 为标准轨迹补齐坐标，确保前台地图可视化可用
+            fillStandardTrackCoordinates(logistics, standardTracks);
 
             // 批量添加轨迹
             boolean result = logisticsTrackService.batchAddTracks(logisticsId, standardTracks);
@@ -533,6 +540,130 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
     }
 
     /**
+     * 为标准轨迹补齐坐标
+     * 说明：当真实路径规划失败并降级为标准模板时，模板本身没有坐标。
+     * 这里通过发货地-收货地线性插值生成每个轨迹点坐标，保证地图和进度同步展示。
+     */
+    private void fillStandardTrackCoordinates(Logistics logistics, List<LogisticsTrack> tracks) {
+        if (logistics == null || tracks == null || tracks.isEmpty()) {
+            return;
+        }
+
+        Double senderLng = logistics.getSenderLongitude();
+        Double senderLat = logistics.getSenderLatitude();
+        Double receiverLng = logistics.getReceiverLongitude();
+        Double receiverLat = logistics.getReceiverLatitude();
+
+        // 收货地坐标缺失时，尝试按地址自动补全一次
+        if (receiverLng == null || receiverLat == null) {
+            ensureReceiverCoordinates(logistics);
+            receiverLng = logistics.getReceiverLongitude();
+            receiverLat = logistics.getReceiverLatitude();
+        }
+
+        if (senderLng == null || senderLat == null || receiverLng == null || receiverLat == null) {
+            log.warn("标准轨迹坐标补齐失败，起终点坐标不完整: logisticsId={}, sender=({},{}), receiver=({},{})",
+                    logistics.getId(), senderLng, senderLat, receiverLng, receiverLat);
+            return;
+        }
+
+        int total = tracks.size();
+        for (int i = 0; i < total; i++) {
+            LogisticsTrack track = tracks.get(i);
+            if (track == null) {
+                continue;
+            }
+
+            // 已有坐标则保持原值
+            if (track.getLongitude() != null && track.getLatitude() != null) {
+                continue;
+            }
+
+            // 轨迹点分布在(0,1)开区间，避免与起终点完全重合
+            double progress = (double) (i + 1) / (double) (total + 1);
+            double lng = senderLng + (receiverLng - senderLng) * progress;
+            double lat = senderLat + (receiverLat - senderLat) * progress;
+
+            track.setLongitude(lng);
+            track.setLatitude(lat);
+
+            if (!StringUtils.hasText(track.getLocationName())) {
+                track.setLocationName(track.getLocation());
+            }
+
+            Map<String, Object> detailsJson = track.getDetailsJson();
+            if (detailsJson == null) {
+                detailsJson = new HashMap<>();
+            }
+            detailsJson.put("coordinateGenerated", true);
+            detailsJson.put("coordinateMode", "linear_interpolation");
+            detailsJson.put("coordinateProgress", progress);
+            track.setDetailsJson(detailsJson);
+        }
+    }
+
+    /**
+     * 尝试补全收货地址坐标
+     * 场景：历史数据或管理员发货场景下，可能缺失receiver经纬度，导致地图轨迹无法展示
+     */
+    private boolean ensureReceiverCoordinates(Logistics logistics) {
+        if (logistics == null) {
+            return false;
+        }
+
+        if (logistics.getReceiverLongitude() != null && logistics.getReceiverLatitude() != null) {
+            return true;
+        }
+
+        if (!StringUtils.hasText(logistics.getReceiverAddress())) {
+            log.warn("收货地址为空，无法补全坐标: logisticsId={}", logistics.getId());
+            return false;
+        }
+
+        try {
+            GeoCodeResponse response = amapService.geoCode(logistics.getReceiverAddress());
+            if (response == null || response.getGeoCodes() == null || response.getGeoCodes().isEmpty()) {
+                log.warn("收货地址地理编码失败: logisticsId={}, address={}",
+                        logistics.getId(), logistics.getReceiverAddress());
+                return false;
+            }
+
+            String location = response.getGeoCodes().get(0).getLocation();
+            if (!StringUtils.hasText(location) || !location.contains(",")) {
+                log.warn("地理编码返回坐标格式非法: logisticsId={}, location={}", logistics.getId(), location);
+                return false;
+            }
+
+            String[] lonLat = location.split(",");
+            if (lonLat.length != 2) {
+                log.warn("地理编码返回坐标数量非法: logisticsId={}, location={}", logistics.getId(), location);
+                return false;
+            }
+
+            Double lng = Double.parseDouble(lonLat[0]);
+            Double lat = Double.parseDouble(lonLat[1]);
+
+            logistics.setReceiverLongitude(lng);
+            logistics.setReceiverLatitude(lat);
+
+            // 尝试持久化，失败不阻断后续轨迹生成
+            boolean updated = updateById(logistics);
+            if (!updated) {
+                log.warn("收货坐标补全后写回数据库失败: logisticsId={}, lng={}, lat={}",
+                        logistics.getId(), lng, lat);
+            } else {
+                log.info("收货坐标补全成功: logisticsId={}, lng={}, lat={}", logistics.getId(), lng, lat);
+            }
+
+            return true;
+        } catch (Exception e) {
+            log.warn("收货坐标补全异常: logisticsId={}, address={}, error={}",
+                    logistics.getId(), logistics.getReceiverAddress(), e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
      * 【场景3：物流轨迹可视化】根据真实路径规划生成物流轨迹
      * 调用高德地图API获取驾车路线，生成带坐标的轨迹点
      *
@@ -555,12 +686,29 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
                 return false;
             }
 
-            // 2. 调用高德地图API获取驾车路径规划
-            DrivingRouteResponse routeResponse = amapService.drivingRoute(destLng, destLat);
+            // 2. 解析目标坐标（优先使用入参，缺失时按收货地址自动补全）
+            Double targetLng = destLng;
+            Double targetLat = destLat;
+            if (targetLng == null || targetLat == null) {
+                boolean resolved = ensureReceiverCoordinates(logistics);
+                if (resolved) {
+                    targetLng = logistics.getReceiverLongitude();
+                    targetLat = logistics.getReceiverLatitude();
+                }
+            }
+
+            if (targetLng == null || targetLat == null) {
+                log.error("目标坐标为空，无法生成真实路径轨迹: logisticsId={}", logisticsId);
+                return false;
+            }
+
+            // 3. 调用高德地图API获取驾车路径规划
+            DrivingRouteResponse routeResponse = amapService.drivingRoute(targetLng, targetLat);
             if (routeResponse == null || routeResponse.getRoute() == null
                     || routeResponse.getRoute().getPaths() == null
                     || routeResponse.getRoute().getPaths().isEmpty()) {
-                log.error("驾车路径规划失败或返回空结果: logisticsId={}", logisticsId);
+                log.error("驾车路径规划失败或返回空结果: logisticsId={}, target=({}, {})",
+                        logisticsId, targetLng, targetLat);
                 return false;
             }
 
