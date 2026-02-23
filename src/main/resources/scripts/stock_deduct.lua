@@ -6,6 +6,7 @@
 -- KEYS[2]: 用户购买记录Set Key，如 seckill:users:{seckillProductId}
 -- ARGV[1]: 扣减数量
 -- ARGV[2]: 用户ID（用于防重复购买检查，可选）
+-- ARGV[3]: 用户购买记录Set的过期时间（秒），与活动结束时间对齐
 --
 -- 返回值：
 --   1: 扣减成功
@@ -17,6 +18,7 @@ local stockKey = KEYS[1]
 local userSetKey = KEYS[2]
 local deductNum = tonumber(ARGV[1])
 local userId = ARGV[2]
+local expireSeconds = tonumber(ARGV[3])
 
 -- 检查库存Key是否存在
 if (redis.call('exists', stockKey) == 0) then
@@ -37,9 +39,11 @@ if (userId ~= nil and userId ~= '' and userSetKey ~= nil and userSetKey ~= '') t
     if (redis.call('sismember', userSetKey, userId) == 1) then
         return -2
     end
-    -- 将用户ID添加到Set中，并设置过期时间24小时
+    -- 将用户ID添加到Set中，并设置过期时间（与活动结束时间对齐）
     redis.call('sadd', userSetKey, userId)
-    redis.call('expire', userSetKey, 86400)
+    if (expireSeconds ~= nil and expireSeconds > 0) then
+        redis.call('expire', userSetKey, expireSeconds)
+    end
 end
 
 -- 执行库存扣减
