@@ -305,7 +305,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean save(Category entity) {
         if (entity == null) {
             return false;
@@ -327,7 +327,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateById(Category entity) {
         if (entity == null || entity.getCategoryId() == null) {
             return false;
@@ -691,9 +691,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
             // 清除分类商品数量映射缓存
             redisUtil.del(CATEGORY_PRODUCT_COUNT_KEY);
 
-            // 清除所有分类详情缓存
-            Set<String> keys = redisTemplate.keys(CATEGORY_DETAIL_KEY + "*");
-            if (keys != null && !keys.isEmpty()) {
+            // 清除所有分类详情缓存（使用SCAN替代KEYS避免阻塞Redis）
+            Set<String> keys = redisUtil.keys(CATEGORY_DETAIL_KEY + "*");
+            if (!keys.isEmpty()) {
                 redisTemplate.delete(keys);
             }
 

@@ -88,7 +88,7 @@ public class CacheAspect {
             for (String keyPrefix : cacheEvict.keyPrefixes()) {
                 if (cacheEvict.allEntries()) {
                     // 清除所有匹配的键
-                    Set<String> keys = redisUtil.keys(keyPrefix + "*");
+                    Set<String> keys = redisUtil.scan(keyPrefix + "*");
                     if (keys != null && !keys.isEmpty()) {
                         redisUtil.del(keys.toArray(new String[0]));
                         log.debug("已清除缓存: {} (共{}个键)", keyPrefix, keys.size());

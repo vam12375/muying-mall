@@ -109,7 +109,12 @@ public class RedisUtil {
      */
     public Set<String> keys(String pattern) {
         try {
-            return redisTemplate.keys(pattern);
+            Set<String> keys = new HashSet<>();
+            try (Cursor<String> cursor = redisTemplate.scan(
+                    ScanOptions.scanOptions().match(pattern).count(100).build())) {
+                cursor.forEachRemaining(keys::add);
+            }
+            return keys;
         } catch (Exception e) {
             e.printStackTrace();
             return new HashSet<>();

@@ -2,9 +2,12 @@ package com.muyingmall.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -89,8 +92,8 @@ public class CacheRefreshService {
             };
             
             for (String pattern : patterns) {
-                Set<String> keys = redisTemplate.keys(pattern);
-                if (keys != null && !keys.isEmpty()) {
+                Set<String> keys = scanKeys(pattern);
+                if (!keys.isEmpty()) {
                     Long deletedCount = redisTemplate.delete(keys);
                     log.debug("清理用户订单列表缓存: pattern={}, deletedCount={}", pattern, deletedCount);
                 }
@@ -113,8 +116,8 @@ public class CacheRefreshService {
             };
             
             for (String pattern : patterns) {
-                Set<String> keys = redisTemplate.keys(pattern);
-                if (keys != null && !keys.isEmpty()) {
+                Set<String> keys = scanKeys(pattern);
+                if (!keys.isEmpty()) {
                     Long deletedCount = redisTemplate.delete(keys);
                     log.debug("清理订单统计缓存: pattern={}, deletedCount={}", pattern, deletedCount);
                 }
@@ -155,8 +158,8 @@ public class CacheRefreshService {
             };
             
             for (String pattern : patterns) {
-                Set<String> keys = redisTemplate.keys(pattern);
-                if (keys != null && !keys.isEmpty()) {
+                Set<String> keys = scanKeys(pattern);
+                if (!keys.isEmpty()) {
                     Long deletedCount = redisTemplate.delete(keys);
                     log.debug("清理支付缓存: pattern={}, deletedCount={}", pattern, deletedCount);
                 }
@@ -180,8 +183,8 @@ public class CacheRefreshService {
             };
             
             for (String pattern : patterns) {
-                Set<String> keys = redisTemplate.keys(pattern);
-                if (keys != null && !keys.isEmpty()) {
+                Set<String> keys = scanKeys(pattern);
+                if (!keys.isEmpty()) {
                     Long deletedCount = redisTemplate.delete(keys);
                     log.debug("清理用户相关缓存: pattern={}, deletedCount={}", pattern, deletedCount);
                 }
@@ -211,5 +214,14 @@ public class CacheRefreshService {
         for (String key : cacheKeys) {
             forceRefreshCache(key);
         }
+    }
+
+    private Set<String> scanKeys(String pattern) {
+        Set<String> keys = new HashSet<>();
+        try (Cursor<String> cursor = redisTemplate.scan(
+                ScanOptions.scanOptions().match(pattern).count(100).build())) {
+            cursor.forEachRemaining(keys::add);
+        }
+        return keys;
     }
 }

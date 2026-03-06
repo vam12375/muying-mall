@@ -211,7 +211,7 @@ public class BrandServiceImpl extends ServiceImpl<BrandMapper, Brand> implements
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean createBrand(Brand brand) {
         log.debug("创建品牌: {}", brand);
         boolean result = save(brand);
@@ -226,7 +226,7 @@ public class BrandServiceImpl extends ServiceImpl<BrandMapper, Brand> implements
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateBrand(Brand brand) {
         log.debug("更新品牌: id={}, brand={}", brand.getBrandId(), brand);
         boolean result = updateById(brand);
@@ -243,7 +243,7 @@ public class BrandServiceImpl extends ServiceImpl<BrandMapper, Brand> implements
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteBrand(Integer id) {
         log.debug("删除品牌: id={}", id);
         boolean result = removeById(id);
@@ -264,9 +264,8 @@ public class BrandServiceImpl extends ServiceImpl<BrandMapper, Brand> implements
      */
     private void cleanListCache() {
         log.debug("清除品牌列表缓存");
-        // 获取所有匹配的键
-        Set<String> keys = redisTemplate.keys(BRAND_LIST_KEY + "*");
-        if (keys != null && !keys.isEmpty()) {
+        Set<String> keys = redisUtil.keys(BRAND_LIST_KEY + "*");
+        if (!keys.isEmpty()) {
             redisTemplate.delete(keys);
             log.debug("清除品牌列表缓存成功: 清除键数量={}", keys.size());
         } else {
