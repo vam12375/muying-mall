@@ -2,7 +2,7 @@ package com.muyingmall.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.common.api.CommonPage;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.dto.BrandDTO;
 import com.muyingmall.entity.Brand;
 import com.muyingmall.service.BrandService;
@@ -40,7 +40,7 @@ public class AdminBrandController {
      */
     @GetMapping
     @Operation(summary = "获取品牌分页列表")
-    public CommonResult<Map<String, Object>> getBrandPage(
+    public Result<Map<String, Object>> getBrandPage(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "keyword", required = false) String keyword) {
@@ -60,10 +60,10 @@ public class AdminBrandController {
             log.debug("获取品牌分页列表成功: 总记录数={}, 当前页记录数={}",
                     brandPage.getTotal(), brandPage.getRecords().size());
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("获取品牌列表失败", e);
-            return CommonResult.failed("获取品牌列表失败: " + e.getMessage());
+            return Result.error("获取品牌列表失败: " + e.getMessage());
         }
     }
 
@@ -74,7 +74,7 @@ public class AdminBrandController {
      */
     @GetMapping("/all")
     @Operation(summary = "获取所有品牌列表")
-    public CommonResult<List<BrandDTO>> getAllBrands() {
+    public Result<List<BrandDTO>> getAllBrands() {
         try {
             log.debug("获取所有品牌列表");
 
@@ -89,10 +89,10 @@ public class AdminBrandController {
 
             log.debug("获取所有品牌列表成功: 总记录数={}", brands.size());
 
-            return CommonResult.success(brandDTOs);
+            return Result.success(brandDTOs);
         } catch (Exception e) {
             log.error("获取品牌列表失败", e);
-            return CommonResult.failed("获取品牌列表失败: " + e.getMessage());
+            return Result.error("获取品牌列表失败: " + e.getMessage());
         }
     }
 
@@ -104,14 +104,14 @@ public class AdminBrandController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取品牌详情")
-    public CommonResult<BrandDTO> getBrandDetail(@PathVariable Integer id) {
+    public Result<BrandDTO> getBrandDetail(@PathVariable Integer id) {
         try {
             log.debug("获取品牌详情: id={}", id);
 
             Brand brand = brandService.getBrandDetail(id);
             if (brand == null) {
                 log.warn("品牌不存在: id={}", id);
-                return CommonResult.failed("品牌不存在");
+                return Result.error("品牌不存在");
             }
 
             // 获取品牌关联的商品数量
@@ -120,10 +120,10 @@ public class AdminBrandController {
 
             log.debug("获取品牌详情成功: id={}, name={}", id, brand.getName());
 
-            return CommonResult.success(brandDTO);
+            return Result.success(brandDTO);
         } catch (Exception e) {
             log.error("获取品牌详情失败: id=" + id, e);
-            return CommonResult.failed("获取品牌详情失败: " + e.getMessage());
+            return Result.error("获取品牌详情失败: " + e.getMessage());
         }
     }
 
@@ -136,21 +136,21 @@ public class AdminBrandController {
     @PostMapping
     @Operation(summary = "创建品牌")
     @com.muyingmall.annotation.AdminOperationLog(operation = "创建品牌", module = "品牌管理", operationType = "CREATE", targetType = "brand")
-    public CommonResult<Boolean> createBrand(@RequestBody Brand brand) {
+    public Result<Boolean> createBrand(@RequestBody Brand brand) {
         try {
             log.debug("创建品牌: {}", brand);
 
             boolean result = brandService.createBrand(brand);
             if (result) {
                 log.debug("创建品牌成功: id={}, name={}", brand.getBrandId(), brand.getName());
-                return CommonResult.success(true, "创建品牌成功");
+                return Result.success(true, "创建品牌成功");
             } else {
                 log.warn("创建品牌失败");
-                return CommonResult.failed("创建品牌失败");
+                return Result.error("创建品牌失败");
             }
         } catch (Exception e) {
             log.error("创建品牌失败", e);
-            return CommonResult.failed("创建品牌失败: " + e.getMessage());
+            return Result.error("创建品牌失败: " + e.getMessage());
         }
     }
 
@@ -164,7 +164,7 @@ public class AdminBrandController {
     @PutMapping("/{id}")
     @Operation(summary = "更新品牌")
     @com.muyingmall.annotation.AdminOperationLog(operation = "更新品牌", module = "品牌管理", operationType = "UPDATE", targetType = "brand")
-    public CommonResult<Boolean> updateBrand(@PathVariable Integer id, @RequestBody Brand brand) {
+    public Result<Boolean> updateBrand(@PathVariable Integer id, @RequestBody Brand brand) {
         try {
             log.debug("更新品牌: id={}, brand={}", id, brand);
 
@@ -172,14 +172,14 @@ public class AdminBrandController {
             boolean result = brandService.updateBrand(brand);
             if (result) {
                 log.debug("更新品牌成功: id={}", id);
-                return CommonResult.success(true, "更新品牌成功");
+                return Result.success(true, "更新品牌成功");
             } else {
                 log.warn("更新品牌失败: id={}", id);
-                return CommonResult.failed("更新品牌失败");
+                return Result.error("更新品牌失败");
             }
         } catch (Exception e) {
             log.error("更新品牌失败: id=" + id, e);
-            return CommonResult.failed("更新品牌失败: " + e.getMessage());
+            return Result.error("更新品牌失败: " + e.getMessage());
         }
     }
 
@@ -192,21 +192,21 @@ public class AdminBrandController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除品牌")
     @com.muyingmall.annotation.AdminOperationLog(operation = "删除品牌", module = "品牌管理", operationType = "DELETE", targetType = "brand")
-    public CommonResult<Boolean> deleteBrand(@PathVariable Integer id) {
+    public Result<Boolean> deleteBrand(@PathVariable Integer id) {
         try {
             log.debug("删除品牌: id={}", id);
 
             boolean result = brandService.deleteBrand(id);
             if (result) {
                 log.debug("删除品牌成功: id={}", id);
-                return CommonResult.success(true, "删除品牌成功");
+                return Result.success(true, "删除品牌成功");
             } else {
                 log.warn("删除品牌失败: id={}", id);
-                return CommonResult.failed("删除品牌失败");
+                return Result.error("删除品牌失败");
             }
         } catch (Exception e) {
             log.error("删除品牌失败: id=" + id, e);
-            return CommonResult.failed("删除品牌失败: " + e.getMessage());
+            return Result.error("删除品牌失败: " + e.getMessage());
         }
     }
 }

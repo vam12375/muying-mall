@@ -1,7 +1,7 @@
 package com.muyingmall.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.entity.Order;
 import com.muyingmall.entity.Logistics;
 import com.muyingmall.entity.LogisticsCompany;
@@ -55,7 +55,7 @@ public class AdminOrderController {
      */
     @GetMapping
     @Operation(summary = "分页获取订单列表")
-    public CommonResult<Map<String, Object>> getOrderList(
+    public Result<Map<String, Object>> getOrderList(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
             @RequestParam(value = "status", required = false) String status,
@@ -68,10 +68,10 @@ public class AdminOrderController {
             result.put("list", orderPage.getRecords());
             result.put("total", orderPage.getTotal());
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("获取订单列表失败", e);
-            return CommonResult.failed("获取订单列表失败: " + e.getMessage());
+            return Result.error("获取订单列表失败: " + e.getMessage());
         }
     }
 
@@ -82,7 +82,7 @@ public class AdminOrderController {
      */
     @GetMapping("/statistics")
     @Operation(summary = "获取订单统计数据")
-    public CommonResult<Map<String, Object>> getOrderStatistics() {
+    public Result<Map<String, Object>> getOrderStatistics() {
         try {
             Map<String, Object> statistics = orderService.getOrderStatistics(null);
 
@@ -95,10 +95,10 @@ public class AdminOrderController {
             result.put("completed", statistics.get("completedCount"));
             result.put("cancelled", statistics.get("cancelledCount"));
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("获取订单统计数据失败", e);
-            return CommonResult.failed("获取订单统计数据失败: " + e.getMessage());
+            return Result.error("获取订单统计数据失败: " + e.getMessage());
         }
     }
 
@@ -110,13 +110,13 @@ public class AdminOrderController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取订单详情")
-    public CommonResult<Order> getOrderDetail(@PathVariable("id") Integer id) {
+    public Result<Order> getOrderDetail(@PathVariable("id") Integer id) {
         try {
             Order order = orderService.getOrderDetailByAdmin(id);
-            return CommonResult.success(order);
+            return Result.success(order);
         } catch (Exception e) {
             log.error("获取订单详情失败", e);
-            return CommonResult.failed("获取订单详情失败: " + e.getMessage());
+            return Result.error("获取订单详情失败: " + e.getMessage());
         }
     }
 
@@ -131,20 +131,20 @@ public class AdminOrderController {
     @PutMapping("/{id}/status")
     @Operation(summary = "更新订单状态")
     @com.muyingmall.annotation.AdminOperationLog(operation = "更新订单状态", module = "订单管理", operationType = "UPDATE", targetType = "order")
-    public CommonResult<Boolean> updateOrderStatus(
+    public Result<Boolean> updateOrderStatus(
             @PathVariable("id") Integer id,
             @RequestParam("status") String status,
             @RequestParam(value = "remark", required = false) String remark) {
         try {
             boolean result = orderService.updateOrderStatusByAdmin(id, status, remark);
             if (result) {
-                return CommonResult.success(true, "更新订单状态成功");
+                return Result.success(true, "更新订单状态成功");
             } else {
-                return CommonResult.failed("更新订单状态失败");
+                return Result.error("更新订单状态失败");
             }
         } catch (Exception e) {
             log.error("更新订单状态失败", e);
-            return CommonResult.failed("更新订单状态失败: " + e.getMessage());
+            return Result.error("更新订单状态失败: " + e.getMessage());
         }
     }
 
@@ -162,7 +162,7 @@ public class AdminOrderController {
     @PutMapping("/{id}/ship")
     @Operation(summary = "订单发货")
     @com.muyingmall.annotation.AdminOperationLog(operation = "订单发货", module = "订单管理", operationType = "UPDATE", targetType = "order", description = "管理员发货操作")
-    public CommonResult<Boolean> shipOrder(
+    public Result<Boolean> shipOrder(
             @PathVariable("id") Integer id,
             @RequestParam("companyId") Integer companyId,
             @RequestParam(value = "trackingNo", required = false) String trackingNo,
@@ -173,13 +173,13 @@ public class AdminOrderController {
             // 获取物流公司
             LogisticsCompany company = logisticsCompanyService.getById(companyId);
             if (company == null) {
-                return CommonResult.failed("物流公司不存在");
+                return Result.error("物流公司不存在");
             }
 
             // 获取订单信息
             Order order = orderService.getById(id);
             if (order == null) {
-                return CommonResult.failed("订单不存在");
+                return Result.error("订单不存在");
             }
 
             // 【幂等性检查】防止重复发货
@@ -187,7 +187,7 @@ public class AdminOrderController {
             if (order.getStatus() != OrderStatus.PENDING_SHIPMENT) {
                 log.warn("【管理员发货】订单状态不正确: orderId={}, currentStatus={}",
                         id, order.getStatus());
-                return CommonResult.failed("订单状态不正确，只有待发货的订单才能发货");
+                return Result.error("订单状态不正确，只有待发货的订单才能发货");
             }
 
             // 检查是否已存在物流记录（防止重复发货）
@@ -195,7 +195,7 @@ public class AdminOrderController {
             if (existingLogistics != null) {
                 log.warn("【管理员发货】订单已存在物流记录，拒绝重复发货: orderId={}, logisticsId={}",
                         id, existingLogistics.getId());
-                return CommonResult.failed("订单已发货，请勿重复操作");
+                return Result.error("订单已发货，请勿重复操作");
             }
 
             // 如果未提供物流单号，自动生成
@@ -260,7 +260,7 @@ public class AdminOrderController {
             // 保存物流记录
             boolean logisticsResult = logisticsService.createLogistics(logistics);
             if (!logisticsResult) {
-                return CommonResult.failed("创建物流记录失败");
+                return Result.error("创建物流记录失败");
             }
 
             // 【场景3：物流轨迹可视化】发货后立即生成物流轨迹
@@ -293,13 +293,13 @@ public class AdminOrderController {
             // 更新订单发货信息
             boolean orderResult = orderService.shipOrder(id, company.getName(), finalTrackingNo);
             if (!orderResult) {
-                return CommonResult.failed("更新订单发货信息失败");
+                return Result.error("更新订单发货信息失败");
             }
 
-            return CommonResult.success(true, "订单发货成功");
+            return Result.success(true, "订单发货成功");
         } catch (Exception e) {
             log.error("订单发货失败", e);
-            return CommonResult.failed("订单发货失败: " + e.getMessage());
+            return Result.error("订单发货失败: " + e.getMessage());
         }
     }
 

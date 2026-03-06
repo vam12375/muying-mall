@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.dto.CommentDTO;
 import com.muyingmall.dto.CommentReplyDTO;
 import com.muyingmall.dto.CommentStatsDTO;
@@ -76,7 +76,7 @@ public class CommentController {
 
     @Operation(summary = "创建商品评价")
     @PostMapping("/create")
-    public CommonResult<Boolean> createComment(@RequestBody CommentDTO commentDTO) {
+    public Result<Boolean> createComment(@RequestBody CommentDTO commentDTO) {
         Comment comment = new Comment();
         BeanUtils.copyProperties(commentDTO, comment);
         // 如果images是列表，转换为JSON字符串
@@ -85,21 +85,21 @@ public class CommentController {
                 comment.setImages(objectMapper.writeValueAsString(commentDTO.getImages()));
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
-                return CommonResult.failed("图片格式转换失败: " + e.getMessage());
+                return Result.error("图片格式转换失败: " + e.getMessage());
             }
         }
         boolean result = commentService.createComment(comment);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "创建订单商品评价")
     @PostMapping("/order/{orderId}")
-    public CommonResult<Boolean> createOrderComment(
+    public Result<Boolean> createOrderComment(
             @PathVariable @Parameter(description = "订单ID") Integer orderId,
             @RequestBody CommentDTO commentDTO) {
         // 检查订单是否已评价
         if (orderService.isOrderCommented(orderId)) {
-            return CommonResult.failed("该订单已评价");
+            return Result.error("该订单已评价");
         }
 
         // 设置订单ID
@@ -114,17 +114,17 @@ public class CommentController {
                 comment.setImages(objectMapper.writeValueAsString(commentDTO.getImages()));
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
-                return CommonResult.failed("图片格式转换失败: " + e.getMessage());
+                return Result.error("图片格式转换失败: " + e.getMessage());
             }
         }
 
         boolean result = commentService.createComment(comment);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "根据订单ID获取评价")
     @GetMapping("/order/{orderId}")
-    public CommonResult<List<CommentDTO>> getOrderComments(
+    public Result<List<CommentDTO>> getOrderComments(
             @PathVariable @Parameter(description = "订单ID") Integer orderId) {
         // 根据订单ID查询评价
         LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
@@ -132,20 +132,20 @@ public class CommentController {
         List<Comment> comments = commentService.list(queryWrapper);
 
         List<CommentDTO> result = convertToDTO(comments);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "检查订单是否已评价")
     @GetMapping("/order/{orderId}/status")
-    public CommonResult<Boolean> checkOrderCommentStatus(
+    public Result<Boolean> checkOrderCommentStatus(
             @PathVariable @Parameter(description = "订单ID") Integer orderId) {
         boolean isCommented = orderService.isOrderCommented(orderId);
-        return CommonResult.success(isCommented);
+        return Result.success(isCommented);
     }
 
     @Operation(summary = "获取商品评价列表")
     @GetMapping("/product/{productId}")
-    public CommonResult<List<CommentDTO>> getProductComments(
+    public Result<List<CommentDTO>> getProductComments(
             @PathVariable @Parameter(description = "商品ID") Integer productId) {
         List<Comment> comments = commentService.getProductComments(productId);
         List<CommentDTO> result = convertToDTO(comments);
@@ -163,12 +163,12 @@ public class CommentController {
             }
         }
 
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "分页获取商品评价")
     @GetMapping("/product/{productId}/page")
-    public CommonResult<Map<String, Object>> getProductCommentPage(
+    public Result<Map<String, Object>> getProductCommentPage(
             @PathVariable @Parameter(description = "商品ID") Integer productId,
             @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
             @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size) {
@@ -201,21 +201,21 @@ public class CommentController {
                 "records", records,
                 "stats", ratingStats);
 
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取用户评价列表")
     @GetMapping("/user/{userId}")
-    public CommonResult<List<CommentDTO>> getUserComments(
+    public Result<List<CommentDTO>> getUserComments(
             @PathVariable @Parameter(description = "用户ID") Integer userId) {
         List<Comment> userComments = commentService.getUserCommentPage(userId, 1, 100).getRecords();
         List<CommentDTO> result = convertToDTO(userComments);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "分页获取用户评价列表")
     @GetMapping("/user/{userId}/page")
-    public CommonResult<Map<String, Object>> getUserCommentPage(
+    public Result<Map<String, Object>> getUserCommentPage(
             @PathVariable @Parameter(description = "用户ID") Integer userId,
             @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
             @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size,
@@ -233,12 +233,12 @@ public class CommentController {
                 "current", commentPage.getCurrent(),
                 "records", records);
 
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "分页获取用户评价列表（带搜索和筛选）")
     @GetMapping("/user/{userId}/page/search")
-    public CommonResult<Map<String, Object>> searchUserCommentPage(
+    public Result<Map<String, Object>> searchUserCommentPage(
             @PathVariable @Parameter(description = "用户ID") Integer userId,
             @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
             @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size,
@@ -259,56 +259,56 @@ public class CommentController {
                 "current", commentPage.getCurrent(),
                 "records", records);
 
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取用户评价统计数据")
     @GetMapping("/user/{userId}/stats")
-    public CommonResult<Map<String, Object>> getUserCommentStats(
+    public Result<Map<String, Object>> getUserCommentStats(
             @PathVariable @Parameter(description = "用户ID") Integer userId) {
         try {
             Map<String, Object> stats = commentService.getUserCommentStats(userId);
-            return CommonResult.success(stats);
+            return Result.success(stats);
         } catch (Exception e) {
             log.error("获取用户评价统计数据失败", e);
-            return CommonResult.failed("系统繁忙，请稍后再试");
+            return Result.error("系统繁忙，请稍后再试");
         }
     }
 
     @Operation(summary = "获取用户评价趋势数据")
     @GetMapping("/user/{userId}/trend")
-    public CommonResult<Map<String, Object>> getUserCommentTrend(
+    public Result<Map<String, Object>> getUserCommentTrend(
             @PathVariable @Parameter(description = "用户ID") Integer userId,
             @RequestParam(defaultValue = "30") @Parameter(description = "天数") Integer days) {
         try {
             Map<String, Object> trend = commentService.getUserCommentTrend(userId, days);
-            return CommonResult.success(trend);
+            return Result.success(trend);
         } catch (Exception e) {
             log.error("获取用户评价趋势数据失败", e);
-            return CommonResult.failed("系统繁忙，请稍后再试");
+            return Result.error("系统繁忙，请稍后再试");
         }
     }
 
     @Operation(summary = "更新评价状态")
     @PutMapping("/{commentId}/status")
-    public CommonResult<Boolean> updateCommentStatus(
+    public Result<Boolean> updateCommentStatus(
             @PathVariable @Parameter(description = "评价ID") Integer commentId,
             @RequestParam @Parameter(description = "状态：0-隐藏，1-显示") Integer status) {
         boolean result = commentService.updateCommentStatus(commentId, status);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "删除评价")
     @DeleteMapping("/{commentId}")
-    public CommonResult<Boolean> deleteComment(
+    public Result<Boolean> deleteComment(
             @PathVariable @Parameter(description = "评价ID") Integer commentId) {
         boolean result = commentService.deleteComment(commentId);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "更新评价")
     @PutMapping("/{commentId}")
-    public CommonResult<Boolean> updateComment(
+    public Result<Boolean> updateComment(
             @PathVariable @Parameter(description = "评价ID") Integer commentId,
             @RequestBody CommentDTO commentDTO) {
         // 设置评价ID
@@ -323,25 +323,25 @@ public class CommentController {
                 comment.setImages(objectMapper.writeValueAsString(commentDTO.getImages()));
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
-                return CommonResult.failed("图片格式转换失败: " + e.getMessage());
+                return Result.error("图片格式转换失败: " + e.getMessage());
             }
         }
 
         boolean result = commentService.updateById(comment);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取商品评分统计")
     @GetMapping("/product/{productId}/stats")
-    public CommonResult<Map<String, Object>> getProductRatingStats(
+    public Result<Map<String, Object>> getProductRatingStats(
             @PathVariable @Parameter(description = "商品ID") Integer productId) {
         Map<String, Object> stats = commentService.getProductRatingStats(productId);
-        return CommonResult.success(stats);
+        return Result.success(stats);
     }
 
     @Operation(summary = "管理员获取评价列表")
     @GetMapping("/admin/list")
-    public CommonResult<Map<String, Object>> adminGetCommentList(
+    public Result<Map<String, Object>> adminGetCommentList(
             @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
             @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size,
             @RequestParam(required = false) @Parameter(description = "商品ID") Integer productId,
@@ -362,12 +362,12 @@ public class CommentController {
                 "current", commentPage.getCurrent(),
                 "records", records);
 
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取评价统计数据")
     @GetMapping("/admin/stats")
-    public CommonResult<CommentStatsDTO> getCommentStats(
+    public Result<CommentStatsDTO> getCommentStats(
             @RequestParam(defaultValue = "7") @Parameter(description = "统计天数") Integer days) {
         Map<String, Object> stats = commentService.getCommentStats(days);
 
@@ -401,59 +401,59 @@ public class CommentController {
             statsDTO.setNegativeRate(0.0);
         }
 
-        return CommonResult.success(statsDTO);
+        return Result.success(statsDTO);
     }
 
     @Operation(summary = "创建评价回复")
     @PostMapping("/reply")
-    public CommonResult<Boolean> createCommentReply(@RequestBody CommentReplyDTO replyDTO) {
+    public Result<Boolean> createCommentReply(@RequestBody CommentReplyDTO replyDTO) {
         CommentReply reply = new CommentReply();
         BeanUtils.copyProperties(replyDTO, reply);
         boolean result = commentReplyService.createCommentReply(reply);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取评价回复列表")
     @GetMapping("/{commentId}/replies")
-    public CommonResult<List<CommentReplyDTO>> getCommentReplies(
+    public Result<List<CommentReplyDTO>> getCommentReplies(
             @PathVariable @Parameter(description = "评价ID") Integer commentId) {
         List<CommentReply> replies = commentReplyService.getCommentReplies(commentId);
         List<CommentReplyDTO> result = convertToReplyDTO(replies);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "删除评价回复")
     @DeleteMapping("/reply/{replyId}")
-    public CommonResult<Boolean> deleteCommentReply(
+    public Result<Boolean> deleteCommentReply(
             @PathVariable @Parameter(description = "回复ID") Integer replyId) {
         boolean result = commentReplyService.deleteCommentReply(replyId);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "更新评价回复")
     @PutMapping("/reply/{replyId}")
-    public CommonResult<Boolean> updateCommentReply(
+    public Result<Boolean> updateCommentReply(
             @PathVariable @Parameter(description = "回复ID") Integer replyId,
             @RequestBody CommentReplyDTO replyDTO) {
         CommentReply reply = new CommentReply();
         BeanUtils.copyProperties(replyDTO, reply);
         reply.setReplyId(replyId);
         boolean result = commentReplyService.updateCommentReply(reply);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取用户评价的回复列表")
     @GetMapping("/user/{userId}/replies")
-    public CommonResult<List<CommentReplyDTO>> getUserCommentReplies(
+    public Result<List<CommentReplyDTO>> getUserCommentReplies(
             @PathVariable @Parameter(description = "用户ID") Integer userId) {
         List<CommentReply> replies = commentReplyService.getUserCommentReplies(userId);
         List<CommentReplyDTO> result = convertToReplyDTO(replies);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "创建商品评价（带标签）")
     @PostMapping("/create/with-tags")
-    public CommonResult<Boolean> createCommentWithTags(@RequestBody CommentWithTagsDTO commentDTO) {
+    public Result<Boolean> createCommentWithTags(@RequestBody CommentWithTagsDTO commentDTO) {
         Comment comment = new Comment();
         BeanUtils.copyProperties(commentDTO, comment);
 
@@ -463,7 +463,7 @@ public class CommentController {
                 comment.setImages(objectMapper.writeValueAsString(commentDTO.getImages()));
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
-                return CommonResult.failed("图片格式转换失败: " + e.getMessage());
+                return Result.error("图片格式转换失败: " + e.getMessage());
             }
         }
 
@@ -476,95 +476,95 @@ public class CommentController {
         }
 
         boolean result = commentService.createCommentWithTags(comment, tagIds);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取评价的标签")
     @GetMapping("/{commentId}/tags")
-    public CommonResult<List<CommentTagDTO>> getCommentTags(
+    public Result<List<CommentTagDTO>> getCommentTags(
             @PathVariable @Parameter(description = "评价ID") Integer commentId) {
         List<CommentTag> tags = commentService.getCommentTags(commentId);
         List<CommentTagDTO> result = convertToTagDTO(tags);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "为评价添加标签")
     @PostMapping("/{commentId}/tags")
-    public CommonResult<Boolean> addCommentTags(
+    public Result<Boolean> addCommentTags(
             @PathVariable @Parameter(description = "评价ID") Integer commentId,
             @RequestBody List<Integer> tagIds) {
         boolean result = commentService.addCommentTags(commentId, tagIds);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "更新评价标签")
     @PutMapping("/{commentId}/tags")
-    public CommonResult<Boolean> updateCommentTags(
+    public Result<Boolean> updateCommentTags(
             @PathVariable @Parameter(description = "评价ID") Integer commentId,
             @RequestBody List<Integer> tagIds) {
         boolean result = commentService.updateCommentTags(commentId, tagIds);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "删除评价标签")
     @DeleteMapping("/{commentId}/tags/{tagId}")
-    public CommonResult<Boolean> removeCommentTag(
+    public Result<Boolean> removeCommentTag(
             @PathVariable @Parameter(description = "评价ID") Integer commentId,
             @PathVariable @Parameter(description = "标签ID") Integer tagId) {
         boolean result = commentService.removeCommentTag(commentId, tagId);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "删除评价的所有标签")
     @DeleteMapping("/{commentId}/tags")
-    public CommonResult<Boolean> removeAllCommentTags(
+    public Result<Boolean> removeAllCommentTags(
             @PathVariable @Parameter(description = "评价ID") Integer commentId) {
         boolean result = commentService.removeAllCommentTags(commentId);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取热门标签列表")
     @GetMapping("/tags/hot")
-    public CommonResult<List<CommentTagDTO>> getHotTags(
+    public Result<List<CommentTagDTO>> getHotTags(
             @RequestParam(defaultValue = "10") @Parameter(description = "限制数量") Integer limit) {
         List<CommentTag> tags = commentTagService.getHotTags(limit);
         List<CommentTagDTO> result = convertToTagDTO(tags);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "根据商品分类获取标签列表")
     @GetMapping("/tags/category/{categoryId}")
-    public CommonResult<List<CommentTagDTO>> getTagsByCategory(
+    public Result<List<CommentTagDTO>> getTagsByCategory(
             @PathVariable @Parameter(description = "商品分类ID") Integer categoryId) {
         List<CommentTag> tags = commentTagService.getTagsByCategory(categoryId);
         List<CommentTagDTO> result = convertToTagDTO(tags);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "搜索标签")
     @GetMapping("/tags/search")
-    public CommonResult<List<CommentTagDTO>> searchTags(
+    public Result<List<CommentTagDTO>> searchTags(
             @RequestParam @Parameter(description = "搜索关键词") String keyword,
             @RequestParam(defaultValue = "10") @Parameter(description = "限制数量") Integer limit) {
         List<CommentTag> tags = commentTagService.searchTags(keyword, limit);
         List<CommentTagDTO> result = convertToTagDTO(tags);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取评价推荐标签")
     @GetMapping("/tags/recommended")
-    public CommonResult<List<CommentTagDTO>> getRecommendedTags(
+    public Result<List<CommentTagDTO>> getRecommendedTags(
             @RequestParam(required = false) @Parameter(description = "商品ID") Integer productId,
             @RequestParam(required = false) @Parameter(description = "分类ID") Integer categoryId,
             @RequestParam(defaultValue = "10") @Parameter(description = "限制数量") Integer limit) {
         List<CommentTag> tags = commentTagService.getRecommendedTags(productId, categoryId, limit);
         List<CommentTagDTO> result = convertToTagDTO(tags);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "根据标签筛选用户评价")
     @GetMapping("/user/{userId}/tag/{tagId}")
-    public CommonResult<Map<String, Object>> getUserCommentsByTag(
+    public Result<Map<String, Object>> getUserCommentsByTag(
             @PathVariable @Parameter(description = "用户ID") Integer userId,
             @PathVariable @Parameter(description = "标签ID") Integer tagId,
             @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
@@ -583,73 +583,73 @@ public class CommentController {
                 "current", commentPage.getCurrent(),
                 "records", records);
 
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取系统预设评价模板")
     @GetMapping("/templates/system")
-    public CommonResult<List<CommentTemplateDTO>> getSystemTemplates(
+    public Result<List<CommentTemplateDTO>> getSystemTemplates(
             @RequestParam(required = false) @Parameter(description = "评分") Integer rating,
             @RequestParam(required = false) @Parameter(description = "商品分类ID") Integer categoryId) {
         List<CommentTemplate> templates = commentTemplateService.getSystemTemplates(rating, categoryId);
         List<CommentTemplateDTO> result = templates.stream()
                 .map(this::convertToTemplateDTO)
                 .collect(Collectors.toList());
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取用户自定义评价模板")
     @GetMapping("/templates/user/{userId}")
-    public CommonResult<List<CommentTemplateDTO>> getUserTemplates(
+    public Result<List<CommentTemplateDTO>> getUserTemplates(
             @PathVariable @Parameter(description = "用户ID") Integer userId) {
         List<CommentTemplate> templates = commentTemplateService.getUserTemplates(userId);
         List<CommentTemplateDTO> result = templates.stream()
                 .map(this::convertToTemplateDTO)
                 .collect(Collectors.toList());
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "创建用户自定义评价模板")
     @PostMapping("/templates")
-    public CommonResult<Boolean> createUserTemplate(@RequestBody CommentTemplateDTO templateDTO) {
+    public Result<Boolean> createUserTemplate(@RequestBody CommentTemplateDTO templateDTO) {
         CommentTemplate template = new CommentTemplate();
         BeanUtils.copyProperties(templateDTO, template);
         boolean result = commentTemplateService.createUserTemplate(template);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "更新评价模板")
     @PutMapping("/templates/{templateId}")
-    public CommonResult<Boolean> updateTemplate(
+    public Result<Boolean> updateTemplate(
             @PathVariable @Parameter(description = "模板ID") Integer templateId,
             @RequestBody CommentTemplateDTO templateDTO) {
         CommentTemplate template = new CommentTemplate();
         BeanUtils.copyProperties(templateDTO, template);
         template.setTemplateId(templateId);
         boolean result = commentTemplateService.updateTemplate(template);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "删除评价模板")
     @DeleteMapping("/templates/{templateId}")
-    public CommonResult<Boolean> deleteTemplate(
+    public Result<Boolean> deleteTemplate(
             @PathVariable @Parameter(description = "模板ID") Integer templateId,
             @RequestParam @Parameter(description = "用户ID") Integer userId) {
         boolean result = commentTemplateService.deleteTemplate(templateId, userId);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "增加模板使用次数")
     @PostMapping("/templates/{templateId}/use")
-    public CommonResult<Boolean> incrementTemplateUseCount(
+    public Result<Boolean> incrementTemplateUseCount(
             @PathVariable @Parameter(description = "模板ID") Integer templateId) {
         boolean result = commentTemplateService.incrementUseCount(templateId);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "分页获取所有模板（管理员使用）")
     @GetMapping("/admin/templates")
-    public CommonResult<Map<String, Object>> getTemplatesPage(
+    public Result<Map<String, Object>> getTemplatesPage(
             @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
             @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size,
             @RequestParam(required = false) @Parameter(description = "模板类型") Integer templateType) {
@@ -667,28 +667,28 @@ public class CommentController {
                 "current", templatesPage.getCurrent(),
                 "records", records);
 
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取评价奖励配置")
     @GetMapping("/reward/config")
-    public CommonResult<CommentRewardConfig> getRewardConfig() {
+    public Result<CommentRewardConfig> getRewardConfig() {
         CommentRewardConfig config = commentRewardConfigService.getActiveRewardConfig();
-        return CommonResult.success(config);
+        return Result.success(config);
     }
 
     @Operation(summary = "计算评价可获得的奖励")
     @PostMapping("/reward/calculate")
-    public CommonResult<Map<String, Object>> calculateReward(@RequestBody CommentDTO commentDTO) {
+    public Result<Map<String, Object>> calculateReward(@RequestBody CommentDTO commentDTO) {
         Comment comment = new Comment();
         BeanUtils.copyProperties(commentDTO, comment);
         Map<String, Object> reward = commentRewardConfigService.calculateReward(comment);
-        return CommonResult.success(reward);
+        return Result.success(reward);
     }
 
     @Operation(summary = "获取未评价订单列表")
     @GetMapping("/user/{userId}/unrated")
-    public CommonResult<List<Order>> getUnratedOrders(
+    public Result<List<Order>> getUnratedOrders(
             @PathVariable @Parameter(description = "用户ID") Integer userId) {
         // 查询用户已完成但未评价的订单
         LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
@@ -698,22 +698,22 @@ public class CommentController {
                 .orderByDesc(Order::getCompletionTime);
 
         List<Order> orders = orderService.list(queryWrapper);
-        return CommonResult.success(orders);
+        return Result.success(orders);
     }
 
     @Operation(summary = "获取评价情感分析数据")
     @GetMapping("/sentiment-analysis")
-    public CommonResult<Map<String, Object>> getCommentSentimentAnalysis(
+    public Result<Map<String, Object>> getCommentSentimentAnalysis(
             @RequestParam(required = false) @Parameter(description = "商品ID") Integer productId,
             @RequestParam(defaultValue = "30") @Parameter(description = "天数") Integer days) {
 
         Map<String, Object> result = commentService.getCommentSentimentAnalysis(productId, days);
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取用户评价奖励历史")
     @GetMapping("/user/{userId}/rewards")
-    public CommonResult<List<Map<String, Object>>> getUserCommentRewards(
+    public Result<List<Map<String, Object>>> getUserCommentRewards(
             @PathVariable @Parameter(description = "用户ID") Integer userId,
             @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
             @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size) {
@@ -754,7 +754,7 @@ public class CommentController {
             }
         }
 
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     /**
@@ -910,7 +910,7 @@ public class CommentController {
 
     @Operation(summary = "获取推荐评价模板")
     @GetMapping("/templates/recommended")
-    public CommonResult<List<CommentTemplateDTO>> getRecommendedTemplates(
+    public Result<List<CommentTemplateDTO>> getRecommendedTemplates(
             @RequestParam(required = false) @Parameter(description = "用户ID") Integer userId,
             @RequestParam(required = false) @Parameter(description = "商品ID") Integer productId,
             @RequestParam(required = false) @Parameter(description = "评分") Integer rating,
@@ -921,19 +921,19 @@ public class CommentController {
         List<CommentTemplateDTO> result = templates.stream()
                 .map(this::convertToTemplateDTO)
                 .collect(Collectors.toList());
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     @Operation(summary = "获取评价关键词")
     @GetMapping("/keywords")
-    public CommonResult<Map<String, Object>> getCommentKeywords(
+    public Result<Map<String, Object>> getCommentKeywords(
             @RequestParam(required = false) @Parameter(description = "商品ID") Integer productId,
             @RequestParam(required = false) @Parameter(description = "最低评分") Integer minRating,
             @RequestParam(required = false) @Parameter(description = "最高评分") Integer maxRating,
             @RequestParam(defaultValue = "20") @Parameter(description = "关键词数量") Integer limit) {
 
         Map<String, Object> keywords = commentService.getCommentKeywords(productId, minRating, maxRating, limit);
-        return CommonResult.success(keywords);
+        return Result.success(keywords);
     }
 
     /**
@@ -941,11 +941,11 @@ public class CommentController {
      */
     @Operation(summary = "上传评论图片")
     @PostMapping("/upload/image")
-    public CommonResult<Map<String, String>> uploadCommentImage(@RequestParam("file") MultipartFile file) {
+    public Result<Map<String, String>> uploadCommentImage(@RequestParam("file") MultipartFile file) {
         try {
             // 验证文件
             if (file == null || file.isEmpty()) {
-                return CommonResult.failed("文件不能为空");
+                return Result.error("文件不能为空");
             }
 
             // 获取文件后缀
@@ -958,7 +958,7 @@ public class CommentController {
             // 限制文件类型
             if (!".jpg".equalsIgnoreCase(suffix) && !".jpeg".equalsIgnoreCase(suffix) &&
                     !".png".equalsIgnoreCase(suffix) && !".gif".equalsIgnoreCase(suffix)) {
-                return CommonResult.failed("只支持jpg、jpeg、png、gif格式的图片");
+                return Result.error("只支持jpg、jpeg、png、gif格式的图片");
             }
 
             // 生成评论图片存储路径
@@ -987,10 +987,10 @@ public class CommentController {
             result.put("url", fileUrl);
             result.put("name", originalFilename);
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (IOException e) {
             e.printStackTrace();
-            return CommonResult.failed("图片上传失败: " + e.getMessage());
+            return Result.error("图片上传失败: " + e.getMessage());
         }
     }
 }

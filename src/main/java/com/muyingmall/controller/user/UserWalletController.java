@@ -8,8 +8,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.common.api.CommonPage;
-import com.muyingmall.common.api.CommonResult;
-import com.muyingmall.common.api.ResultCode;
+import com.muyingmall.common.api.Result;
+
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.config.AlipayConfig;
 import com.muyingmall.dto.WalletInfoDTO;
@@ -67,7 +67,7 @@ public class UserWalletController {
 
     @Operation(summary = "获取钱包信息", description = "获取当前用户的钱包完整信息，包括余额、冻结金额、累计充值、累计消费等")
     @GetMapping("/info")
-    public CommonResult<WalletInfoDTO> getWalletInfo() {
+    public Result<WalletInfoDTO> getWalletInfo() {
         // 添加详细日志
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         log.debug("UserWalletController.getWalletInfo - 当前认证对象: {}", authentication);
@@ -92,7 +92,7 @@ public class UserWalletController {
 
         if (userId == null) {
             log.error("获取钱包信息失败：用户ID为null");
-            return CommonResult.unauthorized(null);
+            return Result.unauthorized(null);
         }
 
         try {
@@ -100,7 +100,7 @@ public class UserWalletController {
             UserAccount userAccount = userAccountService.getUserAccountByUserId(userId);
             if (userAccount == null) {
                 log.error("获取钱包信息失败：用户ID={}的账户不存在", userId);
-                return CommonResult.failed("账户不存在");
+                return Result.error("账户不存在");
             }
             log.debug("找到用户账户: {}", userAccount);
 
@@ -117,16 +117,16 @@ public class UserWalletController {
 
             log.debug("获取钱包信息成功：{}", walletInfoDTO);
 
-            return CommonResult.success(walletInfoDTO);
+            return Result.success(walletInfoDTO);
         } catch (Exception e) {
             log.error("获取钱包信息失败", e);
-            return CommonResult.failed("获取钱包信息失败: " + e.getMessage());
+            return Result.error("获取钱包信息失败: " + e.getMessage());
         }
     }
 
     @Operation(summary = "获取钱包余额", description = "快速获取当前用户的钱包余额和冻结金额，用于页面显示")
     @GetMapping("/balance")
-    public CommonResult<Map<String, Object>> getWalletBalance() {
+    public Result<Map<String, Object>> getWalletBalance() {
         // 添加详细日志
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         log.debug("UserWalletController.getWalletBalance - 当前认证对象: {}", authentication);
@@ -137,7 +137,7 @@ public class UserWalletController {
 
         if (userId == null) {
             log.error("获取钱包余额失败：用户ID为null");
-            return CommonResult.unauthorized(null);
+            return Result.unauthorized(null);
         }
 
         try {
@@ -145,7 +145,7 @@ public class UserWalletController {
             UserAccount userAccount = userAccountService.getUserAccountByUserId(userId);
             if (userAccount == null) {
                 log.error("获取钱包余额失败：用户ID={}的账户不存在", userId);
-                return CommonResult.failed("账户不存在");
+                return Result.error("账户不存在");
             }
             log.debug("找到用户账户: {}", userAccount);
 
@@ -156,16 +156,16 @@ public class UserWalletController {
 
             log.debug("获取钱包余额成功：{}", result);
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("获取钱包余额失败", e);
-            return CommonResult.failed("获取钱包余额失败: " + e.getMessage());
+            return Result.error("获取钱包余额失败: " + e.getMessage());
         }
     }
 
     @Operation(summary = "获取交易记录", description = "分页查询当前用户的钱包交易记录，支持按交易类型和时间范围筛选")
     @GetMapping("/transactions")
-    public CommonResult<Map<String, Object>> getTransactions(
+    public Result<Map<String, Object>> getTransactions(
             @Parameter(description = "页码", example = "1") @RequestParam(value = "page", defaultValue = "1") Integer page,
             @Parameter(description = "每页数量", example = "10") @RequestParam(value = "size", defaultValue = "10") Integer size,
             @Parameter(description = "交易类型: 1-充值，2-消费，3-退款，4-管理员调整") @RequestParam(value = "type", required = false) Integer type,
@@ -182,7 +182,7 @@ public class UserWalletController {
 
         if (userId == null) {
             log.error("获取交易记录失败：用户ID为null");
-            return CommonResult.unauthorized(null);
+            return Result.unauthorized(null);
         }
 
         try {
@@ -203,16 +203,16 @@ public class UserWalletController {
 
             log.debug("获取交易记录成功，总记录数：{}", transactions.getTotal());
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("获取交易记录失败", e);
-            return CommonResult.failed("获取交易记录失败: " + e.getMessage());
+            return Result.error("获取交易记录失败: " + e.getMessage());
         }
     }
 
     @Operation(summary = "创建充值订单", description = "创建钱包充值订单，返回支付所需的订单号和支付表单。充值金额必须大于0。")
     @PostMapping("/recharge")
-    public CommonResult<Map<String, Object>> createRechargeOrder(
+    public Result<Map<String, Object>> createRechargeOrder(
             @RequestBody RechargeRequestDTO rechargeRequest) {
 
         // 添加详细日志
@@ -225,7 +225,7 @@ public class UserWalletController {
 
         if (userId == null) {
             log.error("创建充值订单失败：用户ID为null");
-            return CommonResult.unauthorized(null);
+            return Result.unauthorized(null);
         }
 
         try {
@@ -235,13 +235,13 @@ public class UserWalletController {
 
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 log.error("创建充值订单失败：充值金额必须大于0，当前金额={}", amount);
-                return CommonResult.validateFailed("充值金额必须大于0");
+                return Result.validateFailed("充值金额必须大于0");
             }
 
             // 验证支付方式
             if (!"alipay".equals(paymentMethod) && !"wechat".equals(paymentMethod)) {
                 log.error("创建充值订单失败：不支持的支付方式，paymentMethod={}", paymentMethod);
-                return CommonResult.validateFailed("不支持的支付方式");
+                return Result.validateFailed("不支持的支付方式");
             }
 
             log.debug("开始创建充值订单，userId={}, amount={}, paymentMethod={}", userId, amount, paymentMethod);
@@ -250,23 +250,23 @@ public class UserWalletController {
             try {
                 Map<String, Object> result = userAccountService.createRechargeOrder(userId, amount, paymentMethod);
                 log.debug("创建充值订单成功：{}", result);
-                return CommonResult.success(result);
+                return Result.success(result);
             } catch (Exception e) {
                 log.error("调用userAccountService.createRechargeOrder时发生异常", e);
                 // 提供更详细的错误信息
                 String errorMessage = "创建充值订单失败: " + (e.getMessage() != null ? e.getMessage() : "未知错误");
                 log.error(errorMessage);
-                return CommonResult.failed(errorMessage);
+                return Result.error(errorMessage);
             }
         } catch (Exception e) {
             log.error("创建充值订单过程中发生未预期的异常", e);
-            return CommonResult.failed("创建充值订单失败: " + (e.getMessage() != null ? e.getMessage() : "系统错误，请稍后再试"));
+            return Result.error("创建充值订单失败: " + (e.getMessage() != null ? e.getMessage() : "系统错误，请稍后再试"));
         }
     }
 
     @Operation(summary = "查询充值订单状态")
     @GetMapping("/recharge/{orderNo}/status")
-    public CommonResult<Map<String, Object>> queryRechargeStatus(
+    public Result<Map<String, Object>> queryRechargeStatus(
             @Parameter(description = "充值订单号", required = true) @PathVariable(value = "orderNo") String orderNo) {
 
         log.debug("查询充值订单状态，orderNo={}", orderNo);
@@ -275,7 +275,7 @@ public class UserWalletController {
         Integer userId = userAccountService.getCurrentUserId();
         if (userId == null) {
             log.error("查询充值订单状态失败：用户ID为null");
-            return CommonResult.unauthorized(null);
+            return Result.unauthorized(null);
         }
 
         try {
@@ -289,7 +289,7 @@ public class UserWalletController {
 
             if (transaction == null) {
                 log.error("查询充值订单状态失败：订单不存在，orderNo={}", orderNo);
-                return CommonResult.validateFailed("充值订单不存在");
+                return Result.validateFailed("充值订单不存在");
             }
 
             Map<String, Object> result = new HashMap<>();
@@ -305,16 +305,16 @@ public class UserWalletController {
 
             log.debug("查询充值订单状态成功：{}", result);
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("查询充值订单状态失败", e);
-            return CommonResult.failed("查询充值订单状态失败: " + e.getMessage());
+            return Result.error("查询充值订单状态失败: " + e.getMessage());
         }
     }
 
     @Operation(summary = "获取充值订单支付表单")
     @GetMapping("/recharge/form")
-    public CommonResult<Map<String, Object>> getRechargeOrderForm(
+    public Result<Map<String, Object>> getRechargeOrderForm(
             @Parameter(description = "充值订单号", required = true) @RequestParam(value = "orderNo") String orderNo) {
 
         log.debug("获取充值订单支付表单，orderNo={}", orderNo);
@@ -323,7 +323,7 @@ public class UserWalletController {
         Integer userId = userAccountService.getCurrentUserId();
         if (userId == null) {
             log.error("获取充值订单支付表单失败：用户ID为null");
-            return CommonResult.unauthorized(null);
+            return Result.unauthorized(null);
         }
 
         try {
@@ -337,7 +337,7 @@ public class UserWalletController {
 
             if (transaction == null) {
                 log.error("获取充值订单支付表单失败：订单不存在，orderNo={}", orderNo);
-                return CommonResult.validateFailed("充值订单不存在");
+                return Result.validateFailed("充值订单不存在");
             }
 
             // 获取支付表单
@@ -379,14 +379,14 @@ public class UserWalletController {
                 result.put("formHtml", formHtml);
                 log.debug("获取充值订单支付表单成功");
 
-                return CommonResult.success(result);
+                return Result.success(result);
             } catch (Exception e) {
                 log.error("获取充值订单支付表单失败: {}", e.getMessage(), e);
-                return CommonResult.failed("获取充值订单支付表单失败: " + e.getMessage());
+                return Result.error("获取充值订单支付表单失败: " + e.getMessage());
             }
         } catch (Exception e) {
             log.error("获取充值订单支付表单过程中发生未预期的异常", e);
-            return CommonResult.failed("获取充值订单支付表单失败: " + (e.getMessage() != null ? e.getMessage() : "系统错误，请稍后再试"));
+            return Result.error("获取充值订单支付表单失败: " + (e.getMessage() != null ? e.getMessage() : "系统错误，请稍后再试"));
         }
     }
 }

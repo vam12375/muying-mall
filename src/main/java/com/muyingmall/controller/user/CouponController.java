@@ -21,6 +21,7 @@ import java.util.Map;
  * 优惠券控制器
  */
 @RestController
+@RequestMapping("/coupons")
 @RequiredArgsConstructor
 @Tag(name = "优惠券", description = "优惠券查询、领取等接口")
 public class CouponController {
@@ -32,7 +33,7 @@ public class CouponController {
     /**
      * 获取可用优惠券列表
      */
-    @GetMapping("/coupons/available")
+    @GetMapping("/available")
     @Operation(summary = "获取可用优惠券列表")
     public Result<List<Coupon>> listAvailableCoupons() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -83,7 +84,7 @@ public class CouponController {
     /**
      * 领取优惠券
      */
-    @PostMapping("/coupons/{couponId}/receive")
+    @PostMapping("/{couponId}/receive")
     @Operation(summary = "领取优惠券")
     public Result<Void> receiveCoupon(@PathVariable("couponId") Long couponId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -141,7 +142,7 @@ public class CouponController {
     /**
      * 通过优惠码领取优惠券
      */
-    @PostMapping("/coupons/receive-by-code")
+    @PostMapping("/receive-by-code")
     @Operation(summary = "通过优惠码领取优惠券")
     public Result<Void> receiveCouponByCode(@RequestBody Map<String, String> request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -175,7 +176,7 @@ public class CouponController {
     /**
      * 获取优惠券详情
      */
-    @GetMapping("/coupons/{couponId}")
+    @GetMapping("/{couponId}")
     @Operation(summary = "获取优惠券详情")
     public Result<Coupon> getCouponDetail(@PathVariable("couponId") Long couponId) {
         Coupon coupon = couponService.getById(couponId);

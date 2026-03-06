@@ -1,7 +1,7 @@
 package com.muyingmall.controller.admin;
 
 import com.muyingmall.annotation.AdminOperationLog;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.entity.User;
 import com.muyingmall.service.AdminLoginRecordService;
 import com.muyingmall.service.AdminOperationLogService;
@@ -38,11 +38,11 @@ public class AdminProfileController {
     @GetMapping("/statistics")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看个人统计", module = "个人中心", operationType = "READ")
-    public CommonResult<Map<String, Object>> getStatistics(@RequestHeader("Authorization") String authHeader) {
+    public Result<Map<String, Object>> getStatistics(@RequestHeader("Authorization") String authHeader) {
         try {
             User user = getUserFromToken(authHeader);
             if (user == null) {
-                return CommonResult.unauthorized("身份令牌无效");
+                return Result.unauthorized("身份令牌无效");
             }
             
             Integer adminId = user.getUserId();
@@ -78,10 +78,10 @@ public class AdminProfileController {
             stats.put("accountStatus", "正常");
             stats.put("securityScore", 95);
             
-            return CommonResult.success(stats);
+            return Result.success(stats);
         } catch (Exception e) {
             log.error("获取统计信息失败", e);
-            return CommonResult.failed("获取统计信息失败: " + e.getMessage());
+            return Result.error("获取统计信息失败: " + e.getMessage());
         }
     }
     
@@ -91,14 +91,14 @@ public class AdminProfileController {
     @GetMapping("/login-records")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看登录记录", module = "个人中心", operationType = "READ")
-    public CommonResult<Map<String, Object>> getLoginRecords(
+    public Result<Map<String, Object>> getLoginRecords(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestHeader("Authorization") String authHeader) {
         try {
             User user = getUserFromToken(authHeader);
             if (user == null) {
-                return CommonResult.unauthorized("身份令牌无效");
+                return Result.unauthorized("身份令牌无效");
             }
             
             Integer adminId = user.getUserId();
@@ -112,10 +112,10 @@ public class AdminProfileController {
             result.put("page", page);
             result.put("pageSize", pageSize);
             
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("获取登录记录失败", e);
-            return CommonResult.failed("获取登录记录失败: " + e.getMessage());
+            return Result.error("获取登录记录失败: " + e.getMessage());
         }
     }
     
@@ -125,14 +125,14 @@ public class AdminProfileController {
     @GetMapping("/operation-logs")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看操作记录", module = "个人中心", operationType = "READ")
-    public CommonResult<Map<String, Object>> getOperationLogs(
+    public Result<Map<String, Object>> getOperationLogs(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestHeader("Authorization") String authHeader) {
         try {
             User user = getUserFromToken(authHeader);
             if (user == null) {
-                return CommonResult.unauthorized("身份令牌无效");
+                return Result.unauthorized("身份令牌无效");
             }
             
             Integer adminId = user.getUserId();
@@ -145,10 +145,10 @@ public class AdminProfileController {
             result.put("page", page);
             result.put("pageSize", pageSize);
             
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("获取操作记录失败", e);
-            return CommonResult.failed("获取操作记录失败: " + e.getMessage());
+            return Result.error("获取操作记录失败: " + e.getMessage());
         }
     }
     

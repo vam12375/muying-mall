@@ -424,9 +424,13 @@ public class SystemController {
     public Result<Map<String, Object>> refreshRedisStats() {
         log.debug("接收到刷新Redis状态请求");
         try {
-            // 清除部分系统缓存，但不清除用户会话和重要数据
-            Set<String> keys = redisTemplate.keys("product:*");
-            if (keys != null && !keys.isEmpty()) {
+            // 清除部分系统缓存，但不清除用户会话和重要数据（使用SCAN替代KEYS避免阻塞Redis）
+            Set<String> keys = new HashSet<>();
+            try (Cursor<String> cursor = redisTemplate.scan(
+                    ScanOptions.scanOptions().match("product:*").count(100).build())) {
+                cursor.forEachRemaining(keys::add);
+            }
+            if (!keys.isEmpty()) {
                 redisTemplate.delete(keys);
                 log.debug("已清除商品相关缓存, 共{}个键", keys.size());
             }

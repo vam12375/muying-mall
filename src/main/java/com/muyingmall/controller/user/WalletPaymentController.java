@@ -8,7 +8,7 @@ import com.alipay.api.request.AlipayTradeQueryRequest;
 import com.alipay.api.response.AlipayTradeQueryResponse;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.config.AlipayConfig;
 import com.muyingmall.dto.RechargeRequestDTO;
@@ -270,7 +270,7 @@ public class WalletPaymentController {
      * 手动完成充值（调试用）
      */
     @PostMapping("/manual-complete")
-    public CommonResult<Map<String, Object>> manualCompleteRecharge(@RequestParam String orderNo) {
+    public Result<Map<String, Object>> manualCompleteRecharge(@RequestParam String orderNo) {
         log.debug("手动完成充值请求: {}", orderNo);
         Map<String, Object> result = new HashMap<>();
 
@@ -286,7 +286,7 @@ public class WalletPaymentController {
                 log.warn("手动完成充值 - 未找到充值记录: {}", orderNo);
                 result.put("success", false);
                 result.put("message", "未找到充值记录");
-                return CommonResult.success(result);
+                return Result.success(result);
             }
 
             log.debug("找到充值记录: ID={}, 用户ID={}, 金额={}, 状态={}, 账户ID={}",
@@ -304,7 +304,7 @@ public class WalletPaymentController {
                 log.debug("手动完成充值 - 充值已完成: {}", orderNo);
                 result.put("success", true);
                 result.put("message", "充值已完成");
-                return CommonResult.success(result);
+                return Result.success(result);
             }
 
             // 检查用户账户是否存在
@@ -313,7 +313,7 @@ public class WalletPaymentController {
                 log.error("手动完成充值 - 用户账户不存在: accountId={}", transaction.getAccountId());
                 result.put("success", false);
                 result.put("message", "用户账户不存在，accountId=" + transaction.getAccountId());
-                return CommonResult.success(result);
+                return Result.success(result);
             }
 
             log.debug("找到用户账户: accountId={}, userId={}, balance={}",
@@ -333,7 +333,7 @@ public class WalletPaymentController {
                     log.error("充值失败: 更新用户账户余额失败, accountId={}", transaction.getAccountId());
                     result.put("success", false);
                     result.put("message", "更新用户账户余额失败");
-                    return CommonResult.success(result);
+                    return Result.success(result);
                 }
 
                 log.debug("充值 - 更新账户余额成功: beforeBalance={}, afterBalance={}", beforeBalance, afterBalance);
@@ -349,7 +349,7 @@ public class WalletPaymentController {
                     log.error("充值失败: 更新交易记录状态失败, transactionId={}", transaction.getId());
                     result.put("success", false);
                     result.put("message", "更新交易记录状态失败");
-                    return CommonResult.success(result);
+                    return Result.success(result);
                 }
 
                 log.debug("充值 - 更新交易记录状态成功: transactionId={}, status=1(成功)", transaction.getId());
@@ -360,14 +360,14 @@ public class WalletPaymentController {
                 result.put("afterBalance", afterBalance);
                 result.put("amount", transaction.getAmount());
 
-                return CommonResult.success(result);
+                return Result.success(result);
 
             } catch (Exception e) {
                 log.error("充值操作执行异常: {}", e.getMessage(), e);
                 result.put("success", false);
                 result.put("message", "充值操作执行异常: " + e.getMessage());
                 result.put("error", e.getClass().getSimpleName());
-                return CommonResult.success(result);
+                return Result.success(result);
             }
 
         } catch (Exception e) {
@@ -375,7 +375,7 @@ public class WalletPaymentController {
             result.put("success", false);
             result.put("message", "充值完成失败: " + e.getMessage());
             result.put("error", e.getClass().getSimpleName());
-            return CommonResult.success(result);
+            return Result.success(result);
         }
     }
 
@@ -383,7 +383,7 @@ public class WalletPaymentController {
      * 查询充值记录详情（调试用）
      */
     @GetMapping("/query-recharge")
-    public CommonResult<Map<String, Object>> queryRechargeRecord(@RequestParam String orderNo) {
+    public Result<Map<String, Object>> queryRechargeRecord(@RequestParam String orderNo) {
         log.debug("查询充值记录请求: {}", orderNo);
 
         try {
@@ -400,7 +400,7 @@ public class WalletPaymentController {
                 log.warn("查询充值记录 - 未找到充值记录: {}", orderNo);
                 result.put("found", false);
                 result.put("message", "未找到充值记录");
-                return CommonResult.success(result);
+                return Result.success(result);
             }
 
             log.debug("查询到充值记录: ID={}, 用户ID={}, 金额={}, 状态={}, 账户ID={}",
@@ -417,14 +417,14 @@ public class WalletPaymentController {
             result.put("createTime", transaction.getCreateTime());
             result.put("updateTime", transaction.getUpdateTime());
 
-            return CommonResult.success(result);
+            return Result.success(result);
 
         } catch (Exception e) {
             log.error("查询充值记录失败: {}", e.getMessage(), e);
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("error", true);
             errorResult.put("message", e.getMessage());
-            return CommonResult.success(errorResult);
+            return Result.success(errorResult);
         }
     }
 
@@ -432,7 +432,7 @@ public class WalletPaymentController {
      * 检查交易状态（调试用）
      */
     @GetMapping("/check-status")
-    public CommonResult<Map<String, Object>> checkTransactionStatus(@RequestParam String orderNo) {
+    public Result<Map<String, Object>> checkTransactionStatus(@RequestParam String orderNo) {
         log.debug("检查交易状态请求: {}", orderNo);
 
         try {
@@ -468,11 +468,11 @@ public class WalletPaymentController {
                 result.put("error", "未找到本地交易记录");
             }
 
-            return CommonResult.success(result);
+            return Result.success(result);
 
         } catch (Exception e) {
             log.error("检查交易状态失败: {}", e.getMessage(), e);
-            return CommonResult.failed("检查失败: " + e.getMessage());
+            return Result.error("检查失败: " + e.getMessage());
         }
     }
 
@@ -730,7 +730,7 @@ public class WalletPaymentController {
      * 查询用户账户详情（调试用）
      */
     @GetMapping("/query-account")
-    public CommonResult<Map<String, Object>> queryUserAccount(@RequestParam Integer accountId) {
+    public Result<Map<String, Object>> queryUserAccount(@RequestParam Integer accountId) {
         log.debug("查询用户账户请求: accountId={}", accountId);
         Map<String, Object> result = new HashMap<>();
 
@@ -742,7 +742,7 @@ public class WalletPaymentController {
                 log.warn("查询用户账户 - 未找到账户: accountId={}", accountId);
                 result.put("found", false);
                 result.put("message", "未找到账户");
-                return CommonResult.success(result);
+                return Result.success(result);
             }
 
             log.debug("查询到用户账户: accountId={}, userId={}, balance={}, status={}",
@@ -756,13 +756,13 @@ public class WalletPaymentController {
             result.put("createTime", userAccount.getCreateTime());
             result.put("updateTime", userAccount.getUpdateTime());
 
-            return CommonResult.success(result);
+            return Result.success(result);
 
         } catch (Exception e) {
             log.error("查询用户账户失败: {}", e.getMessage(), e);
             result.put("error", true);
             result.put("message", e.getMessage());
-            return CommonResult.success(result);
+            return Result.success(result);
         }
     }
 
@@ -770,7 +770,7 @@ public class WalletPaymentController {
      * 创建测试充值记录（调试用）
      */
     @PostMapping("/create-test-recharge")
-    public CommonResult<Map<String, Object>> createTestRecharge(
+    public Result<Map<String, Object>> createTestRecharge(
             @RequestParam Integer userId,
             @RequestParam BigDecimal amount) {
         log.debug("创建测试充值记录: userId={}, amount={}", userId, amount);
@@ -785,7 +785,7 @@ public class WalletPaymentController {
             if (userAccount == null) {
                 result.put("success", false);
                 result.put("message", "用户账户不存在");
-                return CommonResult.success(result);
+                return Result.success(result);
             }
 
             // 生成测试订单号
@@ -811,7 +811,7 @@ public class WalletPaymentController {
             if (rows <= 0) {
                 result.put("success", false);
                 result.put("message", "创建充值记录失败");
-                return CommonResult.success(result);
+                return Result.success(result);
             }
 
             log.debug("创建测试充值记录成功: transactionId={}, orderNo={}", transaction.getId(), orderNo);
@@ -823,13 +823,13 @@ public class WalletPaymentController {
             result.put("userId", userId);
             result.put("amount", amount);
 
-            return CommonResult.success(result);
+            return Result.success(result);
 
         } catch (Exception e) {
             log.error("创建测试充值记录失败: {}", e.getMessage(), e);
             result.put("success", false);
             result.put("message", "创建测试充值记录失败: " + e.getMessage());
-            return CommonResult.success(result);
+            return Result.success(result);
         }
     }
 

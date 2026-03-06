@@ -1,7 +1,7 @@
 package com.muyingmall.controller.common;
 
 import com.muyingmall.annotation.AdminOperationLog;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.dto.SystemMetricsDTO;
 import com.muyingmall.dto.SystemMetricsDTO.*;
 import com.muyingmall.monitor.*;
@@ -33,13 +33,13 @@ public class SystemMonitorController {
     @GetMapping("/metrics")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看系统监控指标", module = "系统监控", operationType = "READ")
-    public CommonResult<SystemMetricsDTO> getSystemMetrics() {
+    public Result<SystemMetricsDTO> getSystemMetrics() {
         try {
             SystemMetricsDTO metrics = systemMonitorService.getSystemMetrics();
-            return CommonResult.success(metrics);
+            return Result.success(metrics);
         } catch (Exception e) {
             log.error("获取系统监控指标失败", e);
-            return CommonResult.failed("获取系统监控指标失败: " + e.getMessage());
+            return Result.error("获取系统监控指标失败: " + e.getMessage());
         }
     }
 
@@ -49,13 +49,13 @@ public class SystemMonitorController {
     @GetMapping("/health")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看系统健康状态", module = "系统监控", operationType = "READ")
-    public CommonResult<SystemHealthDTO> getSystemHealth() {
+    public Result<SystemHealthDTO> getSystemHealth() {
         try {
             SystemHealthDTO health = systemMonitorService.getSystemHealth();
-            return CommonResult.success(health);
+            return Result.success(health);
         } catch (Exception e) {
             log.error("获取系统健康状态失败", e);
-            return CommonResult.failed("获取系统健康状态失败: " + e.getMessage());
+            return Result.error("获取系统健康状态失败: " + e.getMessage());
         }
     }
 
@@ -66,13 +66,13 @@ public class SystemMonitorController {
     @GetMapping("/server")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看服务器性能", module = "系统监控", operationType = "READ")
-    public CommonResult<ServerPerformanceDTO> getServerPerformance() {
+    public Result<ServerPerformanceDTO> getServerPerformance() {
         try {
             ServerPerformanceDTO performance = serverMonitor.getServerPerformance();
-            return CommonResult.success(performance);
+            return Result.success(performance);
         } catch (Exception e) {
             log.error("获取服务器性能指标失败", e);
-            return CommonResult.failed("获取服务器性能指标失败: " + e.getMessage());
+            return Result.error("获取服务器性能指标失败: " + e.getMessage());
         }
     }
 
@@ -82,13 +82,13 @@ public class SystemMonitorController {
     @GetMapping("/database")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看数据库监控", module = "系统监控", operationType = "READ")
-    public CommonResult<DatabaseMetricsDTO> getDatabaseMetrics() {
+    public Result<DatabaseMetricsDTO> getDatabaseMetrics() {
         try {
             DatabaseMetricsDTO metrics = databaseMonitor.getDatabaseMetrics();
-            return CommonResult.success(metrics);
+            return Result.success(metrics);
         } catch (Exception e) {
             log.error("获取数据库监控指标失败", e);
-            return CommonResult.failed("获取数据库监控指标失败: " + e.getMessage());
+            return Result.error("获取数据库监控指标失败: " + e.getMessage());
         }
     }
 
@@ -98,13 +98,13 @@ public class SystemMonitorController {
     @GetMapping("/redis")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看Redis监控", module = "系统监控", operationType = "READ")
-    public CommonResult<RedisMetricsDTO> getRedisMetrics() {
+    public Result<RedisMetricsDTO> getRedisMetrics() {
         try {
             RedisMetricsDTO metrics = redisMonitor.getRedisMetrics();
-            return CommonResult.success(metrics);
+            return Result.success(metrics);
         } catch (Exception e) {
             log.error("获取Redis监控指标失败", e);
-            return CommonResult.failed("获取Redis监控指标失败: " + e.getMessage());
+            return Result.error("获取Redis监控指标失败: " + e.getMessage());
         }
     }
 
@@ -114,13 +114,13 @@ public class SystemMonitorController {
     @GetMapping("/api-statistics")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看API统计", module = "系统监控", operationType = "READ")
-    public CommonResult<ApiStatisticsDTO> getApiStatistics() {
+    public Result<ApiStatisticsDTO> getApiStatistics() {
         try {
             ApiStatisticsDTO statistics = apiStatisticsMonitor.getApiStatistics();
-            return CommonResult.success(statistics);
+            return Result.success(statistics);
         } catch (Exception e) {
             log.error("获取API统计失败", e);
-            return CommonResult.failed("获取API统计失败: " + e.getMessage());
+            return Result.error("获取API统计失败: " + e.getMessage());
         }
     }
 
@@ -130,13 +130,13 @@ public class SystemMonitorController {
     @PostMapping("/api-statistics/reset")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "重置API统计", module = "系统监控", operationType = "UPDATE")
-    public CommonResult<String> resetApiStatistics() {
+    public Result<String> resetApiStatistics() {
         try {
             apiStatisticsMonitor.resetStatistics();
-            return CommonResult.success("API统计数据已重置");
+            return Result.success("API统计数据已重置");
         } catch (Exception e) {
             log.error("重置API统计失败", e);
-            return CommonResult.failed("重置API统计失败: " + e.getMessage());
+            return Result.error("重置API统计失败: " + e.getMessage());
         }
     }
 
@@ -145,13 +145,13 @@ public class SystemMonitorController {
      */
     @GetMapping("/database/version")
     @PreAuthorize("hasAuthority('admin')")
-    public CommonResult<String> getDatabaseVersion() {
+    public Result<String> getDatabaseVersion() {
         try {
             String version = databaseMonitor.getDatabaseVersion();
-            return CommonResult.success(version);
+            return Result.success(version);
         } catch (Exception e) {
             log.error("获取数据库版本失败", e);
-            return CommonResult.failed("获取数据库版本失败: " + e.getMessage());
+            return Result.error("获取数据库版本失败: " + e.getMessage());
         }
     }
 
@@ -160,13 +160,13 @@ public class SystemMonitorController {
      */
     @GetMapping("/redis/ping")
     @PreAuthorize("hasAuthority('admin')")
-    public CommonResult<Boolean> pingRedis() {
+    public Result<Boolean> pingRedis() {
         try {
             boolean available = redisMonitor.isRedisAvailable();
-            return CommonResult.success(available);
+            return Result.success(available);
         } catch (Exception e) {
             log.error("检查Redis连接失败", e);
-            return CommonResult.failed("检查Redis连接失败: " + e.getMessage());
+            return Result.error("检查Redis连接失败: " + e.getMessage());
         }
     }
 }

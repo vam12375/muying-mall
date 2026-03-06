@@ -1,7 +1,7 @@
 package com.muyingmall.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.entity.LogisticsCompany;
 import com.muyingmall.service.LogisticsCompanyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,7 +36,7 @@ public class AdminLogisticsCompanyController {
      */
     @GetMapping
     @Operation(summary = "分页获取物流公司列表")
-    public CommonResult<Map<String, Object>> getCompanyList(
+    public Result<Map<String, Object>> getCompanyList(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
             @RequestParam(value = "keyword", required = false) String keyword) {
@@ -47,10 +47,10 @@ public class AdminLogisticsCompanyController {
             result.put("list", companyPage.getRecords());
             result.put("total", companyPage.getTotal());
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("获取物流公司列表失败", e);
-            return CommonResult.failed("获取物流公司列表失败: " + e.getMessage());
+            return Result.error("获取物流公司列表失败: " + e.getMessage());
         }
     }
 
@@ -61,13 +61,13 @@ public class AdminLogisticsCompanyController {
      */
     @GetMapping("/enabled")
     @Operation(summary = "获取所有启用的物流公司")
-    public CommonResult<List<LogisticsCompany>> getEnabledCompanies() {
+    public Result<List<LogisticsCompany>> getEnabledCompanies() {
         try {
             List<LogisticsCompany> companies = logisticsCompanyService.getAllEnabledCompanies();
-            return CommonResult.success(companies);
+            return Result.success(companies);
         } catch (Exception e) {
             log.error("获取启用物流公司失败", e);
-            return CommonResult.failed("获取启用物流公司失败: " + e.getMessage());
+            return Result.error("获取启用物流公司失败: " + e.getMessage());
         }
     }
 
@@ -79,16 +79,16 @@ public class AdminLogisticsCompanyController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取物流公司详情")
-    public CommonResult<LogisticsCompany> getCompanyDetail(@PathVariable("id") Integer id) {
+    public Result<LogisticsCompany> getCompanyDetail(@PathVariable("id") Integer id) {
         try {
             LogisticsCompany company = logisticsCompanyService.getCompanyById(id);
             if (company == null) {
-                return CommonResult.failed("物流公司不存在");
+                return Result.error("物流公司不存在");
             }
-            return CommonResult.success(company);
+            return Result.success(company);
         } catch (Exception e) {
             log.error("获取物流公司详情失败", e);
-            return CommonResult.failed("获取物流公司详情失败: " + e.getMessage());
+            return Result.error("获取物流公司详情失败: " + e.getMessage());
         }
     }
 
@@ -100,17 +100,17 @@ public class AdminLogisticsCompanyController {
      */
     @PostMapping
     @Operation(summary = "添加物流公司")
-    public CommonResult<Boolean> addCompany(@RequestBody LogisticsCompany company) {
+    public Result<Boolean> addCompany(@RequestBody LogisticsCompany company) {
         try {
             boolean result = logisticsCompanyService.addCompany(company);
             if (result) {
-                return CommonResult.success(true, "添加物流公司成功");
+                return Result.success(true, "添加物流公司成功");
             } else {
-                return CommonResult.failed("添加物流公司失败");
+                return Result.error("添加物流公司失败");
             }
         } catch (Exception e) {
             log.error("添加物流公司失败", e);
-            return CommonResult.failed("添加物流公司失败: " + e.getMessage());
+            return Result.error("添加物流公司失败: " + e.getMessage());
         }
     }
 
@@ -123,7 +123,7 @@ public class AdminLogisticsCompanyController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "更新物流公司")
-    public CommonResult<Boolean> updateCompany(
+    public Result<Boolean> updateCompany(
             @PathVariable("id") Integer id,
             @RequestBody LogisticsCompany company) {
         try {
@@ -131,13 +131,13 @@ public class AdminLogisticsCompanyController {
             company.setId(id);
             boolean result = logisticsCompanyService.updateCompany(company);
             if (result) {
-                return CommonResult.success(true, "更新物流公司成功");
+                return Result.success(true, "更新物流公司成功");
             } else {
-                return CommonResult.failed("更新物流公司失败");
+                return Result.error("更新物流公司失败");
             }
         } catch (Exception e) {
             log.error("更新物流公司失败", e);
-            return CommonResult.failed("更新物流公司失败: " + e.getMessage());
+            return Result.error("更新物流公司失败: " + e.getMessage());
         }
     }
 
@@ -149,17 +149,17 @@ public class AdminLogisticsCompanyController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除物流公司")
-    public CommonResult<Boolean> deleteCompany(@PathVariable("id") Integer id) {
+    public Result<Boolean> deleteCompany(@PathVariable("id") Integer id) {
         try {
             boolean result = logisticsCompanyService.deleteCompany(id);
             if (result) {
-                return CommonResult.success(true, "删除物流公司成功");
+                return Result.success(true, "删除物流公司成功");
             } else {
-                return CommonResult.failed("删除物流公司失败");
+                return Result.error("删除物流公司失败");
             }
         } catch (Exception e) {
             log.error("删除物流公司失败", e);
-            return CommonResult.failed("删除物流公司失败: " + e.getMessage());
+            return Result.error("删除物流公司失败: " + e.getMessage());
         }
     }
 }

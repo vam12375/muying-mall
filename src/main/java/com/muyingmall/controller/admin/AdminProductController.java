@@ -1,7 +1,7 @@
 package com.muyingmall.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.entity.Product;
 import com.muyingmall.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,7 +35,7 @@ public class AdminProductController {
      */
     @GetMapping("/page")
     @Operation(summary = "分页获取商品列表")
-    public CommonResult<Page<Product>> getProductPage(
+    public Result<Page<Product>> getProductPage(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "keyword", required = false) String keyword,
@@ -44,9 +44,9 @@ public class AdminProductController {
             @RequestParam(value = "status", required = false) Integer status) {
         try {
             Page<Product> productPage = productService.getProductPage(page, size, categoryId, brandId, keyword, status);
-            return CommonResult.success(productPage);
+            return Result.success(productPage);
         } catch (Exception e) {
-            return CommonResult.failed("获取商品列表失败: " + e.getMessage());
+            return Result.error("获取商品列表失败: " + e.getMessage());
         }
     }
 
@@ -58,15 +58,15 @@ public class AdminProductController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取商品详情")
-    public CommonResult<Product> getProductDetail(@PathVariable Integer id) {
+    public Result<Product> getProductDetail(@PathVariable Integer id) {
         try {
             Product product = productService.getProductDetail(id);
             if (product == null) {
-                return CommonResult.failed("商品不存在");
+                return Result.error("商品不存在");
             }
-            return CommonResult.success(product);
+            return Result.success(product);
         } catch (Exception e) {
-            return CommonResult.failed("获取商品详情失败: " + e.getMessage());
+            return Result.error("获取商品详情失败: " + e.getMessage());
         }
     }
 
@@ -79,16 +79,16 @@ public class AdminProductController {
     @PostMapping
     @Operation(summary = "创建商品")
     @com.muyingmall.annotation.AdminOperationLog(operation = "创建商品", module = "商品管理", operationType = "CREATE", targetType = "product")
-    public CommonResult<Boolean> createProduct(@RequestBody Product product) {
+    public Result<Boolean> createProduct(@RequestBody Product product) {
         try {
             boolean result = productService.createProduct(product);
             if (result) {
-                return CommonResult.success(true, "创建商品成功");
+                return Result.success(true, "创建商品成功");
             } else {
-                return CommonResult.failed("创建商品失败");
+                return Result.error("创建商品失败");
             }
         } catch (Exception e) {
-            return CommonResult.failed("创建商品失败: " + e.getMessage());
+            return Result.error("创建商品失败: " + e.getMessage());
         }
     }
 
@@ -102,17 +102,17 @@ public class AdminProductController {
     @PutMapping("/{id}")
     @Operation(summary = "更新商品")
     @com.muyingmall.annotation.AdminOperationLog(operation = "更新商品", module = "商品管理", operationType = "UPDATE", targetType = "product")
-    public CommonResult<Boolean> updateProduct(@PathVariable Integer id, @RequestBody Product product) {
+    public Result<Boolean> updateProduct(@PathVariable Integer id, @RequestBody Product product) {
         try {
             product.setProductId(id);
             boolean result = productService.updateProduct(product);
             if (result) {
-                return CommonResult.success(true, "更新商品成功");
+                return Result.success(true, "更新商品成功");
             } else {
-                return CommonResult.failed("更新商品失败");
+                return Result.error("更新商品失败");
             }
         } catch (Exception e) {
-            return CommonResult.failed("更新商品失败: " + e.getMessage());
+            return Result.error("更新商品失败: " + e.getMessage());
         }
     }
 
@@ -125,16 +125,16 @@ public class AdminProductController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除商品")
     @com.muyingmall.annotation.AdminOperationLog(operation = "删除商品", module = "商品管理", operationType = "DELETE", targetType = "product")
-    public CommonResult<Boolean> deleteProduct(@PathVariable Integer id) {
+    public Result<Boolean> deleteProduct(@PathVariable Integer id) {
         try {
             boolean result = productService.deleteById(id);
             if (result) {
-                return CommonResult.success(true, "删除商品成功");
+                return Result.success(true, "删除商品成功");
             } else {
-                return CommonResult.failed("删除商品失败");
+                return Result.error("删除商品失败");
             }
         } catch (Exception e) {
-            return CommonResult.failed("删除商品失败: " + e.getMessage());
+            return Result.error("删除商品失败: " + e.getMessage());
         }
     }
 
@@ -148,19 +148,19 @@ public class AdminProductController {
     @PutMapping("/{id}/status")
     @Operation(summary = "更新商品状态")
     @com.muyingmall.annotation.AdminOperationLog(operation = "更新商品状态", module = "商品管理", operationType = "UPDATE", targetType = "product")
-    public CommonResult<Boolean> updateProductStatus(
+    public Result<Boolean> updateProductStatus(
             @PathVariable Integer id,
             @RequestParam("status") Integer status) {
         try {
             boolean result = productService.updateStatus(id, status);
             String statusDesc = status == 1 ? "上架" : "下架";
             if (result) {
-                return CommonResult.success(true, "商品" + statusDesc + "成功");
+                return Result.success(true, "商品" + statusDesc + "成功");
             } else {
-                return CommonResult.failed("商品" + statusDesc + "失败");
+                return Result.error("商品" + statusDesc + "失败");
             }
         } catch (Exception e) {
-            return CommonResult.failed("更新商品状态失败: " + e.getMessage());
+            return Result.error("更新商品状态失败: " + e.getMessage());
         }
     }
 
@@ -173,15 +173,15 @@ public class AdminProductController {
      */
     @GetMapping("/top")
     @Operation(summary = "获取热门商品列表", description = "按销量降序返回热门商品，用于仪表盘展示")
-    public CommonResult<List<Product>> getTopProducts(
+    public Result<List<Product>> getTopProducts(
             @RequestParam(value = "limit", defaultValue = "5") int limit) {
         try {
             // 限制最大返回数量
             limit = Math.min(Math.max(1, limit), 20);
             List<Product> topProducts = productService.getTopProductsBySales(limit);
-            return CommonResult.success(topProducts);
+            return Result.success(topProducts);
         } catch (Exception e) {
-            return CommonResult.failed("获取热门商品失败: " + e.getMessage());
+            return Result.error("获取热门商品失败: " + e.getMessage());
         }
     }
 }

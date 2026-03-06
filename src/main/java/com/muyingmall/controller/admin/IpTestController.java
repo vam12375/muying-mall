@@ -1,6 +1,6 @@
 package com.muyingmall.controller.admin;
 
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.util.IpUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,7 +26,7 @@ public class IpTestController {
      */
     @GetMapping("/current")
     @Operation(summary = "获取当前IP信息")
-    public CommonResult<Map<String, Object>> getCurrentIpInfo(HttpServletRequest request) {
+    public Result<Map<String, Object>> getCurrentIpInfo(HttpServletRequest request) {
         try {
             String ip = IpUtil.getRealIp(request);
             String location = IpUtil.getIpLocation(ip);
@@ -37,10 +37,10 @@ public class IpTestController {
             result.put("userAgent", request.getHeader("User-Agent"));
             result.put("headers", getRequestHeaders(request));
             
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("获取IP信息失败", e);
-            return CommonResult.failed("获取IP信息失败: " + e.getMessage());
+            return Result.error("获取IP信息失败: " + e.getMessage());
         }
     }
     
@@ -49,7 +49,7 @@ public class IpTestController {
      */
     @GetMapping("/query")
     @Operation(summary = "查询指定IP地理位置")
-    public CommonResult<Map<String, String>> queryIpLocation(@RequestParam String ip) {
+    public Result<Map<String, String>> queryIpLocation(@RequestParam String ip) {
         try {
             String location = IpUtil.getIpLocation(ip);
             
@@ -57,10 +57,10 @@ public class IpTestController {
             result.put("ip", ip);
             result.put("location", location);
             
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("查询IP地理位置失败", e);
-            return CommonResult.failed("查询失败: " + e.getMessage());
+            return Result.error("查询失败: " + e.getMessage());
         }
     }
     
@@ -69,13 +69,13 @@ public class IpTestController {
      */
     @PostMapping("/clear-cache")
     @Operation(summary = "清理IP缓存")
-    public CommonResult<Void> clearCache() {
+    public Result<Void> clearCache() {
         try {
             IpUtil.cleanExpiredCache();
-            return CommonResult.success(null, "缓存清理成功");
+            return Result.success(null, "缓存清理成功");
         } catch (Exception e) {
             log.error("清理缓存失败", e);
-            return CommonResult.failed("清理缓存失败: " + e.getMessage());
+            return Result.error("清理缓存失败: " + e.getMessage());
         }
     }
     

@@ -1,7 +1,7 @@
 package com.muyingmall.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.dto.UserMessageDTO;
 import com.muyingmall.entity.User;
 import com.muyingmall.entity.UserMessage;
@@ -48,7 +48,7 @@ public class AdminMessageController {
      */
     @GetMapping("/list")
     @Operation(summary = "获取消息列表", description = "分页获取所有用户的消息列表")
-    public CommonResult<Page<UserMessageDTO>> getMessageList(
+    public Result<Page<UserMessageDTO>> getMessageList(
             @Parameter(description = "消息类型") @RequestParam(required = false) String type,
             @Parameter(description = "是否已读：0-未读，1-已读") @RequestParam(required = false) Integer isRead,
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
@@ -104,10 +104,10 @@ public class AdminMessageController {
 
             dtoPage.setRecords(dtoList);
 
-            return CommonResult.success(dtoPage);
+            return Result.success(dtoPage);
         } catch (Exception e) {
             log.error("获取消息列表失败: ", e);
-            return CommonResult.failed("获取消息列表失败: " + e.getMessage());
+            return Result.error("获取消息列表失败: " + e.getMessage());
         }
     }
 
@@ -119,7 +119,7 @@ public class AdminMessageController {
      */
     @GetMapping("/statistics")
     @Operation(summary = "获取消息统计", description = "获取消息统计数据")
-    public CommonResult<Map<String, Object>> getMessageStatistics() {
+    public Result<Map<String, Object>> getMessageStatistics() {
         try {
             Map<String, Object> stats = new HashMap<>();
             // 获取催发货消息总数作为未读消息数
@@ -127,10 +127,10 @@ public class AdminMessageController {
             stats.put("total", messagePage.getTotal());
             stats.put("unread", messagePage.getTotal());
             stats.put("today", 0); // TODO: 实现今日消息统计
-            return CommonResult.success(stats);
+            return Result.success(stats);
         } catch (Exception e) {
             log.error("获取消息统计失败: ", e);
-            return CommonResult.failed("获取消息统计失败: " + e.getMessage());
+            return Result.error("获取消息统计失败: " + e.getMessage());
         }
     }
 
@@ -142,12 +142,12 @@ public class AdminMessageController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取消息详情", description = "根据ID获取消息详情")
-    public CommonResult<UserMessageDTO> getMessageDetail(
+    public Result<UserMessageDTO> getMessageDetail(
             @Parameter(description = "消息ID") @PathVariable Long id) {
         try {
             UserMessage message = userMessageService.getById(id);
             if (message == null) {
-                return CommonResult.failed("消息不存在");
+                return Result.error("消息不存在");
             }
 
             UserMessageDTO dto = new UserMessageDTO();
@@ -179,10 +179,10 @@ public class AdminMessageController {
                 dto.setSendTime(message.getReadTime());
             }
 
-            return CommonResult.success(dto);
+            return Result.success(dto);
         } catch (Exception e) {
             log.error("获取消息详情失败: ", e);
-            return CommonResult.failed("获取消息详情失败: " + e.getMessage());
+            return Result.error("获取消息详情失败: " + e.getMessage());
         }
     }
 
@@ -195,7 +195,7 @@ public class AdminMessageController {
      */
     @GetMapping("/shipping-reminder")
     @Operation(summary = "获取催发货消息列表", description = "分页获取所有用户的催发货提醒消息")
-    public CommonResult<Page<UserMessageDTO>> getShippingReminderMessages(
+    public Result<Page<UserMessageDTO>> getShippingReminderMessages(
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") int size) {
 
@@ -236,10 +236,10 @@ public class AdminMessageController {
 
             dtoPage.setRecords(dtoList);
 
-            return CommonResult.success(dtoPage);
+            return Result.success(dtoPage);
         } catch (Exception e) {
             log.error("获取催发货消息列表失败: ", e);
-            return CommonResult.failed("获取催发货消息列表失败: " + e.getMessage());
+            return Result.error("获取催发货消息列表失败: " + e.getMessage());
         }
     }
 
@@ -253,7 +253,7 @@ public class AdminMessageController {
      */
     @PostMapping("/system")
     @Operation(summary = "创建系统消息", description = "创建发送给所有用户的系统消息")
-    public CommonResult<Boolean> createSystemMessage(
+    public Result<Boolean> createSystemMessage(
             @Parameter(description = "消息标题") @RequestParam String title,
             @Parameter(description = "消息内容") @RequestParam String content,
             @Parameter(description = "额外信息") @RequestParam(required = false) String extra) {
@@ -262,13 +262,13 @@ public class AdminMessageController {
             boolean success = userMessageService.createSystemMessage(title, content, extra);
 
             if (success) {
-                return CommonResult.success(true, "系统消息创建成功");
+                return Result.success(true, "系统消息创建成功");
             } else {
-                return CommonResult.failed("系统消息创建失败");
+                return Result.error("系统消息创建失败");
             }
         } catch (Exception e) {
             log.error("创建系统消息失败: ", e);
-            return CommonResult.failed("创建系统消息失败: " + e.getMessage());
+            return Result.error("创建系统消息失败: " + e.getMessage());
         }
     }
 
@@ -279,15 +279,15 @@ public class AdminMessageController {
      */
     @GetMapping("/unread/count")
     @Operation(summary = "获取未读消息数量", description = "获取管理员未读消息数量")
-    public CommonResult<Integer> getUnreadCount() {
+    public Result<Integer> getUnreadCount() {
         try {
             // TODO: 这里暂时只返回催发货消息数量
             Page<UserMessage> messagePage = userMessageService.getShippingReminderMessages(1, 1);
 
-            return CommonResult.success((int) messagePage.getTotal());
+            return Result.success((int) messagePage.getTotal());
         } catch (Exception e) {
             log.error("获取未读消息数量失败: ", e);
-            return CommonResult.failed("获取未读消息数量失败: " + e.getMessage());
+            return Result.error("获取未读消息数量失败: " + e.getMessage());
         }
     }
 
@@ -299,20 +299,20 @@ public class AdminMessageController {
      */
     @PutMapping("/read")
     @Operation(summary = "标记消息为已读", description = "将指定消息标记为已读状态")
-    public CommonResult<Boolean> markMessageRead(
+    public Result<Boolean> markMessageRead(
             @RequestParam String id) {
 
         try {
             boolean success = userMessageService.markAsRead(id);
 
             if (success) {
-                return CommonResult.success(true, "标记已读成功");
+                return Result.success(true, "标记已读成功");
             } else {
-                return CommonResult.failed("标记已读失败，消息不存在或已被删除");
+                return Result.error("标记已读失败，消息不存在或已被删除");
             }
         } catch (Exception e) {
             log.error("标记消息已读失败: ", e);
-            return CommonResult.failed("标记消息已读失败: " + e.getMessage());
+            return Result.error("标记消息已读失败: " + e.getMessage());
         }
     }
 
@@ -323,7 +323,7 @@ public class AdminMessageController {
      */
     @PutMapping("/readAll")
     @Operation(summary = "标记所有消息为已读", description = "将所有催发货消息标记为已读状态")
-    public CommonResult<Integer> markAllRead() {
+    public Result<Integer> markAllRead() {
         try {
             // TODO: 这里暂时只实现标记所有催发货消息为已读
             Page<UserMessage> messagePage = userMessageService.getShippingReminderMessages(1, Integer.MAX_VALUE);
@@ -338,10 +338,10 @@ public class AdminMessageController {
                 }
             }
 
-            return CommonResult.success(count, "成功标记" + count + "条消息为已读");
+            return Result.success(count, "成功标记" + count + "条消息为已读");
         } catch (Exception e) {
             log.error("标记所有消息已读失败: ", e);
-            return CommonResult.failed("标记所有消息已读失败: " + e.getMessage());
+            return Result.error("标记所有消息已读失败: " + e.getMessage());
         }
     }
 
@@ -353,18 +353,18 @@ public class AdminMessageController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除消息", description = "删除指定的消息")
-    public CommonResult<Boolean> deleteMessage(@PathVariable String id) {
+    public Result<Boolean> deleteMessage(@PathVariable String id) {
         try {
             boolean success = userMessageService.deleteMessage(id);
 
             if (success) {
-                return CommonResult.success(true, "删除成功");
+                return Result.success(true, "删除成功");
             } else {
-                return CommonResult.failed("删除失败，消息不存在或已被删除");
+                return Result.error("删除失败，消息不存在或已被删除");
             }
         } catch (Exception e) {
             log.error("删除消息失败: ", e);
-            return CommonResult.failed("删除消息失败: " + e.getMessage());
+            return Result.error("删除消息失败: " + e.getMessage());
         }
     }
 }
