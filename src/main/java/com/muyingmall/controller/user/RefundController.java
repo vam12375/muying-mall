@@ -1,17 +1,16 @@
 package com.muyingmall.controller.user;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.muyingmall.dto.RefundRequestDTO;
 import com.muyingmall.entity.Refund;
 import com.muyingmall.enums.RefundStatus;
 import com.muyingmall.service.RefundService;
 import com.muyingmall.service.RefundStateService;
 import com.muyingmall.common.api.Result;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-
-import java.math.BigDecimal;
-import java.util.Map;
 
 /**
  * 退款控制器
@@ -56,19 +55,16 @@ public class RefundController {
             
             **返回：** 退款申请ID
             """)
-    public Result<Long> applyRefund(@RequestBody Map<String, Object> requestData) {
-        log.debug("收到退款申请请求: {}", requestData);
+    public Result<Long> applyRefund(@RequestBody @Valid RefundRequestDTO request) {
+        log.debug("收到退款申请请求: {}", request);
 
-        // 从请求体中获取参数
-        Integer orderId = Integer.valueOf(requestData.get("orderId").toString());
-        Integer userId = Integer.valueOf(requestData.get("userId").toString());
-        BigDecimal amount = new BigDecimal(requestData.get("amount").toString());
-        String reason = (String) requestData.get("reason");
-        String reasonDetail = requestData.get("reasonDetail") != null ? (String) requestData.get("reasonDetail") : null;
-        String evidenceImages = requestData.get("evidenceImages") != null ? requestData.get("evidenceImages").toString()
-                : null;
-
-        Long refundId = refundService.applyRefund(orderId, userId, amount, reason, reasonDetail, evidenceImages);
+        Long refundId = refundService.applyRefund(
+                request.getOrderId(),
+                request.getUserId(),
+                request.getAmount(),
+                request.getReason(),
+                request.getReasonDetail(),
+                request.getEvidenceImages());
         return Result.success(refundId, "退款申请提交成功");
     }
 

@@ -1,7 +1,7 @@
 package com.muyingmall.controller.admin;
 
 import com.muyingmall.annotation.AdminOperationLog;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.dto.AdminLoginDTO;
 import com.muyingmall.entity.AdminLoginRecord;
 import com.muyingmall.entity.User;
@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -68,7 +69,7 @@ public class AdminController {
      */
     @PostMapping("/login")
     @com.muyingmall.annotation.AdminOperationLog(operation = "管理员登录", module = "系统管理", operationType = "LOGIN", targetType = "admin", description = "管理员登录系统")
-    public CommonResult login(@RequestBody AdminLoginDTO loginParam, HttpServletRequest request) {
+    public Result<?> login(@RequestBody @Valid AdminLoginDTO loginParam, HttpServletRequest request) {
         // 验证图形验证码
         if (loginParam.getCaptcha_key() != null && loginParam.getCaptcha_code() != null) {
             String redisKey = CAPTCHA_KEY_PREFIX + loginParam.getCaptcha_key();
@@ -76,12 +77,12 @@ public class AdminController {
             
             // 验证码不存在或已过期
             if (storedCaptcha == null) {
-                return CommonResult.failed("验证码已过期，请重新获取");
+                return Result.error("验证码已过期，请重新获取");
             }
             
             // 验证码错误（忽略大小写）
             if (!storedCaptcha.equalsIgnoreCase(loginParam.getCaptcha_code())) {
-                return CommonResult.failed("验证码错误");
+                return Result.error("验证码错误");
             }
             
             // 验证通过，删除已使用的验证码
@@ -98,12 +99,12 @@ public class AdminController {
                 loginRecordService.recordLogin(user.getUserId(), user.getUsername(), request, 
                     AdminLoginRecord.LoginStatus.FAILED.getCode(), "密码错误");
             }
-            return CommonResult.failed("用户名或密码错误");
+            return Result.error("用户名或密码错误");
         }
 
         // 检查用户角色是否为管理员
         if (!"admin".equals(user.getRole())) {
-            return CommonResult.failed("该账号没有管理员权限");
+            return Result.error("该账号没有管理员权限");
         }
 
         // 用户存在且验证通过，生成token
@@ -127,7 +128,7 @@ public class AdminController {
 
         result.put("user", userInfo);
 
-        return CommonResult.success(result);
+        return Result.success(result);
     }
 
     /**
@@ -135,20 +136,20 @@ public class AdminController {
      */
     @GetMapping("/info")
     @PreAuthorize("hasAuthority('admin')")
-    public CommonResult<Map<String, Object>> getUserInfo(@RequestHeader("Authorization") String authHeader) {
+    public Result<Map<String, Object>> getUserInfo(@RequestHeader("Authorization") String authHeader) {
         // 从token中解析用户信息
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return CommonResult.unauthorized("未提供合法的身份令牌");
+            return Result.unauthorized("未提供合法的身份令牌");
         }
 
         User user = userService.getUserFromToken(authHeader);
         if (user == null) {
-            return CommonResult.unauthorized("身份令牌无效或已过期");
+            return Result.unauthorized("身份令牌无效或已过期");
         }
 
         // 检查用户角色是否为管理员
         if (!"admin".equals(user.getRole())) {
-            return CommonResult.forbidden("该账号没有管理员权限");
+            return Result.forbidden("该账号没有管理员权限");
         }
 
         // 封装完整的用户信息
@@ -165,7 +166,7 @@ public class AdminController {
         userInfo.put("lastLogin", null); // 添加最后登录时间（暂无数据）
         userInfo.put("loginCount", 0); // 添加登录次数（暂无数据）
 
-        return CommonResult.success(userInfo);
+        return Result.success(userInfo);
     }
 
     /**
@@ -175,14 +176,14 @@ public class AdminController {
      * @return 上传结果，包含文件URL
      */
     @PostMapping("/upload")
-    public CommonResult<Map<String, String>> uploadFile(
+    public Result<Map<String, String>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "folder", required = false, defaultValue = "images") String folder,
             @RequestParam(value = "filename", required = false) String customFilename) {
         try {
             // 验证文件
             if (file == null || file.isEmpty()) {
-                return CommonResult.failed("文件不能为空");
+                return Result.error("文件不能为空");
             }
 
             // 获取文件后缀
@@ -196,7 +197,7 @@ public class AdminController {
             if (!".jpg".equalsIgnoreCase(suffix) && !".jpeg".equalsIgnoreCase(suffix) &&
                     !".png".equalsIgnoreCase(suffix) && !".gif".equalsIgnoreCase(suffix) &&
                     !".webp".equalsIgnoreCase(suffix)) {
-                return CommonResult.failed("只支持jpg、jpeg、png、gif、webp格式的图片");
+                return Result.error("只支持jpg、jpeg、png、gif、webp格式的图片");
             }
 
             // 生成存储路径（支持指定文件夹）
@@ -239,9 +240,9 @@ public class AdminController {
             result.put("filename", filename);  // 返回文件名
             result.put("name", originalFilename);
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (IOException e) {
-            return CommonResult.failed("文件上传失败: " + e.getMessage());
+            return Result.error("文件上传失败: " + e.getMessage());
         }
     }
 
@@ -251,23 +252,23 @@ public class AdminController {
     @PostMapping("/avatar/upload")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "上传头像", module = "个人中心", operationType = "UPDATE", targetType = "admin", description = "管理员上传头像")
-    public CommonResult<Map<String, String>> uploadAvatar(
+    public Result<Map<String, String>> uploadAvatar(
             @RequestParam("file") MultipartFile file,
             @RequestHeader("Authorization") String authHeader) {
 
         // 从token中解析用户信息
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return CommonResult.unauthorized("未提供合法的身份令牌");
+            return Result.unauthorized("未提供合法的身份令牌");
         }
 
         User user = userService.getUserFromToken(authHeader);
         if (user == null) {
-            return CommonResult.unauthorized("身份令牌无效或已过期");
+            return Result.unauthorized("身份令牌无效或已过期");
         }
 
         // 检查用户角色是否为管理员
         if (!"admin".equals(user.getRole())) {
-            return CommonResult.forbidden("该账号没有管理员权限");
+            return Result.forbidden("该账号没有管理员权限");
         }
 
         try {
@@ -279,9 +280,9 @@ public class AdminController {
             result.put("url", avatarUrl);
             result.put("name", file.getOriginalFilename());
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
-            return CommonResult.failed("头像上传失败: " + e.getMessage());
+            return Result.error("头像上传失败: " + e.getMessage());
         }
     }
 
@@ -291,23 +292,23 @@ public class AdminController {
     @PutMapping("/update")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "更新个人信息", module = "个人中心", operationType = "UPDATE", targetType = "admin", description = "管理员更新个人信息")
-    public CommonResult<Map<String, Object>> updateAdminInfo(
+    public Result<Map<String, Object>> updateAdminInfo(
             @RequestBody User adminInfo,
             @RequestHeader("Authorization") String authHeader) {
 
         // 从token中解析用户信息
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return CommonResult.unauthorized("未提供合法的身份令牌");
+            return Result.unauthorized("未提供合法的身份令牌");
         }
 
         User user = userService.getUserFromToken(authHeader);
         if (user == null) {
-            return CommonResult.unauthorized("身份令牌无效或已过期");
+            return Result.unauthorized("身份令牌无效或已过期");
         }
 
         // 检查用户角色是否为管理员
         if (!"admin".equals(user.getRole())) {
-            return CommonResult.forbidden("该账号没有管理员权限");
+            return Result.forbidden("该账号没有管理员权限");
         }
 
         // 设置ID为当前登录用户ID（防止篡改其他用户信息）
@@ -339,12 +340,12 @@ public class AdminController {
                 updatedInfo.put("lastLogin", null); // 当前无此数据
                 updatedInfo.put("loginCount", 0); // 当前无此数据
 
-                return CommonResult.success(updatedInfo, "更新成功");
+                return Result.success(updatedInfo, "更新成功");
             } else {
-                return CommonResult.failed("更新失败");
+                return Result.error("更新失败");
             }
         } catch (Exception e) {
-            return CommonResult.failed("更新失败: " + e.getMessage());
+            return Result.error("更新失败: " + e.getMessage());
         }
     }
 
@@ -354,7 +355,7 @@ public class AdminController {
     @PutMapping("/password")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "修改密码", module = "个人中心", operationType = "UPDATE", targetType = "admin", description = "管理员修改密码")
-    public CommonResult updatePassword(
+    public Result<?> updatePassword(
             @RequestBody Map<String, String> passwordMap,
             @RequestHeader("Authorization") String authHeader) {
 
@@ -362,34 +363,34 @@ public class AdminController {
         String newPassword = passwordMap.get("newPassword");
 
         if (oldPassword == null || newPassword == null) {
-            return CommonResult.validateFailed("旧密码和新密码不能为空");
+            return Result.validateFailed("旧密码和新密码不能为空");
         }
 
         // 从token中解析用户信息
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return CommonResult.unauthorized("未提供合法的身份令牌");
+            return Result.unauthorized("未提供合法的身份令牌");
         }
 
         User user = userService.getUserFromToken(authHeader);
         if (user == null) {
-            return CommonResult.unauthorized("身份令牌无效或已过期");
+            return Result.unauthorized("身份令牌无效或已过期");
         }
 
         // 检查用户角色是否为管理员
         if (!"admin".equals(user.getRole())) {
-            return CommonResult.forbidden("该账号没有管理员权限");
+            return Result.forbidden("该账号没有管理员权限");
         }
 
         try {
             // 更新密码
             boolean result = userService.changePassword(user.getUserId(), oldPassword, newPassword);
             if (result) {
-                return CommonResult.success(null, "密码修改成功");
+                return Result.success(null, "密码修改成功");
             } else {
-                return CommonResult.failed("密码修改失败");
+                return Result.error("密码修改失败");
             }
         } catch (Exception e) {
-            return CommonResult.failed("密码修改失败: " + e.getMessage());
+            return Result.error("密码修改失败: " + e.getMessage());
         }
     }
 
@@ -399,7 +400,7 @@ public class AdminController {
     @GetMapping("/login-records")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看登录记录", module = "管理员管理", operationType = "READ")
-    public CommonResult<Map<String, Object>> getLoginRecords(
+    public Result<Map<String, Object>> getLoginRecords(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String startTime,
@@ -430,9 +431,9 @@ public class AdminController {
             result.put("current", loginRecordsPage.getCurrent());
             result.put("size", loginRecordsPage.getSize());
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
-            return CommonResult.failed("获取登录记录失败: " + e.getMessage());
+            return Result.error("获取登录记录失败: " + e.getMessage());
         }
     }
 
@@ -442,7 +443,7 @@ public class AdminController {
     @GetMapping("/system/logs")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看系统日志", module = "系统管理", operationType = "READ")
-    public CommonResult<Map<String, Object>> getSystemLogs(
+    public Result<Map<String, Object>> getSystemLogs(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String startTime,
@@ -483,10 +484,10 @@ public class AdminController {
             result.put("current", operationLogsPage.getCurrent());
             result.put("size", operationLogsPage.getSize());
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
             log.error("获取系统日志失败", e);
-            return CommonResult.failed("获取系统日志失败: " + e.getMessage());
+            return Result.error("获取系统日志失败: " + e.getMessage());
         }
     }
 
@@ -496,16 +497,16 @@ public class AdminController {
     @GetMapping("/system/logs/{id}")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "查看系统日志详情", module = "系统管理", operationType = "READ")
-    public CommonResult<com.muyingmall.entity.AdminOperationLog> getSystemLogDetail(@PathVariable Long id) {
+    public Result<com.muyingmall.entity.AdminOperationLog> getSystemLogDetail(@PathVariable Long id) {
         try {
             com.muyingmall.entity.AdminOperationLog logDetail = operationLogService.getById(id);
             if (logDetail == null) {
-                return CommonResult.failed("日志不存在");
+                return Result.error("日志不存在");
             }
-            return CommonResult.success(logDetail);
+            return Result.success(logDetail);
         } catch (Exception e) {
             log.error("获取系统日志详情失败", e);
-            return CommonResult.failed("获取系统日志详情失败: " + e.getMessage());
+            return Result.error("获取系统日志详情失败: " + e.getMessage());
         }
     }
 
@@ -515,7 +516,7 @@ public class AdminController {
     @GetMapping("/operation-records")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看操作记录", module = "管理员管理", operationType = "READ")
-    public CommonResult<Map<String, Object>> getOperationRecords(
+    public Result<Map<String, Object>> getOperationRecords(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String startTime,
@@ -547,9 +548,9 @@ public class AdminController {
             result.put("current", operationLogsPage.getCurrent());
             result.put("size", operationLogsPage.getSize());
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
-            return CommonResult.failed("获取操作记录失败: " + e.getMessage());
+            return Result.error("获取操作记录失败: " + e.getMessage());
         }
     }
 
@@ -559,7 +560,7 @@ public class AdminController {
     @GetMapping("/statistics")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看统计信息", module = "管理员管理", operationType = "READ")
-    public CommonResult<Map<String, Object>> getAdminStatistics() {
+    public Result<Map<String, Object>> getAdminStatistics() {
 
         try {
 
@@ -583,9 +584,9 @@ public class AdminController {
             statistics.put("accountAge", 365);
             statistics.put("securityScore", 95);
 
-            return CommonResult.success(statistics);
+            return Result.success(statistics);
         } catch (Exception e) {
-            return CommonResult.failed("获取统计信息失败: " + e.getMessage());
+            return Result.error("获取统计信息失败: " + e.getMessage());
         }
     }
 
@@ -662,16 +663,16 @@ public class AdminController {
     @GetMapping("/websocket/status")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看WebSocket状态", module = "管理员管理", operationType = "READ")
-    public CommonResult<Map<String, Object>> getWebSocketStatus() {
+    public Result<Map<String, Object>> getWebSocketStatus() {
         try {
             Map<String, Object> status = new HashMap<>();
             status.put("onlineCount", AdminStatsWebSocket.getOnlineCount());
             status.put("onlineAdmins", AdminStatsWebSocket.getWebSocketMap().keySet());
             status.put("timestamp", System.currentTimeMillis());
 
-            return CommonResult.success(status);
+            return Result.success(status);
         } catch (Exception e) {
-            return CommonResult.failed("获取WebSocket状态失败: " + e.getMessage());
+            return Result.error("获取WebSocket状态失败: " + e.getMessage());
         }
     }
 
@@ -681,14 +682,14 @@ public class AdminController {
     @PostMapping("/notification/send")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "发送系统通知", module = "管理员管理", operationType = "CREATE")
-    public CommonResult<String> sendSystemNotification(
+    public Result<String> sendSystemNotification(
             @RequestBody Map<String, Object> notificationData) {
         try {
             String message = (String) notificationData.get("message");
             Integer targetAdminId = (Integer) notificationData.get("targetAdminId");
 
             if (message == null || message.trim().isEmpty()) {
-                return CommonResult.failed("通知消息不能为空");
+                return Result.error("通知消息不能为空");
             }
 
             // 直接通过WebSocket发送通知
@@ -698,9 +699,9 @@ public class AdminController {
                 AdminStatsWebSocket.broadcast(message);
             }
 
-            return CommonResult.success("系统通知发送成功");
+            return Result.success("系统通知发送成功");
         } catch (Exception e) {
-            return CommonResult.failed("发送系统通知失败: " + e.getMessage());
+            return Result.error("发送系统通知失败: " + e.getMessage());
         }
     }
 
@@ -710,7 +711,7 @@ public class AdminController {
     @PostMapping("/stats/push")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "推送统计数据", module = "管理员管理", operationType = "UPDATE")
-    public CommonResult<String> pushStatsUpdate() {
+    public Result<String> pushStatsUpdate() {
         try {
             // 获取最新统计数据并推送
 
@@ -737,9 +738,9 @@ public class AdminController {
             // 广播统计数据
             AdminStatsWebSocket.broadcastStats(stats);
 
-            return CommonResult.success("统计数据推送成功");
+            return Result.success("统计数据推送成功");
         } catch (Exception e) {
-            return CommonResult.failed("推送统计数据失败: " + e.getMessage());
+            return Result.error("推送统计数据失败: " + e.getMessage());
         }
     }
 
@@ -749,7 +750,7 @@ public class AdminController {
     @GetMapping("/system/logs/statistics")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "查看系统日志统计", module = "系统管理", operationType = "READ")
-    public CommonResult<Map<String, Object>> getSystemLogStatistics(
+    public Result<Map<String, Object>> getSystemLogStatistics(
             @RequestParam(required = false) Integer adminId,
             @RequestParam(defaultValue = "7") Integer days) {
         try {
@@ -873,10 +874,10 @@ public class AdminController {
             }
             statistics.put("dailyTrend", dailyTrend);
             
-            return CommonResult.success(statistics);
+            return Result.success(statistics);
         } catch (Exception e) {
             log.error("获取系统日志统计失败", e);
-            return CommonResult.failed("获取系统日志统计失败：" + e.getMessage());
+            return Result.error("获取系统日志统计失败：" + e.getMessage());
         }
     }
 
@@ -887,21 +888,21 @@ public class AdminController {
     @DeleteMapping("/system/logs/batch")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "批量删除系统日志", module = "系统管理", operationType = "DELETE")
-    public CommonResult<Void> batchDeleteSystemLogs(@RequestBody List<Long> ids) {
+    public Result<Void> batchDeleteSystemLogs(@RequestBody List<Long> ids) {
         try {
             if (ids == null || ids.isEmpty()) {
-                return CommonResult.failed("请选择要删除的日志");
+                return Result.error("请选择要删除的日志");
             }
             
             boolean success = operationLogService.removeByIds(ids);
             if (success) {
-                return CommonResult.success(null, "删除成功");
+                return Result.success(null, "删除成功");
             } else {
-                return CommonResult.failed("删除失败");
+                return Result.error("删除失败");
             }
         } catch (Exception e) {
             log.error("批量删除系统日志失败", e);
-            return CommonResult.failed("批量删除系统日志失败：" + e.getMessage());
+            return Result.error("批量删除系统日志失败：" + e.getMessage());
         }
     }
 
@@ -913,12 +914,12 @@ public class AdminController {
     @DeleteMapping("/system/logs/clear")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "清空历史日志", module = "系统管理", operationType = "DELETE")
-    public CommonResult<Void> clearOldSystemLogs(@RequestParam Integer days) {
+    public Result<Void> clearOldSystemLogs(@RequestParam Integer days) {
         try {
             // 参数验证
             if (days == null || days < 1) {
                 log.warn("清空日志参数无效: days={}", days);
-                return CommonResult.failed("天数参数无效，必须大于0");
+                return Result.error("天数参数无效，必须大于0");
             }
             
             // 计算截止时间
@@ -933,7 +934,7 @@ public class AdminController {
             
             if (count == 0) {
                 log.info("没有需要清空的日志记录");
-                return CommonResult.success(null, "没有需要清空的日志");
+                return Result.success(null, "没有需要清空的日志");
             }
             
             log.info("准备删除{}条日志记录", count);
@@ -947,14 +948,14 @@ public class AdminController {
             
             if (success) {
                 log.info("成功清空{}条历史日志", count);
-                return CommonResult.success(null, "成功清空" + count + "条历史日志");
+                return Result.success(null, "成功清空" + count + "条历史日志");
             } else {
                 log.error("清空日志失败，但未抛出异常");
-                return CommonResult.failed("清空失败，请检查数据库连接");
+                return Result.error("清空失败，请检查数据库连接");
             }
         } catch (Exception e) {
             log.error("清空历史日志异常: days={}, error={}", days, e.getMessage(), e);
-            return CommonResult.failed("清空历史日志失败：" + e.getMessage());
+            return Result.error("清空历史日志失败：" + e.getMessage());
         }
     }
 }

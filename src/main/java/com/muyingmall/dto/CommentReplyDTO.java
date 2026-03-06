@@ -1,6 +1,8 @@
 package com.muyingmall.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -15,9 +17,11 @@ public class CommentReplyDTO {
     @Schema(description = "回复ID")
     private Integer replyId;
 
+    @NotNull(message = "评价ID不能为空")
     @Schema(description = "评价ID")
     private Integer commentId;
 
+    @NotBlank(message = "回复内容不能为空")
     @Schema(description = "回复内容")
     private String content;
 

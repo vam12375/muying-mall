@@ -2,7 +2,7 @@ package com.muyingmall.controller.admin;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.muyingmall.common.api.CommonResult;
+import com.muyingmall.common.api.Result;
 import com.muyingmall.dto.CommentDTO;
 import com.muyingmall.dto.CommentReplyDTO;
 import com.muyingmall.dto.CommentStatsDTO;
@@ -17,6 +17,7 @@ import com.muyingmall.service.CommentService;
 import com.muyingmall.service.CommentTemplateService;
 import com.muyingmall.service.UserService;
 import com.muyingmall.service.ProductService;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,7 +61,7 @@ public class AdminCommentController {
      */
     @GetMapping("/page")
     @Operation(summary = "分页获取评价列表")
-    public CommonResult<Map<String, Object>> getCommentPage(
+    public Result<Map<String, Object>> getCommentPage(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "productId", required = false) Integer productId,
@@ -89,9 +90,9 @@ public class AdminCommentController {
                     "current", commentPage.getCurrent(),
                     "records", records);
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
-            return CommonResult.failed("获取评价列表失败: " + e.getMessage());
+            return Result.error("获取评价列表失败: " + e.getMessage());
         }
     }
 
@@ -103,11 +104,11 @@ public class AdminCommentController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取评价详情")
-    public CommonResult<CommentDTO> getCommentDetail(@PathVariable Integer id) {
+    public Result<CommentDTO> getCommentDetail(@PathVariable Integer id) {
         try {
             Comment comment = commentService.getById(id);
             if (comment == null) {
-                return CommonResult.failed("评价不存在");
+                return Result.error("评价不存在");
             }
 
             CommentDTO commentDTO = new CommentDTO();
@@ -147,9 +148,9 @@ public class AdminCommentController {
                 commentDTO.setProductImage(product.getProductImg());
             }
 
-            return CommonResult.success(commentDTO);
+            return Result.success(commentDTO);
         } catch (Exception e) {
-            return CommonResult.failed("获取评价详情失败: " + e.getMessage());
+            return Result.error("获取评价详情失败: " + e.getMessage());
         }
     }
 
@@ -162,19 +163,19 @@ public class AdminCommentController {
      */
     @PutMapping("/{id}/status")
     @Operation(summary = "更新评价状态")
-    public CommonResult<Boolean> updateCommentStatus(
+    public Result<Boolean> updateCommentStatus(
             @PathVariable Integer id,
             @RequestParam("status") Integer status) {
         try {
             boolean result = commentService.updateCommentStatus(id, status);
             String statusDesc = status == 1 ? "显示" : "隐藏";
             if (result) {
-                return CommonResult.success(true, "评价" + statusDesc + "成功");
+                return Result.success(true, "评价" + statusDesc + "成功");
             } else {
-                return CommonResult.failed("评价" + statusDesc + "失败");
+                return Result.error("评价" + statusDesc + "失败");
             }
         } catch (Exception e) {
-            return CommonResult.failed("更新评价状态失败: " + e.getMessage());
+            return Result.error("更新评价状态失败: " + e.getMessage());
         }
     }
 
@@ -186,16 +187,16 @@ public class AdminCommentController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除评价")
-    public CommonResult<Boolean> deleteComment(@PathVariable Integer id) {
+    public Result<Boolean> deleteComment(@PathVariable Integer id) {
         try {
             boolean result = commentService.deleteComment(id);
             if (result) {
-                return CommonResult.success(true, "删除评价成功");
+                return Result.success(true, "删除评价成功");
             } else {
-                return CommonResult.failed("删除评价失败");
+                return Result.error("删除评价失败");
             }
         } catch (Exception e) {
-            return CommonResult.failed("删除评价失败: " + e.getMessage());
+            return Result.error("删除评价失败: " + e.getMessage());
         }
     }
 
@@ -207,7 +208,7 @@ public class AdminCommentController {
      */
     @GetMapping("/stats")
     @Operation(summary = "获取评价统计数据")
-    public CommonResult<CommentStatsDTO> getCommentStats(
+    public Result<CommentStatsDTO> getCommentStats(
             @RequestParam(value = "days", defaultValue = "7") Integer days) {
         try {
             Map<String, Object> stats = commentService.getCommentStats(days);
@@ -253,9 +254,9 @@ public class AdminCommentController {
                 statsDTO.setNegativeRate(0.0);
             }
 
-            return CommonResult.success(statsDTO);
+            return Result.success(statsDTO);
         } catch (Exception e) {
-            return CommonResult.failed("获取评价统计数据失败: " + e.getMessage());
+            return Result.error("获取评价统计数据失败: " + e.getMessage());
         }
     }
 
@@ -267,14 +268,14 @@ public class AdminCommentController {
      */
     @GetMapping("/{id}/replies")
     @Operation(summary = "获取评价回复列表")
-    public CommonResult<List<CommentReplyDTO>> getCommentReplies(
+    public Result<List<CommentReplyDTO>> getCommentReplies(
             @PathVariable("id") @Parameter(description = "评价ID") Integer commentId) {
         try {
             List<CommentReply> replies = commentReplyService.getCommentReplies(commentId);
             List<CommentReplyDTO> result = convertToReplyDTO(replies);
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
-            return CommonResult.failed("获取评价回复列表失败: " + e.getMessage());
+            return Result.error("获取评价回复列表失败: " + e.getMessage());
         }
     }
 
@@ -288,7 +289,7 @@ public class AdminCommentController {
      */
     @GetMapping("/templates/recommended")
     @Operation(summary = "获取推荐回复模板")
-    public CommonResult<List<CommentTemplateDTO>> getReplyTemplates(
+    public Result<List<CommentTemplateDTO>> getReplyTemplates(
             @RequestParam(required = false) @Parameter(description = "商品ID") Integer productId,
             @RequestParam(required = false) @Parameter(description = "评分") Integer rating,
             @RequestParam(defaultValue = "5") @Parameter(description = "限制数量") Integer limit) {
@@ -324,9 +325,9 @@ public class AdminCommentController {
                     .map(this::convertToTemplateDTO)
                     .collect(Collectors.toList());
 
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
-            return CommonResult.failed("获取推荐回复模板失败: " + e.getMessage());
+            return Result.error("获取推荐回复模板失败: " + e.getMessage());
         }
     }
 
@@ -338,14 +339,14 @@ public class AdminCommentController {
      */
     @PostMapping("/reply")
     @Operation(summary = "创建评价回复")
-    public CommonResult<Boolean> createCommentReply(@RequestBody CommentReplyDTO replyDTO) {
+    public Result<Boolean> createCommentReply(@RequestBody @Valid CommentReplyDTO replyDTO) {
         try {
             CommentReply reply = new CommentReply();
             BeanUtils.copyProperties(replyDTO, reply);
             boolean result = commentReplyService.createCommentReply(reply);
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
-            return CommonResult.failed("创建评价回复失败: " + e.getMessage());
+            return Result.error("创建评价回复失败: " + e.getMessage());
         }
     }
 
@@ -357,12 +358,12 @@ public class AdminCommentController {
      */
     @DeleteMapping("/reply/{replyId}")
     @Operation(summary = "删除评价回复")
-    public CommonResult<Boolean> deleteCommentReply(@PathVariable Integer replyId) {
+    public Result<Boolean> deleteCommentReply(@PathVariable Integer replyId) {
         try {
             boolean result = commentReplyService.deleteCommentReply(replyId);
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
-            return CommonResult.failed("删除评价回复失败: " + e.getMessage());
+            return Result.error("删除评价回复失败: " + e.getMessage());
         }
     }
 
@@ -375,25 +376,25 @@ public class AdminCommentController {
      */
     @PutMapping("/reply/{replyId}")
     @Operation(summary = "更新评价回复")
-    public CommonResult<Boolean> updateCommentReply(
+    public Result<Boolean> updateCommentReply(
             @PathVariable Integer replyId,
             @RequestBody Map<String, String> data) {
         try {
             String content = data.get("content");
             if (content == null) {
-                return CommonResult.failed("回复内容不能为空");
+                return Result.error("回复内容不能为空");
             }
 
             CommentReply reply = commentReplyService.getById(replyId);
             if (reply == null) {
-                return CommonResult.failed("回复不存在");
+                return Result.error("回复不存在");
             }
 
             reply.setContent(content);
             boolean result = commentReplyService.updateCommentReply(reply);
-            return CommonResult.success(result);
+            return Result.success(result);
         } catch (Exception e) {
-            return CommonResult.failed("更新评价回复失败: " + e.getMessage());
+            return Result.error("更新评价回复失败: " + e.getMessage());
         }
     }
 
@@ -405,7 +406,7 @@ public class AdminCommentController {
      */
     @PostMapping("/batch/reply")
     @Operation(summary = "批量回复评价")
-    public CommonResult<Boolean> batchReplyComments(@RequestBody Map<String, Object> data) {
+    public Result<Boolean> batchReplyComments(@RequestBody Map<String, Object> data) {
         try {
             @SuppressWarnings("unchecked")
             List<Integer> commentIds = (List<Integer>) data.get("commentIds");
@@ -414,7 +415,7 @@ public class AdminCommentController {
 
             if (commentIds == null || commentIds.isEmpty() || content == null || content.isEmpty()
                     || replyUserId == null) {
-                return CommonResult.failed("参数错误");
+                return Result.error("参数错误");
             }
 
             boolean allSuccess = true;
@@ -431,9 +432,9 @@ public class AdminCommentController {
                 }
             }
 
-            return CommonResult.success(allSuccess);
+            return Result.success(allSuccess);
         } catch (Exception e) {
-            return CommonResult.failed("批量回复评价失败: " + e.getMessage());
+            return Result.error("批量回复评价失败: " + e.getMessage());
         }
     }
 
