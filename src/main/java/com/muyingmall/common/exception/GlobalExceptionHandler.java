@@ -64,13 +64,10 @@ public class GlobalExceptionHandler {
 
     /**
      * 处理未知异常
-     * 优化：返回success=true，避免JMeter将其判定为错误
-     * 通过code和message区分正常响应和异常响应
      */
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
-        log.error("系统异常: {}", e.getMessage());
-        // 返回成功状态但携带错误信息，保证接口稳定性
-        return Result.success(null, "系统繁忙，请稍后再试");
+        log.error("系统异常", e);
+        return Result.error(500, "系统繁忙，请稍后再试");
     }
 }

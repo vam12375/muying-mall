@@ -1,0 +1,10 @@
+refactor(common): 统一响应格式，清理冗余异常类和响应类
+
+- 删除 CommonResult 类：项目中存在 Result 和 CommonResult 两套响应类型，
+  字段不一致（CommonResult 缺少 success/timestamp），导致响应格式混乱
+- 删除 common/api/ResultCode 和 common/result/ResultCode 两个冗余枚举类，
+  已被 Result 的静态工厂方法替代
+- 删除 exception/BusinessException：与 common/exception/BusinessException 重复，
+  统一使用 common.exception.BusinessException
+- 优化 GlobalExceptionHandler：统一使用 Result<T> 返回异常响应，
+  确保管理端和用户端抛异常时响应格式一致
