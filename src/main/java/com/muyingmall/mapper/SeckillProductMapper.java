@@ -8,6 +8,7 @@ import com.muyingmall.entity.SeckillProduct;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -139,5 +140,19 @@ public interface SeckillProductMapper extends BaseMapper<SeckillProduct> {
             "AND seckill_stock >= #{quantity}")
     int deductStock(@Param("seckillProductId") Long seckillProductId, 
                     @Param("quantity") Integer quantity);
+
+    /**
+     * 回补秒杀库存（订单取消/超时场景）。
+     *
+     * @param seckillProductId 秒杀商品ID
+     * @param quantity         回补数量
+     * @return 影响行数
+     */
+    @Update("UPDATE seckill_product " +
+            "SET seckill_stock = seckill_stock + #{quantity}, " +
+            "update_time = NOW() " +
+            "WHERE id = #{seckillProductId}")
+    int restoreStock(@Param("seckillProductId") Long seckillProductId,
+                     @Param("quantity") Integer quantity);
 }
 

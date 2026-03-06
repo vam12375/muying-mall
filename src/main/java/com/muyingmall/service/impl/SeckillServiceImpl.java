@@ -1,7 +1,9 @@
 package com.muyingmall.service.impl;
 
 import com.muyingmall.entity.ProductSku;
+import com.muyingmall.entity.SeckillProduct;
 import com.muyingmall.mapper.ProductSkuMapper;
+import com.muyingmall.mapper.SeckillProductMapper;
 import com.muyingmall.service.SeckillService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +25,8 @@ import java.util.concurrent.TimeUnit;
  * 秒杀服务实现 - Redis预减库存 + Lua脚本原子性操作
  *
  * 支持两种库存扣减模式：
- * 1. 简单模式：使用Lua脚本原子性预扣减（preDeductStock方法）
- * 2. 完整模式：使用Lua脚本保证原子性并包含用户去重检查（deductStockWithLua方法）
+ * 1. 预扣减模式：返回剩余库存（preDeductStock方法）
+ * 2. 扣减模式：返回状态码（deductStockWithLua方法），支持Key不存在时自动从DB同步重试
  */
 @Slf4j
 @Service
@@ -33,16 +35,13 @@ public class SeckillServiceImpl implements SeckillService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ProductSkuMapper productSkuMapper;
+    private final SeckillProductMapper seckillProductMapper;
 
     private static final String SECKILL_STOCK_KEY = "seckill:stock:";
-    private static final String SECKILL_USERS_KEY = "seckill:users:";
     private static final long STOCK_CACHE_EXPIRE = 24 * 60 * 60; // 24小时
 
-    // Lua脚本：完整库存扣减（含用户去重）
     private DefaultRedisScript<Long> stockDeductScript;
-    // Lua脚本：库存恢复
     private DefaultRedisScript<Long> stockRestoreScript;
-    // Lua脚本：简单预扣减（不含用户去重）
     private DefaultRedisScript<Long> stockPreDeductScript;
 
     /**
@@ -51,19 +50,16 @@ public class SeckillServiceImpl implements SeckillService {
      */
     @PostConstruct
     public void initLuaScripts() {
-        // 加载完整库存扣减脚本（含用户去重）
         stockDeductScript = new DefaultRedisScript<>();
         stockDeductScript.setScriptSource(new ResourceScriptSource(
                 new ClassPathResource("scripts/stock_deduct.lua")));
         stockDeductScript.setResultType(Long.class);
 
-        // 加载库存恢复脚本
         stockRestoreScript = new DefaultRedisScript<>();
         stockRestoreScript.setScriptSource(new ResourceScriptSource(
                 new ClassPathResource("scripts/stock_restore.lua")));
         stockRestoreScript.setResultType(Long.class);
 
-        // 加载简单预扣减脚本
         stockPreDeductScript = new DefaultRedisScript<>();
         stockPreDeductScript.setScriptSource(new ResourceScriptSource(
                 new ClassPathResource("scripts/stock_pre_deduct.lua")));
@@ -74,22 +70,35 @@ public class SeckillServiceImpl implements SeckillService {
 
     @Override
     public int deductStockWithLua(Long seckillProductId, Long skuId, Integer quantity, Integer userId, Long expireSeconds) {
+        if (quantity == null || quantity <= 0) {
+            log.warn("Lua脚本扣减库存参数非法: seckillProductId={}, skuId={}, quantity={}, userId={}",
+                    seckillProductId, skuId, quantity, userId);
+            return -4;
+        }
+
         String stockKey = SECKILL_STOCK_KEY + skuId;
-        String userSetKey = SECKILL_USERS_KEY + seckillProductId;
+        String userSetKey = "seckill:user:" + seckillProductId;
         List<String> keys = Arrays.asList(stockKey, userSetKey);
 
-        // 过期时间默认使用库存缓存过期时间（24小时），优先使用传入的活动剩余秒数
-        String expireStr = String.valueOf(expireSeconds != null ? expireSeconds : STOCK_CACHE_EXPIRE);
-
-        // 执行Lua脚本，保证库存检查、扣减、用户去重在同一原子操作内完成
-        Long result = redisTemplate.execute(
-                stockDeductScript,
-                keys,
-                quantity.toString(),
-                userId != null ? userId.toString() : "",
-                expireStr);
+        Long result;
+        if (expireSeconds != null && expireSeconds > 0) {
+            result = redisTemplate.execute(stockDeductScript, keys, quantity, userId, expireSeconds);
+        } else {
+            result = redisTemplate.execute(stockDeductScript, keys, quantity, userId);
+        }
 
         int resultCode = result != null ? result.intValue() : -3;
+
+        if (resultCode == -3) {
+            log.warn("Lua脚本扣减库存失败，库存Key不存在，尝试从秒杀商品表同步: seckillProductId={}, skuId={}", seckillProductId, skuId);
+            syncSeckillStockToRedis(seckillProductId);
+            if (expireSeconds != null && expireSeconds > 0) {
+                result = redisTemplate.execute(stockDeductScript, keys, quantity, userId, expireSeconds);
+            } else {
+                result = redisTemplate.execute(stockDeductScript, keys, quantity, userId);
+            }
+            resultCode = result != null ? result.intValue() : -3;
+        }
 
         switch (resultCode) {
             case 1:
@@ -100,10 +109,13 @@ public class SeckillServiceImpl implements SeckillService {
                 log.debug("Lua脚本扣减库存失败，库存不足: skuId={}, quantity={}", skuId, quantity);
                 break;
             case -2:
-                log.debug("Lua脚本扣减库存失败，用户已购买: seckillProductId={}, userId={}", seckillProductId, userId);
+                log.debug("Lua脚本扣减库存失败，用户已参与: seckillProductId={}, skuId={}, userId={}", seckillProductId, skuId, userId);
                 break;
             case -3:
-                log.warn("Lua脚本扣减库存失败，库存Key不存在: skuId={}", skuId);
+                log.warn("Lua脚本扣减库存失败，同步后库存Key仍不存在: skuId={}", skuId);
+                break;
+            case -4:
+                log.warn("Lua脚本扣减库存失败，参数非法: skuId={}, quantity={}", skuId, quantity);
                 break;
             default:
                 log.error("Lua脚本扣减库存返回未知结果: skuId={}, result={}", skuId, resultCode);
@@ -114,26 +126,29 @@ public class SeckillServiceImpl implements SeckillService {
 
     @Override
     public int restoreStockWithLua(Long seckillProductId, Long skuId, Integer quantity, Integer userId) {
+        if (quantity == null || quantity <= 0) {
+            log.warn("Lua脚本恢复库存参数非法: seckillProductId={}, skuId={}, quantity={}, userId={}",
+                    seckillProductId, skuId, quantity, userId);
+            return -4;
+        }
+
         String stockKey = SECKILL_STOCK_KEY + skuId;
-        String userSetKey = SECKILL_USERS_KEY + seckillProductId;
+        String userSetKey = "seckill:user:" + seckillProductId;
         List<String> keys = Arrays.asList(stockKey, userSetKey);
 
-        // 执行Lua脚本，原子性恢复库存并清除用户购买记录
         Long result = redisTemplate.execute(
                 stockRestoreScript,
                 keys,
-                quantity.toString(),
-                userId != null ? userId.toString() : "");
+                quantity, userId);
 
-        int resultCode = result != null ? result.intValue() : -1;
-
-        if (resultCode == 1) {
-            log.debug("Lua脚本恢复库存成功: seckillProductId={}, skuId={}, quantity={}, userId={}",
-                    seckillProductId, skuId, quantity, userId);
-        } else {
-            log.warn("Lua脚本恢复库存失败: skuId={}, result={}", skuId, resultCode);
+        if (result != null && result >= 0) {
+            log.debug("Lua脚本恢复库存成功: seckillProductId={}, skuId={}, quantity={}, userId={}, newStock={}",
+                    seckillProductId, skuId, quantity, userId, result);
+            return 1;
         }
 
+        int resultCode = result != null ? result.intValue() : -1;
+        log.warn("Lua脚本恢复库存失败: skuId={}, result={}", skuId, resultCode);
         return resultCode;
     }
 
@@ -146,6 +161,12 @@ public class SeckillServiceImpl implements SeckillService {
 
     @Override
     public boolean preDeductStock(Long skuId, Integer quantity) {
+        // 参数兜底校验：避免 quantity 非法导致 Lua 中 tonumber 返回 nil。
+        if (quantity == null || quantity <= 0) {
+            log.warn("Redis预扣减参数非法: skuId={}, quantity={}", skuId, quantity);
+            return false;
+        }
+
         String key = SECKILL_STOCK_KEY + skuId;
 
         // 先检查库存是否存在，不存在则从数据库同步
@@ -160,11 +181,11 @@ public class SeckillServiceImpl implements SeckillService {
             }
         }
 
-        // 使用Lua脚本原子性扣减库存，避免先decrement再判断再increment的竞态条件
+        // 关键修复：传入数值对象，避免数量参数被序列化为带引号字符串而导致 Lua 解析失败。
         Long result = redisTemplate.execute(
                 stockPreDeductScript,
                 Collections.singletonList(key),
-                quantity.toString());
+                quantity);
 
         if (result == null || result < 0) {
             log.debug("Redis预减库存失败，库存不足: skuId={}, quantity={}, result={}",
@@ -179,9 +200,23 @@ public class SeckillServiceImpl implements SeckillService {
 
     @Override
     public void restoreRedisStock(Long skuId, Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            log.warn("恢复Redis库存参数非法: skuId={}, quantity={}", skuId, quantity);
+            return;
+        }
+
         String key = SECKILL_STOCK_KEY + skuId;
-        redisTemplate.opsForValue().increment(key, quantity);
-        log.debug("恢复Redis库存: skuId={}, quantity={}", skuId, quantity);
+        Long result = redisTemplate.execute(
+                stockRestoreScript,
+                Collections.singletonList(key),
+                quantity);
+
+        if (result != null && result >= 0) {
+            log.debug("恢复Redis库存成功: skuId={}, quantity={}, newStock={}", skuId, quantity, result);
+        } else {
+            log.warn("恢复Redis库存失败(key不存在)，尝试从数据库同步: skuId={}, result={}", skuId, result);
+            syncStockToRedis(skuId);
+        }
     }
 
     @Override
@@ -196,6 +231,18 @@ public class SeckillServiceImpl implements SeckillService {
         ProductSku sku = productSkuMapper.selectById(skuId);
         if (sku != null) {
             initSeckillStock(skuId, sku.getStock());
+        }
+    }
+
+    @Override
+    public void syncSeckillStockToRedis(Long seckillProductId) {
+        SeckillProduct sp = seckillProductMapper.selectById(seckillProductId);
+        if (sp != null) {
+            initSeckillStock(sp.getSkuId(), sp.getSeckillStock());
+            log.info("从秒杀商品表同步库存到Redis: seckillProductId={}, skuId={}, stock={}",
+                    seckillProductId, sp.getSkuId(), sp.getSeckillStock());
+        } else {
+            log.warn("秒杀商品不存在，无法同步库存: seckillProductId={}", seckillProductId);
         }
     }
 

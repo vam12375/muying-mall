@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +64,7 @@ public class SeckillController {
 
     @PostMapping("/execute")
     @Operation(summary = "执行秒杀（同步模式）")
-    public Result<Long> executeSeckill(@RequestBody SeckillRequestDTO request) {
+    public Result<Long> executeSeckill(@RequestBody @Valid SeckillRequestDTO request) {
         Integer userId = userContext.getCurrentUserId();
 
         if (userId == null) {
@@ -80,11 +82,16 @@ public class SeckillController {
 
     @PostMapping("/execute-async")
     @Operation(summary = "执行秒杀（异步模式 - 推荐）")
-    public Result<String> executeSeckillAsync(@RequestBody SeckillRequestDTO request) {
+    public Result<String> executeSeckillAsync(@RequestBody @Valid SeckillRequestDTO request) {
         Integer userId = userContext.getCurrentUserId();
 
         if (userId == null) {
             return Result.error("请先登录");
+        }
+
+        // 前置校验：拒绝明显无效的请求，避免浪费MQ资源
+        if (!seckillOrderService.canUserParticipate(userId, request.getSeckillProductId())) {
+            return Result.error("您暂时无法参与该秒杀活动（已达购买上限或有待支付订单）");
         }
 
         try {
@@ -94,6 +101,7 @@ public class SeckillController {
             message.put("seckillProductId", request.getSeckillProductId());
             message.put("quantity", request.getQuantity());
             message.put("addressId", request.getAddressId());
+            message.put("paymentMethod", request.getPaymentMethod());
 
             // 发送到MQ异步处理
             rabbitTemplate.convertAndSend(

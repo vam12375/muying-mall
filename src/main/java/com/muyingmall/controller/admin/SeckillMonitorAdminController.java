@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -256,14 +258,14 @@ public class SeckillMonitorAdminController {
         try {
             Map<String, Object> status = new HashMap<>();
             
-            // 获取秒杀相关的Redis key数量
-            java.util.Set<String> stockKeys = redisTemplate.keys("seckill:stock:*");
-            java.util.Set<String> orderKeys = redisTemplate.keys("seckill:order:*");
-            java.util.Set<String> userKeys = redisTemplate.keys("seckill:user:*");
+            // 获取秒杀相关的Redis key数量（使用SCAN替代KEYS避免阻塞Redis）
+            java.util.Set<String> stockKeys = scanKeys("seckill:stock:*");
+            java.util.Set<String> orderKeys = scanKeys("seckill:order:*");
+            java.util.Set<String> userKeys = scanKeys("seckill:user:*");
             
-            status.put("stockKeyCount", stockKeys != null ? stockKeys.size() : 0);
-            status.put("orderKeyCount", orderKeys != null ? orderKeys.size() : 0);
-            status.put("userKeyCount", userKeys != null ? userKeys.size() : 0);
+            status.put("stockKeyCount", stockKeys.size());
+            status.put("orderKeyCount", orderKeys.size());
+            status.put("userKeyCount", userKeys.size());
             
             log.debug("查询Redis缓存状态成功");
             return Result.success(status);
@@ -291,29 +293,29 @@ public class SeckillMonitorAdminController {
             
             switch (type) {
                 case "stock":
-                    java.util.Set<String> stockKeys = redisTemplate.keys("seckill:stock:*");
-                    if (stockKeys != null && !stockKeys.isEmpty()) {
+                    java.util.Set<String> stockKeys = scanKeys("seckill:stock:*");
+                    if (!stockKeys.isEmpty()) {
                         clearedCount = stockKeys.size();
                         redisTemplate.delete(stockKeys);
                     }
                     break;
                 case "order":
-                    java.util.Set<String> orderKeys = redisTemplate.keys("seckill:order:*");
-                    if (orderKeys != null && !orderKeys.isEmpty()) {
+                    java.util.Set<String> orderKeys = scanKeys("seckill:order:*");
+                    if (!orderKeys.isEmpty()) {
                         clearedCount = orderKeys.size();
                         redisTemplate.delete(orderKeys);
                     }
                     break;
                 case "user":
-                    java.util.Set<String> userKeys = redisTemplate.keys("seckill:user:*");
-                    if (userKeys != null && !userKeys.isEmpty()) {
+                    java.util.Set<String> userKeys = scanKeys("seckill:user:*");
+                    if (!userKeys.isEmpty()) {
                         clearedCount = userKeys.size();
                         redisTemplate.delete(userKeys);
                     }
                     break;
                 case "all":
-                    java.util.Set<String> allKeys = redisTemplate.keys("seckill:*");
-                    if (allKeys != null && !allKeys.isEmpty()) {
+                    java.util.Set<String> allKeys = scanKeys("seckill:*");
+                    if (!allKeys.isEmpty()) {
                         clearedCount = allKeys.size();
                         redisTemplate.delete(allKeys);
                     }
@@ -380,5 +382,14 @@ public class SeckillMonitorAdminController {
             log.error("同步库存失败", e);
             return Result.error("同步失败：" + e.getMessage());
         }
+    }
+
+    private java.util.Set<String> scanKeys(String pattern) {
+        java.util.Set<String> keys = new java.util.HashSet<>();
+        try (Cursor<String> cursor = redisTemplate.scan(
+                ScanOptions.scanOptions().match(pattern).count(100).build())) {
+            cursor.forEachRemaining(keys::add);
+        }
+        return keys;
     }
 }

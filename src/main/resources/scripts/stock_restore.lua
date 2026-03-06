@@ -1,33 +1,33 @@
 -- stock_restore.lua
--- 秒杀库存原子性恢复脚本
--- 功能：恢复库存（用于订单取消、支付失败等场景）
+-- 秒杀库存原子性恢复脚本（含用户去重清理）
+-- 功能：参数校验 → 恢复库存 → 移除用户去重记录
 --
 -- KEYS[1]: 库存Key，如 seckill:stock:{skuId}
--- KEYS[2]: 用户购买记录Set Key，如 seckill:users:{seckillProductId}
+-- KEYS[2]: 用户去重集合Key，如 seckill:user:{seckillProductId}（可选）
 -- ARGV[1]: 恢复数量
--- ARGV[2]: 用户ID（可选，用于清除购买记录）
+-- ARGV[2]: 用户ID（可选，与KEYS[2]配合使用）
 --
 -- 返回值：
---   1: 恢复成功
+--   恢复后的库存值（>= 0）: 恢复成功
 --  -1: 库存Key不存在
+--  -4: 参数非法（恢复数量无法解析或 <= 0）
 
 local stockKey = KEYS[1]
-local userSetKey = KEYS[2]
 local restoreNum = tonumber(ARGV[1])
-local userId = ARGV[2]
 
--- 检查库存Key是否存在
+if (restoreNum == nil or restoreNum <= 0) then
+    return -4
+end
+
 if (redis.call('exists', stockKey) == 0) then
     return -1
 end
 
--- 执行库存恢复
-redis.call('incrby', stockKey, restoreNum)
+local newStock = redis.call('incrby', stockKey, restoreNum)
 
--- 可选：从Set中移除用户（允许用户重新购买）
-if (userId ~= nil and userId ~= '' and userSetKey ~= nil and userSetKey ~= '') then
-    redis.call('srem', userSetKey, userId)
+-- 移除用户去重记录（当提供用户集合Key和用户ID时生效）
+if #KEYS >= 2 and ARGV[2] then
+    redis.call('srem', KEYS[2], tostring(ARGV[2]))
 end
 
--- 返回成功
-return 1
+return newStock

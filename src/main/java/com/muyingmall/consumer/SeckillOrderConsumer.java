@@ -10,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * 秒杀订单消费者 - 异步处理秒杀订单，实现削峰填谷
@@ -22,6 +25,9 @@ public class SeckillOrderConsumer {
 
     private final SeckillOrderService seckillOrderService;
     private final ObjectMapper objectMapper;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private static final String IDEMPOTENT_KEY_PREFIX = "mq:seckill:consumed:";
 
     /**
      * 消费秒杀订单消息
@@ -34,14 +40,23 @@ public class SeckillOrderConsumer {
         try {
             log.info("收到秒杀订单消息: {}", messageBody);
 
-            // 解析消息
             SeckillOrderMessage orderMessage = objectMapper.readValue(messageBody, SeckillOrderMessage.class);
+
+            // 幂等性检查：防止消息重复消费
+            String idempotentKey = IDEMPOTENT_KEY_PREFIX + orderMessage.getUserId() + ":" + orderMessage.getSeckillProductId();
+            Boolean isNew = redisTemplate.opsForValue().setIfAbsent(idempotentKey, 1, 24, TimeUnit.HOURS);
+            if (Boolean.FALSE.equals(isNew)) {
+                log.warn("秒杀消息重复消费，跳过: userId={}, productId={}", orderMessage.getUserId(), orderMessage.getSeckillProductId());
+                channel.basicAck(deliveryTag, false);
+                return;
+            }
 
             // 构建秒杀请求
             SeckillRequestDTO request = new SeckillRequestDTO();
             request.setSeckillProductId(orderMessage.getSeckillProductId());
             request.setQuantity(orderMessage.getQuantity());
             request.setAddressId(orderMessage.getAddressId());
+            request.setPaymentMethod(orderMessage.getPaymentMethod());
 
             // 执行秒杀
             Long orderId = seckillOrderService.executeSeckill(orderMessage.getUserId(), request);
@@ -83,5 +98,6 @@ public class SeckillOrderConsumer {
         private Long seckillProductId;
         private Integer quantity;
         private Long addressId;
+        private String paymentMethod;
     }
 }

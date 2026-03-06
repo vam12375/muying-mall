@@ -8,6 +8,7 @@ import com.muyingmall.entity.SeckillOrder;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,14 +21,34 @@ import java.util.Map;
 public interface SeckillOrderMapper extends BaseMapper<SeckillOrder> {
     
     /**
-     * 查询用户在活动中的购买数量
+     * 查询用户在活动中的已支付购买数量。
+     * 业务约束：只有支付成功（status=1）才计入用户秒杀成功次数。
      */
     @Select("SELECT COALESCE(SUM(quantity), 0) FROM seckill_order " +
             "WHERE user_id = #{userId} AND activity_id = #{activityId} " +
-            "AND seckill_product_id = #{seckillProductId} AND status != 2")
+            "AND seckill_product_id = #{seckillProductId} AND status = 1")
     Integer countUserPurchase(@Param("userId") Integer userId, 
                              @Param("activityId") Long activityId,
                              @Param("seckillProductId") Long seckillProductId);
+
+    /**
+     * 查询用户在活动中的待支付购买数量。
+     * 用于拦截重复占位下单，防止同一用户无限创建待支付秒杀订单。
+     */
+    @Select("SELECT COALESCE(SUM(quantity), 0) FROM seckill_order " +
+            "WHERE user_id = #{userId} AND activity_id = #{activityId} " +
+            "AND seckill_product_id = #{seckillProductId} AND status = 0")
+    Integer countUserPendingPurchase(@Param("userId") Integer userId,
+                                     @Param("activityId") Long activityId,
+                                     @Param("seckillProductId") Long seckillProductId);
+
+    /**
+     * 将待支付秒杀订单原子标记为已取消。
+     * 返回值为影响行数：1表示成功从待支付转取消，0表示订单不存在或状态已变化。
+     */
+    @Update("UPDATE seckill_order SET status = 2, update_time = NOW() " +
+            "WHERE order_id = #{orderId} AND status = 0")
+    int updateStatusToCancelledIfPending(@Param("orderId") Long orderId);
     
     /**
      * 分页查询秒杀订单（管理后台）

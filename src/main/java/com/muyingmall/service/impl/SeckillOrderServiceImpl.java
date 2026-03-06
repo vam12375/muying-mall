@@ -35,6 +35,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SeckillOrderServiceImpl implements SeckillOrderService {
 
+    private static final int DEFAULT_LIMIT_PER_SKU = 2;
+
     private final SeckillService seckillService;
     private final SeckillProductMapper seckillProductMapper;
     private final SeckillActivityMapper seckillActivityMapper;
@@ -44,22 +46,58 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long executeSeckill(Integer userId, SeckillRequestDTO request) {
-        // 1. 查询秒杀商品信息
+        // 1. 基础参数校验
+        if (request == null || request.getSeckillProductId() == null || request.getQuantity() == null
+                || request.getQuantity() <= 0) {
+            throw new BusinessException("秒杀参数不合法");
+        }
+
+        // 2. 查询秒杀商品信息
         SeckillProduct seckillProduct = seckillProductMapper.selectById(request.getSeckillProductId());
         if (seckillProduct == null) {
             throw new BusinessException("秒杀商品不存在");
         }
 
-        // 2. 查询活动信息，计算活动剩余时间用于用户购买记录的过期设置
+        // 3. 校验秒杀活动状态和时间
         SeckillActivity activity = seckillActivityMapper.selectById(seckillProduct.getActivityId());
-        Long expireSeconds = null;
-        if (activity != null && activity.getEndTime() != null) {
-            long remainingSeconds = Duration.between(LocalDateTime.now(), activity.getEndTime()).getSeconds();
-            // 至少保留60秒，防止边界情况
-            expireSeconds = Math.max(remainingSeconds, 60);
+        if (activity == null || activity.getStatus() != 1) {
+            throw new BusinessException("秒杀活动未开始或已结束");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(activity.getStartTime()) || now.isAfter(activity.getEndTime())) {
+            throw new BusinessException("秒杀活动未开始或已结束");
         }
 
-        // 3. 使用Lua脚本原子性扣减库存（包含用户去重校验）
+        // 4. 只统计"已支付"秒杀数量，达到上限后直接拒绝。
+        int effectiveLimit = resolveEffectiveLimitPerUser(seckillProduct);
+        int paidQuantity = Math.max(0, seckillOrderMapper.countUserPurchase(
+                userId,
+                seckillProduct.getActivityId(),
+                request.getSeckillProductId()));
+
+        if (paidQuantity >= effectiveLimit) {
+            throw new BusinessException("每位用户最多可成功购买" + effectiveLimit + "件，您已达上限");
+        }
+
+        int remainAllowed = effectiveLimit - paidQuantity;
+        if (request.getQuantity() > remainAllowed) {
+            throw new BusinessException("当前最多还可成功购买" + remainAllowed + "件");
+        }
+
+        // 5. 待支付订单拦截：同一用户同一秒杀商品仅允许一个待支付占位，防止无限抢单。
+        int pendingQuantity = Math.max(0, seckillOrderMapper.countUserPendingPurchase(
+                userId,
+                seckillProduct.getActivityId(),
+                request.getSeckillProductId()));
+        if (pendingQuantity > 0) {
+            throw new BusinessException("你有待支付的秒杀订单，请先完成支付或等待超时后重试");
+        }
+
+        // 6. 计算活动剩余时间作为Redis用户集合过期时间
+        long remainingSeconds = Duration.between(now, activity.getEndTime()).getSeconds();
+        Long expireSeconds = Math.max(remainingSeconds, 60);
+
+        // 7. 使用Lua脚本原子性扣减库存（含用户去重）
         int luaResult = seckillService.deductStockWithLua(
                 request.getSeckillProductId(),
                 seckillProduct.getSkuId(),
@@ -67,25 +105,23 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
                 userId,
                 expireSeconds);
 
-        // 处理Lua脚本返回结果
         if (luaResult == -1) {
             throw new BusinessException("商品已售罄");
         } else if (luaResult == -2) {
             throw new BusinessException("您已参与过该秒杀活动");
         } else if (luaResult == -3) {
-            throw new BusinessException("秒杀活动未开始或已结束");
+            throw new BusinessException("库存数据异常，请稍后重试");
         } else if (luaResult != 1) {
             throw new BusinessException("秒杀失败，请稍后重试");
         }
 
         try {
-            // 3. 扣减数据库秒杀库存（使用乐观锁）
+            // 8. 扣减数据库秒杀库存（乐观锁）
             int deductResult = seckillProductMapper.deductStock(
                     request.getSeckillProductId(),
                     request.getQuantity());
 
             if (deductResult <= 0) {
-                // 库存扣减失败，恢复Redis库存和用户记录
                 seckillService.restoreStockWithLua(
                         request.getSeckillProductId(),
                         seckillProduct.getSkuId(),
@@ -94,25 +130,26 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
                 throw new BusinessException("库存不足，秒杀失败");
             }
 
-            // 5. 使用directPurchase创建订单
+            // 9. 使用directPurchase创建订单（传入秒杀价覆盖SKU原价）
+            String payMethod = (request.getPaymentMethod() != null) ? request.getPaymentMethod() : "ALIPAY";
             Map<String, Object> orderResult = orderService.directPurchase(
                     userId,
                     request.getAddressId().intValue(),
                     seckillProduct.getProductId().intValue(),
                     request.getQuantity(),
-                    null, // specs
+                    null,
                     seckillProduct.getSkuId(),
-                    "秒杀订单", // remark
-                    "ALIPAY", // paymentMethod
-                    null, // couponId
-                    java.math.BigDecimal.ZERO, // shippingFee
-                    0 // pointsUsed
+                    "秒杀订单",
+                    payMethod,
+                    null,
+                    BigDecimal.ZERO,
+                    0,
+                    seckillProduct.getSeckillPrice()
             );
 
-            // 6. 获取订单ID
+            // 10. 获取订单ID并创建秒杀订单记录
             Long orderId = ((Number) orderResult.get("orderId")).longValue();
 
-            // 7. 创建秒杀订单记录
             SeckillOrder seckillOrder = new SeckillOrder();
             seckillOrder.setOrderId(orderId);
             seckillOrder.setUserId(userId);
@@ -130,7 +167,6 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
             return orderId;
 
         } catch (Exception e) {
-            // 订单创建失败，恢复Redis库存和用户记录
             log.error("秒杀订单创建失败，恢复库存: userId={}, skuId={}", userId, seckillProduct.getSkuId(), e);
             seckillService.restoreStockWithLua(
                     request.getSeckillProductId(),
@@ -143,20 +179,38 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
 
     @Override
     public boolean canUserParticipate(Integer userId, Long seckillProductId) {
-        // 查询秒杀商品信息
         SeckillProduct seckillProduct = seckillProductMapper.selectById(seckillProductId);
         if (seckillProduct == null) {
             return false;
         }
 
-        // 查询用户已购买数量
         Integer purchasedCount = seckillOrderMapper.countUserPurchase(
                 userId,
                 seckillProduct.getActivityId(),
                 seckillProductId);
 
-        // 检查是否超过限购
-        return purchasedCount < seckillProduct.getLimitPerUser();
+        Integer pendingCount = seckillOrderMapper.countUserPendingPurchase(
+                userId,
+                seckillProduct.getActivityId(),
+                seckillProductId);
+
+        if (Math.max(0, pendingCount) > 0) {
+            return false;
+        }
+
+        return Math.max(0, purchasedCount) < resolveEffectiveLimitPerUser(seckillProduct);
+    }
+
+    /**
+     * 计算用户对该SKU的限购数量。
+     * 优先使用商品配置的 limitPerUser；未配置时使用默认值。
+     */
+    private int resolveEffectiveLimitPerUser(SeckillProduct seckillProduct) {
+        if (seckillProduct != null && seckillProduct.getLimitPerUser() != null
+                && seckillProduct.getLimitPerUser() > 0) {
+            return seckillProduct.getLimitPerUser();
+        }
+        return DEFAULT_LIMIT_PER_SKU;
     }
 
     @Override
@@ -170,7 +224,6 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
     public SeckillOrderDTO getOrderDetailById(Long id) {
         SeckillOrderDTO orderDTO = seckillOrderMapper.selectOrderDetail(id);
         if (orderDTO != null) {
-            // 设置状态文本
             orderDTO.setStatusText(convertStatusToText(orderDTO.getStatus()));
         }
         return orderDTO;
@@ -194,10 +247,9 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
 
     @Override
     public BigDecimal sumAmountByActivityId(Long activityId) {
-        // 查询活动下所有已支付订单
         LambdaQueryWrapper<SeckillOrder> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SeckillOrder::getActivityId, activityId)
-                .eq(SeckillOrder::getStatus, 1); // 已支付
+                .eq(SeckillOrder::getStatus, 1);
 
         return seckillOrderMapper.selectList(wrapper).stream()
                 .map(order -> order.getSeckillPrice().multiply(new BigDecimal(order.getQuantity())))
@@ -224,7 +276,7 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
     public Integer sumQuantityByProductId(Long productId) {
         LambdaQueryWrapper<SeckillOrder> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SeckillOrder::getSeckillProductId, productId)
-                .eq(SeckillOrder::getStatus, 1); // 已支付
+                .eq(SeckillOrder::getStatus, 1);
 
         return seckillOrderMapper.selectList(wrapper).stream()
                 .mapToInt(SeckillOrder::getQuantity)
@@ -235,7 +287,7 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
     public BigDecimal sumAmountByProductId(Long productId) {
         LambdaQueryWrapper<SeckillOrder> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SeckillOrder::getSeckillProductId, productId)
-                .eq(SeckillOrder::getStatus, 1); // 已支付
+                .eq(SeckillOrder::getStatus, 1);
 
         return seckillOrderMapper.selectList(wrapper).stream()
                 .map(order -> order.getSeckillPrice().multiply(new BigDecimal(order.getQuantity())))
@@ -277,7 +329,7 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
         if (endTime != null) {
             wrapper.le(SeckillOrder::getCreateTime, endTime);
         }
-        wrapper.eq(SeckillOrder::getStatus, 1); // 已支付
+        wrapper.eq(SeckillOrder::getStatus, 1);
 
         return seckillOrderMapper.selectList(wrapper).stream()
                 .map(order -> order.getSeckillPrice().multiply(new BigDecimal(order.getQuantity())))
@@ -306,7 +358,6 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
             wrapper.le(SeckillOrder::getCreateTime, endTime);
         }
 
-        // 查询所有订单，然后统计不同的用户ID
         return seckillOrderMapper.selectList(wrapper).stream()
                 .map(SeckillOrder::getUserId)
                 .distinct()
@@ -335,28 +386,22 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
         return rows > 0;
     }
 
-    /**
-     * 将状态字符串转换为状态码
-     */
     private Integer convertStatusToCode(String status) {
         if (status == null) {
             return null;
         }
         switch (status.toUpperCase()) {
             case "PENDING":
-                return 0; // 待支付
+                return 0;
             case "SUCCESS":
-                return 1; // 已支付
+                return 1;
             case "CANCELLED":
-                return 2; // 已取消
+                return 2;
             default:
                 return null;
         }
     }
 
-    /**
-     * 将状态码转换为状态文本
-     */
     private String convertStatusToText(Integer status) {
         if (status == null) {
             return "未知";
