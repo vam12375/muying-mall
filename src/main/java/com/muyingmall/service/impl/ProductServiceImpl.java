@@ -298,7 +298,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean createProduct(Product product) {
         // 保存商品基本信息
         boolean result = save(product);
@@ -330,7 +330,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateProduct(Product product) {
         Integer productId = product.getProductId();
         
@@ -395,7 +395,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteById(Integer id) {
         // 删除商品基本信息
         boolean result = removeById(id);
@@ -419,7 +419,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateStatus(Integer id, Integer status) {
         Product product = getById(id);
         if (product == null) {

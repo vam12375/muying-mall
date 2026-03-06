@@ -33,7 +33,7 @@ public class LogisticsScheduledTask {
      * 若任务仅在整点每2小时触发，会错过 xx:16 的推进时刻。
      * 因此改为每分钟检查一次，按 trackingTime <= now 精准推进到当前应到达点。
      */
-    @Scheduled(cron = "0 */1 * * * *")
+    @Scheduled(cron = "0 0 */12 * * *")
     public void updateLogisticsProgress() {
         log.info("开始执行物流进度推进定时任务");
 

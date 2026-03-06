@@ -35,7 +35,7 @@ public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCou
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean markAsUsed(Long id, Long orderId) {
         UserCoupon userCoupon = getById(id);
         if (userCoupon == null) {

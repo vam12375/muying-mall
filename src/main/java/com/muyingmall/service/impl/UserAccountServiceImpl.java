@@ -655,22 +655,18 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new IllegalArgumentException("用户账户不存在");
         }
 
-        // 检查余额
-        if (userAccount.getBalance().compareTo(amount) < 0) {
+        // 记录扣款前余额（用于交易记录）
+        BigDecimal beforeBalance = userAccount.getBalance();
+
+        // 原子扣减余额（SQL 层面 WHERE balance >= amount，防止并发超扣）
+        Date now = new Date();
+        int rows = userAccountMapper.deductBalance(userId, amount, now);
+        if (rows <= 0) {
             throw new IllegalArgumentException("账户余额不足");
         }
 
-        // 更新账户余额
-        BigDecimal beforeBalance = userAccount.getBalance();
+        // 计算扣款后余额
         BigDecimal afterBalance = beforeBalance.subtract(amount);
-        userAccount.setBalance(afterBalance);
-        userAccount.setUpdateTime(new Date());
-
-        // 更新数据库
-        int rows = userAccountMapper.updateById(userAccount);
-        if (rows <= 0) {
-            throw new RuntimeException("更新账户余额失败");
-        }
 
         // 创建交易记录
         AccountTransaction transaction = new AccountTransaction();
@@ -686,11 +682,14 @@ public class UserAccountServiceImpl implements UserAccountService {
         transaction.setAccountId(userAccount.getId());
         transaction.setRelatedId(orderId.toString());
         transaction.setDescription("账户消费扣款");
-        transaction.setCreateTime(new Date());
-        transaction.setUpdateTime(new Date());
+        transaction.setCreateTime(now);
+        transaction.setUpdateTime(now);
 
         // 保存交易记录
         accountTransactionMapper.insert(transaction);
+
+        // 清除用户账户缓存，避免读到旧余额
+        clearUserAccountCache(userId);
 
         // TODO: 更新订单状态为已支付
         // orderService.updateOrderStatus(orderId, 1); // 假设1表示已支付状态
@@ -719,17 +718,18 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new BusinessException("用户账户不存在");
         }
 
-        // 更新账户余额
+        // 记录退款前余额（用于交易记录）
         BigDecimal beforeBalance = userAccount.getBalance();
-        BigDecimal afterBalance = beforeBalance.add(amount);
-        userAccount.setBalance(afterBalance);
-        userAccount.setUpdateTime(new Date());
 
-        // 更新数据库
-        int rows = userAccountMapper.updateById(userAccount);
+        // 原子增加余额（SQL 层面直接 balance + amount，防止并发覆盖）
+        Date now = new Date();
+        int rows = userAccountMapper.addBalance(userId, amount, now);
         if (rows <= 0) {
             throw new RuntimeException("更新账户余额失败");
         }
+
+        // 计算退款后余额
+        BigDecimal afterBalance = beforeBalance.add(amount);
 
         // 创建交易记录
         AccountTransaction transaction = new AccountTransaction();

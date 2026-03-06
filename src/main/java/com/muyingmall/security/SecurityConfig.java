@@ -109,8 +109,8 @@ public class SecurityConfig {
                                 .requestMatchers("/upload/**", "/static/**").permitAll()
                                 // 允许访问公开可用的优惠券列表
                                 .requestMatchers("/coupons/available").permitAll()
-                                // [P2 修复] 退款公开接口，已补全前导斜杠
-                                .requestMatchers("/refund/**").permitAll()
+                                // 退款接口需要登录
+                                .requestMatchers("/refund/**").authenticated()
                                 // [P0 安全修复] 管理员退款接口已恢复鉴权，不再临时放行
                                 // .requestMatchers("/admin/refund/**").permitAll()
                                 // [P2 安全修复] 使用标准路径匹配替代Lambda，避免URL编码绕过风险

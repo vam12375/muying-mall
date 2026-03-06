@@ -146,4 +146,26 @@ public interface UserAccountMapper extends BaseMapper<UserAccount> {
          */
         @Select("SELECT COALESCE(SUM(balance), 0) FROM user_account")
         java.math.BigDecimal sumAllBalance();
+
+        /**
+         * 原子扣减余额（WHERE balance >= amount 防止超扣）
+         *
+         * @param userId     用户ID
+         * @param amount     扣减金额
+         * @param updateTime 更新时间
+         * @return 影响行数，0 表示余额不足或用户不存在
+         */
+        @Update("UPDATE user_account SET balance = balance - #{amount}, update_time = #{updateTime} WHERE user_id = #{userId} AND balance >= #{amount}")
+        int deductBalance(@Param("userId") Integer userId, @Param("amount") java.math.BigDecimal amount, @Param("updateTime") java.util.Date updateTime);
+
+        /**
+         * 原子增加余额（用于退款等场景）
+         *
+         * @param userId     用户ID
+         * @param amount     增加金额
+         * @param updateTime 更新时间
+         * @return 影响行数
+         */
+        @Update("UPDATE user_account SET balance = balance + #{amount}, update_time = #{updateTime} WHERE user_id = #{userId}")
+        int addBalance(@Param("userId") Integer userId, @Param("amount") java.math.BigDecimal amount, @Param("updateTime") java.util.Date updateTime);
 }

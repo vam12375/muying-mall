@@ -9,7 +9,7 @@ import com.muyingmall.dto.SkuStockDTO;
 import com.muyingmall.entity.Product;
 import com.muyingmall.entity.ProductSku;
 import com.muyingmall.entity.ProductSkuStockLog;
-import com.muyingmall.exception.BusinessException;
+import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.mapper.ProductMapper;
 import com.muyingmall.mapper.ProductSkuMapper;
 import com.muyingmall.mapper.ProductSkuStockLogMapper;
