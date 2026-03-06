@@ -95,6 +95,12 @@ public class Payment implements Serializable {
     private String extra;
 
     /**
+     * TCC 事务类型标识（非持久化字段，仅在 TCC 事务流程中传递）
+     */
+    @TableField(exist = false)
+    private transient String tccTransactionType;
+
+    /**
      * 版本号，用于乐观锁控制
      */
     @Version

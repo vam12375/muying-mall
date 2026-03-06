@@ -96,7 +96,7 @@ public class PaymentController {
      */
     @PostMapping("/alipay/create/{orderId}")
     @Operation(summary = "创建支付宝支付订单")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Result<Map<String, Object>> createAlipayPayment(@PathVariable("orderId") Integer orderId) {
         // 获取当前认证用户
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -208,7 +208,7 @@ public class PaymentController {
      */
     @PostMapping("/wechat/sandbox/{orderId}")
     @Operation(summary = "创建微信沙箱模拟支付订单")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Result<Map<String, Object>> createWechatSandboxPayment(@PathVariable("orderId") Integer orderId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
@@ -299,7 +299,7 @@ public class PaymentController {
      */
     @PostMapping("/wechat/sandbox/create/{orderId}")
     @Operation(summary = "创建微信沙箱模拟支付订单（兼容原始路径）")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Result<Map<String, Object>> createWechatSandboxPaymentCompat(@PathVariable("orderId") Integer orderId) {
         // 委托给新的实现方法，确保兼容性
         return createWechatSandboxPayment(orderId);
@@ -310,7 +310,7 @@ public class PaymentController {
      */
     @PostMapping("/wallet/create/{orderId}")
     @Operation(summary = "创建钱包支付订单")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Result<Map<String, Object>> createWalletPayment(@PathVariable("orderId") Integer orderId,
             @RequestBody(required = false) Map<String, Object> requestParams) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -843,7 +843,7 @@ public class PaymentController {
     /**
      * 向支付宝查询交易状态并更新本地支付记录
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private void checkAlipayTradeStatus(Payment payment) throws AlipayApiException {
         if (!"alipay".equals(payment.getPaymentMethod())) {
             return;
@@ -1112,7 +1112,7 @@ public class PaymentController {
      */
     @PostMapping("/refund/{paymentId}")
     @Operation(summary = "处理退款")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Result<Boolean> processRefund(@PathVariable("paymentId") Long paymentId,
                                        @RequestBody Map<String, Object> refundRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

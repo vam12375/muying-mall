@@ -2,7 +2,7 @@ package com.muyingmall.service.impl;
 
 import com.muyingmall.entity.Payment;
 import com.muyingmall.enums.PaymentStatus;
-import com.muyingmall.exception.BusinessException;
+import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.service.PaymentService;
 import com.muyingmall.service.PaymentStateLogService;
 import com.muyingmall.service.PaymentStateService;
@@ -74,7 +74,7 @@ public class PaymentStateServiceImpl implements PaymentStateService {
         } catch (Exception e) {
             log.error("支付状态转换失败：paymentId={}, event={}, error={}",
                     payment.getId(), event, e.getMessage(), e);
-            throw new BusinessException("支付状态转换失败：" + e.getMessage(), e);
+            throw new BusinessException("支付状态转换失败：" + e.getMessage());
         }
     }
 

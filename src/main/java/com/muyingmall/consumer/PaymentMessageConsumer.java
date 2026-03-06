@@ -11,11 +11,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 支付消息消费者
@@ -33,6 +35,11 @@ public class PaymentMessageConsumer {
     
     @Autowired
     private SeckillOrderService seckillOrderService;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    private static final String IDEMPOTENT_KEY_PREFIX = "mq:payment:consumed:";
 
 
 
@@ -56,16 +63,21 @@ public class PaymentMessageConsumer {
 
         
         try {
-            // 验证消息内容
             if (paymentMessage.getPaymentId() == null || paymentMessage.getOrderId() == null) {
                 log.error("支付成功消息内容不完整: {}", paymentMessage);
-
-                // 拒绝消息，不重新入队
                 channel.basicNack(deliveryTag, false, false);
                 return;
             }
 
-            // 处理支付成功的业务逻辑
+            // 幂等性检查：防止重复消费导致订单状态错乱
+            String idempotentKey = IDEMPOTENT_KEY_PREFIX + "success:" + paymentMessage.getPaymentId();
+            Boolean isNew = redisTemplate.opsForValue().setIfAbsent(idempotentKey, 1, 24, TimeUnit.HOURS);
+            if (Boolean.FALSE.equals(isNew)) {
+                log.warn("支付成功消息重复消费，跳过: paymentId={}", paymentMessage.getPaymentId());
+                channel.basicAck(deliveryTag, false);
+                return;
+            }
+
             processPaymentSuccess(paymentMessage);
             
             // 手动确认消息
@@ -196,9 +208,8 @@ public class PaymentMessageConsumer {
             if (orderId != null) {
                 log.info("更新订单状态为已支付: orderId={}", orderId);
                 try {
-                    // 使用管理员方法更新订单状态为已完成
-                    orderService.updateOrderStatusByAdmin(orderId, "completed", "支付成功");
-                    log.info("订单状态更新成功: orderId={}, status=completed", orderId);
+                    orderService.updateOrderStatusByAdmin(orderId, "pending_shipment", "支付成功，待发货");
+                    log.info("订单状态更新成功: orderId={}, status=pending_shipment", orderId);
                     
                     // 同步更新秒杀订单状态（如果是秒杀订单）
                     updateSeckillOrderStatusIfNeeded(orderId);

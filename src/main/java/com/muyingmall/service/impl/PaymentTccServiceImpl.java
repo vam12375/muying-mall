@@ -2,15 +2,13 @@ package com.muyingmall.service.impl;
 
 import com.muyingmall.entity.Payment;
 import com.muyingmall.enums.PaymentStatus;
-import com.muyingmall.exception.BusinessException;
+import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.lock.DistributedLock;
 import com.muyingmall.service.PaymentService;
 import com.muyingmall.service.PaymentStateLogService;
 import com.muyingmall.service.PaymentTccService;
 import com.muyingmall.statemachine.PaymentEvent;
 import com.muyingmall.statemachine.PaymentStateContext;
-import com.muyingmall.tcc.TccAction;
-import com.muyingmall.tcc.TccTransaction;
 import com.muyingmall.tcc.TccTransactionManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +38,9 @@ public class PaymentTccServiceImpl implements PaymentTccService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Payment createPaymentWithTcc(Payment payment) {
+        // 标记 TCC 事务类型，供 tryAction/confirmAction/cancelAction 分支判断
+        payment.setTccTransactionType("createPayment");
+
         // 开始TCC事务
         String transactionId = tccTransactionManager.begin("createPayment", payment.getPaymentNo(), payment);
 
@@ -54,7 +55,7 @@ public class PaymentTccServiceImpl implements PaymentTccService {
         } catch (Exception e) {
             // 执行Cancel阶段
             tccTransactionManager.cancelAction(transactionId, this, payment);
-            throw new BusinessException("创建支付失败：" + e.getMessage(), e);
+            throw new BusinessException("创建支付失败：" + e.getMessage());
         }
     }
 
@@ -70,6 +71,9 @@ public class PaymentTccServiceImpl implements PaymentTccService {
         // 设置第三方交易号
         payment.setTransactionId(transactionId);
 
+        // 标记 TCC 事务类型，供 tryAction/confirmAction/cancelAction 分支判断
+        payment.setTccTransactionType("processPayment");
+
         // 开始TCC事务
         String tccTransactionId = tccTransactionManager.begin("processPayment", paymentNo, payment);
 
@@ -84,7 +88,7 @@ public class PaymentTccServiceImpl implements PaymentTccService {
         } catch (Exception e) {
             // 执行Cancel阶段
             tccTransactionManager.cancelAction(tccTransactionId, this, payment);
-            throw new BusinessException("处理支付失败：" + e.getMessage(), e);
+            throw new BusinessException("处理支付失败：" + e.getMessage());
         }
     }
 
@@ -96,6 +100,9 @@ public class PaymentTccServiceImpl implements PaymentTccService {
         if (payment == null) {
             throw new BusinessException("支付不存在：" + paymentNo);
         }
+
+        // 标记 TCC 事务类型，供 tryAction/confirmAction/cancelAction 分支判断
+        payment.setTccTransactionType("closePayment");
 
         // 开始TCC事务
         String transactionId = tccTransactionManager.begin("closePayment", paymentNo, payment);
@@ -111,7 +118,7 @@ public class PaymentTccServiceImpl implements PaymentTccService {
         } catch (Exception e) {
             // 执行Cancel阶段
             tccTransactionManager.cancelAction(transactionId, this, payment);
-            throw new BusinessException("关闭支付失败：" + e.getMessage(), e);
+            throw new BusinessException("关闭支付失败：" + e.getMessage());
         }
     }
 
@@ -138,6 +145,9 @@ public class PaymentTccServiceImpl implements PaymentTccService {
             }
 
             if (existingPayment != null) {
+                // 将 TCC 事务类型传递给从 DB 加载的对象，确保后续阶段可用
+                existingPayment.setTccTransactionType(payment.getTccTransactionType());
+
                 // 支付已存在，检查状态
                 if (Objects.equals("createPayment", getTransactionType(payment))) {
                     throw new BusinessException("支付已存在：" + payment.getPaymentNo());
@@ -344,12 +354,13 @@ public class PaymentTccServiceImpl implements PaymentTccService {
 
     /**
      * 获取事务类型
+     * 直接从 Payment 对象的 tccTransactionType 字段读取，
+     * 该字段在入口方法（createPaymentWithTcc/processPaymentWithTcc/closePaymentWithTcc）中设置
      *
      * @param payment 支付
      * @return 事务类型
      */
     private String getTransactionType(Payment payment) {
-        TccTransaction transaction = tccTransactionManager.getTransaction(payment.getTransactionId());
-        return transaction != null ? transaction.getTransactionType() : null;
+        return payment.getTccTransactionType();
     }
 }

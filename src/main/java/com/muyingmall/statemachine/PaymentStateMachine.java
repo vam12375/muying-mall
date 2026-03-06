@@ -1,7 +1,7 @@
 package com.muyingmall.statemachine;
 
 import com.muyingmall.enums.PaymentStatus;
-import com.muyingmall.exception.BusinessException;
+import com.muyingmall.common.exception.BusinessException;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
