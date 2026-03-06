@@ -1,17 +1,16 @@
 package com.muyingmall.task;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.muyingmall.dto.SkuStockDTO;
 import com.muyingmall.entity.Order;
 import com.muyingmall.entity.OrderProduct;
-import com.muyingmall.entity.Product;
 import com.muyingmall.enums.OrderStatus;
 import com.muyingmall.mapper.OrderMapper;
 import com.muyingmall.mapper.OrderProductMapper;
+import com.muyingmall.mapper.ProductMapper;
 import com.muyingmall.service.OrderStateService;
-import com.muyingmall.service.ProductService;
 import com.muyingmall.service.ProductSkuService;
+import com.muyingmall.service.SeckillOrderReleaseService;
 import com.muyingmall.statemachine.OrderEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +34,9 @@ public class OrderTimeoutTask {
     private final OrderMapper orderMapper;
     private final OrderStateService orderStateService;
     private final OrderProductMapper orderProductMapper;
-    private final ProductService productService;
+    private final ProductMapper productMapper;
     private final ProductSkuService productSkuService;
+    private final SeckillOrderReleaseService seckillOrderReleaseService;
 
     /**
      * 每分钟执行一次，检查并取消超时订单
@@ -71,6 +71,8 @@ public class OrderTimeoutTask {
 
                     // 恢复库存
                     restoreStock(order.getOrderId());
+                    // 释放秒杀订单占用（秒杀库存与资格），确保超时后用户可再次参与。
+                    seckillOrderReleaseService.releasePendingSeckillOrder(order.getOrderId(), "SCHEDULE_TIMEOUT");
 
                     log.debug("成功取消超时订单: orderId={}, orderNo={}, userId={}, createTime={}",
                             order.getOrderId(), order.getOrderNo(), order.getUserId(), order.getCreateTime());
@@ -123,11 +125,8 @@ public class OrderTimeoutTask {
                     log.debug("准备恢复SKU库存: skuId={}, quantity={}, orderId={}", skuId, quantity, orderId);
                 } else {
                     // 无SKU，恢复商品库存
-                    productService.update(
-                            new LambdaUpdateWrapper<Product>()
-                                    .eq(Product::getProductId, orderProduct.getProductId())
-                                    .setSql("stock = stock + " + quantity));
-                    
+                    productMapper.increaseStock(orderProduct.getProductId(), quantity);
+
                     log.debug("已恢复商品库存: productId={}, quantity={}", orderProduct.getProductId(), quantity);
                 }
             }

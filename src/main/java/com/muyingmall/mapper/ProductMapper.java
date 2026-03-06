@@ -8,6 +8,7 @@ import com.muyingmall.entity.Product;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 import java.util.Map;
@@ -89,4 +90,13 @@ public interface ProductMapper extends BaseMapper<Product> {
                         "GROUP BY category_id" +
                         "</script>")
         List<Map<String, Object>> batchCountProductsByCategories(@Param("categoryIds") List<Integer> categoryIds);
+
+        @Update("UPDATE product SET stock = stock - #{quantity} WHERE product_id = #{productId}")
+        int decreaseStock(@Param("productId") Integer productId, @Param("quantity") Integer quantity);
+
+        @Update("UPDATE product SET stock = stock + #{quantity} WHERE product_id = #{productId}")
+        int increaseStock(@Param("productId") Integer productId, @Param("quantity") Integer quantity);
+
+        @Update("UPDATE product SET stock = stock - #{quantity}, sales = sales + #{quantity} WHERE product_id = #{productId}")
+        int decreaseStockAndIncreaseSales(@Param("productId") Integer productId, @Param("quantity") Integer quantity);
 }

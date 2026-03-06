@@ -2,7 +2,7 @@ package com.muyingmall.service.impl;
 
 import com.muyingmall.entity.Order;
 import com.muyingmall.enums.OrderStatus;
-import com.muyingmall.exception.BusinessException;
+import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.mapper.OrderMapper;
 import com.muyingmall.service.OrderService;
 import com.muyingmall.service.OrderStateLogService;
@@ -76,7 +76,7 @@ public class OrderStateServiceImpl implements OrderStateService {
         } catch (Exception e) {
             log.error("订单状态转换失败：orderId={}, event={}, error={}",
                     order.getOrderId(), event, e.getMessage(), e);
-            throw new BusinessException("订单状态转换失败：" + e.getMessage(), e);
+            throw new BusinessException("订单状态转换失败：" + e.getMessage());
         }
     }
 

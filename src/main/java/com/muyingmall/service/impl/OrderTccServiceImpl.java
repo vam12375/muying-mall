@@ -6,7 +6,7 @@ import com.muyingmall.dto.OrderCreateDTO;
 import com.muyingmall.dto.SkuStockDTO;
 import com.muyingmall.entity.*;
 import com.muyingmall.enums.OrderStatus;
-import com.muyingmall.exception.BusinessException;
+import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.lock.DistributedLock;
 import com.muyingmall.mapper.CartMapper;
 import com.muyingmall.mapper.OrderMapper;
@@ -126,7 +126,7 @@ public class OrderTccServiceImpl implements OrderTccService {
                         transactionId, cancelError.getMessage());
             }
 
-            throw new BusinessException("订单创建失败：" + e.getMessage(), e);
+            throw new BusinessException("订单创建失败：" + e.getMessage());
         }
     }
 

@@ -6,13 +6,12 @@ import com.muyingmall.entity.OrderProduct;
 import com.muyingmall.enums.OrderStatus;
 import com.muyingmall.mapper.OrderMapper;
 import com.muyingmall.mapper.OrderProductMapper;
+import com.muyingmall.mapper.ProductMapper;
 import com.muyingmall.service.OrderStateService;
-import com.muyingmall.service.ProductService;
 import com.muyingmall.service.ProductSkuService;
+import com.muyingmall.service.SeckillOrderReleaseService;
 import com.muyingmall.statemachine.OrderEvent;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.muyingmall.entity.Product;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +42,9 @@ public class OrderTimeoutConsumer {
     private final OrderMapper orderMapper;
     private final OrderStateService orderStateService;
     private final OrderProductMapper orderProductMapper;
-    private final ProductService productService;
+    private final ProductMapper productMapper;
     private final ProductSkuService productSkuService;
+    private final SeckillOrderReleaseService seckillOrderReleaseService;
 
     /**
      * 处理订单超时消息
@@ -86,6 +86,8 @@ public class OrderTimeoutConsumer {
 
                 // 恢复库存
                 restoreStock(orderId);
+                // 释放秒杀订单占用（秒杀库存与资格），确保超时后用户可再次参与。
+                seckillOrderReleaseService.releasePendingSeckillOrder(orderId, "MQ_TIMEOUT");
 
                 log.info("订单超时取消成功: orderId={}, orderNo={}", orderId, orderNo);
             } else {
@@ -98,8 +100,8 @@ public class OrderTimeoutConsumer {
         } catch (Exception e) {
             log.error("处理订单超时消息失败: orderId={}, error={}", orderId, e.getMessage(), e);
             try {
-                // 消息重新入队
-                channel.basicNack(tag, false, true);
+                // 拒绝消息，不重新入队，路由到死信队列避免无限重试导致重复库存恢复
+                channel.basicNack(tag, false, false);
             } catch (IOException ex) {
                 log.error("消息NACK失败", ex);
             }
@@ -144,10 +146,7 @@ public class OrderTimeoutConsumer {
                     log.debug("准备恢复SKU库存: skuId={}, quantity={}, orderId={}", skuId, quantity, orderId);
                 } else {
                     // 无SKU，恢复商品库存
-                    productService.update(
-                            new LambdaUpdateWrapper<Product>()
-                                    .eq(Product::getProductId, orderProduct.getProductId())
-                                    .setSql("stock = stock + " + quantity));
+                    productMapper.increaseStock(orderProduct.getProductId(), quantity);
 
                     log.debug("已恢复商品库存: productId={}, quantity={}", orderProduct.getProductId(), quantity);
                 }

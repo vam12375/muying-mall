@@ -52,6 +52,16 @@ public interface OrderService extends IService<Order> {
             BigDecimal shippingFee, Integer pointsUsed);
 
     /**
+     * 直接购买商品 - 支持自定义单价（秒杀等场景使用）
+     *
+     * @param overrideUnitPrice 覆盖单价，为null时使用商品/SKU原价
+     */
+    Map<String, Object> directPurchase(Integer userId, Integer addressId, Integer productId,
+            Integer quantity, String specs, Long skuId, String remark,
+            String paymentMethod, Long couponId,
+            BigDecimal shippingFee, Integer pointsUsed, BigDecimal overrideUnitPrice);
+
+    /**
      * 获取订单详情
      * 
      * @param orderId 订单ID

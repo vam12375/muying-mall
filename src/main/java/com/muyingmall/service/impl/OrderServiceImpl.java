@@ -25,6 +25,7 @@ import com.muyingmall.event.OrderPaidEvent;
 import com.muyingmall.mapper.CartMapper;
 import com.muyingmall.mapper.OrderMapper;
 import com.muyingmall.mapper.OrderProductMapper;
+import com.muyingmall.mapper.ProductMapper;
 import com.muyingmall.mapper.UserAddressMapper;
 import com.muyingmall.mapper.UserMapper;
 import com.muyingmall.mapper.SeckillOrderMapper;
@@ -36,6 +37,7 @@ import com.muyingmall.service.CouponService;
 import com.muyingmall.service.UserCouponService;
 import com.muyingmall.service.MessageProducerService;
 import com.muyingmall.service.ProductSkuService;
+import com.muyingmall.service.SeckillOrderReleaseService;
 import com.muyingmall.service.BatchQueryService;
 import com.muyingmall.service.AddressService;
 import com.muyingmall.entity.ProductSku;
@@ -81,6 +83,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private final UserAddressMapper addressMapper;
     private final CartMapper cartMapper;
     private final OrderProductMapper orderProductMapper;
+    private final ProductMapper productMapper;
     private final ProductService productService;
     private final PaymentService paymentService;
     private final ApplicationEventPublisher eventPublisher;
@@ -94,6 +97,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private final ProductSkuService productSkuService;
     private final BatchQueryService batchQueryService;
     private final SeckillOrderMapper seckillOrderMapper;
+    private final SeckillOrderReleaseService seckillOrderReleaseService;
     private final AddressService addressService;
 
     @Override
@@ -396,10 +400,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 减少商品主表库存（仅对无SKU的商品）
         for (Cart cart : cartList) {
             if (cart.getSkuId() == null) {
-                productService.update(
-                        new LambdaUpdateWrapper<Product>()
-                                .eq(Product::getProductId, cart.getProductId())
-                                .setSql("stock = stock - " + cart.getQuantity()));
+                productMapper.decreaseStock(cart.getProductId(), cart.getQuantity());
             }
         }
 
@@ -666,10 +667,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                     skuStockList.add(stockDTO);
                 } else {
                     // 无SKU，恢复商品主表库存
-                    productService.update(
-                            new LambdaUpdateWrapper<Product>()
-                                    .eq(Product::getProductId, orderProduct.getProductId())
-                                    .setSql("stock = stock + " + orderProduct.getQuantity()));
+                    productMapper.increaseStock(orderProduct.getProductId(), orderProduct.getQuantity());
                 }
             }
             
@@ -678,6 +676,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 productSkuService.batchRestoreStock(skuStockList);
                 log.info("订单 {} 取消，SKU库存恢复完成，共 {} 个SKU", orderId, skuStockList.size());
             }
+
+            // 统一释放秒杀订单占用（秒杀库存与资格），确保取消后用户可继续秒杀。
+            seckillOrderReleaseService.releasePendingSeckillOrder(orderId, "USER_CANCEL");
 
             // 清除订单缓存
             clearOrderCache(orderId, userId);
@@ -930,6 +931,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         // 清除订单缓存
         if (result) {
+            // 管理端取消订单时，同步释放秒杀订单占用（秒杀库存与资格）。
+            if (ORDER_STATUS_CANCELLED.equals(status)) {
+                seckillOrderReleaseService.releasePendingSeckillOrder(orderId, "ADMIN_CANCEL");
+            }
+
             clearOrderCache(orderId, order.getUserId());
 
             // 发送订单状态变更消息通知
@@ -1269,10 +1275,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             clearUserOrderListCache(userId);
         }
 
-        // 清除订单统计缓存
+        // 清除订单统计缓存（使用SCAN替代KEYS避免阻塞Redis）
         String orderStatsCacheKey = CacheConstants.ORDER_STATS_KEY + "*";
-        Set<String> statsKeys = redisTemplate.keys(orderStatsCacheKey);
-        if (statsKeys != null && !statsKeys.isEmpty()) {
+        Set<String> statsKeys = redisUtil.keys(orderStatsCacheKey);
+        if (!statsKeys.isEmpty()) {
             redisTemplate.delete(statsKeys);
             log.info("清除订单统计缓存");
         }
@@ -1289,12 +1295,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             return;
         }
 
-        // 清除用户订单列表缓存
+        // 清除用户订单列表缓存（使用SCAN替代KEYS避免阻塞Redis）
         String userOrderListCacheKey = CacheConstants.USER_ORDER_LIST_KEY + userId + "*";
-        Set<String> keys = redisTemplate.keys(userOrderListCacheKey);
-        if (keys != null && !keys.isEmpty()) {
+        Set<String> keys = redisUtil.keys(userOrderListCacheKey);
+        if (!keys.isEmpty()) {
             redisTemplate.delete(keys);
-            log.info("✅ 清除用户订单列表缓存: userId={}, 清除key数量={}", userId, keys.size());
+            log.info("清除用户订单列表缓存: userId={}, 清除key数量={}", userId, keys.size());
         } else {
             log.info("用户订单列表缓存不存在或已清空: userId={}", userId);
         }
@@ -1410,11 +1416,20 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      * 直接购买商品（不添加到购物车）
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> directPurchase(Integer userId, Integer addressId, Integer productId,
             Integer quantity, String specs, Long skuId, String remark,
             String paymentMethod, Long couponId,
             BigDecimal shippingFee, Integer pointsUsed) {
+        return directPurchase(userId, addressId, productId, quantity, specs, skuId, remark,
+                paymentMethod, couponId, shippingFee, pointsUsed, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> directPurchase(Integer userId, Integer addressId, Integer productId,
+            Integer quantity, String specs, Long skuId, String remark,
+            String paymentMethod, Long couponId,
+            BigDecimal shippingFee, Integer pointsUsed, BigDecimal overrideUnitPrice) {
         log.info("开始处理直接购买请求: 用户ID={}, 商品ID={}, skuId={}, 数量={}", userId, productId, skuId, quantity);
 
         // 获取用户地址信息
@@ -1451,18 +1466,17 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             if (sku.getStock() < quantity) {
                 throw new BusinessException(400, "商品规格库存不足");
             }
-            itemPrice = sku.getPrice();
+            itemPrice = (overrideUnitPrice != null) ? overrideUnitPrice : sku.getPrice();
             processedSpecs = sku.getSpecValues();
-            log.info("使用SKU价格: skuId={}, price={}, specs={}", skuId, itemPrice, processedSpecs);
+            log.info("使用SKU价格: skuId={}, price={}, specs={}, overrideUnitPrice={}", skuId, itemPrice, processedSpecs, overrideUnitPrice);
         } else {
             // 无SKU，使用商品主表的价格和库存
             if (product.getStock() < quantity) {
                 throw new BusinessException(400, "商品库存不足");
             }
-            itemPrice = product.getPriceNew();
-            // 处理规格数据，确保是有效的JSON格式
+            itemPrice = (overrideUnitPrice != null) ? overrideUnitPrice : product.getPriceNew();
             processedSpecs = processSpecsToJson(specs);
-            log.info("使用商品主表价格: price={}, specs={}", itemPrice, processedSpecs);
+            log.info("使用商品主表价格: price={}, specs={}, overrideUnitPrice={}", itemPrice, processedSpecs, overrideUnitPrice);
         }
 
         try {
@@ -1631,11 +1645,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 log.info("订单 {} SKU库存扣减完成: skuId={}, quantity={}", order.getOrderNo(), sku.getSkuId(), quantity);
             } else {
                 // 扣减商品主表库存
-                productService.update(
-                        new LambdaUpdateWrapper<Product>()
-                                .eq(Product::getProductId, productId)
-                                .setSql("stock = stock - " + quantity)
-                                .setSql("sales = sales + " + quantity));
+                productMapper.decreaseStockAndIncreaseSales(productId, quantity);
                 
                 // 销量更新后，清除热门商品缓存
                 if (productService instanceof ProductServiceImpl) {
