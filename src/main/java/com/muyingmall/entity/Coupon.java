@@ -32,6 +32,11 @@ public class Coupon implements Serializable {
     private String name;
 
     /**
+     * 优惠码（用于兑换领取，唯一标识）
+     */
+    private String code;
+
+    /**
      * 批次ID
      */
     private Integer batchId;
