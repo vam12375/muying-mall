@@ -18,8 +18,9 @@ ALTER TABLE logistics
   ADD COLUMN last_route_sync_time DATETIME     DEFAULT NULL COMMENT '最近路由同步时间' AFTER `route_sync_status`;
 
 -- --------------------------------------------------------
--- Step 2: 添加索引（按供应商类型/路由同步状态查询时用到）
+-- Step 2: 添加索引（按供应商类型/路由同步状态/供应商代码查询时用到）
 -- --------------------------------------------------------
 ALTER TABLE logistics
   ADD INDEX idx_provider_type       (provider_type),
+  ADD INDEX idx_provider_code       (provider_code),
   ADD INDEX idx_route_sync_status   (route_sync_status);
