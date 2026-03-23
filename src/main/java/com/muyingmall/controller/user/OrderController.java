@@ -83,7 +83,7 @@ public class OrderController {
             
             **可选参数：**
             - paymentMethod: 支付方式（alipay/wallet）
-            - couponId: 优惠券ID
+            - userCouponId: 用户优惠券ID（user_coupon表主键）
             - shippingFee: 运费
             - pointsUsed: 使用的积分数量
             - remark: 订单备注
@@ -102,9 +102,9 @@ public class OrderController {
         }
 
         try {
-            // 从DTO获取支付方式和优惠券ID
+            // 从DTO获取支付方式和用户优惠券ID
             String paymentMethod = orderCreateDTO.getPaymentMethod();
-            Long couponId = orderCreateDTO.getCouponId();
+            Long userCouponId = orderCreateDTO.getUserCouponId();
             List<Integer> cartIds = orderCreateDTO.getCartIds();
             BigDecimal shippingFee = orderCreateDTO.getShippingFee();
             Integer pointsUsed = orderCreateDTO.getPointsUsed();
@@ -113,18 +113,18 @@ public class OrderController {
             System.out.println("创建订单参数: userId=" + userId +
                     ", addressId=" + orderCreateDTO.getAddressId() +
                     ", paymentMethod=" + paymentMethod +
-                    ", couponId=" + couponId +
+                    ", userCouponId=" + userCouponId +
                     ", cartIds=" + cartIds +
                     ", shippingFee=" + shippingFee +
                     ", pointsUsed=" + pointsUsed);
 
-            // 调用服务层创建订单，添加支付方式和优惠券ID
+            // 调用服务层创建订单
             Map<String, Object> orderInfo = orderService.createOrder(
                     userId,
                     orderCreateDTO.getAddressId(),
                     orderCreateDTO.getRemark(),
                     orderCreateDTO.getPaymentMethod(),
-                    orderCreateDTO.getCouponId(),
+                    orderCreateDTO.getUserCouponId(),
                     orderCreateDTO.getCartIds(),
                     orderCreateDTO.getShippingFee(),
                     pointsUsed);
@@ -603,7 +603,7 @@ public class OrderController {
             **可选参数：**
             - specs: 规格信息JSON字符串
             - paymentMethod: 支付方式
-            - couponId: 优惠券ID
+            - userCouponId: 用户优惠券ID（user_coupon表主键）
             - shippingFee: 运费
             - pointsUsed: 使用的积分
             - remark: 订单备注
@@ -630,7 +630,7 @@ public class OrderController {
                     ", specs=" + purchaseDTO.getSpecs() +
                     ", skuId=" + purchaseDTO.getSkuId() +
                     ", paymentMethod=" + purchaseDTO.getPaymentMethod() +
-                    ", couponId=" + purchaseDTO.getCouponId() +
+                    ", userCouponId=" + purchaseDTO.getUserCouponId() +
                     ", shippingFee=" + purchaseDTO.getShippingFee() +
                     ", pointsUsed=" + purchaseDTO.getPointsUsed());
 
@@ -644,7 +644,7 @@ public class OrderController {
                     purchaseDTO.getSkuId(),
                     purchaseDTO.getRemark(),
                     purchaseDTO.getPaymentMethod(),
-                    purchaseDTO.getCouponId(),
+                    purchaseDTO.getUserCouponId(),
                     purchaseDTO.getShippingFee(),
                     purchaseDTO.getPointsUsed());
 

@@ -35,7 +35,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SeckillOrderServiceImpl implements SeckillOrderService {
 
-    private static final int DEFAULT_LIMIT_PER_SKU = 2;
+    private static final int DEFAULT_LIMIT_PER_SKU = 5;
 
     private final SeckillService seckillService;
     private final SeckillProductMapper seckillProductMapper;

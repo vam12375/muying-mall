@@ -58,9 +58,9 @@ public class DirectPurchaseDTO implements Serializable {
     private String remark;
 
     /**
-     * 使用的优惠券ID
+     * 用户优惠券ID（user_coupon表的主键，非coupon表的ID）
      */
-    private Long couponId;
+    private Long userCouponId;
 
     /**
      * 使用的积分数量

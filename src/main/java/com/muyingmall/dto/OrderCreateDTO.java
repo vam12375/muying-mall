@@ -67,10 +67,10 @@ public class OrderCreateDTO implements Serializable {
     private String remark;
 
     /**
-     * 使用的优惠券ID
+     * 用户优惠券ID（user_coupon表的主键，非coupon表的ID）
      */
-    @Schema(description = "优惠券ID，不使用优惠券时为空", example = "1001")
-    private Long couponId;
+    @Schema(description = "用户优惠券ID（user_coupon表主键），不使用优惠券时为空", example = "1001")
+    private Long userCouponId;
 
     /**
      * 使用的积分数量

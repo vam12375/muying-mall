@@ -71,7 +71,7 @@ public class OrderTccServiceImpl implements OrderTccService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> createOrderWithTcc(Integer userId, Integer addressId, String remark,
-            String paymentMethod, Long couponId, List<Integer> cartIds,
+            String paymentMethod, Long userCouponId, List<Integer> cartIds,
             BigDecimal shippingFee, Integer pointsUsed) {
 
         // 构建订单创建参数
@@ -80,7 +80,7 @@ public class OrderTccServiceImpl implements OrderTccService {
         params.setAddressId(addressId);
         params.setRemark(remark);
         params.setPaymentMethod(paymentMethod);
-        params.setCouponId(couponId);
+        params.setUserCouponId(userCouponId);
         params.setCartIds(cartIds);
         params.setShippingFee(shippingFee != null ? shippingFee : BigDecimal.ZERO);
         params.setPointsUsed(pointsUsed != null ? pointsUsed : 0);
@@ -200,8 +200,8 @@ public class OrderTccServiceImpl implements OrderTccService {
 
             // 5. 计算优惠金额
             BigDecimal discountAmount = BigDecimal.ZERO;
-            if (params.getCouponId() != null) {
-                discountAmount = calculateCouponDiscount(params.getCouponId(), params.getUserId(), productAmount);
+            if (params.getUserCouponId() != null) {
+                discountAmount = calculateCouponDiscount(params.getUserCouponId(), params.getUserId(), productAmount);
             }
 
             // 6. 计算积分抵扣
@@ -229,7 +229,7 @@ public class OrderTccServiceImpl implements OrderTccService {
             order.setShippingFee(shippingFee);
             order.setPaymentMethod(params.getPaymentMethod());
             order.setRemark(params.getRemark());
-            order.setCouponId(params.getCouponId());
+            order.setCouponId(params.getUserCouponId());
             order.setPointsUsed(params.getPointsUsed());
 
             // 设置收货信息
@@ -315,8 +315,8 @@ public class OrderTccServiceImpl implements OrderTccService {
             }
 
             // 6. 使用优惠券
-            if (params.getCouponId() != null) {
-                useCoupon(params.getCouponId(), params.getUserId(), order.getOrderId());
+            if (params.getUserCouponId() != null) {
+                useCoupon(params.getUserCouponId(), params.getUserId(), order.getOrderId());
             }
 
             // 7. 扣减积分

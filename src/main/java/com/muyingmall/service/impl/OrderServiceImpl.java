@@ -1,4 +1,5 @@
 package com.muyingmall.service.impl;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -103,10 +104,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> createOrder(Integer userId, Integer addressId, String remark,
-            String paymentMethod, Long couponId, List<Integer> cartIds, BigDecimal shippingFee, Integer pointsUsed) {
-        
+            String paymentMethod, Long userCouponId, List<Integer> cartIds, BigDecimal shippingFee,
+            Integer pointsUsed) {
+
         log.info("🎯🎯🎯 创建订单方法被调用 - userId={}, addressId={}, cartIds={}", userId, addressId, cartIds);
-        
+
         // 校验用户
         User user = userMapper.selectById(userId);
         if (user == null) {
@@ -132,7 +134,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             cartList = cartMapper.selectList(cartQueryWrapper);
 
             log.info("📦 通过cartIds查询购物车 - 请求数量:{}, 查询到数量:{}", cartIds.size(), cartList.size());
-            
+
             if (cartList.size() != cartIds.size()) {
                 log.warn("部分购物车项不存在，请求数量:{}, 查询到数量:{}", cartIds.size(), cartList.size());
             }
@@ -142,7 +144,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             cartQueryWrapper.eq(Cart::getUserId, userId)
                     .eq(Cart::getSelected, 1);
             cartList = cartMapper.selectList(cartQueryWrapper);
-            
+
             log.info("📦 查询已选中的购物车商品 - userId={}, 查询到数量:{}", userId, cartList.size());
         }
 
@@ -150,7 +152,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             log.error("❌❌❌ 购物车为空！userId={}, cartIds={}, 无法创建订单", userId, cartIds);
             throw new BusinessException("购物车中没有选中的商品");
         }
-        
+
         log.info("✅ 购物车商品获取成功，商品数量: {}", cartList.size());
 
         // 创建订单
@@ -223,7 +225,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 if (sku.getStock() < cart.getQuantity()) {
                     throw new BusinessException("商品规格库存不足：" + product.getProductName() + " - " + sku.getSkuName());
                 }
-                
+
                 itemPrice = sku.getPrice();
                 orderProduct.setPrice(itemPrice);
                 orderProduct.setSkuId(sku.getSkuId());
@@ -233,7 +235,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 if (sku.getSkuImage() != null && !sku.getSkuImage().isEmpty()) {
                     orderProduct.setProductImg(sku.getSkuImage());
                 }
-                
+
                 // 记录需要扣减的SKU库存
                 SkuStockDTO stockDTO = new SkuStockDTO();
                 stockDTO.setSkuId(sku.getSkuId());
@@ -249,7 +251,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 // 使用购物车中的规格信息（兼容旧数据）
                 orderProduct.setSpecs(cart.getSpecs());
             }
-            
+
             orderProducts.add(orderProduct);
 
             // 累加金额
@@ -272,40 +274,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 计算优惠金额
         BigDecimal couponAmount = BigDecimal.ZERO;
 
-        // 处理优惠券（如果有）
-        if (couponId != null && couponId > 0) {
-            // 获取用户优惠券
-            UserCoupon userCoupon = userCouponService.getById(couponId);
-            if (userCoupon != null && userCoupon.getUserId().equals(userId)
-                    && userCoupon.getStatus().equals("UNUSED")) {
-                // 获取优惠券信息
-                Coupon coupon = couponService.getById(userCoupon.getCouponId());
-                if (coupon != null && "ACTIVE".equals(coupon.getStatus())) {
-                    // 验证优惠券是否可用
-                    if (order.getTotalAmount().compareTo(coupon.getMinSpend()) >= 0) {
-                        couponAmount = coupon.getValue();
-                        // 记录使用的优惠券
-                        order.setCouponId(couponId);
-                        order.setCouponAmount(couponAmount);
-
-                        // 更新优惠券状态
-                        userCoupon.setStatus("USED");
-                        userCoupon.setUseTime(LocalDateTime.now());
-                        // 只有在订单ID不为null时才设置OrderId，避免NullPointerException
-                        if (order.getOrderId() != null) {
-                            userCoupon.setOrderId(order.getOrderId().longValue());
-                            userCouponService.updateById(userCoupon);
-                        } else {
-                            log.warn("订单ID为null，暂不更新优惠券状态，将在订单保存后更新");
-                            // 标记此优惠券需要在后续更新
-                            order.setCouponId(couponId); // 保存优惠券ID，后续可根据需要更新
-                        }
-                    } else {
-                        log.warn("优惠券不可用于此订单，最低消费金额不足: 订单总额={}, 优惠券最低金额={}",
-                                order.getTotalAmount(), coupon.getMinSpend());
-                    }
-                }
-            }
+        // 处理优惠券（如果有）— 使用 userCouponId（user_coupon 表主键）
+        if (userCouponId != null && userCouponId > 0) {
+            couponAmount = applyCouponToOrder(userCouponId, userId, order);
         }
 
         // 计算积分抵扣金额
@@ -426,11 +397,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         clearUserOrderListCache(userId);
 
         // 订单ID获取成功后，处理之前因为订单ID为null而未完成的优惠券状态更新
-        if (couponId != null && couponId > 0) {
-            UserCoupon userCoupon = userCouponService.getById(couponId);
+        if (userCouponId != null && userCouponId > 0) {
+            UserCoupon userCoupon = userCouponService.getById(userCouponId);
             if (userCoupon != null && userCoupon.getUserId().equals(userId)
                     && "UNUSED".equals(userCoupon.getStatus())) {
-                log.info("更新优惠券状态，订单ID: {}, 优惠券ID: {}", order.getOrderId(), couponId);
+                log.info("更新优惠券状态，订单ID: {}, 用户优惠券ID: {}", order.getOrderId(), userCouponId);
                 userCoupon.setStatus("USED");
                 userCoupon.setUseTime(LocalDateTime.now());
                 userCoupon.setOrderId(order.getOrderId().longValue());
@@ -443,15 +414,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             log.info("=== 开始发送订单创建消息 ===");
             log.info("messageProducerService 实例: {}", messageProducerService != null ? "已注入" : "NULL");
             log.info("订单ID: {}, 订单号: {}, 用户ID: {}", order.getOrderId(), order.getOrderNo(), order.getUserId());
-            
+
             OrderMessage orderMessage = OrderMessage.createOrderEvent(
                     order.getOrderId(),
                     order.getOrderNo(),
                     order.getUserId(),
-                    order.getTotalAmount()
-            );
+                    order.getTotalAmount());
             log.info("订单消息对象创建成功: {}", orderMessage);
-            
+
             messageProducerService.sendOrderMessage(orderMessage);
             log.info("✅ 订单创建消息发送成功: orderId={}, orderNo={}", order.getOrderId(), order.getOrderNo());
 
@@ -459,7 +429,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             messageProducerService.sendOrderTimeoutDelayMessage(order.getOrderId(), order.getOrderNo());
         } catch (Exception e) {
             // 消息发送失败不影响主流程，但需要记录日志
-            log.error("❌ 订单创建消息发送失败: orderId={}, orderNo={}, error={}", 
+            log.error("❌ 订单创建消息发送失败: orderId={}, orderNo={}, error={}",
                     order.getOrderId(), order.getOrderNo(), e.getMessage(), e);
         }
 
@@ -537,13 +507,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         Object cacheResult = redisUtil.get(cacheKey.toString());
         if (cacheResult != null) {
             long cacheTime = System.currentTimeMillis() - startTime;
-            log.info("从缓存中获取用户订单列表: userId={}, page={}, size={}, status={}, 耗时={}ms", 
+            log.info("从缓存中获取用户订单列表: userId={}, page={}, size={}, status={}, 耗时={}ms",
                     userId, page, size, status, cacheTime);
             return (Page<Order>) cacheResult;
         }
 
         // 缓存未命中，从数据库查询
-        log.info("缓存未命中，从数据库查询用户订单列表: userId={}, page={}, size={}, status={}", 
+        log.info("缓存未命中，从数据库查询用户订单列表: userId={}, page={}, size={}, status={}",
                 userId, page, size, status);
         long dbStartTime = System.currentTimeMillis();
 
@@ -585,7 +555,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             LambdaQueryWrapper<OrderProduct> productQueryWrapper = new LambdaQueryWrapper<>();
             productQueryWrapper.in(OrderProduct::getOrderId, orderIds);
             List<OrderProduct> allOrderProducts = orderProductMapper.selectList(productQueryWrapper);
-            
+
             long productQueryTime = System.currentTimeMillis() - productStartTime;
             log.info("批量查询到 {} 条订单商品记录, 耗时={}ms", allOrderProducts.size(), productQueryTime);
 
@@ -611,9 +581,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         long cacheStartTime = System.currentTimeMillis();
         redisUtil.set(cacheKey.toString(), orderPage, 300L);
         long cacheWriteTime = System.currentTimeMillis() - cacheStartTime;
-        
+
         long totalTime = System.currentTimeMillis() - startTime;
-        log.info("订单列表查询完成: userId={}, 总耗时={}ms, 数据库耗时={}ms, 缓存写入耗时={}ms, 缓存命中=false", 
+        log.info("订单列表查询完成: userId={}, 总耗时={}ms, 数据库耗时={}ms, 缓存写入耗时={}ms, 缓存命中=false",
                 userId, totalTime, (System.currentTimeMillis() - dbStartTime), cacheWriteTime);
 
         return orderPage;
@@ -655,7 +625,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
             // 收集需要恢复的SKU库存
             List<SkuStockDTO> skuStockList = new ArrayList<>();
-            
+
             for (OrderProduct orderProduct : orderProducts) {
                 if (orderProduct.getSkuId() != null) {
                     // 有SKU，恢复SKU库存
@@ -670,7 +640,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                     productMapper.increaseStock(orderProduct.getProductId(), orderProduct.getQuantity());
                 }
             }
-            
+
             // 批量恢复SKU库存
             if (!skuStockList.isEmpty()) {
                 productSkuService.batchRestoreStock(skuStockList);
@@ -783,10 +753,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
                 // 发送订单状态变更消息通知
                 sendOrderStatusChangeNotification(order, oldStatus, ORDER_STATUS_COMPLETED);
-                
+
                 // 🔥 关键修复：同步秒杀订单状态（如果是秒杀订单）
                 syncSeckillOrderStatus(orderId);
-                
+
             } catch (Exception pubEx) {
                 // 事件发布失败不应影响主流程，但需要记录错误
                 log.error("发布事件失败 for Order ID {}: {}", order.getOrderId(), pubEx.getMessage(),
@@ -847,7 +817,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             LambdaQueryWrapper<OrderProduct> productQueryWrapper = new LambdaQueryWrapper<>();
             productQueryWrapper.in(OrderProduct::getOrderId, orderIds);
             List<OrderProduct> allOrderProducts = orderProductMapper.selectList(productQueryWrapper);
-            
+
             long productQueryTime = System.currentTimeMillis() - productStartTime;
             log.info("批量查询到 {} 条订单商品记录, 耗时={}ms", allOrderProducts.size(), productQueryTime);
 
@@ -940,7 +910,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
             // 发送订单状态变更消息通知
             sendOrderStatusChangeNotification(order, oldStatus, status);
-            
+
             // 如果订单状态更新为已完成，同步更新秒杀订单状态（如果是秒杀订单）
             if (ORDER_STATUS_COMPLETED.equals(status)) {
                 syncSeckillOrderStatus(orderId);
@@ -949,7 +919,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         return result;
     }
-    
+
     /**
      * 同步秒杀订单状态
      * 当普通订单状态更新为已完成时，同步更新对应的秒杀订单状态
@@ -960,31 +930,31 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private void syncSeckillOrderStatus(Integer orderId) {
         try {
             log.info("🔍 开始检查是否存在秒杀订单: orderId={}", orderId);
-            
+
             // 查询是否存在对应的秒杀订单
             LambdaQueryWrapper<SeckillOrder> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(SeckillOrder::getOrderId, orderId);
-            
+
             SeckillOrder seckillOrder = seckillOrderMapper.selectOne(wrapper);
-            
+
             if (seckillOrder != null) {
-                log.info("✅ 检测到秒杀订单，开始同步状态: seckillOrderId={}, orderId={}, 当前status={}", 
+                log.info("✅ 检测到秒杀订单，开始同步状态: seckillOrderId={}, orderId={}, 当前status={}",
                         seckillOrder.getId(), orderId, seckillOrder.getStatus());
-                
+
                 // 如果秒杀订单状态还是待支付（0），则更新为已支付（1）
                 if (seckillOrder.getStatus() == 0) {
                     seckillOrder.setStatus(1); // 1表示已支付/已完成
                     int rows = seckillOrderMapper.updateById(seckillOrder);
-                    
+
                     if (rows > 0) {
-                        log.info("✅ 秒杀订单状态同步成功: seckillOrderId={}, orderId={}, status: 0→1(已完成)", 
+                        log.info("✅ 秒杀订单状态同步成功: seckillOrderId={}, orderId={}, status: 0→1(已完成)",
                                 seckillOrder.getId(), orderId);
                     } else {
-                        log.error("❌ 秒杀订单状态同步失败: seckillOrderId={}, orderId={}, 数据库更新返回0行", 
+                        log.error("❌ 秒杀订单状态同步失败: seckillOrderId={}, orderId={}, 数据库更新返回0行",
                                 seckillOrder.getId(), orderId);
                     }
                 } else {
-                    log.info("ℹ️ 秒杀订单状态已是: {}, 无需更新: seckillOrderId={}, orderId={}", 
+                    log.info("ℹ️ 秒杀订单状态已是: {}, 无需更新: seckillOrderId={}, orderId={}",
                             seckillOrder.getStatus(), seckillOrder.getId(), orderId);
                 }
             } else {
@@ -1048,13 +1018,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             // 1. 获取收货地址信息
             Address address = addressService.getById(order.getAddressId());
             if (address == null) {
-                log.error("收货地址不存在，无法创建物流: orderId={}, addressId={}", 
+                log.error("收货地址不存在，无法创建物流: orderId={}, addressId={}",
                         order.getOrderId(), order.getAddressId());
                 return;
             }
 
             // 2. 发布订单支付事件，由事件监听器异步处理物流创建（包括坐标补全）
-            log.info("发布订单支付事件，触发物流创建: orderId={}, hasCoords={}", 
+            log.info("发布订单支付事件，触发物流创建: orderId={}, hasCoords={}",
                     order.getOrderId(), address.getLongitude() != null);
             eventPublisher.publishEvent(new OrderPaidEvent(this, order, address));
 
@@ -1315,7 +1285,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      */
     private void sendOrderStatusChangeNotification(Order order, String oldStatus, String newStatus) {
         try {
-            log.info("发送订单状态变更通知: orderId={}, orderNo={}, oldStatus={}, newStatus={}", 
+            log.info("发送订单状态变更通知: orderId={}, orderNo={}, oldStatus={}, newStatus={}",
                     order.getOrderId(), order.getOrderNo(), oldStatus, newStatus);
 
             // 发送原有的Spring事件
@@ -1337,22 +1307,20 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             try {
                 // 创建订单消息
                 OrderMessage orderMessage;
-                
+
                 // 根据新状态确定事件类型
                 if (ORDER_STATUS_CANCELLED.equals(newStatus)) {
                     orderMessage = OrderMessage.cancelOrderEvent(
                             order.getOrderId(),
                             order.getOrderNo(),
                             order.getUserId(),
-                            order.getTotalAmount()
-                    );
+                            order.getTotalAmount());
                 } else if (ORDER_STATUS_COMPLETED.equals(newStatus)) {
                     orderMessage = OrderMessage.completeOrderEvent(
                             order.getOrderId(),
                             order.getOrderNo(),
                             order.getUserId(),
-                            order.getTotalAmount()
-                    );
+                            order.getTotalAmount());
                 } else {
                     // 通用状态变更事件
                     orderMessage = OrderMessage.statusChangeEvent(
@@ -1361,19 +1329,18 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                             order.getUserId(),
                             oldStatus,
                             newStatus,
-                            order.getTotalAmount()
-                    );
+                            order.getTotalAmount());
                 }
 
                 // 发送消息（包含RabbitMQ和Redis通知）
                 messageProducerService.sendOrderMessage(orderMessage);
-                
-                log.info("订单状态变更RabbitMQ消息发送成功: orderId={}, eventType={}", 
+
+                log.info("订单状态变更RabbitMQ消息发送成功: orderId={}, eventType={}",
                         order.getOrderId(), orderMessage.getEventType());
 
             } catch (Exception mqEx) {
                 // RabbitMQ消息发送失败不影响主流程，但需要记录日志
-                log.error("订单状态变更RabbitMQ消息发送失败: orderId={}, orderNo={}, oldStatus={}, newStatus={}, error={}", 
+                log.error("订单状态变更RabbitMQ消息发送失败: orderId={}, orderNo={}, oldStatus={}, newStatus={}, error={}",
                         order.getOrderId(), order.getOrderNo(), oldStatus, newStatus, mqEx.getMessage(), mqEx);
             }
 
@@ -1418,17 +1385,17 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     public Map<String, Object> directPurchase(Integer userId, Integer addressId, Integer productId,
             Integer quantity, String specs, Long skuId, String remark,
-            String paymentMethod, Long couponId,
+            String paymentMethod, Long userCouponId,
             BigDecimal shippingFee, Integer pointsUsed) {
         return directPurchase(userId, addressId, productId, quantity, specs, skuId, remark,
-                paymentMethod, couponId, shippingFee, pointsUsed, null);
+                paymentMethod, userCouponId, shippingFee, pointsUsed, null);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> directPurchase(Integer userId, Integer addressId, Integer productId,
             Integer quantity, String specs, Long skuId, String remark,
-            String paymentMethod, Long couponId,
+            String paymentMethod, Long userCouponId,
             BigDecimal shippingFee, Integer pointsUsed, BigDecimal overrideUnitPrice) {
         log.info("开始处理直接购买请求: 用户ID={}, 商品ID={}, skuId={}, 数量={}", userId, productId, skuId, quantity);
 
@@ -1468,7 +1435,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
             itemPrice = (overrideUnitPrice != null) ? overrideUnitPrice : sku.getPrice();
             processedSpecs = sku.getSpecValues();
-            log.info("使用SKU价格: skuId={}, price={}, specs={}, overrideUnitPrice={}", skuId, itemPrice, processedSpecs, overrideUnitPrice);
+            log.info("使用SKU价格: skuId={}, price={}, specs={}, overrideUnitPrice={}", skuId, itemPrice, processedSpecs,
+                    overrideUnitPrice);
         } else {
             // 无SKU，使用商品主表的价格和库存
             if (product.getStock() < quantity) {
@@ -1476,7 +1444,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
             itemPrice = (overrideUnitPrice != null) ? overrideUnitPrice : product.getPriceNew();
             processedSpecs = processSpecsToJson(specs);
-            log.info("使用商品主表价格: price={}, specs={}, overrideUnitPrice={}", itemPrice, processedSpecs, overrideUnitPrice);
+            log.info("使用商品主表价格: price={}, specs={}, overrideUnitPrice={}", itemPrice, processedSpecs,
+                    overrideUnitPrice);
         }
 
         try {
@@ -1505,40 +1474,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             BigDecimal couponAmount = BigDecimal.ZERO;
             BigDecimal pointsAmount = BigDecimal.ZERO;
 
-            // 处理优惠券
-            if (couponId != null && couponId > 0) {
-                // 获取用户优惠券
-                UserCoupon userCoupon = userCouponService.getById(couponId);
-                if (userCoupon != null && userCoupon.getUserId().equals(userId)
-                        && userCoupon.getStatus().equals("UNUSED")) {
-                    // 获取优惠券信息
-                    Coupon coupon = couponService.getById(userCoupon.getCouponId());
-                    if (coupon != null && "ACTIVE".equals(coupon.getStatus())) {
-                        // 验证优惠券是否可用
-                        if (order.getTotalAmount().compareTo(coupon.getMinSpend()) >= 0) {
-                            couponAmount = coupon.getValue();
-                            // 记录使用的优惠券
-                            order.setCouponId(couponId);
-                            order.setCouponAmount(couponAmount);
-
-                            // 更新优惠券状态
-                            userCoupon.setStatus("USED");
-                            userCoupon.setUseTime(LocalDateTime.now());
-                            // 只有在订单ID不为null时才设置OrderId，避免NullPointerException
-                            if (order.getOrderId() != null) {
-                                userCoupon.setOrderId(order.getOrderId().longValue());
-                                userCouponService.updateById(userCoupon);
-                            } else {
-                                log.warn("订单ID为null，暂不更新优惠券状态，将在订单保存后更新");
-                                // 标记此优惠券需要在后续更新
-                                order.setCouponId(couponId); // 保存优惠券ID，后续可根据需要更新
-                            }
-                        } else {
-                            log.warn("优惠券不可用于此订单，最低消费金额不足: 订单总额={}, 优惠券最低金额={}",
-                                    order.getTotalAmount(), coupon.getMinSpend());
-                        }
-                    }
-                }
+            // 处理优惠券 — 使用 userCouponId（user_coupon 表主键）
+            if (userCouponId != null && userCouponId > 0) {
+                couponAmount = applyCouponToOrder(userCouponId, userId, order);
             }
 
             // 处理积分抵扣
@@ -1601,11 +1539,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
 
             // 订单ID获取成功后，处理之前因为订单ID为null而未完成的优惠券状态更新
-            if (couponId != null && couponId > 0) {
-                UserCoupon userCoupon = userCouponService.getById(couponId);
+            if (userCouponId != null && userCouponId > 0) {
+                UserCoupon userCoupon = userCouponService.getById(userCouponId);
                 if (userCoupon != null && userCoupon.getUserId().equals(userId)
                         && "UNUSED".equals(userCoupon.getStatus())) {
-                    log.info("更新优惠券状态，订单ID: {}, 优惠券ID: {}", order.getOrderId(), couponId);
+                    log.info("更新优惠券状态，订单ID: {}, 用户优惠券ID: {}", order.getOrderId(), userCouponId);
                     userCoupon.setStatus("USED");
                     userCoupon.setUseTime(LocalDateTime.now());
                     userCoupon.setOrderId(order.getOrderId().longValue());
@@ -1629,8 +1567,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 orderProduct.setSkuId(sku.getSkuId());
                 orderProduct.setSkuCode(sku.getSkuCode());
                 // 使用SKU图片（如果有）
-                orderProduct.setProductImg(sku.getSkuImage() != null && !sku.getSkuImage().isEmpty() 
-                        ? sku.getSkuImage() : product.getProductImg());
+                orderProduct.setProductImg(sku.getSkuImage() != null && !sku.getSkuImage().isEmpty()
+                        ? sku.getSkuImage()
+                        : product.getProductImg());
             } else {
                 orderProduct.setProductImg(product.getProductImg());
             }
@@ -1646,7 +1585,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             } else {
                 // 扣减商品主表库存
                 productMapper.decreaseStockAndIncreaseSales(productId, quantity);
-                
+
                 // 销量更新后，清除热门商品缓存
                 if (productService instanceof ProductServiceImpl) {
                     ((ProductServiceImpl) productService).clearTopProductsCache();
@@ -1699,13 +1638,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                         order.getOrderId(),
                         order.getOrderNo(),
                         order.getUserId(),
-                        order.getTotalAmount()
-                );
+                        order.getTotalAmount());
                 messageProducerService.sendOrderMessage(orderMessage);
                 log.info("直接购买订单创建消息发送成功: orderId={}, orderNo={}", order.getOrderId(), order.getOrderNo());
             } catch (Exception e) {
                 // 消息发送失败不影响主流程，但需要记录日志
-                log.error("直接购买订单创建消息发送失败: orderId={}, orderNo={}, error={}", 
+                log.error("直接购买订单创建消息发送失败: orderId={}, orderNo={}, error={}",
                         order.getOrderId(), order.getOrderNo(), e.getMessage(), e);
             }
 
@@ -1781,5 +1719,66 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
+    /**
+     * 处理订单优惠券，计算优惠金额并设置到订单中
+     * 支持 FIXED（固定金额）和 PERCENTAGE（百分比折扣）两种类型
+     *
+     * @param userCouponId 用户优惠券ID（user_coupon表主键）
+     * @param userId       用户ID，用于所有权校验
+     * @param order        订单对象，会被设置 couponId 和 couponAmount
+     * @return 优惠金额，如果优惠券不可用则返回 BigDecimal.ZERO
+     */
+    private BigDecimal applyCouponToOrder(Long userCouponId, Integer userId, Order order) {
+        // 获取用户优惠券记录
+        UserCoupon userCoupon = userCouponService.getById(userCouponId);
+        if (userCoupon == null || !userCoupon.getUserId().equals(userId)
+                || !"UNUSED".equals(userCoupon.getStatus())) {
+            log.warn("用户优惠券不可用: userCouponId={}, userId={}", userCouponId, userId);
+            return BigDecimal.ZERO;
+        }
+
+        // 获取优惠券模板信息
+        Coupon coupon = couponService.getById(userCoupon.getCouponId());
+        if (coupon == null || !"ACTIVE".equals(coupon.getStatus())) {
+            log.warn("优惠券模板不可用: couponId={}", userCoupon.getCouponId());
+            return BigDecimal.ZERO;
+        }
+
+        // 检查最低消费金额
+        if (order.getTotalAmount().compareTo(coupon.getMinSpend()) < 0) {
+            log.warn("优惠券不可用，最低消费金额不足: 订单总额={}, 最低金额={}",
+                    order.getTotalAmount(), coupon.getMinSpend());
+            return BigDecimal.ZERO;
+        }
+
+        // 根据优惠券类型计算优惠金额
+        BigDecimal couponAmount;
+        if ("PERCENTAGE".equals(coupon.getType())) {
+            // 百分比折扣：value 存储的是折扣率（如 0.9 表示 9 折）
+            // 优惠金额 = 订单金额 × (1 - 折扣率)
+            couponAmount = order.getTotalAmount()
+                    .multiply(BigDecimal.ONE.subtract(coupon.getValue()))
+                    .setScale(2, RoundingMode.HALF_UP);
+            // 如果设置了最大折扣金额，取较小值
+            if (coupon.getMaxDiscount() != null && coupon.getMaxDiscount().compareTo(BigDecimal.ZERO) > 0) {
+                couponAmount = couponAmount.min(coupon.getMaxDiscount());
+            }
+            log.info("百分比折扣券: 订单金额={}, 折扣率={}, 优惠金额={}, 最大折扣={}",
+                    order.getTotalAmount(), coupon.getValue(), couponAmount, coupon.getMaxDiscount());
+        } else {
+            // FIXED 固定金额减免
+            couponAmount = coupon.getValue();
+            log.info("固定金额券: 面值={}", couponAmount);
+        }
+
+        // 优惠金额不能超过订单金额
+        couponAmount = couponAmount.min(order.getTotalAmount());
+
+        // 设置优惠券信息到订单（存储 userCouponId 便于后续关联更新）
+        order.setCouponId(userCouponId);
+        order.setCouponAmount(couponAmount);
+
+        return couponAmount;
+    }
 
 }

@@ -16,23 +16,23 @@ public interface OrderService extends IService<Order> {
 
     /**
      * 创建订单
-     * 
+     *
      * @param userId        用户ID
      * @param addressId     地址ID
      * @param remark        备注
      * @param paymentMethod 支付方式
-     * @param couponId      优惠券ID
+     * @param userCouponId  用户优惠券ID（user_coupon表主键）
      * @param cartIds       购物车项ID列表
      * @param shippingFee   运费
      * @param pointsUsed    使用的积分数量
      * @return 订单信息
      */
     Map<String, Object> createOrder(Integer userId, Integer addressId, String remark,
-            String paymentMethod, Long couponId, List<Integer> cartIds, BigDecimal shippingFee, Integer pointsUsed);
+            String paymentMethod, Long userCouponId, List<Integer> cartIds, BigDecimal shippingFee, Integer pointsUsed);
 
     /**
      * 直接购买商品（不添加到购物车）
-     * 
+     *
      * @param userId        用户ID
      * @param addressId     地址ID
      * @param productId     商品ID
@@ -41,14 +41,14 @@ public interface OrderService extends IService<Order> {
      * @param skuId         SKU ID（新版本使用）
      * @param remark        备注
      * @param paymentMethod 支付方式
-     * @param couponId      优惠券ID
+     * @param userCouponId  用户优惠券ID（user_coupon表主键）
      * @param shippingFee   运费
      * @param pointsUsed    使用的积分
      * @return 创建的订单信息
      */
     Map<String, Object> directPurchase(Integer userId, Integer addressId, Integer productId,
             Integer quantity, String specs, Long skuId, String remark,
-            String paymentMethod, Long couponId,
+            String paymentMethod, Long userCouponId,
             BigDecimal shippingFee, Integer pointsUsed);
 
     /**
@@ -58,7 +58,7 @@ public interface OrderService extends IService<Order> {
      */
     Map<String, Object> directPurchase(Integer userId, Integer addressId, Integer productId,
             Integer quantity, String specs, Long skuId, String remark,
-            String paymentMethod, Long couponId,
+            String paymentMethod, Long userCouponId,
             BigDecimal shippingFee, Integer pointsUsed, BigDecimal overrideUnitPrice);
 
     /**

@@ -26,14 +26,14 @@ public interface OrderTccService extends TccAction<OrderCreateDTO, Order> {
      * @param addressId    收货地址ID
      * @param remark       订单备注
      * @param paymentMethod 支付方式
-     * @param couponId     优惠券ID（可选）
+     * @param userCouponId 用户优惠券ID（user_coupon表主键，可选）
      * @param cartIds      购物车商品ID列表
      * @param shippingFee  运费
      * @param pointsUsed   使用积分数量
      * @return 创建结果，包含订单信息
      */
     Map<String, Object> createOrderWithTcc(Integer userId, Integer addressId, String remark,
-            String paymentMethod, Long couponId, java.util.List<Integer> cartIds,
+            String paymentMethod, Long userCouponId, java.util.List<Integer> cartIds,
             java.math.BigDecimal shippingFee, Integer pointsUsed);
 
     /**
