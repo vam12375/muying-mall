@@ -3,8 +3,6 @@ package com.muyingmall.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.muyingmall.entity.Coupon;
-import com.muyingmall.entity.CouponBatch;
-import com.muyingmall.entity.CouponRule;
 import com.muyingmall.entity.UserCoupon;
 
 import java.util.List;
@@ -95,58 +93,6 @@ public interface CouponService extends IService<Coupon> {
      * @return 是否成功
      */
     boolean updateCouponStatus(Long id, String status);
-
-    /**
-     * 分页查询优惠券批次
-     *
-     * @param page       页码
-     * @param size       每页大小
-     * @param couponName 优惠券名称，可为空
-     * @return 批次分页对象
-     */
-    Page<CouponBatch> listCouponBatches(Integer page, Integer size, String couponName);
-
-    /**
-     * 保存优惠券批次
-     *
-     * @param batch 批次对象
-     * @return 是否成功
-     */
-    boolean saveCouponBatch(CouponBatch batch);
-
-    /**
-     * 获取优惠券批次详情
-     *
-     * @param batchId 批次ID
-     * @return 批次对象
-     */
-    CouponBatch getCouponBatchDetail(Integer batchId);
-
-    /**
-     * 分页查询优惠券规则
-     *
-     * @param page 页码
-     * @param size 每页大小
-     * @param name 规则名称，可为空
-     * @return 规则分页对象
-     */
-    Page<CouponRule> listCouponRules(Integer page, Integer size, String name);
-
-    /**
-     * 保存优惠券规则
-     *
-     * @param rule 规则对象
-     * @return 是否成功
-     */
-    boolean saveCouponRule(CouponRule rule);
-
-    /**
-     * 更新优惠券规则
-     *
-     * @param rule 规则对象
-     * @return 是否成功
-     */
-    boolean updateCouponRule(CouponRule rule);
 
     /**
      * 获取优惠券统计数据

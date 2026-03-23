@@ -1,4 +1,4 @@
-package com.muyingmall.service.impl;
+ package com.muyingmall.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -6,8 +6,10 @@ import com.muyingmall.common.constants.CacheConstants;
 import com.muyingmall.common.exception.BusinessException;
 import com.muyingmall.entity.Coupon;
 import com.muyingmall.entity.UserCoupon;
+import com.muyingmall.entity.Product;
 import com.muyingmall.mapper.CouponMapper;
 import com.muyingmall.mapper.UserCouponMapper;
+import com.muyingmall.mapper.ProductMapper;
 import com.muyingmall.service.CouponService;
 import com.muyingmall.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.muyingmall.entity.CouponBatch;
-import com.muyingmall.entity.CouponRule;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -36,6 +36,7 @@ import java.util.Set;
 public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> implements CouponService {
 
     private final UserCouponMapper userCouponMapper;
+    private final ProductMapper productMapper;
     private final RedisUtil redisUtil;
 
     @Override
@@ -78,10 +79,23 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
 
             List<UserCoupon> userCoupons = userCouponMapper.selectList(userCouponQuery);
 
-            // 设置已领取标记
+            // 设置已领取标记（考虑 userLimit 多次领取场景）
+            // 统计每张优惠券的领取次数
+            Map<Long, Long> receiveCountMap = userCoupons.stream()
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            UserCoupon::getCouponId, java.util.stream.Collectors.counting()));
+
             for (Coupon coupon : coupons) {
-                coupon.setIsReceived(userCoupons.stream()
-                        .anyMatch(uc -> uc.getCouponId().equals(coupon.getId())));
+                long receivedCount = receiveCountMap.getOrDefault(coupon.getId(), 0L);
+                if (receivedCount == 0) {
+                    coupon.setIsReceived(false);
+                } else if (coupon.getUserLimit() != null && coupon.getUserLimit() > 0) {
+                    // 有领取限制：达到上限才标记已领取
+                    coupon.setIsReceived(receivedCount >= coupon.getUserLimit());
+                } else {
+                    // 无领取限制（userLimit=0或null），已领取过就标记
+                    coupon.setIsReceived(true);
+                }
             }
         }
 
@@ -170,11 +184,6 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
             throw new BusinessException("优惠券已过期");
         }
 
-        // 检查是否已达到发放数量上限
-        if (coupon.getTotalQuantity() > 0 && coupon.getReceivedQuantity() >= coupon.getTotalQuantity()) {
-            throw new BusinessException("优惠券已被领完");
-        }
-
         // 检查用户是否已领取过该优惠券（如果有限制）
         if (coupon.getUserLimit() != null && coupon.getUserLimit() > 0) {
             LambdaQueryWrapper<UserCoupon> queryWrapper = new LambdaQueryWrapper<>();
@@ -185,6 +194,13 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
             if (count >= coupon.getUserLimit()) {
                 throw new BusinessException("您已领取过该优惠券");
             }
+        }
+
+        // CAS方式安全递增领取数量，防止并发超发
+        // 仅当库存充足时才能成功更新（total_quantity=0 表示不限量，始终成功）
+        int rows = baseMapper.incrementReceivedQuantity(couponId);
+        if (rows == 0) {
+            throw new BusinessException("优惠券已被领完");
         }
 
         // 创建用户优惠券记录
@@ -200,10 +216,6 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
 
         userCouponMapper.insert(userCoupon);
 
-        // 更新优惠券领取数量
-        coupon.setReceivedQuantity(coupon.getReceivedQuantity() + 1);
-        updateById(coupon);
-        
         // 清除用户优惠券缓存和可用优惠券缓存
         clearUserCouponCache(userId);
         redisUtil.del(CacheConstants.COUPON_AVAILABLE_KEY);
@@ -234,6 +246,15 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
 
         List<Coupon> coupons = list(couponQuery);
 
+        // 批量查询商品信息（用于分类/品牌匹配）
+        List<Product> products = new ArrayList<>();
+        if (productIds != null && !productIds.isEmpty()) {
+            LambdaQueryWrapper<Product> productQuery = new LambdaQueryWrapper<>();
+            productQuery.in(Product::getProductId, productIds);
+            products = productMapper.selectList(productQuery);
+        }
+        final List<Product> finalProducts = products;
+
         // 筛选符合订单金额条件的优惠券
         List<UserCoupon> availableCoupons = new ArrayList<>();
         BigDecimal orderAmount = BigDecimal.valueOf(amount);
@@ -247,8 +268,8 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
 
                         // 检查最低使用金额
                         if (orderAmount.compareTo(coupon.getMinSpend()) >= 0) {
-                            // 检查商品适用范围
-                            if (checkProductApplicable(coupon, productIds)) {
+                            // 检查商品适用范围（支持 productIds/categoryIds/brandIds 三个维度）
+                            if (checkProductApplicable(coupon, productIds, finalProducts)) {
                                 availableCoupons.add(userCoupon);
                             }
                         }
@@ -263,22 +284,51 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
 
     /**
      * 检查优惠券是否适用于指定商品
+     * 支持三个维度的匹配：productIds、categoryIds、brandIds
+     * 全部为空时表示全场通用
      */
-    private boolean checkProductApplicable(Coupon coupon, List<Integer> productIds) {
-        // 全场通用，没有商品限制
-        if (coupon.getProductIds() == null || coupon.getProductIds().isEmpty()) {
+    private boolean checkProductApplicable(Coupon coupon, List<Integer> productIds, List<Product> products) {
+        boolean hasProductRestriction = coupon.getProductIds() != null && !coupon.getProductIds().isEmpty();
+        boolean hasCategoryRestriction = coupon.getCategoryIds() != null && !coupon.getCategoryIds().isEmpty();
+        boolean hasBrandRestriction = coupon.getBrandIds() != null && !coupon.getBrandIds().isEmpty();
+
+        // 全场通用，没有任何限制
+        if (!hasProductRestriction && !hasCategoryRestriction && !hasBrandRestriction) {
             return true;
         }
 
-        // 商品限制
-        if (productIds != null && !productIds.isEmpty()) {
-            // 解析优惠券适用的商品ID
-            String[] couponProductIds = coupon.getProductIds().split(",");
-            for (String cpId : couponProductIds) {
-                for (Integer pid : productIds) {
-                    if (cpId.equals(String.valueOf(pid))) {
-                        return true; // 只要有一个商品适用即可
-                    }
+        if (productIds == null || productIds.isEmpty()) {
+            return false;
+        }
+
+        // 检查商品ID限制
+        if (hasProductRestriction) {
+            Set<String> couponProductIds = Set.of(coupon.getProductIds().split(","));
+            for (Integer pid : productIds) {
+                if (couponProductIds.contains(String.valueOf(pid))) {
+                    return true;
+                }
+            }
+        }
+
+        // 检查分类ID限制
+        if (hasCategoryRestriction && !products.isEmpty()) {
+            Set<String> couponCategoryIds = Set.of(coupon.getCategoryIds().split(","));
+            for (Product product : products) {
+                if (product.getCategoryId() != null
+                        && couponCategoryIds.contains(String.valueOf(product.getCategoryId()))) {
+                    return true;
+                }
+            }
+        }
+
+        // 检查品牌ID限制
+        if (hasBrandRestriction && !products.isEmpty()) {
+            Set<String> couponBrandIds = Set.of(coupon.getBrandIds().split(","));
+            for (Product product : products) {
+                if (product.getBrandId() != null
+                        && couponBrandIds.contains(String.valueOf(product.getBrandId()))) {
+                    return true;
                 }
             }
         }
@@ -363,44 +413,6 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
     }
 
     @Override
-    public Page<CouponBatch> listCouponBatches(Integer page, Integer size, String couponName) {
-        // 为简化返回模拟数据，实际项目中应查询数据库
-        Page<CouponBatch> result = new Page<>(page, size, 0);
-        return result;
-    }
-
-    @Override
-    public boolean saveCouponBatch(CouponBatch batch) {
-        // 为简化返回成功，实际项目中应保存到数据库
-        return true;
-    }
-
-    @Override
-    public CouponBatch getCouponBatchDetail(Integer batchId) {
-        // 为简化返回null，实际项目中应查询数据库
-        return null;
-    }
-
-    @Override
-    public Page<CouponRule> listCouponRules(Integer page, Integer size, String name) {
-        // 为简化返回模拟数据，实际项目中应查询数据库
-        Page<CouponRule> result = new Page<>(page, size, 0);
-        return result;
-    }
-
-    @Override
-    public boolean saveCouponRule(CouponRule rule) {
-        // 为简化返回成功，实际项目中应保存到数据库
-        return true;
-    }
-
-    @Override
-    public boolean updateCouponRule(CouponRule rule) {
-        // 为简化返回成功，实际项目中应更新数据库
-        return true;
-    }
-
-    @Override
     public Map<String, Object> getCouponStats() {
         Map<String, Object> stats = new HashMap<>();
 
@@ -434,22 +446,17 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean receiveCouponByCode(Integer userId, String code) {
-        // 根据优惠码查询优惠券
+        // 使用 code 字段精确查询，避免全表扫描
         LambdaQueryWrapper<Coupon> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Coupon::getStatus, "ACTIVE")
-                .gt(Coupon::getEndTime, LocalDateTime.now());
+        queryWrapper.eq(Coupon::getCode, code)
+                .eq(Coupon::getStatus, "ACTIVE")
+                .gt(Coupon::getEndTime, LocalDateTime.now())
+                .last("LIMIT 1");
 
-        List<Coupon> coupons = list(queryWrapper);
-        
-        // 查找匹配的优惠券（这里简化处理，实际应该有专门的code字段）
-        Coupon matchedCoupon = coupons.stream()
-                .filter(c -> code.equalsIgnoreCase(c.getName()) || 
-                            (c.getId().toString().equals(code)))
-                .findFirst()
-                .orElse(null);
+        Coupon matchedCoupon = getOne(queryWrapper, false);
 
         if (matchedCoupon == null) {
-            throw new BusinessException("优惠码无效");
+            throw new BusinessException("优惠码无效或已过期");
         }
 
         // 调用领取优惠券方法
@@ -486,13 +493,21 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
                 .le(UserCoupon::getExpireTime, LocalDateTime.now());
         long expiredCount = userCouponMapper.selectCount(expiredQuery);
 
-        // 计算累计节省金额（简化计算）
+        // 批量查询已使用的优惠券，避免N+1循环查询
         BigDecimal totalSavings = BigDecimal.ZERO;
         List<UserCoupon> usedCoupons = userCouponMapper.selectList(usedQuery);
-        for (UserCoupon uc : usedCoupons) {
-            Coupon coupon = getById(uc.getCouponId());
-            if (coupon != null && "FIXED".equals(coupon.getType())) {
-                totalSavings = totalSavings.add(coupon.getValue());
+        if (!usedCoupons.isEmpty()) {
+            List<Long> couponIds = usedCoupons.stream()
+                    .map(UserCoupon::getCouponId)
+                    .distinct()
+                    .toList();
+            Map<Long, Coupon> couponMap = listByIds(couponIds).stream()
+                    .collect(java.util.stream.Collectors.toMap(Coupon::getId, c -> c));
+            for (UserCoupon uc : usedCoupons) {
+                Coupon coupon = couponMap.get(uc.getCouponId());
+                if (coupon != null && "FIXED".equals(coupon.getType())) {
+                    totalSavings = totalSavings.add(coupon.getValue());
+                }
             }
         }
 
@@ -514,12 +529,9 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         if (userId == null) {
             return;
         }
-        // 清除用户所有状态的优惠券缓存
+        // 使用 SCAN 替代 KEYS，避免生产环境 Redis 阻塞
         String pattern = CacheConstants.USER_COUPON_LIST_KEY + userId + ":*";
-        Set<String> keys = redisUtil.keys(pattern);
-        if (keys != null && !keys.isEmpty()) {
-            redisUtil.del(keys);
-        }
+        redisUtil.deleteByScan(pattern);
         log.debug("清除用户优惠券缓存: userId={}", userId);
     }
 }
