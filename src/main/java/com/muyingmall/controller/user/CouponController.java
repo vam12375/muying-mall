@@ -21,19 +21,17 @@ import java.util.Map;
  * 优惠券控制器
  */
 @RestController
-@RequestMapping("/coupons")
 @RequiredArgsConstructor
 @Tag(name = "优惠券", description = "优惠券查询、领取等接口")
 public class CouponController {
 
     private final CouponService couponService;
     private final UserService userService;
-    private final com.muyingmall.util.ControllerCacheUtil controllerCacheUtil;
 
     /**
      * 获取可用优惠券列表
      */
-    @GetMapping("/available")
+    @GetMapping("/coupons/available")
     @Operation(summary = "获取可用优惠券列表")
     public Result<List<Coupon>> listAvailableCoupons() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -54,8 +52,7 @@ public class CouponController {
 
     /**
      * 获取用户优惠券列表
-     * 性能优化：Controller层缓存
-     * 来源：性能优化 - 缓存优惠券列表响应，延迟从256ms降低到10ms
+     * 缓存统一由 Service 层管理，避免双层缓存不一致
      */
     @GetMapping("/user/coupons")
     @Operation(summary = "获取用户优惠券列表")
@@ -73,18 +70,14 @@ public class CouponController {
             return Result.error(404, "用户不存在");
         }
 
-        String cacheKey = "user:coupons:" + user.getUserId() + ":st" + status;
-        
-        return controllerCacheUtil.getWithCache(cacheKey, 60L, () -> {
-            List<UserCoupon> userCoupons = couponService.getUserCoupons(user.getUserId(), status);
-            return Result.success(userCoupons);
-        });
+        List<UserCoupon> userCoupons = couponService.getUserCoupons(user.getUserId(), status);
+        return Result.success(userCoupons);
     }
 
     /**
      * 领取优惠券
      */
-    @PostMapping("/{couponId}/receive")
+    @PostMapping("/coupons/{couponId}/receive")
     @Operation(summary = "领取优惠券")
     public Result<Void> receiveCoupon(@PathVariable("couponId") Long couponId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -103,10 +96,8 @@ public class CouponController {
         if (!success) {
             return Result.error("领取失败");
         }
-        
-        // 领取成功后清除优惠券缓存
-        clearUserCouponCache(user.getUserId());
-        
+
+        // Service层已统一清除缓存，无需Controller重复清除
         return Result.success(null, "领取成功");
     }
 
@@ -142,7 +133,7 @@ public class CouponController {
     /**
      * 通过优惠码领取优惠券
      */
-    @PostMapping("/receive-by-code")
+    @PostMapping("/coupons/receive-by-code")
     @Operation(summary = "通过优惠码领取优惠券")
     public Result<Void> receiveCouponByCode(@RequestBody Map<String, String> request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -166,17 +157,15 @@ public class CouponController {
         if (!success) {
             return Result.error("优惠码无效或已被使用");
         }
-        
-        // 兑换成功后清除优惠券缓存
-        clearUserCouponCache(user.getUserId());
-        
+
+        // Service层已统一清除缓存
         return Result.success(null, "兑换成功");
     }
 
     /**
      * 获取优惠券详情
      */
-    @GetMapping("/{couponId}")
+    @GetMapping("/coupons/{couponId}")
     @Operation(summary = "获取优惠券详情")
     public Result<Coupon> getCouponDetail(@PathVariable("couponId") Long couponId) {
         Coupon coupon = couponService.getById(couponId);
@@ -184,6 +173,65 @@ public class CouponController {
             return Result.error(404, "优惠券不存在");
         }
         return Result.success(coupon);
+    }
+
+    /**
+     * 验证优惠券是否可用于指定订单
+     */
+    @PostMapping("/coupons/{couponId}/validate")
+    @Operation(summary = "验证优惠券是否可用")
+    public Result<Map<String, Object>> validateCoupon(
+            @PathVariable("couponId") Long couponId,
+            @RequestBody Map<String, Object> orderInfo) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return Result.error(401, "用户未认证");
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        Coupon coupon = couponService.getById(couponId);
+        if (coupon == null) {
+            return Result.error(404, "优惠券不存在");
+        }
+
+        Map<String, Object> result = new java.util.HashMap<>();
+
+        // 检查优惠券状态
+        if (!"ACTIVE".equals(coupon.getStatus())) {
+            result.put("valid", false);
+            result.put("reason", "优惠券已下架");
+            return Result.success(result);
+        }
+
+        // 检查是否过期
+        if (coupon.getEndTime().isBefore(java.time.LocalDateTime.now())) {
+            result.put("valid", false);
+            result.put("reason", "优惠券已过期");
+            return Result.success(result);
+        }
+
+        // 检查最低消费金额
+        Object amountObj = orderInfo.get("totalAmount");
+        if (amountObj != null) {
+            java.math.BigDecimal orderAmount = new java.math.BigDecimal(amountObj.toString());
+            if (orderAmount.compareTo(coupon.getMinSpend()) < 0) {
+                result.put("valid", false);
+                result.put("reason", "订单金额未达到最低消费 ¥" + coupon.getMinSpend());
+                return Result.success(result);
+            }
+        }
+
+        result.put("valid", true);
+        result.put("couponName", coupon.getName());
+        result.put("discountType", coupon.getType());
+        result.put("discountValue", coupon.getValue());
+        return Result.success(result);
     }
 
     /**
@@ -206,21 +254,5 @@ public class CouponController {
 
         Map<String, Object> stats = couponService.getUserCouponStats(user.getUserId());
         return Result.success(stats);
-    }
-
-    /**
-     * 清除用户优惠券缓存
-     * 使用模式匹配清除所有状态的缓存
-     * 
-     * @param userId 用户ID
-     */
-    private void clearUserCouponCache(Integer userId) {
-        if (userId == null) {
-            return;
-        }
-        
-        // 使用模式匹配清除所有状态的优惠券缓存
-        String pattern = "user:coupons:" + userId + ":*";
-        controllerCacheUtil.clearCacheByPattern(pattern);
     }
 }

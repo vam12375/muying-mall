@@ -115,8 +115,11 @@ public class AdminCouponController {
         return Result.success(null, "更新优惠券状态成功");
     }
 
+    // ===================== 批次管理（功能未实现，返回提示） =====================
+
     /**
      * 分页查询优惠券批次列表
+     * TODO: 批次管理功能待实现
      */
     @GetMapping("/batch/list")
     @Operation(summary = "分页查询优惠券批次列表")
@@ -124,40 +127,34 @@ public class AdminCouponController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String couponName) {
-
-        Page<CouponBatch> batchPage = couponService.listCouponBatches(page, size, couponName);
-        return Result.success(batchPage);
+        return Result.error(501, "优惠券批次管理功能暂未实现");
     }
 
     /**
      * 创建优惠券批次
+     * TODO: 批次管理功能待实现
      */
     @PostMapping("/batch")
     @Operation(summary = "创建优惠券批次")
-    @com.muyingmall.annotation.AdminOperationLog(operation = "创建优惠券批次", module = "优惠券管理", operationType = "CREATE", targetType = "coupon_batch")
     public Result<CouponBatch> createCouponBatch(@RequestBody CouponBatch batch) {
-        boolean success = couponService.saveCouponBatch(batch);
-        if (!success) {
-            return Result.error("创建优惠券批次失败");
-        }
-        return Result.success(batch, "创建优惠券批次成功");
+        return Result.error(501, "优惠券批次管理功能暂未实现");
     }
 
     /**
      * 获取优惠券批次详情
+     * TODO: 批次管理功能待实现
      */
     @GetMapping("/batch/{batchId}")
     @Operation(summary = "获取优惠券批次详情")
     public Result<CouponBatch> getCouponBatchDetail(@PathVariable Integer batchId) {
-        CouponBatch batch = couponService.getCouponBatchDetail(batchId);
-        if (batch == null) {
-            return Result.error(404, "优惠券批次不存在");
-        }
-        return Result.success(batch);
+        return Result.error(501, "优惠券批次管理功能暂未实现");
     }
+
+    // ===================== 规则管理（功能未实现，返回提示） =====================
 
     /**
      * 分页查询优惠券规则列表
+     * TODO: 规则管理功能待实现
      */
     @GetMapping("/rule/list")
     @Operation(summary = "分页查询优惠券规则列表")
@@ -165,38 +162,27 @@ public class AdminCouponController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String name) {
-
-        Page<CouponRule> rulePage = couponService.listCouponRules(page, size, name);
-        return Result.success(rulePage);
+        return Result.error(501, "优惠券规则管理功能暂未实现");
     }
 
     /**
      * 创建优惠券规则
+     * TODO: 规则管理功能待实现
      */
     @PostMapping("/rule")
     @Operation(summary = "创建优惠券规则")
-    @com.muyingmall.annotation.AdminOperationLog(operation = "创建优惠券规则", module = "优惠券管理", operationType = "CREATE", targetType = "coupon_rule")
     public Result<CouponRule> createCouponRule(@RequestBody CouponRule rule) {
-        boolean success = couponService.saveCouponRule(rule);
-        if (!success) {
-            return Result.error("创建优惠券规则失败");
-        }
-        return Result.success(rule, "创建优惠券规则成功");
+        return Result.error(501, "优惠券规则管理功能暂未实现");
     }
 
     /**
      * 更新优惠券规则
+     * TODO: 规则管理功能待实现
      */
     @PutMapping("/rule/{ruleId}")
     @Operation(summary = "更新优惠券规则")
-    @com.muyingmall.annotation.AdminOperationLog(operation = "更新优惠券规则", module = "优惠券管理", operationType = "UPDATE", targetType = "coupon_rule")
     public Result<Void> updateCouponRule(@PathVariable Integer ruleId, @RequestBody CouponRule rule) {
-        rule.setRuleId(ruleId);
-        boolean success = couponService.updateCouponRule(rule);
-        if (!success) {
-            return Result.error("更新优惠券规则失败");
-        }
-        return Result.success(null, "更新优惠券规则成功");
+        return Result.error(501, "优惠券规则管理功能暂未实现");
     }
 
     /**
