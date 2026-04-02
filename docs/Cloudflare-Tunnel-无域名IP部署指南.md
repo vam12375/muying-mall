@@ -219,15 +219,15 @@ cloudflared tunnel list
 # 创建路由配置文件
 mkdir -p ~/.cloudflared
 cat > ~/.cloudflared/config.yml << 'EOF'
-tunnel: <你的 TUNNEL_ID>
-credentials-file: /root/.cloudflared/<你的 TUNNEL_ID>.json
+tunnel: <3c2daeb6-6182-4c4b-b369-cdf7f66633a4>
+credentials-file: /root/.cloudflared/<3c2daeb6-6182-4c4b-b369-cdf7f66633a4>.json
 
 ingress:
   - service: http://localhost:8080
 EOF
 
 # 将 Tunnel 绑定到子域（需要在 Cloudflare 管理的域名，若无域名则跳过此步使用 trycloudflare.com）
-# cloudflared tunnel route dns muying-backend api.yourdomain.com
+# cloudflared tunnel route dns muying-backend api.pig1.de5.net
 
 # 启动 Tunnel
 nohup cloudflared tunnel run muying-backend > /tmp/cloudflared.log 2>&1 &

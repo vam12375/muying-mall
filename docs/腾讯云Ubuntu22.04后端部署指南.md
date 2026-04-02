@@ -251,12 +251,12 @@ ALIPAY_PUBLIC_KEY=你的支付宝公钥
 cors.allowed-origins=https://muying-web.pages.dev,https://pig1.de5.net
 
 # 文件上传配置 - Linux 服务器路径
-upload.path=/opt/muying/uploads
+upload.path=/home/ubuntu/uploads
 upload.avatar.path=/avatars
 upload.domain=https://api.pig1.de5.net
 
 # 文件访问URL
-file.upload.path=/opt/muying/uploads
+file.upload.path=/home/ubuntu/uploads
 file.access.url=https://api.pig1.de5.net/avatars
 
 # 文件上传大小限制
@@ -267,8 +267,8 @@ spring.servlet.multipart.max-request-size=10MB
 创建上传目录：
 
 ```bash
-mkdir -p /opt/muying/uploads/avatars
-chmod 755 /opt/muying/uploads
+mkdir -p /home/ubuntu/uploads/avatars
+chmod 755 /home/ubuntu/uploads
 ```
 
 ---
@@ -294,7 +294,7 @@ chmod 755 /opt/muying/uploads
 ### 5.2 构建并启动所有服务
 
 ```bash
-cd /opt/muying/muying-mall
+cd /home/ubuntu/muying-mall
 
 # 构建后端镜像并启动所有服务
 docker compose up -d --build
