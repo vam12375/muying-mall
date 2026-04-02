@@ -39,6 +39,12 @@ build/
 # IDE and editor files
 
 .sanshu-memory/
+.codebuddy/
+.github/
+
+# 构建产物与压缩包
+*.tar.gz
+*.zip
 
 # 临时文件和备份
 *.bkp
