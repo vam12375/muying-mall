@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,15 +28,27 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @EnableCaching
 public class RedisConfig {
 
+    @Value("${spring.data.redis.host:localhost}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
+
+    @Value("${spring.data.redis.password:}")
+    private String redisPassword;
+
     /**
      * 创建db1的Redis连接工厂
      */
     @Bean
     public RedisConnectionFactory redisConnectionFactoryDb1() {
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
-        redisConfig.setHostName("localhost");
-        redisConfig.setPort(6379);
+        redisConfig.setHostName(redisHost);
+        redisConfig.setPort(redisPort);
         redisConfig.setDatabase(1); // 使用db1
+        if (redisPassword != null && !redisPassword.isBlank()) {
+            redisConfig.setPassword(redisPassword);
+        }
         return new LettuceConnectionFactory(redisConfig);
     }
 
@@ -53,8 +66,8 @@ public class RedisConfig {
         // 设置可见性
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
         // 启用序列化类的类型信息（防止反序列化时出现错误）
-        objectMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, 
-                                ObjectMapper.DefaultTyping.NON_FINAL);
+        objectMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance,
+                ObjectMapper.DefaultTyping.NON_FINAL);
         return objectMapper;
     }
 
@@ -63,8 +76,8 @@ public class RedisConfig {
      */
     @Primary
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory, 
-                                                      @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory,
+            @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper) {
         return createRedisTemplate(factory, redisObjectMapper);
     }
 
@@ -86,28 +99,28 @@ public class RedisConfig {
     public RedisTemplate<String, Object> sessionRedisTemplate(RedisConnectionFactory factory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
-        
+
         // 使用StringRedisSerializer来序列化和反序列化redis的key值
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
         template.setKeySerializer(stringRedisSerializer);
         template.setHashKeySerializer(stringRedisSerializer);
-        
+
         // 使用JdkSerializationRedisSerializer来序列化和反序列化redis的value值
         // 这与Spring Session默认使用的序列化方式一致
         JdkSerializationRedisSerializer jdkSerializer = new JdkSerializationRedisSerializer();
         template.setValueSerializer(jdkSerializer);
         template.setHashValueSerializer(jdkSerializer);
-        
+
         template.afterPropertiesSet();
-        
+
         return template;
     }
 
     /**
      * 创建RedisTemplate的通用方法
      */
-    private RedisTemplate<String, Object> createRedisTemplate(RedisConnectionFactory factory, 
-                                                             ObjectMapper redisObjectMapper) {
+    private RedisTemplate<String, Object> createRedisTemplate(RedisConnectionFactory factory,
+            ObjectMapper redisObjectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         // 配置连接工厂
         template.setConnectionFactory(factory);
@@ -118,8 +131,8 @@ public class RedisConfig {
         template.setHashKeySerializer(stringRedisSerializer);
 
         // 使用Jackson2JsonRedisSerializer来序列化和反序列化redis的value值
-        Jackson2JsonRedisSerializer<Object> jsonRedisSerializer = 
-            new Jackson2JsonRedisSerializer<>(redisObjectMapper, Object.class);
+        Jackson2JsonRedisSerializer<Object> jsonRedisSerializer = new Jackson2JsonRedisSerializer<>(redisObjectMapper,
+                Object.class);
         template.setValueSerializer(jsonRedisSerializer);
         template.setHashValueSerializer(jsonRedisSerializer);
 
