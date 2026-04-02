@@ -18,30 +18,30 @@ public class CaptchaConfig {
     public DefaultKaptcha captchaProducer() {
         DefaultKaptcha kaptcha = new DefaultKaptcha();
         Properties properties = new Properties();
-        
+
         // 图片尺寸
         properties.setProperty("kaptcha.image.width", "150");
         properties.setProperty("kaptcha.image.height", "50");
-        
+
         // 验证码字符配置
         properties.setProperty("kaptcha.textproducer.char.length", "4");
         properties.setProperty("kaptcha.textproducer.char.string", "ABCDEFGHJKLMNPQRSTUVWXYZ23456789");
-        
-        // 字体配置
+
+        // 字体配置：优先使用容器内可用字体，避免 Alpine 环境缺少 Arial 导致生成失败
         properties.setProperty("kaptcha.textproducer.font.size", "40");
-        properties.setProperty("kaptcha.textproducer.font.names", "Arial");
+        properties.setProperty("kaptcha.textproducer.font.names", "DejaVu Sans,SansSerif,Arial");
         properties.setProperty("kaptcha.textproducer.font.color", "black");
-        
+
         // 背景配置（纯白色）
         properties.setProperty("kaptcha.background.clear.from", "white");
         properties.setProperty("kaptcha.background.clear.to", "white");
-        
+
         // 干扰配置
         properties.setProperty("kaptcha.noise.color", "black");
-        
+
         // 边框
         properties.setProperty("kaptcha.border", "no");
-        
+
         Config config = new Config(properties);
         kaptcha.setConfig(config);
         return kaptcha;

@@ -22,11 +22,13 @@ RUN mvn clean package -DskipTests -B
 # 阶段2: 运行阶段
 FROM eclipse-temurin:21-jre-alpine
 
-# 安装必要的工具
-RUN apk add --no-cache tzdata curl
+# 安装必要的工具和验证码生成所需字体
+RUN apk add --no-cache tzdata curl fontconfig ttf-dejavu \
+    && fc-cache -f
 
 # 设置时区为上海
 ENV TZ=Asia/Shanghai
+ENV JAVA_TOOL_OPTIONS="-Djava.awt.headless=true"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # 创建应用目录
