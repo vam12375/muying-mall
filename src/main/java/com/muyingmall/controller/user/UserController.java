@@ -1,7 +1,9 @@
 package com.muyingmall.controller.user;
 
-import com.google.code.kaptcha.impl.DefaultKaptcha;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.muyingmall.common.api.Result;
+import com.google.code.kaptcha.impl.DefaultKaptcha;
 import com.muyingmall.dto.CaptchaDTO;
 import com.muyingmall.dto.LoginDTO;
 import com.muyingmall.dto.LoginResponseDTO;
@@ -15,6 +17,7 @@ import com.muyingmall.util.LoginRateLimiter;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
@@ -34,9 +37,18 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -56,9 +68,24 @@ public class UserController {
     private final com.muyingmall.util.RedisUtil redisUtil;
     private final DefaultKaptcha captchaProducer;
     private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+
+    /**
+     * 前端登录页渲染 Turnstile 组件时使用的站点公钥。
+     */
+    @Value("${cloudflare.turnstile.site-key:}")
+    private String turnstileSiteKey;
+
+    /**
+     * 后端调用 Cloudflare siteverify 接口时使用的校验密钥。
+     */
+    @Value("${cloudflare.turnstile.secret-key:}")
+    private String turnstileSecretKey;
 
     private static final String CAPTCHA_KEY_PREFIX = "captcha:";
     private static final int CAPTCHA_EXPIRE_MINUTES = 5;
+    private static final String TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
     /**
      * 获取图形验证码
@@ -120,24 +147,17 @@ public class UserController {
             @ApiResponse(responseCode = "429", description = "请求过于频繁")
     })
     public Result<LoginResponseDTO> login(@RequestBody @Valid LoginDTO loginDTO,
-                                         HttpSession session,
-                                         HttpServletRequest request) {
-        // 验证图形验证码（必需）
-        if (loginDTO.getCaptchaKey() == null || loginDTO.getCaptchaKey().trim().isEmpty()) {
-            return Result.error(400, "请输入验证码");
+            HttpSession session,
+            HttpServletRequest request) {
+        // 登录前必须先通过 Turnstile 人机验证，拦截脚本撞库与暴力尝试。
+        if (!StringUtils.hasText(loginDTO.getTurnstileToken())) {
+            return Result.error(400, "请完成人机验证");
         }
-        if (loginDTO.getCaptchaCode() == null || loginDTO.getCaptchaCode().trim().isEmpty()) {
-            return Result.error(400, "请输入验证码");
+
+        // 先校验 Turnstile 令牌，再进入账号密码校验流程，减少无效登录请求对业务层的压力。
+        if (!verifyTurnstileToken(loginDTO.getTurnstileToken(), IpUtil.getIpAddr(request))) {
+            return Result.error(400, "人机验证失败，请重试");
         }
-        
-        String storedCaptcha = redisTemplate.opsForValue().get(CAPTCHA_KEY_PREFIX + loginDTO.getCaptchaKey());
-        if (storedCaptcha == null) {
-            return Result.error(400, "验证码已过期，请重新获取");
-        }
-        if (!storedCaptcha.equalsIgnoreCase(loginDTO.getCaptchaCode())) {
-            return Result.error(400, "验证码错误");
-        }
-        redisTemplate.delete(CAPTCHA_KEY_PREFIX + loginDTO.getCaptchaKey());
 
         // 获取客户端IP
         String clientIp = IpUtil.getIpAddr(request);
@@ -173,6 +193,47 @@ public class UserController {
         }
 
         return Result.success(responseDTO, "登录成功");
+    }
+
+    /**
+     * 调用 Cloudflare 官方 siteverify 接口校验登录页提交的 Turnstile 令牌。
+     * 只有验证成功后，后续账号密码校验与会话创建流程才会继续执行。
+     */
+    private boolean verifyTurnstileToken(String token, String remoteIp) {
+        if (!StringUtils.hasText(turnstileSecretKey)) {
+            log.warn("Cloudflare Turnstile secret-key 未配置，无法校验登录人机验证");
+            return false;
+        }
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+            form.add("secret", turnstileSecretKey);
+            form.add("response", token);
+            if (StringUtils.hasText(remoteIp)) {
+                form.add("remoteip", remoteIp);
+            }
+
+            HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(form, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(TURNSTILE_VERIFY_URL, requestEntity,
+                    String.class);
+            String body = response.getBody();
+            if (!StringUtils.hasText(body)) {
+                return false;
+            }
+
+            JsonNode root = objectMapper.readTree(body);
+            boolean success = root.path("success").asBoolean(false);
+            if (!success) {
+                log.warn("登录 Turnstile 校验失败: {}", body);
+            }
+            return success;
+        } catch (Exception e) {
+            log.error("登录 Turnstile 校验异常", e);
+            return false;
+        }
     }
 
     /**

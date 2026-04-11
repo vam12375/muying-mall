@@ -380,3 +380,10 @@ aliyun:
     region-id: cn-hangzhou
     # API端点
     endpoint: dypnsapi.aliyuncs.com
+
+cloudflare:
+  turnstile:
+    # 前端渲染 Turnstile 组件使用的站点密钥。
+    site-key: ${CLOUDFLARE_TURNSTILE_SITE_KEY:}
+    # 后端向 Cloudflare 发起 siteverify 校验时使用的密钥。
+    secret-key: ${CLOUDFLARE_TURNSTILE_SECRET_KEY:}

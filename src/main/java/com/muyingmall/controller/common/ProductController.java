@@ -5,6 +5,8 @@ import com.muyingmall.common.api.Result;
 import com.muyingmall.entity.Product;
 import com.muyingmall.entity.ProductParam;
 import com.muyingmall.entity.ProductSpecs;
+import com.muyingmall.dto.ProductAccessVerifyRequest;
+import com.muyingmall.service.ProductAccessGuardService;
 import com.muyingmall.service.ProductParamService;
 import com.muyingmall.service.ProductService;
 import com.muyingmall.service.impl.ProductCacheService;
@@ -19,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -34,9 +37,9 @@ import java.util.Random;
 @Slf4j
 @Tag(name = "商品管理", description = """
         商品查询接口，提供商品列表、详情、推荐等功能。
-        
+
         **无需登录即可访问**
-        
+
         **支持的筛选条件：**
         - 分类筛选（categoryId）
         - 品牌筛选（brandId）
@@ -50,7 +53,12 @@ public class ProductController {
     private final ProductService productService;
     private final ProductParamService productParamService;
     private final ProductCacheService productCacheService;
-    
+
+    /**
+     * 商品详情页访问防护服务，用于限制高频刷新并触发人机验证。
+     */
+    private final ProductAccessGuardService productAccessGuardService;
+
     // 商品ID有效范围常量（用于快速过滤无效请求）
     private static final int MIN_PRODUCT_ID = 1;
     private static final int MAX_PRODUCT_ID = 100000;
@@ -82,9 +90,10 @@ public class ProductController {
         // 参数校验和边界处理
         page = Math.max(1, page);
         size = Math.min(Math.max(1, size), 100); // 限制每页最大100条
-        
+
         try {
-            Page<Product> productPage = productService.getProductPage(page, size, categoryId, brandId, isHot, isNew, isRecommend,
+            Page<Product> productPage = productService.getProductPage(page, size, categoryId, brandId, isHot, isNew,
+                    isRecommend,
                     keyword);
             return Result.success(productPage);
         } catch (Exception e) {
@@ -102,35 +111,57 @@ public class ProductController {
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     public Result<Product> detail(
-            @Parameter(description = "商品ID", example = "1", required = true) @PathVariable("id") Integer id) {
+            @Parameter(description = "商品ID", example = "1", required = true) @PathVariable("id") Integer id,
+            HttpServletRequest request) {
         // 参数校验：快速过滤无效ID，防止缓存穿透
         if (id == null || id < MIN_PRODUCT_ID || id > MAX_PRODUCT_ID) {
             log.debug("商品ID无效: {}", id);
-            return Result.success(null); // 返回成功但数据为空，避免JMeter判定为错误
+            return Result.validateFailed("商品ID无效");
         }
-        
-        // 使用带缓存穿透保护的查询方法
-        Product product = productService.getProductDetailWithProtection(id);
-        
-        // 返回成功（即使商品不存在也返回成功，数据为null）
-        return Result.success(product);
+
+        try {
+            // 先做商品详情访问频率评估，命中阈值时由前端弹出 Turnstile 验证。
+            Map<String, Object> accessCheck = productAccessGuardService.evaluateAccess(id, request);
+            if (Boolean.TRUE.equals(accessCheck.get("needVerify"))) {
+                return new Result<Product>(429, String.valueOf(accessCheck.get("message")), null, false);
+            }
+
+            // 使用带缓存穿透保护的查询方法
+            Product product = productService.getProductDetailWithProtection(id);
+            if (product == null) {
+                log.debug("商品不存在或已下架: {}", id);
+                return Result.error(404, "商品不存在或已下架");
+            }
+
+            return Result.success(product);
+        } catch (Exception e) {
+            log.error("获取商品详情失败: id={}", id, e);
+            return Result.error("获取商品详情失败");
+        }
     }
 
     @GetMapping("/{id}/details")
     @Operation(summary = "获取商品详情和参数")
-    public Result<Map<String, Object>> detailWithParams(@PathVariable("id") Integer id) {
+    public Result<Map<String, Object>> detailWithParams(@PathVariable("id") Integer id, HttpServletRequest request) {
         // 参数校验：快速过滤无效ID
         if (id == null || id < MIN_PRODUCT_ID || id > MAX_PRODUCT_ID) {
             log.debug("商品ID无效: {}", id);
-            return Result.success(null);
+            return Result.validateFailed("商品ID无效");
         }
-        
+
         try {
+            // 详情与参数联合接口同样纳入访问频率保护，避免被高频刷新击穿后端。
+            Map<String, Object> accessCheck = productAccessGuardService.evaluateAccess(id, request);
+            if (Boolean.TRUE.equals(accessCheck.get("needVerify"))) {
+                return new Result<Map<String, Object>>(429, String.valueOf(accessCheck.get("message")), accessCheck,
+                        false);
+            }
+
             // 使用带缓存穿透保护的查询方法
             Product product = productService.getProductDetailWithProtection(id);
             if (product == null) {
-                // 商品不存在时返回成功但数据为空
-                return Result.success(null);
+                log.debug("商品不存在或已下架: {}", id);
+                return Result.error(404, "商品不存在或已下架");
             }
 
             Map<String, Object> result = new HashMap<>();
@@ -144,12 +175,13 @@ public class ProductController {
             List<ProductParam> productParams = productParamService.getParamsByProductId(id);
             result.put("params", productParams);
 
-            log.debug("获取商品详情和参数成功，商品ID：{}，规格数量：{}，参数数量：{}", 
+            result.putAll(accessCheck);
+            log.debug("获取商品详情和参数成功，商品ID：{}，规格数量：{}，参数数量：{}",
                     id, specsList != null ? specsList.size() : 0, productParams.size());
             return Result.success(result);
         } catch (Exception e) {
-            log.error("获取商品详情和参数失败", e);
-            return Result.success(null); // 异常时也返回成功，避免影响测试结果
+            log.error("获取商品详情和参数失败: id={}", id, e);
+            return Result.error("获取商品详情和参数失败");
         }
     }
 
@@ -164,11 +196,11 @@ public class ProductController {
         try {
             // 限制最大返回数量
             limit = Math.min(Math.max(1, limit), 50);
-            
+
             // 查询新品（isNew=true）
             Page<Product> productPage = productService.getProductPage(1, limit, null, null, null, true, null, null);
             List<Product> newProducts = productPage.getRecords();
-            
+
             log.debug("获取新品列表成功，数量：{}", newProducts.size());
             return Result.success(newProducts);
         } catch (Exception e) {
@@ -188,11 +220,11 @@ public class ProductController {
         try {
             // 限制最大返回数量
             limit = Math.min(Math.max(1, limit), 50);
-            
+
             // 查询热门商品（isHot=true）
             Page<Product> productPage = productService.getProductPage(1, limit, null, null, true, null, null, null);
             List<Product> hotProducts = productPage.getRecords();
-            
+
             log.debug("获取热门商品列表成功，数量：{}", hotProducts.size());
             return Result.success(hotProducts);
         } catch (Exception e) {
@@ -212,17 +244,35 @@ public class ProductController {
         try {
             // 限制最大返回数量，防止恶意请求
             limit = Math.min(Math.max(1, limit), 50);
-            
+
             // 使用优化后的推荐服务方法获取推荐商品
             List<Product> recommendedProducts = productService.getRecommendedProducts(
                     productId, categoryId, limit, type);
 
             return Result.success(recommendedProducts != null ? recommendedProducts : Collections.emptyList());
         } catch (Exception e) {
-            log.error("获取推荐商品失败: productId={}, categoryId={}, type={}, error={}", 
+            log.error("获取推荐商品失败: productId={}, categoryId={}, type={}, error={}",
                     productId, categoryId, type, e.getMessage());
             // 返回空列表而非错误，保证接口稳定性
             return Result.success(Collections.emptyList());
         }
+    }
+
+    /**
+     * 提交商品详情页访问验证结果。
+     * 当前端因频繁刷新商品详情页而被限制时，可通过该接口提交 verifyKey 和 Turnstile 令牌完成放行。
+     */
+    @PostMapping("/{id}/access/verify")
+    @Operation(summary = "验证商品访问验证码")
+    public Result<Map<String, Object>> verifyAccess(@PathVariable("id") Integer id,
+            @RequestBody ProductAccessVerifyRequest request,
+            HttpServletRequest httpServletRequest) {
+        boolean passed = productAccessGuardService.verifyAccess(id, request, httpServletRequest);
+        if (!passed) {
+            return Result.validateFailed("Cloudflare 人机验证失败或已过期");
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("passed", true);
+        return Result.success(result, "验证通过");
     }
 }

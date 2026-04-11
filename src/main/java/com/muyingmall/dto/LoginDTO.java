@@ -8,9 +8,16 @@ import java.io.Serializable;
 /**
  * 登录数据传输对象
  */
+/**
+ * 登录请求数据传输对象。
+ * 用于接收前端提交的账号、密码、记住我状态以及 Turnstile 人机验证令牌。
+ */
 @Data
 public class LoginDTO implements Serializable {
 
+    /**
+     * 序列化版本号。
+     */
     private static final long serialVersionUID = 1L;
 
     /**
@@ -31,12 +38,7 @@ public class LoginDTO implements Serializable {
     private Boolean rememberMe = false;
 
     /**
-     * 验证码Key
+     * Cloudflare Turnstile 返回的 token
      */
-    private String captchaKey;
-
-    /**
-     * 验证码
-     */
-    private String captchaCode;
+    private String turnstileToken;
 }
