@@ -131,12 +131,13 @@ public class CacheProtectionUtil {
                 }
 
                 // 4. 持锁线程查询数据库
-                T dbResult = null;
+                T dbResult;
                 try {
                     dbResult = dbFallback.call();
                 } catch (Exception dbEx) {
-                    // 数据库查询异常，记录日志但不抛出
-                    log.warn("数据库查询异常: key={}, error={}", cacheKey, dbEx.getMessage());
+                    // 数据库查询异常时不写入空值缓存，直接向上抛出，由调用方决定如何降级
+                    log.error("数据库查询异常，跳过空值缓存写入: key={}", cacheKey, dbEx);
+                    throw new RuntimeException("数据库查询异常: " + cacheKey, dbEx);
                 }
 
                 // 5. 写入缓存
@@ -146,7 +147,7 @@ public class CacheProtectionUtil {
                         redisUtil.set(cacheKey, dbResult, finalExpireTime);
                         log.debug("将查询结果写入缓存: key={}, expireTime={}s", cacheKey, finalExpireTime);
                     } else {
-                        // 缓存空值，避免缓存穿透
+                        // 仅在数据库正常返回空结果时缓存空值，避免缓存穿透
                         redisUtil.set(cacheKey, CacheConstants.EMPTY_CACHE_VALUE, NULL_VALUE_EXPIRE_TIME);
                         log.debug("数据不存在，写入空值缓存: key={}", cacheKey);
                     }
@@ -177,22 +178,24 @@ public class CacheProtectionUtil {
                     }
                 }
 
-                // 7. 重试后仍未命中缓存，降级查询数据库（无需日志，正常降级流程）
+                // 7. 重试后仍未命中缓存，降级查询数据库（不写缓存，避免异常场景污染缓存）
                 try {
                     return dbFallback.call();
                 } catch (Exception dbEx) {
-                    log.warn("降级查询数据库失败: key={}, error={}", cacheKey, dbEx.getMessage());
-                    return null;
+                    log.error("降级查询数据库失败: key={}", cacheKey, dbEx);
+                    throw new RuntimeException("降级查询数据库失败: " + cacheKey, dbEx);
                 }
             }
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             log.error("缓存查询流程异常: key={}, error={}", cacheKey, e.getMessage(), e);
-            // 最终降级：直接查询数据库
+            // 最终降级：直接查询数据库，但失败时向上抛出，避免将异常伪装为空结果
             try {
                 return dbFallback.call();
             } catch (Exception fallbackEx) {
-                log.error("最终降级查询也失败: key={}, error={}", cacheKey, fallbackEx.getMessage());
-                return null;
+                log.error("最终降级查询也失败: key={}", cacheKey, fallbackEx);
+                throw new RuntimeException("最终降级查询失败: " + cacheKey, fallbackEx);
             }
         } finally {
             // 8. 释放锁
