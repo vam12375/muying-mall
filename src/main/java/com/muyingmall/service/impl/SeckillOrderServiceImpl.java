@@ -15,6 +15,7 @@ import com.muyingmall.mapper.SeckillProductMapper;
 import com.muyingmall.service.OrderService;
 import com.muyingmall.service.SeckillOrderService;
 import com.muyingmall.service.SeckillService;
+import com.muyingmall.service.SeckillStockTxService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
     private final SeckillActivityMapper seckillActivityMapper;
     private final SeckillOrderMapper seckillOrderMapper;
     private final OrderService orderService;
+    private final SeckillStockTxService seckillStockTxService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -115,20 +117,17 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
             throw new BusinessException("秒杀失败，请稍后重试");
         }
 
+        boolean seckillDbStockDeducted = false;
         try {
-            // 8. 扣减数据库秒杀库存（乐观锁）
-            int deductResult = seckillProductMapper.deductStock(
+            // 8. 扣减数据库秒杀库存（独立短事务，尽快释放 seckill_product 行锁）
+            int deductResult = seckillStockTxService.deductStock(
                     request.getSeckillProductId(),
                     request.getQuantity());
 
             if (deductResult <= 0) {
-                seckillService.restoreStockWithLua(
-                        request.getSeckillProductId(),
-                        seckillProduct.getSkuId(),
-                        request.getQuantity(),
-                        userId);
                 throw new BusinessException("库存不足，秒杀失败");
             }
+            seckillDbStockDeducted = true;
 
             // 9. 使用directPurchase创建订单（传入秒杀价覆盖SKU原价）
             String payMethod = (request.getPaymentMethod() != null) ? request.getPaymentMethod() : "ALIPAY";
@@ -144,8 +143,7 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
                     null,
                     BigDecimal.ZERO,
                     0,
-                    seckillProduct.getSeckillPrice()
-            );
+                    seckillProduct.getSeckillPrice());
 
             // 10. 获取订单ID并创建秒杀订单记录
             Long orderId = ((Number) orderResult.get("orderId")).longValue();
@@ -168,6 +166,20 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
 
         } catch (Exception e) {
             log.error("秒杀订单创建失败，恢复库存: userId={}, skuId={}", userId, seckillProduct.getSkuId(), e);
+
+            if (seckillDbStockDeducted) {
+                try {
+                    int restoreRows = seckillStockTxService.restoreStock(
+                            request.getSeckillProductId(),
+                            request.getQuantity());
+                    log.info("秒杀下单失败，已补偿回补数据库秒杀库存: userId={}, seckillProductId={}, quantity={}, rows={}",
+                            userId, request.getSeckillProductId(), request.getQuantity(), restoreRows);
+                } catch (Exception restoreEx) {
+                    log.error("秒杀下单失败后补偿回补数据库秒杀库存失败: userId={}, skuId={}, seckillProductId={}",
+                            userId, seckillProduct.getSkuId(), request.getSeckillProductId(), restoreEx);
+                }
+            }
+
             seckillService.restoreStockWithLua(
                     request.getSeckillProductId(),
                     seckillProduct.getSkuId(),
