@@ -74,7 +74,8 @@ public class BatchQueryServiceImpl implements BatchQueryService {
     }
     
     @Override
-    @Cacheable(keyPrefix = CacheConstants.BRAND_KEY_PREFIX + "batch:", expireTime = 3600)
+    @Cacheable(keyPrefix = CacheConstants.BRAND_KEY_PREFIX + "batch:", expireTime = 3600,
+            useLocalCache = true, localExpireSeconds = 120)
     public Map<Integer, Brand> batchGetBrands(List<Integer> brandIds) {
         if (brandIds == null || brandIds.isEmpty()) {
             return Collections.emptyMap();
@@ -92,7 +93,8 @@ public class BatchQueryServiceImpl implements BatchQueryService {
     }
     
     @Override
-    @Cacheable(keyPrefix = CacheConstants.CATEGORY_KEY_PREFIX + "batch:", expireTime = 3600)
+    @Cacheable(keyPrefix = CacheConstants.CATEGORY_KEY_PREFIX + "batch:", expireTime = 3600,
+            useLocalCache = true, localExpireSeconds = 120)
     public Map<Integer, Category> batchGetCategories(List<Integer> categoryIds) {
         if (categoryIds == null || categoryIds.isEmpty()) {
             return Collections.emptyMap();

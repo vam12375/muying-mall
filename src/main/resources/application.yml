@@ -329,14 +329,15 @@ cache:
     enabled: true
     # 默认过期时间（秒）
     default-ttl: 3600
-  # 二级缓存设置
-  second-level:
-    # 是否启用本地缓存作为二级缓存
-    enabled: false
-    # 本地缓存最大大小
-    max-size: 1000
-    # 本地缓存过期时间（秒）
-    ttl: 60
+  # 本地缓存（L1 - Caffeine）配置
+  # L2 为 Redis，通过 Redis Pub/Sub 广播失效保证多节点 L1 一致性
+  local:
+    # 是否启用本地 Caffeine 缓存（开关总控，独立于注解级的 useLocalCache）
+    enabled: true
+    # 单个本地缓存实例最大 entry 数
+    max-size: 10000
+    # 是否启用 Caffeine 命中率统计（用于监控与简历数据展示）
+    stats-enabled: true
 
 # RabbitMQ自定义配置
 rabbitmq:
