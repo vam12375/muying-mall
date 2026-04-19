@@ -41,6 +41,7 @@ build/
 .sanshu-memory/
 .codebuddy/
 .github/
+.logs/
 
 # 构建产物与压缩包
 *.tar.gz
