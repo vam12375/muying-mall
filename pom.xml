@@ -144,6 +144,11 @@
 			<artifactId>guava</artifactId>
 			<version>32.1.3-jre</version>
 		</dependency>
+		<!-- Caffeine - 本地一级缓存 (L1)，与 Redis 组成二级缓存架构 -->
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
 		<!-- Jackson Java 8 日期时间模块 -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>

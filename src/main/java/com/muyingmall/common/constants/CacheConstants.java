@@ -443,4 +443,12 @@ public class CacheConstants {
      * 用户账户缓存过期时间（秒）
      */
     public static final long USER_ACCOUNT_EXPIRE_TIME = 600; // 10分钟
+
+    // ================= Caffeine 二级缓存相关 =================
+
+    /**
+     * 本地缓存失效广播 Redis Pub/Sub Channel
+     * 用于多节点间 Caffeine (L1) 失效通知
+     */
+    public static final String LOCAL_CACHE_EVICT_CHANNEL = "cache:evict:local";
 }
