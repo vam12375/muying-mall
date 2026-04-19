@@ -2,6 +2,8 @@ package com.muyingmall.aspect;
 
 import com.muyingmall.annotation.CacheEvict;
 import com.muyingmall.annotation.Cacheable;
+import com.muyingmall.cache.CacheEvictPublisher;
+import com.muyingmall.cache.LocalCache;
 import com.muyingmall.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +20,13 @@ import java.util.stream.Collectors;
 
 /**
  * 缓存切面
- * 处理@Cacheable和@CacheEvict注解
- * 来源：性能优化 - Redis缓存增强
- * 
+ * 处理 @Cacheable 和 @CacheEvict 注解
+ * 支持：
+ *   - Redis (L2) 单层缓存（默认）
+ *   - Caffeine (L1) + Redis (L2) 二级缓存（useLocalCache=true）
+ * 二级缓存失效通过 Redis Pub/Sub 广播保证多节点 L1 一致性
+ *
+ * 来源：性能优化 - Redis + Caffeine 二级缓存增强
  */
 @Aspect
 @Component
@@ -29,50 +35,64 @@ import java.util.stream.Collectors;
 public class CacheAspect {
 
     private final RedisUtil redisUtil;
+    private final LocalCache localCache;
+    private final CacheEvictPublisher cacheEvictPublisher;
 
     /**
-     * 处理@Cacheable注解
-     * 先查缓存，缓存不存在则执行方法并缓存结果
+     * 处理 @Cacheable 注解
+     * 读流程：
+     *   useLocalCache=true 时：L1 -> L2 -> DB -> 回填 L1+L2
+     *   useLocalCache=false 时：L2 -> DB -> 回填 L2
      */
     @Around("@annotation(com.muyingmall.annotation.Cacheable)")
     public Object handleCacheable(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         Cacheable cacheable = method.getAnnotation(Cacheable.class);
-
-        // 生成缓存键
-        String cacheKey = null;
-        if (cacheable != null) {
-            cacheKey = generateCacheKey(cacheable.keyPrefix(), joinPoint.getArgs(), cacheable.useParams());
+        if (cacheable == null) {
+            return joinPoint.proceed();
         }
 
-        // 尝试从缓存获取
-        Object cachedValue = redisUtil.get(cacheKey);
-        if (cachedValue != null) {
-            log.debug("缓存命中: {}", cacheKey);
-            return cachedValue;
+        String cacheKey = generateCacheKey(cacheable.keyPrefix(), joinPoint.getArgs(), cacheable.useParams());
+        boolean useLocal = cacheable.useLocalCache();
+        long localTtl = cacheable.localExpireSeconds();
+
+        // L1 查询
+        if (useLocal) {
+            Object l1Value = localCache.get(localTtl, cacheKey);
+            if (l1Value != null) {
+                log.debug("L1 命中: {}", cacheKey);
+                return l1Value;
+            }
         }
 
-        // 缓存未命中，执行方法
+        // L2 查询
+        Object l2Value = redisUtil.get(cacheKey);
+        if (l2Value != null) {
+            log.debug("L2 命中: {}", cacheKey);
+            if (useLocal) {
+                localCache.put(localTtl, cacheKey, l2Value);
+            }
+            return l2Value;
+        }
+
+        // 缓存全部未命中，执行方法
         log.debug("缓存未命中，执行方法: {}", cacheKey);
         Object result = joinPoint.proceed();
-
-        // 缓存结果（如果不为null）
         if (result != null) {
-            if (cacheable != null) {
-                redisUtil.set(cacheKey, result, cacheable.expireTime());
+            redisUtil.set(cacheKey, result, cacheable.expireTime());
+            if (useLocal) {
+                localCache.put(localTtl, cacheKey, result);
             }
-            if (cacheable != null) {
-                log.debug("结果已缓存: {}, 过期时间: {}秒", cacheKey, cacheable.expireTime());
-            }
+            log.debug("结果已缓存: key={}, L2 TTL={}s, L1 TTL={}s",
+                    cacheKey, cacheable.expireTime(), useLocal ? localTtl : 0);
         }
-
         return result;
     }
 
     /**
-     * 处理@CacheEvict注解
-     * 清除指定的缓存
+     * 处理 @CacheEvict 注解
+     * 清除 L2；useLocalCache=true 时同步清除本节点 L1 并发布 Pub/Sub 广播
      */
     @Around("@annotation(com.muyingmall.annotation.CacheEvict)")
     public Object handleCacheEvict(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -80,27 +100,36 @@ public class CacheAspect {
         Method method = signature.getMethod();
         CacheEvict cacheEvict = method.getAnnotation(CacheEvict.class);
 
-        // 先执行方法
         Object result = joinPoint.proceed();
+        if (cacheEvict == null) {
+            return result;
+        }
 
-        // 清除缓存
-        if (cacheEvict != null) {
-            for (String keyPrefix : cacheEvict.keyPrefixes()) {
-                if (cacheEvict.allEntries()) {
-                    // 清除所有匹配的键
-                    Set<String> keys = redisUtil.scan(keyPrefix + "*");
-                    if (keys != null && !keys.isEmpty()) {
-                        redisUtil.del(keys.toArray(new String[0]));
-                        log.debug("已清除缓存: {} (共{}个键)", keyPrefix, keys.size());
-                    }
-                } else {
-                    // 只清除精确匹配的键
-                    redisUtil.del(keyPrefix);
-                    log.debug("已清除缓存: {}", keyPrefix);
+        boolean useLocal = cacheEvict.useLocalCache();
+        for (String keyPrefix : cacheEvict.keyPrefixes()) {
+            if (cacheEvict.allEntries()) {
+                // 前缀批量清 L2
+                Set<String> keys = redisUtil.scan(keyPrefix + "*");
+                if (keys != null && !keys.isEmpty()) {
+                    redisUtil.del(keys.toArray(new String[0]));
+                    log.debug("L2 按前缀清除: {} ({} keys)", keyPrefix, keys.size());
+                }
+                // L1 本地 + 广播
+                if (useLocal) {
+                    localCache.evictByPrefix(keyPrefix);
+                    cacheEvictPublisher.publishPrefix(keyPrefix);
+                }
+            } else {
+                // 精确清 L2
+                redisUtil.del(keyPrefix);
+                log.debug("L2 精确清除: {}", keyPrefix);
+                // L1 本地 + 广播
+                if (useLocal) {
+                    localCache.evict(keyPrefix);
+                    cacheEvictPublisher.publishKey(keyPrefix);
                 }
             }
         }
-
         return result;
     }
 
@@ -111,12 +140,9 @@ public class CacheAspect {
         if (!useParams || args == null || args.length == 0) {
             return prefix;
         }
-
-        // 将参数转换为字符串并拼接
         String paramStr = Arrays.stream(args)
                 .map(arg -> arg == null ? "null" : arg.toString())
                 .collect(Collectors.joining(":"));
-
         return prefix + paramStr;
     }
 }
