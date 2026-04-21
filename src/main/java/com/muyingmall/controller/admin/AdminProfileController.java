@@ -6,6 +6,7 @@ import com.muyingmall.entity.User;
 import com.muyingmall.service.AdminLoginRecordService;
 import com.muyingmall.service.AdminOperationLogService;
 import com.muyingmall.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,6 +39,7 @@ public class AdminProfileController {
     @GetMapping("/statistics")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看个人统计", module = "个人中心", operationType = "READ")
+    @Operation(summary = "获取管理员个人统计")
     public Result<Map<String, Object>> getStatistics(@RequestHeader("Authorization") String authHeader) {
         try {
             User user = getUserFromToken(authHeader);
@@ -91,6 +93,7 @@ public class AdminProfileController {
     @GetMapping("/login-records")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看登录记录", module = "个人中心", operationType = "READ")
+    @Operation(summary = "分页查询个人登录记录")
     public Result<Map<String, Object>> getLoginRecords(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
@@ -125,6 +128,7 @@ public class AdminProfileController {
     @GetMapping("/operation-logs")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看操作记录", module = "个人中心", operationType = "READ")
+    @Operation(summary = "分页查询个人操作记录")
     public Result<Map<String, Object>> getOperationLogs(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,

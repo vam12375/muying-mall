@@ -2,6 +2,7 @@ package com.muyingmall.controller.common;
 
 import com.muyingmall.common.api.Result;
 import com.muyingmall.util.JwtUtils;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +29,7 @@ public class TestController {
      * 测试连接
      */
     @GetMapping("/connection")
+    @Operation(summary = "测试后端连接")
     public Result<Map<String, Object>> testConnection() {
         Map<String, Object> data = new HashMap<>();
         data.put("message", "后端连接成功");
@@ -41,6 +43,7 @@ public class TestController {
      */
     @GetMapping("/auth")
     @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "测试JWT认证")
     public Result<Map<String, Object>> testAuth() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Map<String, Object> data = new HashMap<>();
@@ -55,6 +58,7 @@ public class TestController {
      * 注意：实际生产环境不应该暴露此接口
      */
     @GetMapping("/jwt-demo")
+    @Operation(summary = "生成演示JWT令牌（测试）")
     public Result<Map<String, Object>> testJwt() {
         // 生成一个演示令牌
         String demoToken = jwtUtils.generateToken(999, "demo_user", "ROLE_USER");

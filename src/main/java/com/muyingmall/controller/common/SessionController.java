@@ -34,6 +34,7 @@ public class SessionController {
      * 通过简单返回当前登录用户信息，避免前端重复请求用户信息
      */
     @PostMapping("/sync")
+    @Operation(summary = "同步当前会话")
     public Result<Void> syncSession(HttpSession session) {
         // 从会话中获取用户信息
         User user = (User) session.getAttribute("user");

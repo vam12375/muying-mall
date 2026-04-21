@@ -6,6 +6,8 @@ import com.muyingmall.entity.ParentingTip;
 import com.muyingmall.entity.ParentingTipCategory;
 import com.muyingmall.entity.ParentingTipComment;
 import com.muyingmall.service.ParentingTipService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/parenting-tips")
 @RequiredArgsConstructor
+@Tag(name = "用户-育儿知识", description = "育儿知识内容浏览与评论")
 public class ParentingTipController {
 
     private final ParentingTipService parentingTipService;
@@ -28,6 +31,7 @@ public class ParentingTipController {
      * 分页查询育儿知识列表
      */
     @GetMapping
+    @Operation(summary = "分页查询育儿知识")
     public Result<Map<String, Object>> getList(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer pageSize,
@@ -49,6 +53,7 @@ public class ParentingTipController {
      * 获取热门知识
      */
     @GetMapping("/hot")
+    @Operation(summary = "获取热门育儿知识")
     public Result<List<ParentingTip>> getHotTips(@RequestParam(defaultValue = "6") Integer limit) {
         return Result.success(parentingTipService.getHotTips(limit));
     }
@@ -57,6 +62,7 @@ public class ParentingTipController {
      * 获取所有分类
      */
     @GetMapping("/categories")
+    @Operation(summary = "获取育儿知识分类列表")
     public Result<List<ParentingTipCategory>> getCategories() {
         return Result.success(parentingTipService.getCategories());
     }
@@ -65,6 +71,7 @@ public class ParentingTipController {
      * 获取详情
      */
     @GetMapping("/{id}")
+    @Operation(summary = "获取育儿知识详情")
     public Result<ParentingTip> getDetail(@PathVariable Long id) {
         ParentingTip tip = parentingTipService.getDetail(id);
         if (tip == null) {
@@ -77,6 +84,7 @@ public class ParentingTipController {
      * 增加浏览量
      */
     @PostMapping("/{id}/view")
+    @Operation(summary = "增加浏览量")
     public Result<Void> increaseViewCount(@PathVariable Long id) {
         parentingTipService.increaseViewCount(id);
         return Result.success();
@@ -86,6 +94,7 @@ public class ParentingTipController {
      * 获取相关知识
      */
     @GetMapping("/{id}/related")
+    @Operation(summary = "获取相关育儿知识")
     public Result<List<ParentingTip>> getRelatedTips(
             @PathVariable Long id,
             @RequestParam Integer categoryId,
@@ -97,6 +106,7 @@ public class ParentingTipController {
      * 获取评论列表
      */
     @GetMapping("/{id}/comments")
+    @Operation(summary = "分页获取知识评论")
     public Result<Map<String, Object>> getComments(
             @PathVariable Long id,
             @RequestParam(defaultValue = "1") Integer page,
@@ -112,6 +122,7 @@ public class ParentingTipController {
      * 添加评论
      */
     @PostMapping("/{id}/comments")
+    @Operation(summary = "发表育儿知识评论")
     public Result<ParentingTipComment> addComment(
             @PathVariable Long id,
             @RequestBody Map<String, String> body,

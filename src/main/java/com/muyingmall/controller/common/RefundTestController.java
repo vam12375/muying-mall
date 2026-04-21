@@ -6,6 +6,7 @@ import com.muyingmall.service.RefundService;
 import com.muyingmall.service.RefundStateService;
 import com.muyingmall.statemachine.RefundEvent;
 import com.muyingmall.common.api.Result;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,7 @@ public class RefundTestController {
      * 查看所有退款状态的数量
      */
     @GetMapping("/status/count")
+    @Operation(summary = "查询各退款状态数量（测试）")
     public Result<Map<String, Object>> getRefundStatusCount() {
         Map<String, Object> result = new HashMap<>();
 
@@ -57,6 +59,7 @@ public class RefundTestController {
      * 查看指定状态的退款列表
      */
     @GetMapping("/status/{status}")
+    @Operation(summary = "按状态查询退款列表（测试）")
     public Result<List<Map<String, Object>>> getRefundsByStatus(@PathVariable("status") String status) {
         List<Refund> refunds = refundService.lambdaQuery()
                 .eq(Refund::getStatus, status)
@@ -84,6 +87,7 @@ public class RefundTestController {
      * 手动触发状态转换事件
      */
     @PostMapping("/trigger/{refundId}/{event}")
+    @Operation(summary = "手动触发退款状态事件（测试）")
     public Result<Boolean> triggerEvent(
             @PathVariable("refundId") Long refundId,
             @PathVariable("event") String eventName,

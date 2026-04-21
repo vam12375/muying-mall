@@ -6,6 +6,7 @@ import com.muyingmall.dto.SystemMetricsDTO;
 import com.muyingmall.dto.SystemMetricsDTO.*;
 import com.muyingmall.monitor.*;
 import com.muyingmall.service.SystemMonitorService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,6 +34,7 @@ public class SystemMonitorController {
     @GetMapping("/metrics")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看系统监控指标", module = "系统监控", operationType = "READ")
+    @Operation(summary = "获取系统监控指标")
     public Result<SystemMetricsDTO> getSystemMetrics() {
         try {
             SystemMetricsDTO metrics = systemMonitorService.getSystemMetrics();
@@ -49,6 +51,7 @@ public class SystemMonitorController {
     @GetMapping("/health")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看系统健康状态", module = "系统监控", operationType = "READ")
+    @Operation(summary = "获取系统健康状态")
     public Result<SystemHealthDTO> getSystemHealth() {
         try {
             SystemHealthDTO health = systemMonitorService.getSystemHealth();
@@ -66,6 +69,7 @@ public class SystemMonitorController {
     @GetMapping("/server")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看服务器性能", module = "系统监控", operationType = "READ")
+    @Operation(summary = "获取服务器性能指标")
     public Result<ServerPerformanceDTO> getServerPerformance() {
         try {
             ServerPerformanceDTO performance = serverMonitor.getServerPerformance();
@@ -82,6 +86,7 @@ public class SystemMonitorController {
     @GetMapping("/database")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看数据库监控", module = "系统监控", operationType = "READ")
+    @Operation(summary = "获取数据库监控指标")
     public Result<DatabaseMetricsDTO> getDatabaseMetrics() {
         try {
             DatabaseMetricsDTO metrics = databaseMonitor.getDatabaseMetrics();
@@ -98,6 +103,7 @@ public class SystemMonitorController {
     @GetMapping("/redis")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看Redis监控", module = "系统监控", operationType = "READ")
+    @Operation(summary = "获取Redis监控指标")
     public Result<RedisMetricsDTO> getRedisMetrics() {
         try {
             RedisMetricsDTO metrics = redisMonitor.getRedisMetrics();
@@ -114,6 +120,7 @@ public class SystemMonitorController {
     @GetMapping("/api-statistics")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看API统计", module = "系统监控", operationType = "READ")
+    @Operation(summary = "获取API调用统计")
     public Result<ApiStatisticsDTO> getApiStatistics() {
         try {
             ApiStatisticsDTO statistics = apiStatisticsMonitor.getApiStatistics();
@@ -130,6 +137,7 @@ public class SystemMonitorController {
     @PostMapping("/api-statistics/reset")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "重置API统计", module = "系统监控", operationType = "UPDATE")
+    @Operation(summary = "重置API统计数据")
     public Result<String> resetApiStatistics() {
         try {
             apiStatisticsMonitor.resetStatistics();
@@ -145,6 +153,7 @@ public class SystemMonitorController {
      */
     @GetMapping("/database/version")
     @PreAuthorize("hasAuthority('admin')")
+    @Operation(summary = "获取数据库版本")
     public Result<String> getDatabaseVersion() {
         try {
             String version = databaseMonitor.getDatabaseVersion();
@@ -160,6 +169,7 @@ public class SystemMonitorController {
      */
     @GetMapping("/redis/ping")
     @PreAuthorize("hasAuthority('admin')")
+    @Operation(summary = "检查Redis连接状态")
     public Result<Boolean> pingRedis() {
         try {
             boolean available = redisMonitor.isRedisAvailable();

@@ -21,6 +21,7 @@ import java.nio.file.Paths;
  */
 @Slf4j
 @RestController
+@io.swagger.v3.oas.annotations.tags.Tag(name = "静态资源", description = "本地静态文件代理与访问接口")
 public class StaticResourceController {
 
     @Value("${upload.path:G:/muying/muying-web/public}")
@@ -30,6 +31,7 @@ public class StaticResourceController {
      * 测试端点 - 验证 Controller 是否被加载
      */
     @GetMapping("/api/test/static-controller")
+    @io.swagger.v3.oas.annotations.Operation(summary = "静态资源控制器连通性测试")
     public ResponseEntity<String> testController() {
         log.debug("【StaticResourceController】测试端点被调用");
         return ResponseEntity.ok("StaticResourceController is working! uploadPath=" + uploadPath);
@@ -39,6 +41,7 @@ public class StaticResourceController {
      * 处理商品图片请求 - 使用 /api/static/products 路径（避免与资源处理器冲突）
      */
     @GetMapping("/api/static/products/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取商品图片")
     public ResponseEntity<Resource> getProductImage(@PathVariable String fileName) {
         log.debug("【StaticResourceController】收到商品图片请求: {}", fileName);
         return serveFile("products", fileName);
@@ -48,6 +51,7 @@ public class StaticResourceController {
      * 处理商品图片请求 - 使用 /res/products 备用路径
      */
     @GetMapping("/res/products/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取商品图片（备用路径）")
     public ResponseEntity<Resource> getProductImageAlt(@PathVariable String fileName) {
         log.debug("【StaticResourceController】收到商品图片请求(备用路径): {}", fileName);
         return serveFile("products", fileName);
@@ -57,6 +61,7 @@ public class StaticResourceController {
      * 处理品牌图片请求 - /api/static/brands 路径
      */
     @GetMapping("/api/static/brands/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取品牌图片")
     public ResponseEntity<Resource> getBrandImage(@PathVariable String fileName) {
         log.debug("【StaticResourceController】收到品牌图片请求: {}", fileName);
         return serveFile("brands", fileName);
@@ -66,6 +71,7 @@ public class StaticResourceController {
      * 处理分类图标请求 - /api/static/categorys 路径
      */
     @GetMapping("/api/static/categorys/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取分类图标")
     public ResponseEntity<Resource> getCategoryIcon(@PathVariable String fileName) {
         log.debug("【StaticResourceController】收到分类图标请求: {}", fileName);
         return serveFile("categorys", fileName);
@@ -75,6 +81,7 @@ public class StaticResourceController {
      * 处理详情图片请求 - /api/static/details 路径
      */
     @GetMapping("/api/static/details/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取商品详情图片")
     public ResponseEntity<Resource> getDetailImage(@PathVariable String fileName) {
         log.debug("【StaticResourceController】收到详情图片请求: {}", fileName);
         return serveFile("details", fileName);
@@ -84,6 +91,7 @@ public class StaticResourceController {
      * 处理轮播图请求 - /api/static/banners 路径
      */
     @GetMapping("/api/static/banners/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取轮播图")
     public ResponseEntity<Resource> getBannerImage(@PathVariable String fileName) {
         log.debug("【StaticResourceController】收到轮播图请求: {}", fileName);
         return serveFile("banners", fileName);
@@ -93,6 +101,7 @@ public class StaticResourceController {
      * 处理通用图片请求 - /api/static/images 路径
      */
     @GetMapping("/api/static/images/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取通用图片")
     public ResponseEntity<Resource> getGeneralImage(@PathVariable String fileName) {
         log.debug("【StaticResourceController】收到通用图片请求: {}", fileName);
         return serveFile("images", fileName);
@@ -102,6 +111,7 @@ public class StaticResourceController {
      * 处理育儿圈图片请求 - /api/static/circle 路径（支持日期子目录）
      */
     @GetMapping("/api/static/circle/{year}/{month}/{day}/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取育儿圈图片（按日期）")
     public ResponseEntity<Resource> getCircleImage(
             @PathVariable String year,
             @PathVariable String month,
@@ -116,6 +126,7 @@ public class StaticResourceController {
      * 处理头像图片请求 - /api/static/avatars 路径
      */
     @GetMapping("/api/static/avatars/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取头像图片")
     public ResponseEntity<Resource> getAvatarImageStatic(@PathVariable String fileName) {
         log.debug("【StaticResourceController】收到头像图片请求: {}", fileName);
         return serveFile("avatars", fileName);
@@ -125,6 +136,7 @@ public class StaticResourceController {
      * 处理头像图片请求（带用户ID子目录）- /api/static/avatars/{userId}
      */
     @GetMapping("/api/static/avatars/{userId}/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取头像图片（带用户ID）")
     public ResponseEntity<Resource> getAvatarImageWithUserId(
             @PathVariable String userId,
             @PathVariable String fileName) {
@@ -136,6 +148,7 @@ public class StaticResourceController {
      * 处理头像图片请求（旧路径兼容）
      */
     @GetMapping("/avatars/{userId}/{fileName:.+}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取头像图片（旧路径兼容）")
     public ResponseEntity<Resource> getAvatarImage(
             @PathVariable String userId,
             @PathVariable String fileName) {

@@ -27,10 +27,11 @@ public class AlipayNotifyController {
 
     /**
      * 处理支付宝退款异步通知
-     * 
+     *
      * 支付宝退款异步通知文档: https://opendocs.alipay.com/open/203/105286
      */
     @PostMapping("/refund/notify")
+    @io.swagger.v3.oas.annotations.Operation(summary = "接收支付宝退款异步通知")
     public String handleRefundNotify(HttpServletRequest request) {
         log.debug("接收到支付宝退款异步通知");
 

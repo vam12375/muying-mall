@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.common.api.Result;
 import com.muyingmall.entity.*;
 import com.muyingmall.service.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -21,6 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/circle")
 @RequiredArgsConstructor
+@Tag(name = "用户-圈子社区", description = "孕产社区内容浏览与互动")
 public class CircleController {
 
     private final CirclePostService postService;
@@ -46,11 +49,13 @@ public class CircleController {
     // ==================== 话题相关 ====================
 
     @GetMapping("/topics")
+    @Operation(summary = "获取话题列表")
     public Result<List<CircleTopic>> getTopics() {
         return Result.success(topicService.getActiveTopics());
     }
 
     @GetMapping("/topics/hot")
+    @Operation(summary = "获取热门话题")
     public Result<List<CircleTopic>> getHotTopics(@RequestParam(defaultValue = "6") int limit) {
         return Result.success(topicService.getHotTopics(limit));
     }
@@ -58,6 +63,7 @@ public class CircleController {
     // ==================== 帖子相关 ====================
 
     @PostMapping("/posts")
+    @Operation(summary = "发布帖子")
     public Result<CirclePost> createPost(@RequestBody Map<String, Object> params) {
         Integer userId = getCurrentUserId();
         if (userId == null) {
@@ -75,6 +81,7 @@ public class CircleController {
     }
 
     @GetMapping("/posts")
+    @Operation(summary = "分页获取帖子列表")
     public Result<Page<CirclePost>> getPostList(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -84,6 +91,7 @@ public class CircleController {
     }
 
     @GetMapping("/posts/following")
+    @Operation(summary = "获取关注用户的帖子")
     public Result<Page<CirclePost>> getFollowingPosts(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -95,6 +103,7 @@ public class CircleController {
     }
 
     @GetMapping("/posts/hot")
+    @Operation(summary = "获取热门帖子")
     public Result<Page<CirclePost>> getHotPosts(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -102,6 +111,7 @@ public class CircleController {
     }
 
     @GetMapping("/posts/{postId}")
+    @Operation(summary = "获取帖子详情")
     public Result<CirclePost> getPostDetail(@PathVariable Long postId) {
         postService.incrementViewCount(postId);
         CirclePost post = postService.getPostDetail(postId, getCurrentUserId());
@@ -112,6 +122,7 @@ public class CircleController {
     }
 
     @DeleteMapping("/posts/{postId}")
+    @Operation(summary = "删除自己的帖子")
     public Result<Void> deletePost(@PathVariable Long postId) {
         Integer userId = getCurrentUserId();
         if (userId == null) {
@@ -127,6 +138,7 @@ public class CircleController {
     // ==================== 评论相关 ====================
 
     @PostMapping("/posts/{postId}/comments")
+    @Operation(summary = "发表评论")
     public Result<CircleComment> createComment(@PathVariable Long postId, @RequestBody Map<String, Object> params) {
         Integer userId = getCurrentUserId();
         if (userId == null) {
@@ -141,6 +153,7 @@ public class CircleController {
     }
 
     @GetMapping("/posts/{postId}/comments")
+    @Operation(summary = "分页获取帖子评论")
     public Result<Page<CircleComment>> getComments(@PathVariable Long postId,
                                                    @RequestParam(defaultValue = "1") int page,
                                                    @RequestParam(defaultValue = "10") int size) {
@@ -148,6 +161,7 @@ public class CircleController {
     }
 
     @GetMapping("/comments/{commentId}/replies")
+    @Operation(summary = "分页获取评论回复")
     public Result<Page<CircleComment>> getReplies(@PathVariable Long commentId,
                                                   @RequestParam(defaultValue = "1") int page,
                                                   @RequestParam(defaultValue = "10") int size) {
@@ -155,6 +169,7 @@ public class CircleController {
     }
 
     @DeleteMapping("/comments/{commentId}")
+    @Operation(summary = "删除自己的评论")
     public Result<Void> deleteComment(@PathVariable Long commentId) {
         Integer userId = getCurrentUserId();
         if (userId == null) {
@@ -169,6 +184,7 @@ public class CircleController {
     // ==================== 点赞相关 ====================
 
     @PostMapping("/posts/{postId}/like")
+    @Operation(summary = "点赞/取消点赞帖子")
     public Result<Map<String, Object>> togglePostLike(@PathVariable Long postId) {
         Integer userId = getCurrentUserId();
         if (userId == null) {
@@ -186,6 +202,7 @@ public class CircleController {
     }
 
     @PostMapping("/comments/{commentId}/like")
+    @Operation(summary = "点赞/取消点赞评论")
     public Result<Map<String, Object>> toggleCommentLike(@PathVariable Long commentId) {
         Integer userId = getCurrentUserId();
         if (userId == null) {
@@ -205,6 +222,7 @@ public class CircleController {
     // ==================== 关注相关 ====================
 
     @PostMapping("/users/{targetUserId}/follow")
+    @Operation(summary = "关注/取消关注用户")
     public Result<Map<String, Object>> toggleFollow(@PathVariable Integer targetUserId) {
         Integer userId = getCurrentUserId();
         if (userId == null) {
@@ -222,6 +240,7 @@ public class CircleController {
     }
 
     @GetMapping("/users/{targetUserId}/following")
+    @Operation(summary = "获取用户关注列表")
     public Result<Page<User>> getFollowingList(@PathVariable Integer targetUserId,
                                                @RequestParam(defaultValue = "1") int page,
                                                @RequestParam(defaultValue = "20") int size) {
@@ -229,6 +248,7 @@ public class CircleController {
     }
 
     @GetMapping("/users/{targetUserId}/followers")
+    @Operation(summary = "获取用户粉丝列表")
     public Result<Page<User>> getFollowerList(@PathVariable Integer targetUserId,
                                               @RequestParam(defaultValue = "1") int page,
                                               @RequestParam(defaultValue = "20") int size) {
@@ -236,6 +256,7 @@ public class CircleController {
     }
 
     @GetMapping("/users/{targetUserId}/stats")
+    @Operation(summary = "获取关注与粉丝统计")
     public Result<Map<String, Object>> getUserStats(@PathVariable Integer targetUserId) {
         Integer currentUserId = getCurrentUserId();
         Map<String, Object> stats = new HashMap<>();
@@ -251,6 +272,7 @@ public class CircleController {
      * 获取用户个人主页信息
      */
     @GetMapping("/users/{targetUserId}/profile")
+    @Operation(summary = "获取用户社区主页信息")
     public Result<Map<String, Object>> getUserProfile(@PathVariable Integer targetUserId) {
         Integer currentUserId = getCurrentUserId();
         User user = userService.getById(targetUserId);
@@ -279,6 +301,7 @@ public class CircleController {
      * 获取用户发布的帖子列表
      */
     @GetMapping("/users/{targetUserId}/posts")
+    @Operation(summary = "获取用户发布的帖子")
     public Result<Page<CirclePost>> getUserPosts(@PathVariable Integer targetUserId,
                                                   @RequestParam(defaultValue = "1") int page,
                                                   @RequestParam(defaultValue = "10") int size) {
@@ -289,6 +312,7 @@ public class CircleController {
      * 编辑帖子
      */
     @PutMapping("/posts/{postId}")
+    @Operation(summary = "编辑帖子")
     public Result<CirclePost> updatePost(@PathVariable Long postId, @RequestBody Map<String, Object> params) {
         Integer userId = getCurrentUserId();
         if (userId == null) {
@@ -324,6 +348,7 @@ public class CircleController {
      * 获取消息列表
      */
     @GetMapping("/messages")
+    @Operation(summary = "分页获取社区消息")
     public Result<Page<CircleMessage>> getMessages(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -339,6 +364,7 @@ public class CircleController {
      * 获取未读消息数量
      */
     @GetMapping("/messages/unread-count")
+    @Operation(summary = "获取未读消息数量")
     public Result<Map<String, Integer>> getUnreadCount() {
         Integer userId = getCurrentUserId();
         if (userId == null) {
@@ -351,6 +377,7 @@ public class CircleController {
      * 标记消息为已读
      */
     @PutMapping("/messages/{messageId}/read")
+    @Operation(summary = "标记指定消息已读")
     public Result<Void> markAsRead(@PathVariable Long messageId) {
         Integer userId = getCurrentUserId();
         if (userId == null) {
@@ -364,6 +391,7 @@ public class CircleController {
      * 标记所有消息为已读
      */
     @PutMapping("/messages/read-all")
+    @Operation(summary = "一键标记全部消息已读")
     public Result<Void> markAllAsRead() {
         Integer userId = getCurrentUserId();
         if (userId == null) {

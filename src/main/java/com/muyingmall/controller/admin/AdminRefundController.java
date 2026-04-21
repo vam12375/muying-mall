@@ -8,6 +8,7 @@ import com.muyingmall.enums.RefundStatus;
 import com.muyingmall.service.AlipayRefundService;
 import com.muyingmall.service.RefundService;
 import com.muyingmall.service.RefundStateService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class AdminRefundController {
      * 获取退款列表
      */
     @GetMapping("/list")
+    @Operation(summary = "分页获取退款列表")
     public Result<Page<Refund>> getRefunds(@RequestParam(value = "page", defaultValue = "1") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
             @RequestParam(value = "status", required = false) String status,
@@ -72,6 +74,7 @@ public class AdminRefundController {
      * 获取退款详情
      */
     @GetMapping("/{refundId}")
+    @Operation(summary = "获取退款详情")
     public Result<Refund> getRefundDetail(@PathVariable("refundId") Long refundId) {
         Refund refund = refundService.getRefundDetail(refundId);
         return Result.success(refund);
@@ -81,6 +84,7 @@ public class AdminRefundController {
      * 审核退款申请
      */
     @PostMapping("/review")
+    @Operation(summary = "审核退款申请")
     public Result<Boolean> reviewRefund(@RequestBody Map<String, Object> requestData) {
         log.debug("收到退款审核请求: {}", requestData);
 
@@ -121,6 +125,7 @@ public class AdminRefundController {
      * 处理退款
      */
     @PostMapping("/process")
+    @Operation(summary = "处理退款")
     public Result<Boolean> processRefund(@RequestBody Map<String, Object> requestData) {
         log.debug("收到退款处理请求: {}", requestData);
 
@@ -161,6 +166,7 @@ public class AdminRefundController {
      * 完成退款
      */
     @PostMapping("/complete")
+    @Operation(summary = "完成退款")
     public Result<Boolean> completeRefund(@RequestBody Map<String, Object> requestData) {
         log.debug("收到完成退款请求: {}", requestData);
 
@@ -199,6 +205,7 @@ public class AdminRefundController {
      * 标记退款失败
      */
     @PostMapping("/fail")
+    @Operation(summary = "标记退款失败")
     public Result<Boolean> failRefund(@RequestBody Map<String, Object> requestData) {
         log.debug("收到标记退款失败请求: {}", requestData);
 
@@ -237,6 +244,7 @@ public class AdminRefundController {
      * 获取退款统计数据
      */
     @GetMapping("/statistics")
+    @Operation(summary = "获取退款统计数据")
     public Result<Map<String, Object>> getRefundStatistics(
             @RequestParam(value = "startTime", required = false) String startTime,
             @RequestParam(value = "endTime", required = false) String endTime) {
@@ -258,6 +266,7 @@ public class AdminRefundController {
      * 获取待处理的退款数量
      */
     @GetMapping("/pending/count")
+    @Operation(summary = "获取待处理退款数量")
     public Result<Long> getPendingRefundCount() {
         log.debug("====================开始处理待处理退款数量请求====================");
         log.debug("请求路径: {}", "/admin/refund/pending/count");
@@ -276,6 +285,7 @@ public class AdminRefundController {
      * 查询支付宝退款状态
      */
     @GetMapping("/alipay/query")
+    @Operation(summary = "查询支付宝退款状态")
     public Result<Map<String, String>> queryAlipayRefundStatus(
             @RequestParam("refundNo") String refundNo,
             @RequestParam(value = "transactionId", required = false) String transactionId) {

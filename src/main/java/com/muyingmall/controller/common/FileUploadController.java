@@ -18,6 +18,7 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/upload")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "文件上传", description = "通用图片上传接口")
 public class FileUploadController {
 
     // 上传到前端public目录
@@ -28,6 +29,7 @@ public class FileUploadController {
      * 上传图片
      */
     @PostMapping("/image")
+    @io.swagger.v3.oas.annotations.Operation(summary = "上传图片")
     public Result<String> uploadImage(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return Result.error("请选择要上传的文件");

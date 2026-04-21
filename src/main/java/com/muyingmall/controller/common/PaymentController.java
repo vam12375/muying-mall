@@ -451,6 +451,7 @@ public class PaymentController {
      * 支付宝异步通知
      */
     @PostMapping("/alipay/notify")
+    @Operation(summary = "支付宝异步通知")
     public String alipayNotify(HttpServletRequest request) {
         Map<String, String> params = new HashMap<>();
         Map<String, String[]> requestParams = request.getParameterMap();
@@ -572,6 +573,7 @@ public class PaymentController {
      * 支付宝同步回调
      */
     @GetMapping("/alipay/return")
+    @Operation(summary = "支付宝同步回调")
     public void alipayReturn(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, String> params = new HashMap<>();
         Map<String, String[]> requestParams = request.getParameterMap();

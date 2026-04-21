@@ -10,6 +10,7 @@ import com.muyingmall.service.AdminOperationLogService;
 import com.muyingmall.service.ExcelExportService;
 import com.muyingmall.service.UserService;
 import com.muyingmall.websocket.AdminStatsWebSocket;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,6 +70,7 @@ public class AdminController {
      */
     @PostMapping("/login")
     @com.muyingmall.annotation.AdminOperationLog(operation = "管理员登录", module = "系统管理", operationType = "LOGIN", targetType = "admin", description = "管理员登录系统")
+    @Operation(summary = "管理员登录")
     public Result<?> login(@RequestBody @Valid AdminLoginDTO loginParam, HttpServletRequest request) {
         // 验证图形验证码
         if (loginParam.getCaptcha_key() != null && loginParam.getCaptcha_code() != null) {
@@ -136,6 +138,7 @@ public class AdminController {
      */
     @GetMapping("/info")
     @PreAuthorize("hasAuthority('admin')")
+    @Operation(summary = "获取当前管理员信息")
     public Result<Map<String, Object>> getUserInfo(@RequestHeader("Authorization") String authHeader) {
         // 从token中解析用户信息
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -171,11 +174,12 @@ public class AdminController {
 
     /**
      * 文件上传接口
-     * 
+     *
      * @param file 上传的文件
      * @return 上传结果，包含文件URL
      */
     @PostMapping("/upload")
+    @Operation(summary = "管理端通用文件上传")
     public Result<Map<String, String>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "folder", required = false, defaultValue = "images") String folder,
@@ -252,6 +256,7 @@ public class AdminController {
     @PostMapping("/avatar/upload")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "上传头像", module = "个人中心", operationType = "UPDATE", targetType = "admin", description = "管理员上传头像")
+    @Operation(summary = "上传管理员头像")
     public Result<Map<String, String>> uploadAvatar(
             @RequestParam("file") MultipartFile file,
             @RequestHeader("Authorization") String authHeader) {
@@ -292,6 +297,7 @@ public class AdminController {
     @PutMapping("/update")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "更新个人信息", module = "个人中心", operationType = "UPDATE", targetType = "admin", description = "管理员更新个人信息")
+    @Operation(summary = "更新管理员信息")
     public Result<Map<String, Object>> updateAdminInfo(
             @RequestBody User adminInfo,
             @RequestHeader("Authorization") String authHeader) {
@@ -355,6 +361,7 @@ public class AdminController {
     @PutMapping("/password")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "修改密码", module = "个人中心", operationType = "UPDATE", targetType = "admin", description = "管理员修改密码")
+    @Operation(summary = "修改管理员密码")
     public Result<?> updatePassword(
             @RequestBody Map<String, String> passwordMap,
             @RequestHeader("Authorization") String authHeader) {
@@ -400,6 +407,7 @@ public class AdminController {
     @GetMapping("/login-records")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看登录记录", module = "管理员管理", operationType = "READ")
+    @Operation(summary = "分页查询登录记录")
     public Result<Map<String, Object>> getLoginRecords(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -443,6 +451,7 @@ public class AdminController {
     @GetMapping("/system/logs")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看系统日志", module = "系统管理", operationType = "READ")
+    @Operation(summary = "分页查询系统日志")
     public Result<Map<String, Object>> getSystemLogs(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -497,6 +506,7 @@ public class AdminController {
     @GetMapping("/system/logs/{id}")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "查看系统日志详情", module = "系统管理", operationType = "READ")
+    @Operation(summary = "查询系统日志详情")
     public Result<com.muyingmall.entity.AdminOperationLog> getSystemLogDetail(@PathVariable Long id) {
         try {
             com.muyingmall.entity.AdminOperationLog logDetail = operationLogService.getById(id);
@@ -516,6 +526,7 @@ public class AdminController {
     @GetMapping("/operation-records")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看操作记录", module = "管理员管理", operationType = "READ")
+    @Operation(summary = "分页查询操作记录")
     public Result<Map<String, Object>> getOperationRecords(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -560,6 +571,7 @@ public class AdminController {
     @GetMapping("/statistics")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看统计信息", module = "管理员管理", operationType = "READ")
+    @Operation(summary = "获取管理员统计信息")
     public Result<Map<String, Object>> getAdminStatistics() {
 
         try {
@@ -596,6 +608,7 @@ public class AdminController {
     @GetMapping("/login-records/export")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "导出登录记录", module = "管理员管理", operationType = "EXPORT")
+    @Operation(summary = "导出登录记录")
     public void exportLoginRecords(
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime,
@@ -629,6 +642,7 @@ public class AdminController {
     @GetMapping("/operation-records/export")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "导出操作记录", module = "管理员管理", operationType = "EXPORT")
+    @Operation(summary = "导出操作记录")
     public void exportOperationRecords(
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime,
@@ -663,6 +677,7 @@ public class AdminController {
     @GetMapping("/websocket/status")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "查看WebSocket状态", module = "管理员管理", operationType = "READ")
+    @Operation(summary = "获取WebSocket连接状态")
     public Result<Map<String, Object>> getWebSocketStatus() {
         try {
             Map<String, Object> status = new HashMap<>();
@@ -682,6 +697,7 @@ public class AdminController {
     @PostMapping("/notification/send")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "发送系统通知", module = "管理员管理", operationType = "CREATE")
+    @Operation(summary = "发送系统通知")
     public Result<String> sendSystemNotification(
             @RequestBody Map<String, Object> notificationData) {
         try {
@@ -711,6 +727,7 @@ public class AdminController {
     @PostMapping("/stats/push")
     @PreAuthorize("hasAuthority('admin')")
     @AdminOperationLog(operation = "推送统计数据", module = "管理员管理", operationType = "UPDATE")
+    @Operation(summary = "手动推送统计数据")
     public Result<String> pushStatsUpdate() {
         try {
             // 获取最新统计数据并推送
@@ -750,6 +767,7 @@ public class AdminController {
     @GetMapping("/system/logs/statistics")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "查看系统日志统计", module = "系统管理", operationType = "READ")
+    @Operation(summary = "获取系统日志统计")
     public Result<Map<String, Object>> getSystemLogStatistics(
             @RequestParam(required = false) Integer adminId,
             @RequestParam(defaultValue = "7") Integer days) {
@@ -888,6 +906,7 @@ public class AdminController {
     @DeleteMapping("/system/logs/batch")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "批量删除系统日志", module = "系统管理", operationType = "DELETE")
+    @Operation(summary = "批量删除系统日志")
     public Result<Void> batchDeleteSystemLogs(@RequestBody List<Long> ids) {
         try {
             if (ids == null || ids.isEmpty()) {
@@ -914,6 +933,7 @@ public class AdminController {
     @DeleteMapping("/system/logs/clear")
     @PreAuthorize("hasAuthority('admin')")
     @com.muyingmall.annotation.AdminOperationLog(operation = "清空历史日志", module = "系统管理", operationType = "DELETE")
+    @Operation(summary = "清空历史日志")
     public Result<Void> clearOldSystemLogs(@RequestParam Integer days) {
         try {
             // 参数验证

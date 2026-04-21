@@ -1,6 +1,7 @@
 package com.muyingmall.controller.admin;
 
 import com.muyingmall.common.api.Result;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,6 +42,7 @@ public class SystemController {
      * 获取Redis服务器信息
      */
     @GetMapping("/redis/info")
+    @Operation(summary = "获取Redis服务器信息")
     public Result<Map<String, Object>> getRedisInfo() {
         try {
             // 使用RedisCallback获取Redis服务器信息
@@ -130,6 +132,7 @@ public class SystemController {
      * 获取Redis缓存键列表
      */
     @GetMapping("/redis/keys")
+    @Operation(summary = "分页获取Redis键列表")
     public Result<Map<String, Object>> getRedisCacheKeys(
             @RequestParam(value = "pattern", defaultValue = "*") String pattern,
             @RequestParam(value = "page", defaultValue = "1") int page,
@@ -241,10 +244,11 @@ public class SystemController {
 
     /**
      * 获取指定键的值
-     * 
+     *
      * @param key 缓存键名
      */
     @GetMapping("/redis/key")
+    @Operation(summary = "获取Redis指定键的值")
     public Result<Map<String, Object>> getRedisCacheValue(@RequestParam("key") String key) {
         if (key == null || key.trim().isEmpty()) {
             return Result.error("键名不能为空");
@@ -327,10 +331,11 @@ public class SystemController {
 
     /**
      * 删除指定的缓存键
-     * 
+     *
      * @param keys 缓存键名或键名数组
      */
     @PostMapping("/redis/delete")
+    @Operation(summary = "删除Redis指定键")
     public Result<Boolean> deleteRedisCache(@RequestBody Map<String, Object> param) {
         try {
             Object keysObj = param.get("keys");
@@ -383,6 +388,7 @@ public class SystemController {
      * 清空所有缓存
      */
     @PostMapping("/redis/flush")
+    @Operation(summary = "清空Redis当前库")
     public Result<Boolean> flushRedisCache() {
         try {
             redisTemplate.execute((RedisCallback<Boolean>) connection -> {
@@ -401,6 +407,7 @@ public class SystemController {
      * 提供与/redis/flush相同的功能，但使用不同的端点名称
      */
     @PostMapping("/redis/clear")
+    @Operation(summary = "清空Redis当前库（别名）")
     public Result<Boolean> clearRedisCache() {
         log.debug("接收到清除缓存请求");
         try {
@@ -421,6 +428,7 @@ public class SystemController {
      * 清除部分缓存并返回最新的服务器信息
      */
     @PostMapping("/redis/refresh")
+    @Operation(summary = "刷新Redis服务器状态")
     public Result<Map<String, Object>> refreshRedisStats() {
         log.debug("接收到刷新Redis状态请求");
         try {

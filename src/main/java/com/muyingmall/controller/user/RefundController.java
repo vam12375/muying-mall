@@ -72,6 +72,7 @@ public class RefundController {
      * 获取退款详情
      */
     @GetMapping("/{refundId}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取退款详情")
     public Result<Refund> getRefundDetail(@PathVariable("refundId") Long refundId) {
         Refund refund = refundService.getRefundDetail(refundId);
         return Result.success(refund);
@@ -81,6 +82,7 @@ public class RefundController {
      * 取消退款申请
      */
     @PostMapping("/cancel/{refundId}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "取消退款申请")
     public Result<Boolean> cancelRefund(@PathVariable("refundId") Long refundId,
                                         @RequestParam("userId") Integer userId,
                                         @RequestParam("reason") String reason) {
@@ -92,6 +94,7 @@ public class RefundController {
      * 获取用户的退款列表
      */
     @GetMapping("/user/{userId}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取用户退款列表")
     public Result<Page<Refund>> getUserRefunds(@PathVariable("userId") Integer userId,
                                                @RequestParam(value = "page", defaultValue = "1") Integer page,
                                                @RequestParam(value = "size", defaultValue = "10") Integer size) {
@@ -103,6 +106,7 @@ public class RefundController {
      * 获取订单的退款列表
      */
     @GetMapping("/order/{orderId}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取订单退款列表")
     public Result<Page<Refund>> getOrderRefunds(@PathVariable("orderId") Integer orderId,
                                                 @RequestParam(value = "page", defaultValue = "1") Integer page,
                                                 @RequestParam(value = "size", defaultValue = "10") Integer size) {
@@ -121,6 +125,7 @@ public class RefundController {
      * 获取退款状态枚举
      */
     @GetMapping("/status/list")
+    @io.swagger.v3.oas.annotations.Operation(summary = "获取退款状态枚举")
     public Result<RefundStatus[]> getRefundStatusList() {
         return Result.success(RefundStatus.values());
     }
@@ -129,6 +134,7 @@ public class RefundController {
      * 获取当前状态可以转换到的下一个状态集合
      */
     @GetMapping("/status/next/{status}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "查询状态可流转的下一步")
     public Result<RefundStatus[]> getNextStatuses(@PathVariable("status") String status) {
         RefundStatus currentStatus = RefundStatus.getByCode(status);
         if (currentStatus == null) {

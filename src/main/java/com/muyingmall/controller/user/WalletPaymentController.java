@@ -70,6 +70,7 @@ public class WalletPaymentController {
      * 支付宝充值回调
      */
     @PostMapping("/alipay/notify")
+    @Operation(summary = "支付宝充值异步通知")
     public String alipayRechargeNotify(HttpServletRequest request) {
         Map<String, String> params = new HashMap<>();
         Map<String, String[]> requestParams = request.getParameterMap();
@@ -175,6 +176,7 @@ public class WalletPaymentController {
      * 支付宝充值同步回调
      */
     @GetMapping("/alipay/return")
+    @Operation(summary = "支付宝充值同步回调")
     public void alipayRechargeReturn(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, String> params = new HashMap<>();
         Map<String, String[]> requestParams = request.getParameterMap();
@@ -270,6 +272,7 @@ public class WalletPaymentController {
      * 手动完成充值（调试用）
      */
     @PostMapping("/manual-complete")
+    @Operation(summary = "手动完成充值（调试）")
     public Result<Map<String, Object>> manualCompleteRecharge(@RequestParam String orderNo) {
         log.debug("手动完成充值请求: {}", orderNo);
         Map<String, Object> result = new HashMap<>();
@@ -383,6 +386,7 @@ public class WalletPaymentController {
      * 查询充值记录详情（调试用）
      */
     @GetMapping("/query-recharge")
+    @Operation(summary = "查询充值记录（调试）")
     public Result<Map<String, Object>> queryRechargeRecord(@RequestParam String orderNo) {
         log.debug("查询充值记录请求: {}", orderNo);
 
@@ -432,6 +436,7 @@ public class WalletPaymentController {
      * 检查交易状态（调试用）
      */
     @GetMapping("/check-status")
+    @Operation(summary = "检查充值交易状态（调试）")
     public Result<Map<String, Object>> checkTransactionStatus(@RequestParam String orderNo) {
         log.debug("检查交易状态请求: {}", orderNo);
 
@@ -480,6 +485,7 @@ public class WalletPaymentController {
      * 微信充值回调
      */
     @PostMapping("/wechat/notify")
+    @Operation(summary = "微信充值异步通知")
     public String wechatRechargeNotify(HttpServletRequest request) {
         log.debug("收到微信充值回调请求");
 
@@ -730,6 +736,7 @@ public class WalletPaymentController {
      * 查询用户账户详情（调试用）
      */
     @GetMapping("/query-account")
+    @Operation(summary = "查询用户账户详情（调试）")
     public Result<Map<String, Object>> queryUserAccount(@RequestParam Integer accountId) {
         log.debug("查询用户账户请求: accountId={}", accountId);
         Map<String, Object> result = new HashMap<>();
@@ -770,6 +777,7 @@ public class WalletPaymentController {
      * 创建测试充值记录（调试用）
      */
     @PostMapping("/create-test-recharge")
+    @Operation(summary = "创建测试充值记录（调试）")
     public Result<Map<String, Object>> createTestRecharge(
             @RequestParam Integer userId,
             @RequestParam BigDecimal amount) {
