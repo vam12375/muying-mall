@@ -14,7 +14,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  */
 @Configuration
 @EnableTransactionManagement
-@MapperScan("com.muyingmall.mapper")
+// 同时扫描主业务和 AI 模块的 Mapper，避免新包下 Mapper 无法注册为 MyBatis Bean。
+@MapperScan({"com.muyingmall.mapper", "com.muyingmall.ai.mapper"})
 public class MybatisPlusConfig {
 
     /**
