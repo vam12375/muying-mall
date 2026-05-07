@@ -34,5 +34,7 @@ public class AiMessage implements Serializable {
 
     private Long toolCallLogId;
 
+    private String toolResults;
+
     private LocalDateTime createTime;
 }
