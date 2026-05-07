@@ -3,6 +3,7 @@ package com.muyingmall.ai.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,4 +22,8 @@ public class AiChatRequest {
     private Integer babyAgeMonth;
 
     private Map<String, Object> metadata;
+
+    private List<AiChatContextMessage> history;
+
+    private Integer maxContextChars;
 }
