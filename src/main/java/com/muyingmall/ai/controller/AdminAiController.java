@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyingmall.ai.dto.AiTicketUpdateRequest;
 import com.muyingmall.ai.entity.AiConversation;
+import com.muyingmall.ai.entity.AiMessage;
 import com.muyingmall.ai.entity.AiSupportTicket;
 import com.muyingmall.ai.entity.AiToolCallLog;
 import com.muyingmall.ai.service.AiConversationService;
+import com.muyingmall.ai.service.AiMessageService;
 import com.muyingmall.ai.service.AiSupportTicketService;
 import com.muyingmall.ai.service.AiToolCallLogService;
 import com.muyingmall.common.api.Result;
@@ -23,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * 管理端 AI Agent 监控接口。
  */
@@ -33,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminAiController {
 
     private final AiConversationService aiConversationService;
+    private final AiMessageService aiMessageService;
     private final AiToolCallLogService aiToolCallLogService;
     private final AiSupportTicketService aiSupportTicketService;
 
@@ -48,6 +53,16 @@ public class AdminAiController {
                 .eq(userId != null, AiConversation::getUserId, userId)
                 .orderByDesc(AiConversation::getUpdateTime);
         return Result.success(aiConversationService.page(new Page<>(page, size), wrapper));
+    }
+
+    @GetMapping("/conversations/{conversationId}/messages")
+    @Operation(summary = "查询 AI 会话消息明细")
+    public Result<List<AiMessage>> listConversationMessages(
+            @PathVariable Long conversationId,
+            @RequestParam(defaultValue = "100") Integer limit) {
+        int safeLimit = Math.min(Math.max(limit, 1), 200);
+        // 管理端用于排查 Agent 决策链路，不限制用户ID，由 /admin/** 鉴权保护。
+        return Result.success(aiMessageService.listRecentMessagesForAdmin(conversationId, safeLimit));
     }
 
     @GetMapping("/tool-logs")
