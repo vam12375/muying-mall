@@ -62,6 +62,15 @@ public interface UserMessageService extends IService<UserMessage> {
     boolean markAsRead(String messageId);
 
     /**
+     * 用户侧标记已读，必须同时校验消息归属，避免通过 messageId 越权操作他人消息。
+     *
+     * @param messageId 消息ID
+     * @param userId    当前登录用户ID
+     * @return 是否成功
+     */
+    boolean markAsRead(String messageId, Integer userId);
+
+    /**
      * 标记用户所有消息为已读
      *
      * @param userId 用户ID
@@ -85,6 +94,15 @@ public interface UserMessageService extends IService<UserMessage> {
      * @return 是否成功
      */
     boolean deleteMessage(String messageId);
+
+    /**
+     * 用户侧删除消息，必须同时校验消息归属，避免通过 messageId 越权删除他人消息。
+     *
+     * @param messageId 消息ID
+     * @param userId    当前登录用户ID
+     * @return 是否成功
+     */
+    boolean deleteMessage(String messageId, Integer userId);
 
     /**
      * 根据用户ID删除全部消息

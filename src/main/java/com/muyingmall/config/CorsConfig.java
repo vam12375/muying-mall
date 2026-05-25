@@ -45,12 +45,6 @@ public class CorsConfig {
         // 设置允许的来源 - 增强支持更多开发环境
         if (allowCredentials) {
             // 如果需要支持credentials，不能使用通配符*，需要明确指定域名
-            config.addAllowedOrigin("http://localhost:5173"); // Vite默认
-            config.addAllowedOrigin("http://localhost:3000"); // React默认
-            config.addAllowedOrigin("http://127.0.0.1:5173");
-            config.addAllowedOrigin("http://127.0.0.1:3000");
-            config.addAllowedOrigin("http://localhost:8081"); // 其他常用端口
-
             // 添加配置文件中定义的域名
             String[] origins = allowedOrigins.split(",");
             for (String origin : origins) {

@@ -261,6 +261,43 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public boolean markAsRead(String messageId, Integer userId) {
+        if (!StringUtils.hasText(messageId) || userId == null) {
+            return false;
+        }
+
+        // 用户侧操作必须带上 userId 归属条件，防止枚举 messageId 标记他人消息。
+        LambdaQueryWrapper<UserMessage> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(UserMessage::getMessageId, messageId);
+        queryWrapper.eq(UserMessage::getUserId, userId);
+        queryWrapper.eq(UserMessage::getStatus, 1);
+
+        UserMessage message = getOne(queryWrapper, false);
+        if (message == null) {
+            return false;
+        }
+        if (message.getIsRead() == 1) {
+            return true;
+        }
+
+        LambdaUpdateWrapper<UserMessage> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(UserMessage::getMessageId, messageId);
+        updateWrapper.eq(UserMessage::getUserId, userId);
+        updateWrapper.eq(UserMessage::getStatus, 1);
+
+        UserMessage updateMessage = new UserMessage();
+        updateMessage.setIsRead(1);
+        updateMessage.setReadTime(LocalDateTime.now());
+
+        boolean result = update(updateMessage, updateWrapper);
+        if (result) {
+            clearMessageCountCache(userId);
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public int markAllAsRead(Integer userId) {
         // 构建更新条件
         LambdaUpdateWrapper<UserMessage> updateWrapper = new LambdaUpdateWrapper<>();
@@ -384,6 +421,29 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
         updateMessage.setStatus(0);
 
         return updateById(updateMessage);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteMessage(String messageId, Integer userId) {
+        if (!StringUtils.hasText(messageId) || userId == null) {
+            return false;
+        }
+
+        // 用户侧删除必须限定 userId，避免通过 messageId 越权删除他人消息。
+        LambdaUpdateWrapper<UserMessage> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(UserMessage::getMessageId, messageId);
+        updateWrapper.eq(UserMessage::getUserId, userId);
+        updateWrapper.eq(UserMessage::getStatus, 1);
+
+        UserMessage updateMessage = new UserMessage();
+        updateMessage.setStatus(0);
+
+        boolean result = update(updateMessage, updateWrapper);
+        if (result) {
+            clearMessageCountCache(userId);
+        }
+        return result;
     }
 
     @Override

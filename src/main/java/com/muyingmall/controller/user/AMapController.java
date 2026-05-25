@@ -71,39 +71,21 @@ public class AMapController {
             @RequestParam(required = false) String ip,
             HttpServletRequest request) {
         String queryIp = ip == null ? null : ip.trim();
-        String headerIp = request == null ? null : request.getHeader("X-Client-Public-IP");
-        if (headerIp != null) {
-            headerIp = headerIp.trim();
-        }
         String requestIp = IpUtil.getRealIp(request);
 
-        String resolvedIp = null;
-        String ipSource = "amap-auto";
+        // IP 定位只信任 Cloudflare/网关传递给后端的真实请求 IP，不再采信客户端可伪造的 query/header。
+        String resolvedIp = IpUtil.isPublicIp(requestIp) ? requestIp : null;
+        String ipSource = resolvedIp == null ? "amap-auto" : "request-ip";
 
-        if (IpUtil.isPublicIp(queryIp)) {
-            resolvedIp = queryIp;
-            ipSource = "query-ip";
-        } else if (IpUtil.isPublicIp(headerIp)) {
-            resolvedIp = headerIp;
-            ipSource = "header-ip";
-        } else if (IpUtil.isPublicIp(requestIp)) {
-            resolvedIp = requestIp;
-            ipSource = "request-ip";
-        }
-
-        if (queryIp != null && !queryIp.isBlank() && !IpUtil.isPublicIp(queryIp)) {
-            log.warn("【高德API】忽略非公网query ip: {}", queryIp);
-        }
-        if (headerIp != null && !headerIp.isBlank() && !IpUtil.isPublicIp(headerIp)) {
-            log.warn("【高德API】忽略非公网header ip: {}", headerIp);
+        if (queryIp != null && !queryIp.isBlank()) {
+            log.warn("忽略客户端提交的 IP 定位参数: queryIp={}", queryIp);
         }
         if (resolvedIp == null) {
             log.warn("【高德API】未获取到公网客户端IP，将使用高德自动检测出口IP，结果可能偏向服务器所在城市");
         }
 
-        log.info("【高德API】IP定位请求: queryIp={}, headerIp={}, requestIp={}, resolvedIp={}, ipSource={}, remoteAddr={}",
+        log.info("【高德API】IP定位请求: queryIp={}, requestIp={}, resolvedIp={}, ipSource={}, remoteAddr={}",
                 queryIp,
-                headerIp,
                 requestIp,
                 resolvedIp,
                 ipSource,

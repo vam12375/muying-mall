@@ -168,7 +168,8 @@ public class UserMessageController {
         }
 
         // 标记消息为已读
-        boolean success = userMessageService.markAsRead(messageId);
+        // 用户侧消息操作必须校验归属，避免通过 messageId 越权标记他人消息。
+        boolean success = userMessageService.markAsRead(messageId, user.getUserId());
 
         if (success) {
             return Result.success(true);
@@ -240,7 +241,8 @@ public class UserMessageController {
         }
 
         // 删除消息
-        boolean success = userMessageService.deleteMessage(messageId);
+        // 用户侧消息操作必须校验归属，避免通过 messageId 越权删除他人消息。
+        boolean success = userMessageService.deleteMessage(messageId, user.getUserId());
 
         if (success) {
             return Result.success(true);
