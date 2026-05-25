@@ -8,9 +8,12 @@ import com.muyingmall.dto.SeckillRequestDTO;
 import com.muyingmall.entity.SeckillActivity;
 import com.muyingmall.service.SeckillActivityService;
 import com.muyingmall.service.SeckillOrderService;
+import com.muyingmall.util.IpUtil;
+import com.muyingmall.util.SeckillRateLimiter;
 import com.muyingmall.util.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -37,6 +40,7 @@ public class SeckillController {
     private final UserContext userContext;
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
+    private final SeckillRateLimiter seckillRateLimiter;
 
     @GetMapping("/activities")
     @Operation(summary = "获取进行中的秒杀活动列表")
@@ -64,11 +68,17 @@ public class SeckillController {
 
     @PostMapping("/execute")
     @Operation(summary = "执行秒杀（同步模式）")
-    public Result<Long> executeSeckill(@RequestBody @Valid SeckillRequestDTO request) {
+    public Result<Long> executeSeckill(@RequestBody @Valid SeckillRequestDTO request,
+            HttpServletRequest httpRequest) {
         Integer userId = userContext.getCurrentUserId();
 
         if (userId == null) {
             return Result.error("请先登录");
+        }
+
+        // 秒杀入口限流：先挡住同一用户/同一IP的高频重放，再进入库存原子扣减链路。
+        if (!seckillRateLimiter.tryAcquire(IpUtil.getIpAddr(httpRequest), userId, request.getSeckillProductId())) {
+            return Result.error(429, "秒杀请求过于频繁，请稍后再试");
         }
 
         try {
@@ -82,7 +92,8 @@ public class SeckillController {
 
     @PostMapping("/execute-async")
     @Operation(summary = "执行秒杀（异步模式 - 推荐）")
-    public Result<String> executeSeckillAsync(@RequestBody @Valid SeckillRequestDTO request) {
+    public Result<String> executeSeckillAsync(@RequestBody @Valid SeckillRequestDTO request,
+            HttpServletRequest httpRequest) {
         Integer userId = userContext.getCurrentUserId();
 
         if (userId == null) {
@@ -90,6 +101,11 @@ public class SeckillController {
         }
 
         // 前置校验：拒绝明显无效的请求，避免浪费MQ资源
+        // 秒杀异步入口同样限流，避免绕过前端按钮状态直接刷队列。
+        if (!seckillRateLimiter.tryAcquire(IpUtil.getIpAddr(httpRequest), userId, request.getSeckillProductId())) {
+            return Result.error(429, "秒杀请求过于频繁，请稍后再试");
+        }
+
         if (!seckillOrderService.canUserParticipate(userId, request.getSeckillProductId())) {
             return Result.error("您暂时无法参与该秒杀活动（已达购买上限或有待支付订单）");
         }
