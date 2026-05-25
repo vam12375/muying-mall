@@ -28,4 +28,9 @@ public class AiChatResponse {
     private List<String> suggestions;
 
     private Map<String, Object> toolResults;
+
+    /**
+     * Agent 轻量工作流状态，用于后台观察意图识别、工具选择、检索、转人工等节点。
+     */
+    private Map<String, Object> workflow;
 }
